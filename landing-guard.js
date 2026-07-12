@@ -15,13 +15,15 @@
     return;
   }
 
-  // Never hijack an OAuth redirect back into this page (e.g. WHOOP
-  // sending the browser to health.html?code=...&state=...). The
-  // referrer on that hop is the OAuth provider's domain, not this
+  // Never hijack an OAuth redirect back into this page. WHOOP's own
+  // authorize redirect can arrive as health.html?code=...&state=...,
+  // and the api/whoop-callback proxy hands tokens back as
+  // health.html#whoop_access=...&whoop_refresh=.... Either way the
+  // referrer on that hop won't reliably look like it came from this
   // site, so without this check it would look identical to a fresh
-  // site open and the auth code would be lost before the page's own
-  // JS ever reads it.
-  if (/[?&]code=/.test(window.location.search)) return;
+  // site open and the tokens would be lost before the page's own JS
+  // ever reads them.
+  if (/[?&]code=/.test(window.location.search) || /whoop_access/.test(window.location.hash)) return;
 
   var nav = (performance.getEntriesByType && performance.getEntriesByType('navigation')[0]) || null;
   var navType = nav
