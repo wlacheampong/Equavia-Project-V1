@@ -188,18 +188,18 @@ body.topbar-modal-open { overflow: hidden; touch-action: none; }
   <a href="vitals.html" class="bottombar-tab" data-page="vitals">
     <span class="bottombar-tab-icon">❤️</span><span>Vitals</span>
   </a>
+  <a href="brand.html" class="bottombar-tab" data-page="brand">
+    <span class="bottombar-tab-icon">📣</span><span>Brand</span>
+  </a>
 </nav>`;
 
-  function isFinancePage() {
-    const p = (window.location.pathname || '').toLowerCase();
-    return p.endsWith('/finance.html') || p.endsWith('finance.html');
-  }
   function isEmbedded() {
     try { return window.self !== window.top; } catch (e) { return true; }
   }
-  function shouldShowChrome() { return !isFinancePage() && !isEmbedded(); }
+  function shouldShowChrome() { return !isEmbedded(); }
   function currentPageKey() {
     const p = (window.location.pathname || '').toLowerCase();
+    if (p.endsWith('finance.html')) return 'finance';
     if (p.endsWith('health.html')) return 'health';
     if (p.endsWith('gym.html')) return 'fitness';
     if (p.endsWith('fuel.html')) return 'fuel';
@@ -207,6 +207,7 @@ body.topbar-modal-open { overflow: hidden; touch-action: none; }
     if (p.endsWith('train.html')) return 'train';
     if (p.endsWith('vee.html')) return 'vee';
     if (p.endsWith('vitals.html')) return 'vitals';
+    if (p.endsWith('brand.html')) return 'brand';
     return 'main';
   }
 
