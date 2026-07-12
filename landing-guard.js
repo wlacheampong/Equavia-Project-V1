@@ -15,6 +15,14 @@
     return;
   }
 
+  // Never hijack an OAuth redirect back into this page (e.g. WHOOP
+  // sending the browser to health.html?code=...&state=...). The
+  // referrer on that hop is the OAuth provider's domain, not this
+  // site, so without this check it would look identical to a fresh
+  // site open and the auth code would be lost before the page's own
+  // JS ever reads it.
+  if (/[?&]code=/.test(window.location.search)) return;
+
   var nav = (performance.getEntriesByType && performance.getEntriesByType('navigation')[0]) || null;
   var navType = nav
     ? nav.type
