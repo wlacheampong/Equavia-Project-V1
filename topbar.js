@@ -173,6 +173,21 @@ body.topbar-modal-open { overflow: hidden; touch-action: none; }
   <a href="gym.html" class="bottombar-tab" data-page="fitness">
     <span class="bottombar-tab-icon">💪</span><span>Fitness</span>
   </a>
+  <a href="fuel.html" class="bottombar-tab" data-page="fuel">
+    <span class="bottombar-tab-icon">🍽️</span><span>Fuel</span>
+  </a>
+  <a href="peak.html" class="bottombar-tab" data-page="peak">
+    <span class="bottombar-tab-icon">🏔️</span><span>Peak</span>
+  </a>
+  <a href="train.html" class="bottombar-tab" data-page="train">
+    <span class="bottombar-tab-icon">🏃</span><span>Train</span>
+  </a>
+  <a href="vee.html" class="bottombar-tab" data-page="vee">
+    <span class="bottombar-tab-icon">💬</span><span>Vee</span>
+  </a>
+  <a href="vitals.html" class="bottombar-tab" data-page="vitals">
+    <span class="bottombar-tab-icon">❤️</span><span>Vitals</span>
+  </a>
 </nav>`;
 
   function isFinancePage() {
@@ -187,6 +202,11 @@ body.topbar-modal-open { overflow: hidden; touch-action: none; }
     const p = (window.location.pathname || '').toLowerCase();
     if (p.endsWith('health.html')) return 'health';
     if (p.endsWith('gym.html')) return 'fitness';
+    if (p.endsWith('fuel.html')) return 'fuel';
+    if (p.endsWith('peak.html')) return 'peak';
+    if (p.endsWith('train.html')) return 'train';
+    if (p.endsWith('vee.html')) return 'vee';
+    if (p.endsWith('vitals.html')) return 'vitals';
     return 'main';
   }
 
