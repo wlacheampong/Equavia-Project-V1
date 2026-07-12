@@ -1,0 +1,33 @@
+// Routes every fresh entry into the app through the landing page
+// (index.html) first. "Fresh entry" means a hard refresh, a typed URL,
+// a bookmark, or a new tab — anything that isn't a click from inside
+// the app's own navigation (topbar / bottom tabs / the landing hero).
+//
+// Loaded synchronously (no defer/async) as the very first thing in
+// <head>, before styles or other scripts, so the redirect — when it
+// fires — happens before this page paints.
+(function () {
+  // Never redirect content embedded in an iframe (e.g. the water
+  // tracker embedded inside health.html).
+  try {
+    if (window.self !== window.top) return;
+  } catch (e) {
+    return;
+  }
+
+  var nav = (performance.getEntriesByType && performance.getEntriesByType('navigation')[0]) || null;
+  var navType = nav
+    ? nav.type
+    : (performance.navigation ? ['navigate', 'reload', 'back_forward'][performance.navigation.type] : 'navigate');
+
+  var referrer = document.referrer || '';
+  var cameFromThisSite = referrer.indexOf(window.location.origin) === 0;
+
+  // A reload of this exact page, or arriving with no same-origin
+  // referrer at all, both count as "opening the site" — send them to
+  // the landing page. Normal in-app navigation (referrer is another
+  // page on this site, type 'navigate') is left alone.
+  if (navType === 'reload' || !cameFromThisSite) {
+    window.location.replace('index.html');
+  }
+})();
