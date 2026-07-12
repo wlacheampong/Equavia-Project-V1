@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#050506">
+<link rel="icon" type="image/webp" href="images/Index Landing Page.webp">
+<link rel="apple-touch-icon" href="images/Index Landing Page.webp">
+<title>Privacy Policy — William's Dashboard</title>
+<style>
+:root {
+  --text-primary: #FAFAFA;
+  --text-secondary: #B8B6B0;
+  --text-tertiary: #76746E;
+  --accent: #E07658;
+  --font: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+* { box-sizing: border-box; }
+html, body {
+  margin: 0; padding: 0;
+  background: #050506;
+  color: var(--text-secondary);
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+}
+body {
+  padding: max(28px, env(safe-area-inset-top)) 20px 60px;
+}
+.page {
+  max-width: 720px;
+  margin: 0 auto;
+}
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-tertiary);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  transition: color 0.15s;
+}
+.back-link:hover { color: var(--text-primary); }
+h1 {
+  margin: 0 0 6px;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  background: linear-gradient(180deg, #FFFFFF 0%, #C7C4BC 120%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+.updated {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-tertiary);
+  margin-bottom: 32px;
+}
+h2 {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--text-primary);
+  margin: 32px 0 10px;
+}
+p, li {
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text-secondary);
+}
+ul { padding-left: 20px; margin: 8px 0; }
+li { margin-bottom: 6px; }
+code {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  background: rgba(255,255,255,0.06);
+  padding: 1px 6px;
+  border-radius: 4px;
+  color: var(--accent);
+}
+a { color: var(--accent); }
+.contact {
+  margin-top: 8px;
+  padding: 16px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.04);
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <a href="dashboard.html" class="back-link">&larr; Back to dashboard</a>
+
+  <h1>Privacy Policy</h1>
+  <div class="updated">Last updated: July 12, 2026</div>
+
+  <p>
+    William's Dashboard ("this app") is a personal, single-user dashboard for
+    tracking daily goals, health, fitness, water intake, and finances. It is
+    not a commercial product, has no user accounts, and is not intended for
+    use by the general public — it exists to serve its one operator. This
+    policy explains what data the app touches and where it goes, including
+    for anyone reviewing it as part of a third-party API integration (e.g.
+    WHOOP's developer platform).
+  </p>
+
+  <h2>What data this app handles</h2>
+  <p>Depending on which page you use, the app reads or stores:</p>
+  <ul>
+    <li><strong>Goals &amp; to-do data</strong> — text of daily/tomorrow goals, completion status, streak counts.</li>
+    <li><strong>Water &amp; health inputs</strong> — hydration logs, and profile inputs you provide (weight, age, sex, activity level, caffeine/substance intake) used only to calculate a daily water target.</li>
+    <li><strong>Fitness data</strong> — workout/progressive-overload entries you log.</li>
+    <li><strong>Finance data</strong> — entries you add on the finance page.</li>
+    <li><strong>WHOOP biometric data</strong> (only if you connect a WHOOP account) — recovery score, sleep stages/duration, strain, HRV, resting heart rate, skin temperature, blood oxygen, and respiratory rate, as provided by WHOOP's API.</li>
+  </ul>
+
+  <h2>Where it's stored</h2>
+  <p>
+    All data is first stored locally in your browser (<code>localStorage</code>)
+    on the device you're using. Some pages additionally sync that same data to
+    a private Supabase (PostgreSQL) database so it stays consistent across
+    your own devices. This app has no accounts or login — the Supabase project
+    is used solely to mirror this one operator's data between their own
+    devices, not to collect data from visitors.
+  </p>
+
+  <h2>Third-party services</h2>
+  <ul>
+    <li><strong>Supabase</strong> — stores a mirror of the app data described above for cross-device sync. See <a href="https://supabase.com/privacy" target="_blank" rel="noopener">Supabase's privacy policy</a>.</li>
+    <li><strong>WHOOP API</strong> — if you choose to connect a WHOOP account, the app requests an OAuth token from WHOOP and uses it (via a backend proxy the operator controls) to fetch the biometric data listed above. This app does not sell or share WHOOP data with any other party. See <a href="https://www.whoop.com/us/en/privacy-policy/" target="_blank" rel="noopener">WHOOP's privacy policy</a>.</li>
+    <li><strong>Anthropic (Claude API)</strong> — an optional "✨ Polish" feature, when enabled, sends the text of a goal you're typing to Anthropic's API to reword it. This is off by default and only activates if an API key is configured. See <a href="https://www.anthropic.com/legal/privacy" target="_blank" rel="noopener">Anthropic's privacy policy</a>.</li>
+  </ul>
+
+  <h2>Data sharing</h2>
+  <p>
+    Data is not sold, rented, or shared with advertisers or data brokers.
+    It is only sent to the third-party services listed above, and only to
+    provide the specific feature you're using (sync, WHOOP metrics, or goal
+    polishing).
+  </p>
+
+  <h2>Your control over your data</h2>
+  <ul>
+    <li>Clearing your browser's site data removes everything stored locally.</li>
+    <li>Disconnecting WHOOP (via the "Disconnect" button) stops any further data access and removes the locally stored token.</li>
+    <li>Because there are no user accounts, data is scoped to whoever operates this app — there is no multi-user data to separate or export.</li>
+  </ul>
+
+  <h2>Children's privacy</h2>
+  <p>This app is not directed at children and is not intended for public sign-up of any kind.</p>
+
+  <h2>Changes to this policy</h2>
+  <p>If what this app collects or how it's used changes, this page will be updated with a new "Last updated" date.</p>
+
+  <h2>Contact</h2>
+  <div class="contact">
+    Questions about this policy can be sent to <a href="mailto:35112462a@gmail.com">35112462a@gmail.com</a>.
+  </div>
+
+</div>
+</body>
+</html>
