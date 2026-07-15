@@ -90,9 +90,6 @@
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
 }
-.bottombar.hidden {
-  display: none !important;
-}
 .bottombar-tab {
   flex: 1;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -226,21 +223,13 @@ body.topbar-modal-open { overflow: hidden; touch-action: none; }
     document.body.insertBefore(topWrap.firstChild, document.body.firstChild);
     const bottomWrap = document.createElement('div');
     bottomWrap.innerHTML = bottombarHtml.trim();
-    const bottombar = document.body.appendChild(bottomWrap.firstChild);
-    bottombar.classList.add('hidden');
+    document.body.appendChild(bottomWrap.firstChild);
     const active = currentPageKey();
     document.querySelectorAll('.bottombar-tab').forEach((t) => {
       t.classList.toggle('active', t.getAttribute('data-page') === active);
     });
-  }
-
-  function showBottomBar() {
-    const bar = document.getElementById('bottombar');
-    if (!bar) return;
-    bar.classList.remove('hidden');
     document.body.classList.add('has-bottombar');
   }
-  window.showBottomBar = showBottomBar;
 
   function calendarDateKey() {
     const d = new Date();
