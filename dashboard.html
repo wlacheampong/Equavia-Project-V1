@@ -84,44 +84,66 @@ body::after {
 
 /* ===== Component 2: Dashboard hero + cards ===== */
 .hero-panel {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 20px;
-  padding: 24px;
+  padding: 28px 30px;
   margin-bottom: 22px;
-  border-radius: 20px;
-  background: rgba(255,255,255,0.05);
-  backdrop-filter: blur(20px) saturate(1.2);
-  -webkit-backdrop-filter: blur(20px) saturate(1.2);
-  box-shadow: 0 22px 50px rgba(0,0,0,0.28);
+  min-height: 220px;
+  border-radius: 24px;
+  background-color: #090608;
+  background-image:
+    radial-gradient(circle at 50% 16%, rgba(255, 64, 64, 0.35), transparent 20%),
+    radial-gradient(circle at 10% 80%, rgba(255, 32, 32, 0.22), transparent 18%),
+    linear-gradient(135deg, rgba(18, 6, 5, 1) 0%, rgba(24, 8, 8, 1) 42%, rgba(42, 10, 10, 0.92) 100%);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  backdrop-filter: blur(22px) saturate(1.2);
+  -webkit-backdrop-filter: blur(22px) saturate(1.2);
+  border: 1px solid rgba(255,255,255,0.12);
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.42);
+  overflow: hidden;
+}
+.hero-panel::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 10%, rgba(255, 60, 60, 0.16), transparent 30%);
+  pointer-events: none;
+}
+.hero-left,
+.hero-right {
+  position: relative;
+  z-index: 1;
 }
 .hero-left {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 18px;
 }
 .hero-avatar {
-  width: 76px;
-  height: 76px;
+  width: 84px;
+  height: 84px;
   border-radius: 50%;
   position: relative;
   overflow: hidden;
-  background: radial-gradient(circle at 24% 24%, rgba(255, 112, 112, 0.24), transparent 28%),
-              radial-gradient(circle at 72% 72%, rgba(255, 38, 38, 0.28), transparent 30%),
-              linear-gradient(135deg, #100203 0%, #2a0508 45%, #530608 100%);
-  box-shadow: 0 0 24px rgba(255, 32, 32, 0.22), inset 0 0 18px rgba(255, 110, 110, 0.14);
-  animation: avatar-rotate 12s linear infinite;
+  background: radial-gradient(circle at 30% 30%, rgba(255, 110, 110, 0.28), transparent 28%),
+              radial-gradient(circle at 70% 70%, rgba(255, 20, 20, 0.30), transparent 32%),
+              linear-gradient(135deg, #180204 0%, #3a0508 48%, #7a0608 100%);
+  box-shadow: 0 0 26px rgba(255, 40, 40, 0.28), inset 0 0 18px rgba(255, 110, 110, 0.18);
 }
 .hero-avatar::before {
   content: '';
   position: absolute;
-  inset: 12px;
-  transform: rotate(45deg);
-  background: linear-gradient(180deg, rgba(255,255,255,0.65) 0%, rgba(255, 0, 0, 0.95) 100%);
-  clip-path: polygon(50% 0%, 100% 26%, 70% 100%, 50% 80%, 30% 100%, 0% 26%);
-  filter: drop-shadow(0 0 24px rgba(255, 21, 21, 0.45));
-  animation: avatar-pulse 1.7s ease-in-out infinite alternate;
+  inset: 10px;
+  transform: rotate(42deg);
+  background: linear-gradient(180deg, rgba(255,255,255,0.75) 0%, rgba(255, 25, 25, 0.95) 100%);
+  clip-path: polygon(50% 0%, 100% 28%, 70% 100%, 50% 82%, 30% 100%, 0% 28%);
+  filter: drop-shadow(0 0 20px rgba(255, 25, 25, 0.45));
+  animation: avatar-pulse 1.8s ease-in-out infinite alternate;
 }
 .hero-text {
   display: flex;
@@ -131,41 +153,41 @@ body::after {
 .hero-subhead {
   text-transform: uppercase;
   letter-spacing: 0.18em;
-  font-size: 11px;
-  color: var(--text-tertiary);
+  font-size: 12px;
+  color: rgba(255,255,255,0.72);
 }
 .hero-greeting {
   margin: 0;
-  font-size: 36px;
-  font-weight: 800;
-  color: var(--text-primary);
+  font-size: 38px;
+  font-weight: 900;
+  color: #FFFFFF;
   line-height: 1;
 }
 .hero-name {
   margin: 0;
   font-size: 16px;
-  color: var(--text-secondary);
+  color: rgba(255,255,255,0.70);
 }
 .hero-right {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 6px;
+  gap: 8px;
 }
 .hero-status {
   font-size: 14px;
-  font-weight: 700;
-  color: var(--text-primary);
+  font-weight: 800;
+  color: #FFFFFF;
 }
 .hero-clock {
   font-family: var(--font-mono);
-  font-size: 18px;
-  color: var(--text-secondary);
+  font-size: 20px;
+  color: rgba(255,255,255,0.94);
 }
 .hero-date {
   font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--text-tertiary);
+  font-size: 12px;
+  color: rgba(255,255,255,0.67);
 }
 .dashboard-grid {
   display: grid;
@@ -259,6 +281,300 @@ body::after {
   .day-ring { width: 144px; height: 144px; }
   .day-ring-percent { font-size: 32px; }
   .day-ring-status { font-size: 13px; }
+}
+
+/* ===== Component 3.5: quick actions, pages, and calendar cards ===== */
+.actions-grid {
+  display: grid;
+  grid-template-columns: minmax(280px, 1.35fr) minmax(320px, 0.95fr);
+  gap: 18px;
+  margin-bottom: 18px;
+}
+.quick-action,
+.page-card,
+.calendar-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 22px;
+  padding: 22px;
+  box-shadow: 0 18px 46px rgba(0, 0, 0, 0.20);
+  backdrop-filter: blur(20px) saturate(1.15);
+  -webkit-backdrop-filter: blur(20px) saturate(1.15);
+}
+.card-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+.card-badge {
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.10);
+  color: var(--text-tertiary);
+  font-size: 12px;
+  font-weight: 700;
+}
+.action-title,
+.page-title,
+.calendar-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+}
+.quick-action-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.quick-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+}
+.quick-pill:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.10);
+  border-color: rgba(255, 255, 255, 0.16);
+}
+.pill-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.08);
+}
+.page-card-tabs,
+.calendar-card-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+.calendar-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 18px;
+}
+.calendar-summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+}
+.calendar-summary-item span {
+  color: var(--text-tertiary);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+.calendar-summary-item strong {
+  font-size: 18px;
+  color: var(--text-primary);
+}
+.page-controls-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.control-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.control-pill {
+  padding: 8px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-tertiary);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+.control-pill:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--text-primary);
+}
+.control-input {
+  min-width: 180px;
+  width: 100%;
+  max-width: 260px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-primary);
+  font-size: 13px;
+}
+.control-input::placeholder {
+  color: rgba(255, 255, 255, 0.45);
+}
+.tab-pill {
+  padding: 8px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-tertiary);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+.tab-pill.active {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.18);
+  color: var(--text-primary);
+}
+.page-list {
+  display: grid;
+  gap: 10px;
+}
+.page-list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 18px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  color: var(--text-primary);
+  text-decoration: none;
+  transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
+}
+.page-list-item::after {
+  content: '›';
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 20px;
+  opacity: 0.7;
+}
+.page-list-item:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.18);
+  box-shadow: 0 16px 40px rgba(0,0,0,0.12);
+}
+.page-list-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.page-meta {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.page-icon {
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 18px;
+}
+.page-label {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.calendar-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.calendar-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+.calendar-subtext {
+  margin: 6px 0 0;
+  color: var(--text-tertiary);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.google-btn {
+  min-width: 140px;
+  padding: 12px 16px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.10));
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--text-primary);
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+}
+.google-btn:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.18);
+}
+.calendar-events {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+.event-item {
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.event-item strong {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--text-primary);
+}
+.event-time {
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+.calendar-empty {
+  color: var(--text-tertiary);
+  font-size: 13px;
+  padding: 12px 0;
+}
+.calendar-footer {
+  margin-top: 14px;
+}
+@media (max-width: 860px) {
+  .actions-grid { grid-template-columns: 1fr; }
+  .calendar-summary { grid-template-columns: 1fr; }
+}
+@media (max-width: 680px) {
+  .page-controls-row { flex-direction: column; align-items: stretch; }
+  .control-input { max-width: 100%; }
+}
+@media (max-width: 480px) {
+  .quick-action-grid { grid-template-columns: 1fr 1fr; }
+  .quick-pill { padding: 12px 10px; }
 }
 
 /* ===== Component 4: section + To Do List ===== */
@@ -641,7 +957,10 @@ body::after {
 
   <div class="actions-grid">
     <div class="quick-action">
-      <p class="action-title">Quick actions</p>
+      <div class="card-header-row">
+        <p class="action-title">Quick actions</p>
+        <div class="card-badge">+6</div>
+      </div>
       <div class="quick-action-grid">
         <button class="quick-pill" type="button" disabled><span class="pill-icon">+</span>Add task</button>
         <button class="quick-pill" type="button" disabled><span class="pill-icon">✏️</span>Quick NOTE</button>
@@ -652,15 +971,51 @@ body::after {
       </div>
     </div>
     <div class="page-card">
-      <p class="page-title">Pages</p>
-      <div class="page-grid">
-        <a href="dashboard.html" class="page-pill"><span class="page-icon">📝</span><span class="page-label">Planner</span></a>
-        <a href="finance.html" class="page-pill"><span class="page-icon">💵</span><span class="page-label">Finance</span></a>
-        <a href="#" class="page-pill"><span class="page-icon">📊</span><span class="page-label">Investment</span></a>
-        <a href="#" class="page-pill"><span class="page-icon">📚</span><span class="page-label">Reading journal</span></a>
-        <a href="health.html" class="page-pill"><span class="page-icon">🏋️</span><span class="page-label">Health & Fitness</span></a>
-        <a href="#" class="page-pill"><span class="page-icon">🗒️</span><span class="page-label">Notes</span></a>
-        <a href="#" class="page-pill"><span class="page-icon">🌐</span><span class="page-label">Life Style</span></a>
+      <div class="card-header-row">
+        <p class="page-title">Pages</p>
+        <div class="page-card-tabs">
+          <button class="tab-pill active" type="button">Pages</button>
+          <button class="tab-pill" type="button">Projects</button>
+          <button class="tab-pill" type="button">Notes</button>
+        </div>
+      </div>
+      <div class="page-controls-row">
+        <div class="control-group">
+          <button class="control-pill" type="button">Filter</button>
+          <button class="control-pill" type="button">Sort</button>
+          <button class="control-pill" type="button">Search</button>
+        </div>
+        <input class="control-input" type="search" placeholder="Search pages..." aria-label="Search pages">
+      </div>
+      <div class="page-list">
+        <a href="dashboard.html" class="page-list-item">
+          <span class="page-list-left"><span class="page-icon">📝</span><span class="page-label">Planner</span></span>
+          <span class="page-meta">Open</span>
+        </a>
+        <a href="finance.html" class="page-list-item">
+          <span class="page-list-left"><span class="page-icon">💵</span><span class="page-label">Finance</span></span>
+          <span class="page-meta">Open</span>
+        </a>
+        <a href="#" class="page-list-item">
+          <span class="page-list-left"><span class="page-icon">📊</span><span class="page-label">Investment</span></span>
+          <span class="page-meta">Open</span>
+        </a>
+        <a href="#" class="page-list-item">
+          <span class="page-list-left"><span class="page-icon">📚</span><span class="page-label">Reading journal</span></span>
+          <span class="page-meta">Open</span>
+        </a>
+        <a href="health.html" class="page-list-item">
+          <span class="page-list-left"><span class="page-icon">🏋️</span><span class="page-label">Health & Fitness</span></span>
+          <span class="page-meta">Open</span>
+        </a>
+        <a href="#" class="page-list-item">
+          <span class="page-list-left"><span class="page-icon">🗒️</span><span class="page-label">Notes</span></span>
+          <span class="page-meta">Open</span>
+        </a>
+        <a href="#" class="page-list-item">
+          <span class="page-list-left"><span class="page-icon">🌐</span><span class="page-label">Life Style</span></span>
+          <span class="page-meta">Open</span>
+        </a>
       </div>
     </div>
     <div class="calendar-card">
@@ -669,7 +1024,26 @@ body::after {
           <p class="calendar-title">Calendar</p>
           <p class="calendar-subtext">Connect Google Calendar for events and schedule sync.</p>
         </div>
-        <button class="google-btn" type="button" id="googleCalendarConnect">Connect Google</button>
+        <button class="google-btn" type="button" id="googleCalendarConnect">Connect</button>
+      </div>
+      <div class="calendar-card-tabs">
+        <button class="tab-pill active" type="button">Upcoming</button>
+        <button class="tab-pill" type="button">Week</button>
+        <button class="tab-pill" type="button">Month</button>
+      </div>
+      <div class="calendar-summary">
+        <div class="calendar-summary-item">
+          <span>Today</span>
+          <strong>2 events</strong>
+        </div>
+        <div class="calendar-summary-item">
+          <span>Week</span>
+          <strong>7 events</strong>
+        </div>
+        <div class="calendar-summary-item">
+          <span>Month</span>
+          <strong>18 events</strong>
+        </div>
       </div>
       <div id="calendarStatus" class="calendar-empty">No calendar connected yet.</div>
       <div class="calendar-events" id="calendarEvents" aria-live="polite"></div>
