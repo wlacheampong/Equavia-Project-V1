@@ -639,6 +639,46 @@ body::after {
     </div>
   </div>
 
+  <div class="actions-grid">
+    <div class="quick-action">
+      <p class="action-title">Quick actions</p>
+      <div class="quick-action-grid">
+        <button class="quick-pill" type="button" disabled><span class="pill-icon">+</span>Add task</button>
+        <button class="quick-pill" type="button" disabled><span class="pill-icon">✏️</span>Quick NOTE</button>
+        <button class="quick-pill" type="button" disabled><span class="pill-icon">📈</span>Invest Watchlist</button>
+        <button class="quick-pill" type="button" disabled><span class="pill-icon">📅</span>Daily Habit</button>
+        <button class="quick-pill" type="button" disabled><span class="pill-icon">💰</span>DCA</button>
+        <button class="quick-pill" type="button" disabled><span class="pill-icon">⭐</span>Wishlist</button>
+      </div>
+    </div>
+    <div class="page-card">
+      <p class="page-title">Pages</p>
+      <div class="page-grid">
+        <a href="dashboard.html" class="page-pill"><span class="page-icon">📝</span><span class="page-label">Planner</span></a>
+        <a href="finance.html" class="page-pill"><span class="page-icon">💵</span><span class="page-label">Finance</span></a>
+        <a href="#" class="page-pill"><span class="page-icon">📊</span><span class="page-label">Investment</span></a>
+        <a href="#" class="page-pill"><span class="page-icon">📚</span><span class="page-label">Reading journal</span></a>
+        <a href="health.html" class="page-pill"><span class="page-icon">🏋️</span><span class="page-label">Health & Fitness</span></a>
+        <a href="#" class="page-pill"><span class="page-icon">🗒️</span><span class="page-label">Notes</span></a>
+        <a href="#" class="page-pill"><span class="page-icon">🌐</span><span class="page-label">Life Style</span></a>
+      </div>
+    </div>
+    <div class="calendar-card">
+      <div class="calendar-header">
+        <div>
+          <p class="calendar-title">Calendar</p>
+          <p class="calendar-subtext">Connect Google Calendar for events and schedule sync.</p>
+        </div>
+        <button class="google-btn" type="button" id="googleCalendarConnect">Connect Google</button>
+      </div>
+      <div id="calendarStatus" class="calendar-empty">No calendar connected yet.</div>
+      <div class="calendar-events" id="calendarEvents" aria-live="polite"></div>
+      <div class="calendar-footer">
+        <div class="calendar-subtext">Syncs your primary Google Calendar events into the dashboard.</div>
+      </div>
+    </div>
+  </div>
+
   <div class="ticker-row" hidden aria-hidden="true">
     <div class="goal-ticker" id="goalTicker" aria-live="polite" aria-atomic="true">
       <div class="goal-ticker-led"><span class="goal-ticker-led-dot"></span></div>
@@ -931,6 +971,16 @@ window.addEventListener('DOMContentLoaded', function () {
     tick();
   });
 
+  document.addEventListener('DOMContentLoaded', function () {
+    const connectBtn = document.getElementById('googleCalendarConnect');
+    if (connectBtn) connectBtn.addEventListener('click', connectGoogleCalendar);
+    const storedEvents = getStoredCalendarEvents();
+    if (storedEvents.length > 0) {
+      renderCalendarEvents(storedEvents);
+      setCalendarStatus(storedEvents.length + ' saved events available.');
+    }
+  });
+
   // ---------- Day Ring ----------
   const PALETTE = [
     [0,    [255, 100, 100]],
@@ -987,10 +1037,170 @@ window.addEventListener('DOMContentLoaded', function () {
     return h + 'h ' + m + 'm';
   }
 
+  const GOOGLE_CAL_CLIENT_ID = '';
+  const GOOGLE_CAL_SCOPE = 'https://www.googleapis.com/auth/calendar.readonly';
+  const CALENDAR_STORAGE_KEY = 'google_calendar_events_v1';
+
   const C = 2 * Math.PI * 52;
   const fillEl = document.getElementById('dayRingFill');
   fillEl.setAttribute('stroke-dasharray', C);
   fillEl.setAttribute('stroke-dashoffset', C);
+
+  async function sha256(message) {
+    const msgBuffer = new TextEncoder().encode(message);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+    return new Uint8Array(hashBuffer);
+  }
+  function base64UrlEncode(buffer) {
+    return btoa(String.fromCharCode.apply(null, Array.from(buffer)))
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '');
+  }
+  async function generateCodeChallenge(verifier) {
+    const hashed = await sha256(verifier);
+    return base64UrlEncode(hashed);
+  }
+  function makeCodeVerifier() {
+    const array = new Uint8Array(32);
+    crypto.getRandomValues(array);
+    return base64UrlEncode(array);
+  }
+  function clearUrlParams() {
+    if (window.history.replaceState) {
+      const url = new URL(window.location.href);
+      url.search = '';
+      window.history.replaceState({}, document.title, url.toString());
+    }
+  }
+  function formatTime(dateStr) {
+    return new Date(dateStr).toLocaleString('en-US', {
+      month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit'
+    });
+  }
+  function saveCalendarEvents(events) {
+    localStorage.setItem(CALENDAR_STORAGE_KEY, JSON.stringify(events));
+  }
+  function loadCalendarEvents() {
+    try { return JSON.parse(localStorage.getItem(CALENDAR_STORAGE_KEY)) || []; }
+    catch (e) { return []; }
+  }
+  function renderCalendarEvents(events) {
+    const container = document.getElementById('calendarEvents');
+    const status = document.getElementById('calendarStatus');
+    container.innerHTML = '';
+    if (!events || events.length === 0) {
+      status.textContent = 'No upcoming events found.';
+      return;
+    }
+    status.textContent = events.length + ' upcoming events';
+    events.slice(0, 6).forEach((event) => {
+      const item = document.createElement('div');
+      item.className = 'event-item';
+      const title = document.createElement('strong');
+      title.textContent = event.summary || 'Untitled event';
+      const when = document.createElement('div');
+      when.className = 'event-time';
+      when.textContent = event.startText + ' — ' + event.endText;
+      item.appendChild(title);
+      item.appendChild(when);
+      container.appendChild(item);
+    });
+  }
+  function setCalendarStatus(message) {
+    const status = document.getElementById('calendarStatus');
+    if (status) status.textContent = message;
+  }
+  function getStoredCalendarEvents() {
+    return loadCalendarEvents();
+  }
+  function createGoogleAuthUrl(codeChallenge) {
+    const redirectUri = window.location.origin + window.location.pathname;
+    const params = new URLSearchParams({
+      client_id: GOOGLE_CAL_CLIENT_ID,
+      redirect_uri: redirectUri,
+      response_type: 'code',
+      scope: GOOGLE_CAL_SCOPE,
+      access_type: 'offline',
+      include_granted_scopes: 'true',
+      prompt: 'consent',
+      code_challenge_method: 'S256',
+      code_challenge: codeChallenge,
+    });
+    return 'https://accounts.google.com/o/oauth2/v2/auth?' + params.toString();
+  }
+  async function connectGoogleCalendar() {
+    if (!GOOGLE_CAL_CLIENT_ID) {
+      setCalendarStatus('Paste your Google client ID into the dashboard code to connect.');
+      return;
+    }
+    const verifier = makeCodeVerifier();
+    localStorage.setItem('gcal_pkce_verifier', verifier);
+    const challenge = await generateCodeChallenge(verifier);
+    window.location.href = createGoogleAuthUrl(challenge);
+  }
+  async function exchangeGoogleCode(code, verifier) {
+    const redirectUri = window.location.origin + window.location.pathname;
+    const body = new URLSearchParams({
+      client_id: GOOGLE_CAL_CLIENT_ID,
+      code,
+      code_verifier: verifier,
+      redirect_uri: redirectUri,
+      grant_type: 'authorization_code'
+    });
+    const res = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: body.toString()
+    });
+    if (!res.ok) throw new Error('Token exchange failed');
+    return await res.json();
+  }
+  async function fetchGoogleCalendarEvents(accessToken) {
+    const start = new Date().toISOString();
+    const end = new Date();
+    end.setDate(end.getDate() + 7);
+    const params = new URLSearchParams({
+      timeMin: start,
+      timeMax: end.toISOString(),
+      singleEvents: 'true',
+      orderBy: 'startTime',
+      maxResults: '12'
+    });
+    const res = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events?' + params.toString(), {
+      headers: { Authorization: 'Bearer ' + accessToken }
+    });
+    if (!res.ok) throw new Error('Calendar fetch failed');
+    const data = await res.json();
+    return (data.items || []).map(evt => ({
+      summary: evt.summary,
+      startText: evt.start?.dateTime || evt.start?.date || '',
+      endText: evt.end?.dateTime || evt.end?.date || ''
+    }));
+  }
+  async function handleGoogleCalendarRedirect() {
+    const url = new URL(window.location.href);
+    const code = url.searchParams.get('code');
+    const state = url.searchParams.get('state');
+    if (!code) return;
+    const verifier = localStorage.getItem('gcal_pkce_verifier');
+    if (!verifier) return;
+    setCalendarStatus('Finishing Google Calendar connection...');
+    try {
+      const tokenData = await exchangeGoogleCode(code, verifier);
+      if (!tokenData.access_token) throw new Error('No access token');
+      const events = await fetchGoogleCalendarEvents(tokenData.access_token);
+      saveCalendarEvents(events);
+      renderCalendarEvents(events);
+      setCalendarStatus('Connected to Google Calendar.');
+    } catch (err) {
+      console.error(err);
+      setCalendarStatus('Calendar connect failed. Check your client ID and redirect URI.');
+    } finally {
+      localStorage.removeItem('gcal_pkce_verifier');
+      clearUrlParams();
+    }
+  }
 
   function updateDayRing() {
     const now = new Date();
@@ -1376,6 +1586,7 @@ window.addEventListener('DOMContentLoaded', function () {
   );
 
   // ---------- Boot ----------
+  handleGoogleCalendarRedirect().catch(() => {});
   rollover();
   processStreak();
   loadToday();
