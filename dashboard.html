@@ -521,6 +521,12 @@ body::after {
   font-size: 12px;
   line-height: 1.5;
 }
+.calendar-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
 .google-btn {
   min-width: 140px;
   padding: 12px 16px;
@@ -530,11 +536,26 @@ body::after {
   color: var(--text-primary);
   font-weight: 700;
   cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
 }
 .google-btn:hover {
   transform: translateY(-1px);
   background: rgba(255, 255, 255, 0.18);
+}
+.google-btn-secondary {
+  min-width: 0;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+.google-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.08);
 }
 .calendar-events {
   display: grid;
@@ -1024,7 +1045,10 @@ body::after {
           <p class="calendar-title">Calendar</p>
           <p class="calendar-subtext">Connect Google Calendar for events and schedule sync.</p>
         </div>
-        <button class="google-btn" type="button" id="googleCalendarConnect">Connect</button>
+        <div class="calendar-header-actions">
+          <a class="google-btn google-btn-secondary" href="https://calendar.google.com/calendar/u/0/r" target="_blank" rel="noopener" aria-label="Open Google Calendar in a new tab">Open</a>
+          <button class="google-btn" type="button" id="googleCalendarConnect">Connect</button>
+        </div>
       </div>
       <div class="calendar-card-tabs">
         <button class="tab-pill active" type="button">Upcoming</button>
