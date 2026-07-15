@@ -14,11 +14,11 @@
 <style>
 :root {
   --text-primary: #FAFAFA;
-  --text-secondary: #B8B6B0;
-  --text-tertiary: #76746E;
-  --success: #6BE3A4;
-  --warning: #F2C063;
-  --danger: #FF6B6B;
+  --text-secondary: #D5C9C6;
+  --text-tertiary: #9B8A8B;
+  --success: #FF5C5C;
+  --warning: #EF463E;
+  --danger: #FF1E1E;
   --font: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 }
@@ -82,96 +82,115 @@ body::after {
 }
 @media (max-width: 480px) { .dash-title { font-size: 22px; } }
 
-/* ===== Component 2: Goal Ticker ===== */
-.ticker-row {
+/* ===== Component 2: Dashboard hero + cards ===== */
+.hero-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 24px;
+  margin-bottom: 22px;
+  border-radius: 20px;
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(20px) saturate(1.2);
+  -webkit-backdrop-filter: blur(20px) saturate(1.2);
+  box-shadow: 0 22px 50px rgba(0,0,0,0.28);
+}
+.hero-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.hero-avatar {
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  position: relative;
+  overflow: hidden;
+  background: radial-gradient(circle at 24% 24%, rgba(255, 112, 112, 0.24), transparent 28%),
+              radial-gradient(circle at 72% 72%, rgba(255, 38, 38, 0.28), transparent 30%),
+              linear-gradient(135deg, #100203 0%, #2a0508 45%, #530608 100%);
+  box-shadow: 0 0 24px rgba(255, 32, 32, 0.22), inset 0 0 18px rgba(255, 110, 110, 0.14);
+  animation: avatar-rotate 12s linear infinite;
+}
+.hero-avatar::before {
+  content: '';
+  position: absolute;
+  inset: 12px;
+  transform: rotate(45deg);
+  background: linear-gradient(180deg, rgba(255,255,255,0.65) 0%, rgba(255, 0, 0, 0.95) 100%);
+  clip-path: polygon(50% 0%, 100% 26%, 70% 100%, 50% 80%, 30% 100%, 0% 26%);
+  filter: drop-shadow(0 0 24px rgba(255, 21, 21, 0.45));
+  animation: avatar-pulse 1.7s ease-in-out infinite alternate;
+}
+.hero-text {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.hero-subhead {
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+.hero-greeting {
+  margin: 0;
+  font-size: 36px;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1;
+}
+.hero-name {
+  margin: 0;
+  font-size: 16px;
+  color: var(--text-secondary);
+}
+.hero-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+.hero-status {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.hero-clock {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  color: var(--text-secondary);
+}
+.hero-date {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+.dashboard-grid {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 4px;
+  grid-template-columns: minmax(280px, 360px) minmax(340px, 1fr);
+  gap: 18px;
   margin-bottom: 18px;
 }
-.goal-ticker {
-  position: relative; overflow: hidden;
-  display: flex; align-items: center; gap: 10px;
-  padding: 7px 12px;
-  border-radius: 12px;
-  background:
-    linear-gradient(180deg, rgba(0,0,0,0.42) 0%, rgba(0,0,0,0.30) 100%),
-    repeating-linear-gradient(0deg, rgba(255,255,255,0.025) 0, rgba(255,255,255,0.025) 1px, transparent 1px, transparent 3px);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
-}
-.goal-ticker::after {
-  content: '';
-  position: absolute; top: 0; bottom: 0;
-  width: 30%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.04), transparent);
-  pointer-events: none;
-  animation: ticker-sweep 8s linear infinite;
-}
-@keyframes ticker-sweep {
-  0%   { left: -40%; }
-  100% { left: 110%; }
-}
-.goal-ticker-led { display: inline-flex; align-items: center; }
-.goal-ticker-led-dot {
-  width: 7px; height: 7px; border-radius: 50%;
-  background: #6BE3A4;
-  box-shadow: 0 0 8px rgba(107,227,164,0.7);
-  animation: led-pulse 1.6s ease-in-out infinite;
-}
-@keyframes led-pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50%      { opacity: 0.45; transform: scale(0.85); }
-}
-.goal-ticker-label {
-  font-family: var(--font-mono);
-  font-size: 9.5px; font-weight: 800;
-  letter-spacing: 0.18em;
-  color: var(--text-tertiary);
-}
-.goal-ticker-stage {
-  position: relative; overflow: hidden;
-  flex: 1; height: 22px;
-}
-.goal-ticker-row {
-  position: absolute; inset: 0;
-  display: flex; align-items: center; gap: 8px;
-  font-family: var(--font-mono);
-  font-size: 12.5px; font-weight: 600;
-  font-variant-numeric: tabular-nums;
-  color: var(--text-primary);
-  white-space: nowrap;
-}
-.goal-ticker-row.is-leaving  { animation: ticker-leave 0.45s cubic-bezier(0.55, 0, 0.55, 1) forwards; }
-.goal-ticker-row.is-entering { animation: ticker-enter 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
-@keyframes ticker-leave { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-100%); } }
-@keyframes ticker-enter { from { opacity: 0; transform: translateY(100%); } to { opacity: 1; transform: translateY(0); } }
-.goal-ticker-status {
-  display: inline-flex; justify-content: center;
-  width: 18px;
-  color: var(--text-tertiary);
-}
-.goal-ticker-status[data-status="done"]    { color: var(--success); }
-.goal-ticker-status[data-status="pending"] { color: var(--text-tertiary); }
-.goal-ticker-text {
-  flex: 1;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
-.goal-ticker-meta {
-  font-family: var(--font-mono);
-  font-size: 11px; font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0.04em;
-  color: var(--text-secondary);
-  padding: 3px 8px;
-  border-radius: 999px;
+.dashboard-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 22px;
+  border-radius: 20px;
   background: rgba(255,255,255,0.04);
+  backdrop-filter: blur(20px) saturate(1.2);
+  -webkit-backdrop-filter: blur(20px) saturate(1.2);
+  box-shadow: 0 18px 40px rgba(0,0,0,0.25);
 }
-@media (max-width: 480px) {
-  .goal-ticker { padding: 9px 12px; }
-  .goal-ticker-label { font-size: 9px; letter-spacing: 0.14em; }
-  .goal-ticker-row { font-size: 12px; }
-  .goal-ticker-meta { font-size: 10px; padding: 2px 7px; }
+.card-todo {
+  margin-bottom: 18px;
 }
+.dashboard-card .section-title {
+  margin-bottom: 4px;
+}
+.ticker-row { display: none !important; }
 
 /* ===== Component 3: Day Ring ===== */
 .day-ring-wrap {
@@ -275,7 +294,7 @@ body::after {
 .gm-card.gm-all-done::before {
   content: '';
   position: absolute; inset: 0;
-  background: radial-gradient(circle at 50% 0%, rgba(107,227,164,0.10), transparent 60%);
+  background: radial-gradient(circle at 50% 0%, rgba(255,92,92,0.14), transparent 60%);
   pointer-events: none;
 }
 .gm-card.gm-all-done .gm-progress-num,
@@ -327,8 +346,8 @@ body::after {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 8px 12px;
   border-radius: 999px;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.06);
+  background: rgba(255, 20, 20, 0.12);
+  border: 1px solid rgba(255, 56, 56, 0.24);
   color: var(--text-tertiary);
   font-size: 11px; font-weight: 600;
   letter-spacing: 0.10em; text-transform: uppercase;
@@ -341,12 +360,12 @@ body::after {
   font-variant-numeric: tabular-nums;
 }
 .gm-streak.gm-streak-active {
-  background: rgba(242,192,99,0.10);
-  color: #F2C063;
-  border-color: rgba(242,192,99,0.32);
+  background: rgba(239,70,62,0.10);
+  color: #EF463E;
+  border-color: rgba(239,70,62,0.32);
 }
 .gm-streak.gm-streak-active .gm-streak-icon {
-  filter: drop-shadow(0 0 6px rgba(242,192,99,0.6));
+  filter: drop-shadow(0 0 6px rgba(239,70,62,0.45));
 }
 
 .gm-bar {
@@ -357,13 +376,13 @@ body::after {
 .gm-bar:empty { display: none; }
 .gm-bar-seg {
   flex: 1;
-  background: rgba(255,255,255,0.06);
+  background: rgba(255, 255, 255, 0.06);
   border-radius: 3px;
   transition: background 0.3s, box-shadow 0.3s;
 }
 .gm-bar-seg-done {
-  background: #6BE3A4;
-  box-shadow: 0 0 6px rgba(107,227,164,0.40);
+  background: var(--success);
+  box-shadow: 0 0 8px rgba(255,92,92,0.45);
 }
 
 .goal-list { list-style: none; margin: 0; padding: 0; }
@@ -378,31 +397,31 @@ body::after {
   display: flex; align-items: center; gap: 12px;
   padding: 12px 14px;
   margin-bottom: 6px;
-  background: rgba(255,255,255,0.035);
-  border: 1px solid rgba(255,255,255,0.06);
+  background: rgba(255, 20, 20, 0.10);
+  border: 1px solid rgba(255, 56, 56, 0.20);
   border-radius: 12px;
   transition: background 0.2s, opacity 0.3s;
   position: relative;
 }
-.gm-row:hover { background: rgba(255,255,255,0.06); }
+.gm-row:hover { background: rgba(255, 56, 56, 0.14); }
 .gm-row.gm-row-done {
   opacity: 0.45;
-  background: rgba(107,227,164,0.04);
+  background: rgba(255, 92, 92, 0.08);
 }
 .gm-row.gm-row-done .gm-text {
   text-decoration: line-through;
   text-decoration-color: rgba(255,255,255,0.4);
 }
 .gm-row.gm-row-queued {
-  background: rgba(242,192,99,0.10);
-  box-shadow: inset 3px 0 0 0 #F2C063;
+  background: rgba(239,70,62,0.10);
+  box-shadow: inset 3px 0 0 0 #EF463E;
 }
-.gm-row.gm-row-queued .gm-text { color: #FFE2A8; }
-.gm-row.is-drag-over { border-top: 2px solid #6BE3A4; }
+.gm-row.gm-row-queued .gm-text { color: #FFB3B0; }
+.gm-row.is-drag-over { border-top: 2px solid var(--success); }
 .gm-row.is-queue-flashing { animation: gm-queue-flash 0.48s ease-out; }
 @keyframes gm-queue-flash {
-  0%   { background: rgba(255,255,255,0.035); transform: scale(1); }
-  40%  { background: rgba(242,192,99,0.32); transform: scale(1.015); }
+  0%   { background: rgba(255, 20, 20, 0.08); transform: scale(1); }
+  40%  { background: rgba(239,70,62,0.32); transform: scale(1.015); }
   100% { background: rgba(255,255,255,0.035); transform: scale(1); }
 }
 
@@ -431,9 +450,9 @@ body::after {
   transition: background 0.2s, border-color 0.2s, box-shadow 0.25s;
 }
 .gm-check:checked {
-  background: #6BE3A4;
-  border-color: #6BE3A4;
-  box-shadow: 0 0 12px rgba(107,227,164,0.40);
+  background: var(--success);
+  border-color: var(--success);
+  box-shadow: 0 0 12px rgba(255,92,92,0.40);
 }
 .gm-check:checked::after {
   content: '';
@@ -536,7 +555,7 @@ body::after {
   display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
   margin-top: 14px;
   padding-top: 14px;
-  border-top: 1px solid rgba(255,255,255,0.06);
+  border-top: 1px solid rgba(255, 56, 56, 0.14);
 }
 .gm-input {
   flex: 1; min-width: 0;
@@ -604,7 +623,23 @@ body::after {
 
   <h1 class="dash-title">William's Dashboard</h1>
 
-  <div class="ticker-row">
+  <div class="hero-panel">
+    <div class="hero-left">
+      <div class="hero-avatar" aria-hidden="true"></div>
+      <div class="hero-text">
+        <div class="hero-subhead">Welcome back</div>
+        <div class="hero-greeting" id="heroGreeting">Good Evening</div>
+        <div class="hero-name">Mah</div>
+      </div>
+    </div>
+    <div class="hero-right">
+      <div class="hero-status">You have <span id="heroPercent">—</span> of your awake day left</div>
+      <div class="hero-clock" id="heroClock">—</div>
+      <div class="hero-date" id="heroDate">—</div>
+    </div>
+  </div>
+
+  <div class="ticker-row" hidden aria-hidden="true">
     <div class="goal-ticker" id="goalTicker" aria-live="polite" aria-atomic="true">
       <div class="goal-ticker-led"><span class="goal-ticker-led-dot"></span></div>
       <div class="goal-ticker-label">GOALS</div>
@@ -618,86 +653,106 @@ body::after {
     </div>
   </div>
 
-  <div class="day-ring-wrap">
-    <div class="day-ring">
-      <svg viewBox="0 0 120 120">
-        <defs>
-          <filter id="dayRingGlow" x="-20%" y="-20%" width="140%" height="140%">
-            <feGaussianBlur stdDeviation="2.4" result="b" />
-            <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
-          </filter>
-        </defs>
-        <circle class="day-ring-track" cx="60" cy="60" r="52" />
-        <circle class="day-ring-fill"  cx="60" cy="60" r="52" id="dayRingFill" filter="url(#dayRingGlow)" />
-      </svg>
-      <div class="day-ring-overlay">
-        <div class="day-ring-percent" id="dayRingPercent">—</div>
-        <div class="day-ring-phase"   id="dayRingPhase">—</div>
-        <div class="day-ring-clock"   id="dayRingClock">—</div>
-      </div>
-    </div>
-    <div class="day-ring-text">
-      <div class="day-ring-status"    id="dayRingStatus">Loading…</div>
-      <div class="day-ring-remaining" id="dayRingRemaining">—</div>
-      <div class="day-ring-hours">8:00 AM – 12:00 AM</div>
-    </div>
-  </div>
-
-  <div class="section">
-    <div class="section-title">To Do List</div>
-
-    <!-- TODAY -->
-    <div class="gm-card" id="gmCardToday">
-      <div class="gm-header">
-        <div class="gm-header-left">
-          <div class="gm-eyebrow" id="todayLabel">Today —</div>
-          <div class="gm-progress-row">
-            <span class="gm-progress-num"   id="gmProgressNum">0</span>
-            <span class="gm-progress-total" id="gmProgressTotal">/ 0</span>
-            <span class="gm-progress-label" id="gmProgressLabel">no goals yet</span>
+  <div class="dashboard-grid">
+    <section class="dashboard-card">
+      <div class="section-title">Daily progress</div>
+      <div class="day-ring-wrap">
+        <div class="day-ring">
+          <svg viewBox="0 0 120 120">
+            <defs>
+              <filter id="dayRingGlow" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="2.4" result="b" />
+                <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+            </defs>
+            <circle class="day-ring-track" cx="60" cy="60" r="52" />
+            <circle class="day-ring-fill"  cx="60" cy="60" r="52" id="dayRingFill" filter="url(#dayRingGlow)" />
+          </svg>
+          <div class="day-ring-overlay">
+            <div class="day-ring-percent" id="dayRingPercent">—</div>
+            <div class="day-ring-phase"   id="dayRingPhase">—</div>
+            <div class="day-ring-clock"   id="dayRingClock">—</div>
           </div>
         </div>
-        <div class="gm-streak" id="gmStreak">
-          <span class="gm-streak-icon">⚡</span>
-          <span class="gm-streak-num" id="gmStreakNum">0</span>
-          <span>day streak</span>
+        <div class="day-ring-text">
+          <div class="day-ring-status"    id="dayRingStatus">Loading…</div>
+          <div class="day-ring-remaining" id="dayRingRemaining">—</div>
+          <div class="day-ring-hours">8:00 AM – 12:00 AM</div>
         </div>
       </div>
-      <div class="gm-bar" id="gmBar"></div>
-      <ul id="goalList" class="goal-list gm-list"></ul>
-      <div id="emptyState" class="empty-state">No goals for today yet — add one below.</div>
-      <button type="button" id="gmPushBtn" class="gm-push-btn" style="display:none;">Push remaining to tomorrow</button>
-      <div class="goal-input-wrap gm-input-wrap">
-        <input id="goalInput" class="gm-input" type="text" placeholder="Add a goal for today…" autocomplete="off">
-        <button type="button" id="goalAddBtn"    class="gm-add">+ Add</button>
-        <button type="button" id="goalPolishBtn" class="gm-polish">✨ Polish</button>
-        <div class="gm-status" id="polishStatus"></div>
-      </div>
-    </div>
+    </section>
 
-    <!-- PLAN TOMORROW -->
+    <section class="dashboard-card">
+      <div class="section-title">Goals</div>
+      <div class="gm-card" id="gmCardToday">
+        <div class="gm-header">
+          <div class="gm-header-left">
+            <div class="gm-eyebrow" id="todayLabel">Today —</div>
+            <div class="gm-progress-row">
+              <span class="gm-progress-num"   id="gmProgressNum">0</span>
+              <span class="gm-progress-total" id="gmProgressTotal">/ 0</span>
+              <span class="gm-progress-label" id="gmProgressLabel">no goals yet</span>
+            </div>
+          </div>
+          <div class="gm-streak" id="gmStreak">
+            <span class="gm-streak-icon">⚡</span>
+            <span class="gm-streak-num" id="gmStreakNum">0</span>
+            <span>day streak</span>
+          </div>
+        </div>
+        <div class="gm-bar" id="gmBar"></div>
+        <ul id="goalList" class="goal-list gm-list"></ul>
+        <div id="emptyState" class="empty-state">No goals for today yet — add one below.</div>
+        <button type="button" id="gmPushBtn" class="gm-push-btn" style="display:none;">Push remaining to tomorrow</button>
+        <div class="goal-input-wrap gm-input-wrap">
+          <input id="goalInput" class="gm-input" type="text" placeholder="Add a goal for today…" autocomplete="off">
+          <button type="button" id="goalAddBtn"    class="gm-add">+ Add</button>
+          <button type="button" id="goalPolishBtn" class="gm-polish">✨ Polish</button>
+          <div class="gm-status" id="polishStatus"></div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <section class="dashboard-card card-todo">
+    <div class="section-title">To Do List</div>
     <div class="gm-card gm-card-tomorrow" id="gmCardTomorrow">
       <div class="gm-header">
         <div class="gm-header-left">
-          <div class="gm-eyebrow" id="tomorrowLabel">Plan tomorrow —</div>
-          <div class="gm-tomorrow-sub">Write tonight, locked until 6 AM.</div>
+          <div class="gm-eyebrow" id="tomorrowLabel">To Do</div>
+          <div class="gm-tomorrow-sub">A separate list to keep priorities visible.</div>
         </div>
         <div class="gm-tomorrow-count" id="gmTomorrowCount">0 planned</div>
       </div>
       <ul id="tomorrowList" class="goal-list gm-list"></ul>
-      <div id="tomorrowEmpty" class="empty-state">Nothing planned for tomorrow yet</div>
+      <div id="tomorrowEmpty" class="empty-state">Nothing added yet</div>
       <div class="goal-input-wrap gm-input-wrap">
-        <input id="tomorrowInput" class="gm-input" type="text" placeholder="Add a goal for tomorrow…" autocomplete="off">
+        <input id="tomorrowInput" class="gm-input" type="text" placeholder="Add a to-do item…" autocomplete="off">
         <button type="button" id="tomorrowAddBtn"    class="gm-add">+ Add</button>
         <button type="button" id="tomorrowPolishBtn" class="gm-polish">✨ Polish</button>
         <div class="gm-status" id="tomorrowStatus"></div>
       </div>
     </div>
-  </div>
+  </section>
 
 </div>
 
 <script>
+window.addEventListener('DOMContentLoaded', function () {
+  const avatar = document.querySelector('.hero-avatar');
+  if (!avatar) return;
+  avatar.addEventListener('click', function () {
+    if (typeof showBottomBar === 'function') {
+      showBottomBar();
+      return;
+    }
+    const bar = document.getElementById('bottombar');
+    if (!bar) return;
+    bar.classList.remove('hidden');
+    document.body.classList.add('has-bottombar');
+  });
+});
+
 (function () {
   'use strict';
 
@@ -878,15 +933,15 @@ body::after {
 
   // ---------- Day Ring ----------
   const PALETTE = [
-    [0,    [255, 216, 158]],
-    [12.5, [255, 205, 121]],
-    [25,   [255, 227, 143]],
-    [37.5, [255, 183, 106]],
-    [50,   [255, 149,  89]],
-    [62.5, [243, 111,  79]],
-    [75,   [226,  93, 122]],
-    [87.5, [123,  91, 176]],
-    [100,  [ 47,  58, 102]]
+    [0,    [255, 100, 100]],
+    [12.5, [255, 80, 80]],
+    [25,   [255, 64, 64]],
+    [37.5, [235, 52, 52]],
+    [50,   [222, 38, 38]],
+    [62.5, [205, 30, 30]],
+    [75,   [180, 22, 22]],
+    [87.5, [150, 18, 18]],
+    [100,  [120, 14, 14]]
   ];
   function lerp(a, b, t) { return a + (b - a) * t; }
   function paletteAt(p) {
@@ -912,6 +967,20 @@ body::after {
     if (h === 0) h = 12;
     return h + ':' + pad2(m) + ' ' + ampm;
   }
+  function getGreeting(hour) {
+    if (hour < 5) return 'Good Night';
+    if (hour < 12) return 'Good Morning';
+    if (hour < 17) return 'Good Afternoon';
+    return 'Good Evening';
+  }
+  function formatHeroDate(d) {
+    return d.toLocaleDateString('en-US', {
+      weekday: 'long',
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  }
   function formatRemaining(totalMin) {
     const h = Math.floor(totalMin / 60);
     const m = Math.floor(totalMin % 60);
@@ -931,8 +1000,15 @@ body::after {
     const clockEl     = document.getElementById('dayRingClock');
     const statusEl    = document.getElementById('dayRingStatus');
     const remainingEl = document.getElementById('dayRingRemaining');
+    const greetingEl  = document.getElementById('heroGreeting');
+    const heroPercentEl = document.getElementById('heroPercent');
+    const heroClockEl = document.getElementById('heroClock');
+    const heroDateEl  = document.getElementById('heroDate');
 
     clockEl.textContent = formatClock(now);
+    if (greetingEl) greetingEl.textContent = getGreeting(now.getHours());
+    if (heroClockEl) heroClockEl.textContent = formatClock(now);
+    if (heroDateEl) heroDateEl.textContent = formatHeroDate(now);
 
     if (hours < WAKE_HOUR) {
       fillEl.setAttribute('stroke-dashoffset', C);
@@ -942,6 +1018,7 @@ body::after {
       statusEl.textContent  = '😴 Still sleeping';
       const minsUntil = (WAKE_HOUR - hours) * 60;
       remainingEl.textContent = formatRemaining(minsUntil) + ' until wake-up';
+      if (heroPercentEl) heroPercentEl.textContent = '100%';
       return;
     }
 
@@ -949,6 +1026,7 @@ body::after {
       fillEl.setAttribute('stroke-dashoffset', 0);
       fillEl.style.stroke = '#E25D7A';
       percentEl.textContent = '100%';
+      if (heroPercentEl) heroPercentEl.textContent = '0%';
       phaseEl.textContent   = 'PAST BEDTIME';
       statusEl.textContent  = '⚠️ Past bedtime';
       remainingEl.textContent = 'Sleep!';
@@ -957,9 +1035,11 @@ body::after {
 
     const span = SLEEP_HOUR - WAKE_HOUR;
     const percent = (hours - WAKE_HOUR) / span * 100;
+    const remainingPercent = Math.max(0, Math.min(100, Math.round(100 - percent)));
     fillEl.setAttribute('stroke-dashoffset', C * (1 - percent / 100));
     fillEl.style.stroke = rgb(paletteAt(percent));
     percentEl.textContent = Math.floor(percent) + '%';
+    if (heroPercentEl) heroPercentEl.textContent = remainingPercent + '%';
 
     let phase, status;
     if (percent < 25)      { phase = 'MORNING';   status = '☀️ Morning — fresh start'; }
