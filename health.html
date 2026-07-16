@@ -649,6 +649,41 @@ main {
     .wh-verdict-badge.red    { color:#FF8A8A; border-color:rgba(255,138,138,0.50); background:rgba(255,138,138,0.10); }
     .wh-verdict-headline { font-size:15px; font-weight:600; color:var(--text-primary); line-height:1.4; margin-bottom:12px; }
     .wh-verdict-reasons { font-size:12.5px; color:var(--text-secondary); line-height:1.65; }
+    /* Daily Readiness Summary */
+    .wh-readiness { margin-top:10px; display:flex; flex-direction:column; gap:10px; }
+    .wh-ready-card { padding:14px 16px; background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.04); border-left:2px solid rgba(255,255,255,0.40); border-radius:0 12px 12px 0; }
+    .wh-ready-card.green  { border-left-color:#6BE3A4; }
+    .wh-ready-card.yellow { border-left-color:#F2C063; }
+    .wh-ready-card.red    { border-left-color:#FF8A8A; }
+    .wh-ready-head { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:8px; }
+    .wh-ready-eye { font-size:10px; color:var(--text-tertiary); text-transform:uppercase; letter-spacing:0.18em; font-weight:700; }
+    .wh-ready-take { font-size:14px; font-weight:700; color:var(--text-primary); line-height:1.4; margin-bottom:6px; }
+    .wh-ready-sub { font-size:12px; color:var(--text-secondary); line-height:1.6; }
+    .wh-dose-table { width:100%; border-collapse:collapse; margin-top:10px; font-size:12px; }
+    .wh-dose-table th { text-align:left; font-size:9.5px; color:var(--text-tertiary); text-transform:uppercase; letter-spacing:0.10em; font-weight:700; padding-bottom:6px; border-bottom:1px solid rgba(255,255,255,0.06); }
+    .wh-dose-table td { padding:7px 0; border-bottom:1px solid rgba(255,255,255,0.04); color:var(--text-primary); font-variant-numeric:tabular-nums; }
+    .wh-dose-table th:last-child, .wh-dose-table td:last-child { text-align:right; }
+    .wh-trend-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:2px; }
+    .wh-trend-item { text-align:center; }
+    .wh-trend-label { font-size:9.5px; color:var(--text-tertiary); text-transform:uppercase; letter-spacing:0.1em; font-weight:700; margin-bottom:5px; }
+    .wh-trend-val { font-size:16px; font-weight:700; color:var(--text-primary); font-variant-numeric:tabular-nums; }
+    .wh-trend-avg { font-size:10.5px; color:var(--text-tertiary); font-family:var(--font-mono); margin-top:3px; }
+    .wh-trend-arrow { font-size:11px; font-weight:800; margin-left:3px; }
+    .wh-trend-arrow.up   { color:#6BE3A4; }
+    .wh-trend-arrow.down { color:#FF8A8A; }
+    .wh-trend-arrow.flat { color:var(--text-tertiary); }
+    .wh-week-strip { display:flex; justify-content:space-between; margin-top:2px; gap:4px; }
+    .wh-week-day { display:flex; flex-direction:column; align-items:center; gap:5px; flex:1; }
+    .wh-week-dow { font-size:9px; color:var(--text-tertiary); text-transform:uppercase; letter-spacing:0.06em; font-weight:700; }
+    .wh-week-day.is-today .wh-week-dow { color:var(--text-primary); }
+    .wh-week-dot { width:10px; height:10px; border-radius:50%; background:rgba(255,255,255,0.12); }
+    .wh-week-dot.green  { background:#6BE3A4; box-shadow:0 0 6px rgba(107,227,164,0.5); }
+    .wh-week-dot.yellow { background:#F2C063; box-shadow:0 0 6px rgba(242,192,99,0.5); }
+    .wh-week-dot.red    { background:#FF8A8A; box-shadow:0 0 6px rgba(255,138,138,0.5); }
+    .wh-week-sleep { font-size:9.5px; color:var(--text-tertiary); font-family:var(--font-mono); }
+    .wh-fuel-nudge { font-size:12px; color:var(--text-secondary); padding:0 2px; }
+    .wh-disclaimer { font-size:10.5px; color:var(--text-tertiary); text-align:center; margin-top:2px; font-style:italic; }
+    @media (max-width:380px) { .wh-trend-grid { grid-template-columns:1fr; } }
     /* Disconnect */
     .wh-disconnect-link { display:block; margin:16px auto 0; padding:6px 14px; background:transparent; border:none; color:var(--text-tertiary); font-family:inherit; font-size:11px; text-align:center; cursor:pointer; letter-spacing:0.04em; }
     .wh-disconnect-link:hover { color:var(--text-secondary); text-decoration:underline; }
@@ -720,6 +755,50 @@ main {
           <div id="whVerdictHead" class="wh-verdict-headline"></div>
           <div id="whVerdictReasons" class="wh-verdict-reasons"></div>
         </div>
+
+        <div id="whReadiness" class="wh-readiness" style="display:none">
+          <div id="whTrainCard" class="wh-ready-card">
+            <div class="wh-ready-head"><span class="wh-ready-eye">Training plan</span><span id="whTrainBadge" class="wh-verdict-badge"></span></div>
+            <div id="whTrainTake" class="wh-ready-take"></div>
+            <div id="whTrainWhy" class="wh-ready-sub"></div>
+          </div>
+
+          <div id="whDoseCard" class="wh-ready-card">
+            <div class="wh-ready-head"><span class="wh-ready-eye">Stimulant plan</span></div>
+            <div id="whDoseHead" class="wh-ready-take"></div>
+            <table id="whDoseTable" class="wh-dose-table" style="display:none">
+              <thead><tr><th>Time</th><th>Caffeine</th><th>L-Theanine</th></tr></thead>
+              <tbody id="whDoseBody"></tbody>
+            </table>
+          </div>
+
+          <div id="whHydrateCard" class="wh-ready-card">
+            <div class="wh-ready-head"><span class="wh-ready-eye">Hydration &amp; early warning</span></div>
+            <div id="whHydrateText" class="wh-ready-sub"></div>
+          </div>
+
+          <div id="whSleepTargetCard" class="wh-ready-card" style="display:none">
+            <div class="wh-ready-head"><span class="wh-ready-eye">Tonight's sleep target</span></div>
+            <div id="whSleepTargetTake" class="wh-ready-take"></div>
+            <div id="whSleepTargetSub" class="wh-ready-sub"></div>
+          </div>
+
+          <div id="whTrendCard" class="wh-ready-card" style="display:none">
+            <div class="wh-ready-head"><span class="wh-ready-eye">Trend context — last <span id="whTrendDays"></span> days</span></div>
+            <div id="whTrendGrid" class="wh-trend-grid"></div>
+            <div id="whTrendNote" class="wh-ready-sub" style="margin-top:10px"></div>
+          </div>
+
+          <div id="whWeekCard" class="wh-ready-card" style="display:none">
+            <div class="wh-ready-head"><span class="wh-ready-eye">Last 7 days</span></div>
+            <div id="whWeekStrip" class="wh-week-strip"></div>
+          </div>
+
+          <div id="whFuelingNudge" class="wh-fuel-nudge" style="display:none"></div>
+
+          <div class="wh-disclaimer">General wellness guidance, not medical advice — adjust to your own tolerance.</div>
+        </div>
+
         <button id="whDisconnectBtn" class="wh-disconnect-link" type="button">Disconnect</button>
       </div>
     </div>
@@ -730,6 +809,37 @@ main {
     const CLIENT_ID = 'e70ad99d-ddc3-46a4-a803-705e8a82707b';
     const REDIRECT  = window.location.origin + '/api/whoop-callback';
     const SCOPES    = 'read:recovery read:sleep read:workout read:cycles read:profile read:body_measurement offline';
+
+    // ============================================================
+    // READINESS THRESHOLDS — tune these to your own body over time.
+    // Defaults below are WHOOP's general population zone cutoffs
+    // (the same bands the zone-dots above already use), not your
+    // personal baseline yet.
+    // ============================================================
+    const RECOVERY_GREEN_THRESHOLD = 67;   // >= this => green ("push")
+    const RECOVERY_RED_THRESHOLD   = 34;   // <  this => red ("recover"), WHOOP's own red cutoff
+    const HRV_GOOD_MS              = 60;   // >= this => strong autonomic state
+    const HRV_LOW_MS               = 40;   // <  this => low / under stress
+    const RHR_GOOD_BPM             = 55;   // <= this => well-conditioned
+    const RHR_ELEVATED_BPM         = 70;   // >  this => elevated / under strain
+    const SKIN_TEMP_ELEVATED_C     = 34.0; // above this => possible dehydration/illness signal
+    const RESP_NORMAL_LOW          = 12;
+    const RESP_NORMAL_HIGH         = 18;   // outside this band => flagged as "up" for hydration/illness
+    const SLEEP_POOR_PCT           = 70;   // below this => "poor sleep" for the fueling nudge
+    const STRAIN_HIGH_THRESHOLD    = 14;   // yesterday's strain >= this => "high load" for fueling nudge
+    const DEEP_SLEEP_MIN_PCT       = 13;   // deep sleep below this % of total sleep => flagged as short
+    const MIN_HOURS_BEFORE_BED     = 9;    // last caffeine dose must land >= this many hours before bedtime
+    const TYPICAL_BEDTIME_HOUR     = 23;   // 24h clock — tune to your real bedtime
+    const TYPICAL_WAKE_HOUR        = 6.5;  // 24h clock (6:30am) — drives tonight's bedtime suggestion
+    const HRV_TREND_DECLINE_DAYS   = 3;    // consecutive falling days => "declining pattern" not a one-off dip
+    const TREND_LOOKBACK_DAYS      = 7;    // days of history pulled from the WHOOP API for trends/weekly strip
+    const TREND_FLAT_BAND_PCT      = 5;    // % difference from the 7-day avg still counted as "flat"
+
+    const CAFFEINE_DOSES = [
+      { hour: 7,  label: '7:00 AM',  caffeine: 50, theanine: 100 },
+      { hour: 10, label: '10:00 AM', caffeine: 50, theanine: 100 },
+      { hour: 13, label: '1:00 PM',  caffeine: 50, theanine: 100 },
+    ];
 
     function load() { try { return JSON.parse(localStorage.getItem(KEY)); } catch { return null; } }
     function save(t) { try { localStorage.setItem(KEY, JSON.stringify(t)); } catch {} }
@@ -813,19 +923,275 @@ main {
       return { cls, badge, headline };
     }
 
+    // ============================================================
+    // DAILY READINESS SUMMARY — plain-English layer on top of the
+    // raw metrics above. Every recommendation here combines at
+    // least two signals (never fires off one metric alone) and
+    // defaults to recovery-first advice when signals disagree.
+    // ============================================================
+    function joinList(arr) {
+      if (!arr.length) return '';
+      if (arr.length === 1) return arr[0];
+      return arr.slice(0, -1).join(', ') + ' and ' + arr[arr.length - 1];
+    }
+    function cap1(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
+    function fmtClock(hourFloat) {
+      let h = Math.floor(((hourFloat % 24) + 24) % 24);
+      let m = Math.round((hourFloat - Math.floor(hourFloat)) * 60);
+      if (m === 60) { m = 0; h = (h + 1) % 24; }
+      const ampm = h >= 12 ? 'PM' : 'AM';
+      let h12 = h % 12; if (h12 === 0) h12 = 12;
+      return h12 + ':' + String(m).padStart(2, '0') + ' ' + ampm;
+    }
+    function dayMetrics(rec) {
+      if (!rec || !rec.score) return null;
+      return {
+        recovery: rec.score.recovery_score != null ? Math.round(rec.score.recovery_score) : null,
+        hrv: rec.score.hrv_rmssd_milli != null ? Math.round(rec.score.hrv_rmssd_milli) : null,
+        rhr: rec.score.resting_heart_rate != null ? Math.round(rec.score.resting_heart_rate) : null,
+        skin: rec.score.skin_temp_celsius != null ? rec.score.skin_temp_celsius : null,
+        date: rec.created_at || rec.updated_at || null,
+      };
+    }
+    function avg(arr, key) {
+      const vals = arr.map(d => d[key]).filter(v => v != null);
+      if (!vals.length) return null;
+      return vals.reduce((a, b) => a + b, 0) / vals.length;
+    }
+    function trendDir(today, avgVal) {
+      if (today == null || avgVal == null || avgVal === 0) return null;
+      const diffPct = ((today - avgVal) / avgVal) * 100;
+      if (diffPct > TREND_FLAT_BAND_PCT) return 'up';
+      if (diffPct < -TREND_FLAT_BAND_PCT) return 'down';
+      return 'flat';
+    }
+    // trendDays[0] = today, trendDays[i+1] = one day earlier. "Declining"
+    // means each day back was higher than the day after it — i.e. HRV has
+    // fallen every day, right up to today.
+    function isDeclining(days, key, span) {
+      if (days.length < span) return false;
+      for (let i = 0; i < span - 1; i++) {
+        const nearer = days[i][key], farther = days[i + 1][key];
+        if (nearer == null || farther == null) return false;
+        if (!(nearer < farther)) return false;
+      }
+      return true;
+    }
+    // Looks for 2+ consecutive recent days (today included) all showing the
+    // temp-up + RHR-up + HRV-down combo — a single rough night is normal,
+    // the same pattern holding is the "monitor for illness" case.
+    function multiDayStressFlag(days) {
+      let streak = 0;
+      for (let i = 0; i < Math.min(3, days.length); i++) {
+        const d = days[i];
+        const tempUp = d.skin != null && d.skin > SKIN_TEMP_ELEVATED_C;
+        const rhrUp = d.rhr != null && d.rhr > RHR_ELEVATED_BPM;
+        const hrvDown = d.hrv != null && d.hrv < HRV_LOW_MS;
+        if (tempUp && rhrUp && hrvDown) streak++;
+        else break;
+      }
+      return streak >= 2;
+    }
+
+    function buildTrainingPlan(ctx) {
+      if (ctx.recovery == null) return null;
+      const hrvLow = ctx.hrv != null && ctx.hrv < HRV_LOW_MS;
+      const rhrElevated = ctx.rhr != null && ctx.rhr > RHR_ELEVATED_BPM;
+      let cls, action, ceiling;
+      if (ctx.recovery >= RECOVERY_GREEN_THRESHOLD) {
+        cls = 'green'; action = 'Train as planned.'; ceiling = 'Aim for strain 14–18 today — push if it feels good.';
+      } else if (ctx.recovery >= RECOVERY_RED_THRESHOLD) {
+        cls = 'yellow'; action = 'Reduce volume — drop 1–2 sets per exercise.'; ceiling = 'Aim for strain 8–11 today, stop if you hit 14.';
+      } else {
+        cls = 'red';
+        action = (hrvLow && rhrElevated) ? 'Rest day.' : 'Active recovery only.';
+        ceiling = 'Keep strain under 6 — walk, mobility, light movement.';
+      }
+      let why;
+      const signals = [];
+      if (hrvLow) signals.push('HRV is down');
+      if (rhrElevated) signals.push('RHR is elevated');
+      if (signals.length) why = cap1(joinList(signals)) + ' — your body is still absorbing yesterday\'s strain.';
+      else if (cls === 'green') why = 'HRV and RHR both look solid — you\'re primed to push.';
+      else why = 'Recovery score alone says take it easier today.';
+      return { cls, action, ceiling, why };
+    }
+
+    function buildCaffeinePlan(ctx) {
+      const rhrElevated = ctx.rhr != null && ctx.rhr > RHR_ELEVATED_BPM;
+      const tempElevated = ctx.skin != null && ctx.skin > SKIN_TEMP_ELEVATED_C;
+      const recoveryRed = ctx.recovery != null && ctx.recovery < RECOVERY_RED_THRESHOLD;
+      const triggers = [];
+      if (rhrElevated) triggers.push('RHR is elevated');
+      if (tempElevated) triggers.push('skin temp is elevated');
+      if (recoveryRed) triggers.push('recovery is in the red');
+      if (ctx.hrvDeclining) triggers.push('HRV has been trending down the last ' + HRV_TREND_DECLINE_DAYS + ' days');
+      const overrideTriggered = triggers.length > 0;
+
+      // Auto-drop any dose that would land inside the pre-bed cutoff window,
+      // independent of the stress override.
+      const cutoffHour = TYPICAL_BEDTIME_HOUR - MIN_HOURS_BEFORE_BED;
+      let doses = CAFFEINE_DOSES.filter(d => d.hour <= cutoffHour);
+
+      const severe = recoveryRed && triggers.length >= 2;
+      if (overrideTriggered) {
+        if (severe) doses = doses.slice(0, 1);
+        else if (doses.length > 1) doses = doses.slice(0, doses.length - 1);
+      }
+      return {
+        overrideTriggered, severe, triggers, doses,
+        totalCaffeine: doses.reduce((s, d) => s + d.caffeine, 0),
+        totalTheanine: doses.reduce((s, d) => s + d.theanine, 0),
+      };
+    }
+
+    function buildHydrationFlag(ctx, multiDay) {
+      const tempUp = ctx.skin != null && ctx.skin > SKIN_TEMP_ELEVATED_C;
+      const respUp = ctx.resp != null && ctx.resp > RESP_NORMAL_HIGH;
+      if (multiDay) return { cls: 'red', text: 'This looks like more than one rough night — consider a rest day and monitor for illness.' };
+      if (tempUp && respUp) return { cls: 'yellow', text: 'Skin temp and breathing rate are both elevated — increase water/electrolytes today and keep an eye on how you feel.' };
+      return { cls: 'green', text: 'Temp and breathing both look normal — no hydration or illness flags today.' };
+    }
+
+    function buildFuelingNudge(yestStrain, sleepPerf) {
+      if (yestStrain != null && yestStrain >= STRAIN_HIGH_THRESHOLD && sleepPerf != null && sleepPerf < SLEEP_POOR_PCT) {
+        return 'Prioritize protein and carbs at breakfast today to support recovery.';
+      }
+      return null;
+    }
+
+    function sleepDebtInfo(s0) {
+      if (!s0 || !s0.score) return null;
+      const need = s0.score.sleep_needed, stage = s0.score.stage_summary;
+      if (!need || !stage) return null;
+      const neededMs = (need.baseline_milli || 0) + (need.need_from_sleep_debt_milli || 0) + (need.need_from_recent_strain_milli || 0) + (need.need_from_recent_nap_milli || 0);
+      if (!neededMs) return null;
+      const deep = stage.total_slow_wave_sleep_time_milli || 0;
+      const rem = stage.total_rem_sleep_time_milli || 0;
+      const light = stage.total_light_sleep_time_milli || 0;
+      const totalAsleep = deep + rem + light;
+      return { neededMs, deepPct: totalAsleep > 0 ? (deep / totalAsleep * 100) : null };
+    }
+    function buildSleepTarget(debtInfo) {
+      if (!debtInfo) return null;
+      const neededHrs = debtInfo.neededMs / 3.6e6;
+      const bedtimeStr = fmtClock(TYPICAL_WAKE_HOUR - neededHrs);
+      let deepNote = '';
+      if (debtInfo.deepPct != null && debtInfo.deepPct < DEEP_SLEEP_MIN_PCT) {
+        deepNote = ' Deep sleep was short last night — prioritize an earlier bedtime tonight over sleeping in, since deep sleep happens earlier in the night.';
+      }
+      return { bedtimeStr, neededStr: neededHrs.toFixed(1) + 'h', deepNote };
+    }
+
+    function renderReadiness(ctx) {
+      const wrap = $('whReadiness');
+      if (ctx.recScore == null) { wrap.style.display = 'none'; return; }
+      wrap.style.display = '';
+
+      const plan = buildTrainingPlan({ recovery: ctx.recScore, hrv: ctx.hrv, rhr: ctx.rhr });
+      if (plan) {
+        $('whTrainCard').className = 'wh-ready-card ' + plan.cls;
+        const b = $('whTrainBadge'); b.textContent = plan.cls.toUpperCase(); b.className = 'wh-verdict-badge ' + plan.cls;
+        $('whTrainTake').textContent = plan.action + ' ' + plan.ceiling;
+        $('whTrainWhy').textContent = plan.why;
+      }
+
+      const dosePlan = buildCaffeinePlan({ recovery: ctx.recScore, rhr: ctx.rhr, skin: ctx.skin, hrvDeclining: ctx.hrvDeclining });
+      $('whDoseCard').className = 'wh-ready-card ' + (dosePlan.overrideTriggered ? (dosePlan.severe ? 'red' : 'yellow') : 'green');
+      $('whDoseHead').textContent = !dosePlan.overrideTriggered
+        ? 'Normal day — full stimulant schedule.'
+        : 'Body\'s under strain today — cutting back on stimulants. ' + cap1(joinList(dosePlan.triggers)) + ', so dial back and lean on hydration/rest instead.';
+      const tbody = $('whDoseBody'); tbody.innerHTML = '';
+      dosePlan.doses.forEach(d => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = '<td>' + d.label + '</td><td>' + d.caffeine + 'mg</td><td>' + d.theanine + 'mg</td>';
+        tbody.appendChild(tr);
+      });
+      $('whDoseTable').style.display = dosePlan.doses.length ? '' : 'none';
+
+      const multiDay = multiDayStressFlag(ctx.trendDays);
+      const hydrate = buildHydrationFlag({ skin: ctx.skin, resp: ctx.resp }, multiDay);
+      $('whHydrateCard').className = 'wh-ready-card ' + hydrate.cls;
+      $('whHydrateText').textContent = hydrate.text;
+
+      const sleepTarget = buildSleepTarget(ctx.debtInfo);
+      if (sleepTarget) {
+        $('whSleepTargetCard').style.display = '';
+        $('whSleepTargetTake').textContent = 'Aim for lights-out around ' + sleepTarget.bedtimeStr + ' (~' + sleepTarget.neededStr + ' of sleep tonight).';
+        $('whSleepTargetSub').textContent = 'Based on your current sleep debt.' + sleepTarget.deepNote;
+      } else {
+        $('whSleepTargetCard').style.display = 'none';
+      }
+
+      if (ctx.trendDays.length >= 2) {
+        $('whTrendCard').style.display = '';
+        $('whTrendDays').textContent = String(ctx.trendDays.length);
+        const grid = $('whTrendGrid'); grid.innerHTML = '';
+        const today0 = ctx.trendDays[0];
+        [
+          { key: 'recovery', label: 'Recovery', unit: '',    avgVal: ctx.recAvg7, dir: ctx.recDir },
+          { key: 'hrv',      label: 'HRV',      unit: 'ms',  avgVal: ctx.hrvAvg7, dir: ctx.hrvDir },
+          { key: 'rhr',      label: 'RHR',      unit: 'bpm', avgVal: ctx.rhrAvg7, dir: ctx.rhrDir },
+        ].forEach(m => {
+          const todayVal = today0 ? today0[m.key] : null;
+          const arrow = m.dir === 'up' ? '▲' : m.dir === 'down' ? '▼' : '▬';
+          const div = document.createElement('div');
+          div.className = 'wh-trend-item';
+          div.innerHTML =
+            '<div class="wh-trend-label">' + m.label + '</div>' +
+            '<div class="wh-trend-val">' + (todayVal != null ? todayVal : '—') + m.unit + '<span class="wh-trend-arrow ' + (m.dir || 'flat') + '">' + arrow + '</span></div>' +
+            '<div class="wh-trend-avg">avg ' + (m.avgVal != null ? m.avgVal.toFixed(1) : '—') + m.unit + '</div>';
+          grid.appendChild(div);
+        });
+        $('whTrendNote').textContent = ctx.hrvDeclining
+          ? 'HRV has fallen for ' + HRV_TREND_DECLINE_DAYS + ' days straight — this reads as a real deload day, not just a one-off dip.'
+          : 'Today looks like normal day-to-day wobble, not a declining trend.';
+      } else {
+        $('whTrendCard').style.display = 'none';
+      }
+
+      if (ctx.trendDays.length) {
+        $('whWeekCard').style.display = '';
+        const strip = $('whWeekStrip'); strip.innerHTML = '';
+        const days = ctx.trendDays.slice(0, 7).slice().reverse(); // oldest -> newest (today last)
+        const sleepPcts = ctx.weekSleepPct.slice(0, 7).slice().reverse();
+        days.forEach((d, i) => {
+          const dow = d.date ? new Date(d.date).toLocaleDateString(undefined, { weekday: 'short' }).slice(0, 1) : '—';
+          const cls = d.recovery == null ? '' : (d.recovery >= RECOVERY_GREEN_THRESHOLD ? 'green' : (d.recovery >= RECOVERY_RED_THRESHOLD ? 'yellow' : 'red'));
+          const sleepPct = sleepPcts[i];
+          const el = document.createElement('div');
+          el.className = 'wh-week-day' + (i === days.length - 1 ? ' is-today' : '');
+          el.innerHTML =
+            '<span class="wh-week-dow">' + dow + '</span>' +
+            '<span class="wh-week-dot ' + cls + '"></span>' +
+            '<span class="wh-week-sleep">' + (sleepPct != null ? sleepPct + '%' : '—') + '</span>';
+          strip.appendChild(el);
+        });
+      } else {
+        $('whWeekCard').style.display = 'none';
+      }
+
+      const nudge = buildFuelingNudge(ctx.yestStrain, ctx.sleepPerf);
+      const nudgeEl = $('whFuelingNudge');
+      if (nudge) { nudgeEl.style.display = ''; nudgeEl.textContent = '🍳 ' + nudge; }
+      else nudgeEl.style.display = 'none';
+    }
+
     async function loadData() {
       let t = load(); if (!t) return;
       if (t.expires && Date.now() > t.expires - 60000) { const n = await refreshTok(t); if (n) t = n; }
       showErr('');
       try {
         const [rec, sleep, cycle] = await Promise.all([
-          whFetch('/recovery?limit=1', t).catch((e)=>{console.error('[whoop] recovery', e.message); return null;}),
-          whFetch('/activity/sleep?limit=1', t).catch((e)=>{console.error('[whoop] sleep', e.message); return null;}),
-          whFetch('/cycle?limit=1', t).catch((e)=>{console.error('[whoop] cycle', e.message); return null;}),
+          whFetch('/recovery?limit=' + TREND_LOOKBACK_DAYS, t).catch((e)=>{console.error('[whoop] recovery', e.message); return null;}),
+          whFetch('/activity/sleep?limit=' + TREND_LOOKBACK_DAYS, t).catch((e)=>{console.error('[whoop] sleep', e.message); return null;}),
+          whFetch('/cycle?limit=2', t).catch((e)=>{console.error('[whoop] cycle', e.message); return null;}),
         ]);
+        const recArr = (rec && rec.records) || [];
+        const sleepArr = (sleep && sleep.records) || [];
 
         let recScore = null, hrv = null, rhr = null, skin = null, spo2 = null;
-        const r0 = rec && rec.records && rec.records[0];
+        const r0 = recArr[0];
         if (r0 && r0.score) {
           recScore = Math.round(r0.score.recovery_score || 0);
           hrv = r0.score.hrv_rmssd_milli != null ? Math.round(r0.score.hrv_rmssd_milli) : null;
@@ -846,7 +1212,7 @@ main {
         }
 
         let sleepPerf = null, sleepDuration = null, resp = null;
-        const s0 = sleep && sleep.records && sleep.records[0];
+        const s0 = sleepArr[0];
         if (s0 && s0.score) {
           sleepPerf = Math.round(s0.score.sleep_performance_percentage || 0);
           resp = s0.score.respiratory_rate != null ? Number(s0.score.respiratory_rate).toFixed(1) : null;
@@ -881,7 +1247,13 @@ main {
         }
 
         let strain = null, kcal = null;
-        const c0 = cycle && cycle.records && cycle.records[0];
+        const cycleArr = (cycle && cycle.records) || [];
+        const c0 = cycleArr[0];
+        // WHOOP's cycle[0] is often today's still-in-progress cycle; cycle[1]
+        // (if present) is the most recent fully-completed one — that's what
+        // "yesterday's strain" means for the training-plan/fueling copy below.
+        const yestCycle = cycleArr[1] || cycleArr[0];
+        const yestStrain = yestCycle && yestCycle.score && yestCycle.score.strain != null ? Number(yestCycle.score.strain) : null;
         if (c0 && c0.score && c0.score.strain != null) {
           strain = Number(c0.score.strain);
           $('whStrain').textContent = strain.toFixed(1);
@@ -917,6 +1289,22 @@ main {
           if (rhr != null)      reasons.push((rhr <= 60 ? '✓' : '·') + ' RHR ' + rhr + 'bpm — ' + (rhr <= 60 ? 'well-conditioned.' : 'elevated.'));
           $('whVerdictReasons').innerHTML = reasons.join('<br>');
         }
+
+        const trendDays = recArr.map(dayMetrics).filter(Boolean);
+        const recAvg7 = avg(trendDays, 'recovery');
+        const hrvAvg7 = avg(trendDays, 'hrv');
+        const rhrAvg7 = avg(trendDays, 'rhr');
+        const weekSleepPct = sleepArr.map(s => s && s.score && s.score.sleep_performance_percentage != null ? Math.round(s.score.sleep_performance_percentage) : null);
+        renderReadiness({
+          recScore, hrv, rhr, skin, resp: resp != null ? Number(resp) : null, sleepPerf, yestStrain,
+          trendDays, recAvg7, hrvAvg7, rhrAvg7,
+          recDir: trendDir(trendDays[0] && trendDays[0].recovery, recAvg7),
+          hrvDir: trendDir(trendDays[0] && trendDays[0].hrv, hrvAvg7),
+          rhrDir: trendDir(trendDays[0] && trendDays[0].rhr, rhrAvg7),
+          hrvDeclining: isDeclining(trendDays, 'hrv', HRV_TREND_DECLINE_DAYS),
+          weekSleepPct,
+          debtInfo: sleepDebtInfo(s0),
+        });
 
         const now = new Date();
         $('whUpdated').textContent = 'Updated ' + now.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
