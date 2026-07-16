@@ -1030,25 +1030,47 @@ body::after {
 }
 .cal-month-cell {
   background: rgba(0,0,0,0.20);
-  min-height: 58px;
+  min-height: 96px;
   padding: 6px;
   cursor: pointer;
   transition: background 0.15s;
-  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  display: flex; flex-direction: column; align-items: flex-start; gap: 3px;
+  overflow: hidden;
 }
 .cal-month-cell:hover { background: rgba(255,255,255,0.03); }
 .cal-month-cell.is-outside { opacity: 0.32; }
 .cal-month-num {
-  font-size: 12.5px; font-weight: 600; color: var(--text-primary);
-  width: 22px; height: 22px; border-radius: 50%;
+  flex-shrink: 0;
+  font-size: 12px; font-weight: 600; color: var(--text-primary);
+  width: 20px; height: 20px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
 }
 .cal-month-cell.is-today .cal-month-num { background: #E2755A; color: #fff; }
-.cal-month-dot { width: 4px; height: 4px; border-radius: 50%; background: #E2755A; }
+.cal-month-events { width: 100%; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.cal-month-event {
+  width: 100%;
+  font-size: 9.5px; line-height: 1.35;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgba(226,93,58,0.14);
+  border-left: 2px solid #E2755A;
+  color: var(--text-primary);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.cal-month-more {
+  font-size: 9px; color: var(--text-tertiary); padding-left: 5px;
+}
 
+@media (max-width: 720px) {
+  .cal-month-cell { min-height: 74px; }
+  .cal-month-event { font-size: 8.5px; }
+}
 @media (max-width: 480px) {
   .cal-day-name { font-size: 8px; }
   .cal-day-num { width: 22px; height: 22px; font-size: 13px; }
+  .cal-month-cell { min-height: 60px; padding: 4px; }
+  .cal-month-event { display: none; }
+  .cal-month-more { display: block; }
 }
 </style>
 </head>
@@ -2380,6 +2402,8 @@ body::after {
     }
   }
 
+  const CAL_MONTH_MAX_VISIBLE = 3;
+
   function renderMonthGrid(events) {
     const grid = document.getElementById('calMonthGrid');
     if (!grid) return;
@@ -2393,10 +2417,13 @@ body::after {
     const monthStart = new Date(calAnchor.getFullYear(), calAnchor.getMonth(), 1);
     const gridStart = calAddDays(monthStart, -monthStart.getDay());
     const today = calMidnight(new Date());
-    const eventDatesSet = new Set();
+    const eventsByDay = new Map();
     (events || []).forEach(ev => {
       const d = calEventDate(ev, 'start');
-      if (d) eventDatesSet.add(d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate());
+      if (!d) return;
+      const key = d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate();
+      if (!eventsByDay.has(key)) eventsByDay.set(key, []);
+      eventsByDay.get(key).push(ev);
     });
     for (let i = 0; i < 42; i++) {
       const cellDate = calAddDays(gridStart, i);
@@ -2407,12 +2434,28 @@ body::after {
       num.className = 'cal-month-num';
       num.textContent = String(cellDate.getDate());
       cell.appendChild(num);
+
       const key = cellDate.getFullYear() + '-' + cellDate.getMonth() + '-' + cellDate.getDate();
-      if (eventDatesSet.has(key)) {
-        const dot = document.createElement('div');
-        dot.className = 'cal-month-dot';
-        cell.appendChild(dot);
+      const dayEvents = (eventsByDay.get(key) || []).sort((a, b) => calEventDate(a, 'start') - calEventDate(b, 'start'));
+      if (dayEvents.length) {
+        const evWrap = document.createElement('div');
+        evWrap.className = 'cal-month-events';
+        dayEvents.slice(0, CAL_MONTH_MAX_VISIBLE).forEach(ev => {
+          const pill = document.createElement('div');
+          pill.className = 'cal-month-event';
+          const timePrefix = calEventIsAllDay(ev) ? '' : formatClock(calEventDate(ev, 'start')) + ' ';
+          pill.textContent = timePrefix + (ev.summary || '(untitled)');
+          evWrap.appendChild(pill);
+        });
+        if (dayEvents.length > CAL_MONTH_MAX_VISIBLE) {
+          const more = document.createElement('div');
+          more.className = 'cal-month-more';
+          more.textContent = '+' + (dayEvents.length - CAL_MONTH_MAX_VISIBLE) + ' more';
+          evWrap.appendChild(more);
+        }
+        cell.appendChild(evWrap);
       }
+
       cell.addEventListener('click', () => {
         calAnchor = calMidnight(cellDate);
         calView = 'week';
