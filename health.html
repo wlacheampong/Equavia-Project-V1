@@ -774,7 +774,17 @@ main {
 
           <div id="whHydrateCard" class="wh-ready-card">
             <div class="wh-ready-head"><span class="wh-ready-eye">Hydration &amp; early warning</span></div>
+            <div id="whHydrateIllness" class="wh-ready-take" style="display:none;color:#FF8A8A"></div>
+            <div id="whHydrateTotal" class="wh-ready-take"></div>
             <div id="whHydrateText" class="wh-ready-sub"></div>
+          </div>
+
+          <div id="whFormulaCard" class="wh-ready-card">
+            <div class="wh-ready-head"><span class="wh-ready-eye">Today's water &amp; electrolyte formula</span></div>
+            <div id="whFormulaTotal" class="wh-ready-take"></div>
+            <div id="whFormulaServings" class="wh-ready-sub"></div>
+            <div id="whFormulaBreakdown" class="wh-ready-sub" style="margin-top:4px;font-family:var(--font-mono);font-size:11px"></div>
+            <div class="wh-ready-sub" style="margin-top:8px;font-style:italic">General formula for personal tracking, not medical guidance.</div>
           </div>
 
           <div id="whSleepTargetCard" class="wh-ready-card" style="display:none">
@@ -840,6 +850,35 @@ main {
       { hour: 10, label: '10:00 AM', caffeine: 50, theanine: 100 },
       { hour: 13, label: '1:00 PM',  caffeine: 50, theanine: 100 },
     ];
+
+    // ---- Hydration (Section 3) ----
+    const BASE_HYDRATION_TARGET_ML     = 2500; // flat baseline shown regardless of other stats
+    const CAFFEINE_WATER_BUMP_ML       = 275;  // extra water per 50mg caffeine dose actually taken today
+    const HIGH_STRAIN_HYDRATION_BONUS_ML = 500; // add-on if yesterday's OR today's strain exceeded STRAIN_HIGH_THRESHOLD
+
+    // ---- Daily Water & Electrolyte Formula (Section 4) ----
+    // WEIGHT_KG / HEIGHT_CM are `let`, not `const` — loadData() overwrites
+    // them from WHOOP's own body-measurement endpoint when available, so
+    // the values below are just the fallback until that loads (or if it
+    // fails). Edit the fallbacks if your real stats change.
+    let WEIGHT_KG              = 80.6;
+    let HEIGHT_CM              = 181;
+    const WATER_PER_KG_ML          = 33;   // base_water_ml = WEIGHT_KG * this
+    const HEIGHT_BONUS_CM_THRESHOLD = 180; // above this height, add a small modifier
+    const HEIGHT_BONUS_ML          = 250;
+
+    // Electrolyte product profile — EDIT THIS WHENEVER YOUR PRODUCT
+    // CHANGES, straight from the label. Defaults below are filled in
+    // from a Bulk-brand electrolyte mix as a working example.
+    const ELECTROLYTE_PRODUCT = {
+      name: 'Bulk Electrolytes (example — edit to match your actual product)',
+      sodiumMg: 500,
+      potassiumMg: 150,
+      calciumMg: 90,
+      magnesiumMg: 15,
+      coverageMl: 1500,      // how much water one serving is meant to cover
+      maxServingsPerDay: 3,  // check your label — defaulted, confirm/edit
+    };
 
     function load() { try { return JSON.parse(localStorage.getItem(KEY)); } catch { return null; } }
     function save(t) { try { localStorage.setItem(KEY, JSON.stringify(t)); } catch {} }
@@ -1045,12 +1084,53 @@ main {
       };
     }
 
-    function buildHydrationFlag(ctx, multiDay) {
+    // Hydration now factors in today's actual caffeine schedule (Section 2)
+    // and strain, not just body stats alone — everything stacks rather than
+    // picking a single winning signal.
+    function buildHydrationPlan(ctx, dosePlan, multiDay) {
       const tempUp = ctx.skin != null && ctx.skin > SKIN_TEMP_ELEVATED_C;
       const respUp = ctx.resp != null && ctx.resp > RESP_NORMAL_HIGH;
-      if (multiDay) return { cls: 'red', text: 'This looks like more than one rough night — consider a rest day and monitor for illness.' };
-      if (tempUp && respUp) return { cls: 'yellow', text: 'Skin temp and breathing rate are both elevated — increase water/electrolytes today and keep an eye on how you feel.' };
-      return { cls: 'green', text: 'Temp and breathing both look normal — no hydration or illness flags today.' };
+      const heatFlag = tempUp && respUp;
+      const highStrain = (ctx.yestStrain != null && ctx.yestStrain > STRAIN_HIGH_THRESHOLD)
+                       || (ctx.todayStrain != null && ctx.todayStrain > STRAIN_HIGH_THRESHOLD);
+
+      // Caffeine add-on shrinks automatically with the dose plan — if
+      // Section 2's override already dropped doses, there's less caffeine
+      // to add water for.
+      const caffeineMl = Math.round((dosePlan.totalCaffeine / 50) * CAFFEINE_WATER_BUMP_ML);
+      const strainMl = highStrain ? HIGH_STRAIN_HYDRATION_BONUS_ML : 0;
+      const totalMl = BASE_HYDRATION_TARGET_ML + caffeineMl + strainMl;
+
+      const stressOverrideActive = dosePlan.overrideTriggered;
+      const caffeineStillTaken = dosePlan.doses.length > 0;
+      const reasons = [];
+      if (heatFlag) reasons.push('elevated skin temp plus breathing rate');
+      if (stressOverrideActive && caffeineStillTaken) reasons.push('today\'s caffeine on top of a stressed body');
+      if (highStrain && !heatFlag) reasons.push('yesterday\'s high strain');
+      const electrolytesRecommended = reasons.length > 0;
+
+      const electrolyteLine = electrolytesRecommended
+        ? 'Electrolytes recommended today — ' + joinList(reasons) + ' both increase fluid loss.'
+        : 'Plain water is enough today — no extra fluid-loss signals.';
+
+      return {
+        totalMl, caffeineMl, strainMl, electrolytesRecommended, electrolyteLine,
+        illnessText: multiDay ? 'This looks like more than one rough night — consider a rest day and monitor for illness.' : null,
+      };
+    }
+
+    function computeWaterFormula(dosePlan, ctx, electrolytesRecommended) {
+      let baseMl = Math.round(WEIGHT_KG * WATER_PER_KG_ML);
+      if (HEIGHT_CM > HEIGHT_BONUS_CM_THRESHOLD) baseMl += HEIGHT_BONUS_ML;
+      const caffeineMl = Math.round((dosePlan.totalCaffeine / 50) * CAFFEINE_WATER_BUMP_ML);
+      const highStrain = (ctx.yestStrain != null && ctx.yestStrain > STRAIN_HIGH_THRESHOLD)
+                       || (ctx.todayStrain != null && ctx.todayStrain > STRAIN_HIGH_THRESHOLD);
+      const strainMl = highStrain ? HIGH_STRAIN_HYDRATION_BONUS_ML : 0;
+      const totalMl = baseMl + caffeineMl + strainMl;
+      let servings = Math.ceil(totalMl / ELECTROLYTE_PRODUCT.coverageMl);
+      if (electrolytesRecommended) servings += 1;
+      servings = Math.min(Math.max(servings, 0), ELECTROLYTE_PRODUCT.maxServingsPerDay);
+      return { baseMl, caffeineMl, strainMl, totalMl, servings };
     }
 
     function buildFuelingNudge(yestStrain, sleepPerf) {
@@ -1110,9 +1190,23 @@ main {
       $('whDoseTable').style.display = dosePlan.doses.length ? '' : 'none';
 
       const multiDay = multiDayStressFlag(ctx.trendDays);
-      const hydrate = buildHydrationFlag({ skin: ctx.skin, resp: ctx.resp }, multiDay);
-      $('whHydrateCard').className = 'wh-ready-card ' + hydrate.cls;
-      $('whHydrateText').textContent = hydrate.text;
+      const hydrate = buildHydrationPlan(
+        { skin: ctx.skin, resp: ctx.resp, yestStrain: ctx.yestStrain, todayStrain: ctx.todayStrain },
+        dosePlan, multiDay
+      );
+      $('whHydrateCard').className = 'wh-ready-card ' + (hydrate.illnessText ? 'red' : (hydrate.electrolytesRecommended ? 'yellow' : 'green'));
+      $('whHydrateIllness').style.display = hydrate.illnessText ? '' : 'none';
+      $('whHydrateIllness').textContent = hydrate.illnessText || '';
+      $('whHydrateTotal').textContent = 'Water target today: ' + hydrate.totalMl.toLocaleString() + 'ml (' + (hydrate.totalMl / 1000).toFixed(1) + 'L)';
+      $('whHydrateText').textContent = hydrate.electrolyteLine;
+
+      const formula = computeWaterFormula(dosePlan, { yestStrain: ctx.yestStrain, todayStrain: ctx.todayStrain }, hydrate.electrolytesRecommended);
+      $('whFormulaTotal').textContent = formula.totalMl.toLocaleString() + 'ml (' + (formula.totalMl / 1000).toFixed(2) + 'L)';
+      $('whFormulaServings').textContent = formula.servings + ' serving' + (formula.servings === 1 ? '' : 's') + ' of electrolytes today (' + ELECTROLYTE_PRODUCT.name + ')';
+      const parts = ['Base ' + formula.baseMl.toLocaleString() + 'ml'];
+      if (formula.caffeineMl) parts.push(formula.caffeineMl.toLocaleString() + 'ml (caffeine)');
+      if (formula.strainMl) parts.push(formula.strainMl.toLocaleString() + 'ml (strain)');
+      $('whFormulaBreakdown').textContent = parts.join(' + ') + ' = ' + formula.totalMl.toLocaleString() + 'ml';
 
       const sleepTarget = buildSleepTarget(ctx.debtInfo);
       if (sleepTarget) {
@@ -1182,13 +1276,19 @@ main {
       if (t.expires && Date.now() > t.expires - 60000) { const n = await refreshTok(t); if (n) t = n; }
       showErr('');
       try {
-        const [rec, sleep, cycle] = await Promise.all([
+        const [rec, sleep, cycle, bodyMeasure] = await Promise.all([
           whFetch('/recovery?limit=' + TREND_LOOKBACK_DAYS, t).catch((e)=>{console.error('[whoop] recovery', e.message); return null;}),
           whFetch('/activity/sleep?limit=' + TREND_LOOKBACK_DAYS, t).catch((e)=>{console.error('[whoop] sleep', e.message); return null;}),
           whFetch('/cycle?limit=2', t).catch((e)=>{console.error('[whoop] cycle', e.message); return null;}),
+          whFetch('/user/measurement/body', t).catch((e)=>{console.error('[whoop] body measurement', e.message); return null;}),
         ]);
         const recArr = (rec && rec.records) || [];
         const sleepArr = (sleep && sleep.records) || [];
+        // Keep the water-formula's WEIGHT_KG/HEIGHT_CM in sync with WHOOP's
+        // own profile whenever it's available — falls back to the
+        // hardcoded defaults above if this endpoint is missing/unauthorized.
+        if (bodyMeasure && bodyMeasure.weight_kilogram != null) WEIGHT_KG = Number(bodyMeasure.weight_kilogram);
+        if (bodyMeasure && bodyMeasure.height_meter != null) HEIGHT_CM = Number(bodyMeasure.height_meter) * 100;
 
         let recScore = null, hrv = null, rhr = null, skin = null, spo2 = null;
         const r0 = recArr[0];
@@ -1297,6 +1397,7 @@ main {
         const weekSleepPct = sleepArr.map(s => s && s.score && s.score.sleep_performance_percentage != null ? Math.round(s.score.sleep_performance_percentage) : null);
         renderReadiness({
           recScore, hrv, rhr, skin, resp: resp != null ? Number(resp) : null, sleepPerf, yestStrain,
+          todayStrain: strain,
           trendDays, recAvg7, hrvAvg7, rhrAvg7,
           recDir: trendDir(trendDays[0] && trendDays[0].recovery, recAvg7),
           hrvDir: trendDir(trendDays[0] && trendDays[0].hrv, hrvAvg7),
