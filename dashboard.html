@@ -597,6 +597,299 @@ body::after {
   .gm-card { padding: 16px; }
   .gm-progress-num { font-size: 36px; }
 }
+
+/* ===== Component 5: Category Tabs ===== */
+.cat-tabs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  margin: 22px 0 20px;
+  scrollbar-width: thin;
+}
+.cat-tab {
+  flex-shrink: 0;
+  display: flex; align-items: center; gap: 9px;
+  padding: 9px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.03);
+  color: var(--text-tertiary);
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+.cat-tab:hover { border-color: rgba(255,255,255,0.16); color: var(--text-secondary); }
+.cat-tab.is-active {
+  border-color: rgba(226,93,58,0.45);
+  background: rgba(226,93,58,0.10);
+  color: #FFC7B8;
+}
+.cat-tab-icon { font-size: 15px; line-height: 1; }
+.cat-tab-label {
+  font-size: 11.5px; font-weight: 700;
+  line-height: 1.25;
+  text-align: left;
+  white-space: nowrap;
+}
+
+/* ===== Component 6: Dashboard grid ===== */
+.page-wide { max-width: 1280px; }
+.dash-grid {
+  display: grid;
+  grid-template-columns: 230px minmax(0, 1fr) 280px;
+  align-items: start;
+  gap: 20px;
+}
+@media (max-width: 900px) {
+  .dash-grid { grid-template-columns: 1fr; }
+  .dash-col-center { order: 1; }
+  .dash-col-left   { order: 2; }
+  .dash-col-right  { order: 3; }
+}
+
+/* ===== Component 7: Daily Goals Tracker (sidebar) ===== */
+.dgt-metric { margin-bottom: 12px; }
+.dgt-metric:last-child { margin-bottom: 0; }
+.dgt-metric-row {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 6px;
+}
+.dgt-metric-label {
+  font-size: 10.5px; font-weight: 700;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+.dgt-metric-value {
+  font-family: var(--font-mono);
+  font-size: 11px; color: var(--text-secondary);
+}
+.dgt-bar {
+  height: 5px; border-radius: 3px;
+  background: rgba(255,255,255,0.06);
+  overflow: hidden;
+}
+.dgt-bar-fill {
+  height: 100%; border-radius: 3px;
+  background: #E25D3A;
+  transition: width 0.4s ease;
+}
+.dgt-metric.is-placeholder .dgt-bar-fill { background: rgba(255,255,255,0.14); }
+.dgt-metric.is-placeholder .dgt-metric-value { color: var(--text-tertiary); }
+
+.dgt-toggle {
+  width: 100%; margin-top: 16px;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 9px 12px;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text-tertiary);
+  font-family: inherit;
+  font-size: 10.5px; font-weight: 700;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+.dgt-toggle:hover { color: var(--text-secondary); border-color: rgba(255,255,255,0.16); }
+.dgt-toggle-arrow { display: inline-block; transition: transform 0.2s; }
+.dgt-toggle.is-open .dgt-toggle-arrow { transform: rotate(180deg); }
+
+.dgt-goals { margin-top: 10px; display: none; flex-direction: column; gap: 8px; }
+.dgt-goal {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.06);
+  background: rgba(0,0,0,0.24);
+  position: relative;
+}
+.dgt-goal-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.dgt-goal-title { font-size: 12.5px; font-weight: 600; color: var(--text-primary); }
+.dgt-goal-value { font-family: var(--font-mono); font-size: 10.5px; color: var(--text-tertiary); }
+.dgt-goal-date { font-family: var(--font-mono); font-size: 9.5px; color: var(--text-tertiary); margin-top: 2px; }
+.dgt-goal-bar { margin-top: 8px; }
+.dgt-goal-del {
+  position: absolute; top: 6px; right: 8px;
+  border: 0; background: transparent; color: var(--text-tertiary);
+  font-size: 15px; cursor: pointer; opacity: 0; transition: opacity 0.2s;
+}
+.dgt-goal:hover .dgt-goal-del { opacity: 0.7; }
+.dgt-goal-del:hover { color: var(--danger); opacity: 1; }
+
+.dgt-add-form { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+.dgt-add-form input {
+  padding: 8px 10px;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+  background: rgba(0,0,0,0.28);
+  color: var(--text-primary);
+  font-family: inherit; font-size: 12px;
+  outline: none;
+}
+.dgt-add-form button {
+  padding: 8px 10px;
+  border: 1px dashed rgba(255,255,255,0.16);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-tertiary);
+  font-family: inherit; font-size: 11px; font-weight: 700;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  cursor: pointer;
+}
+.dgt-add-form button:hover { color: var(--text-primary); border-color: rgba(255,255,255,0.3); }
+.dgt-empty { font-size: 11.5px; font-style: italic; color: var(--text-tertiary); padding: 6px 2px; }
+
+/* ===== Component 8: Projects kanban ===== */
+.proj-header {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+  gap: 12px; margin-bottom: 16px;
+}
+.proj-title { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; color: var(--text-primary); }
+.proj-view-toggle {
+  display: flex; align-items: center; gap: 2px;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px; padding: 3px;
+}
+.proj-view-btn {
+  border: 0; background: transparent;
+  padding: 6px 10px; border-radius: 7px;
+  font-family: var(--font-mono);
+  font-size: 10.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+.proj-view-btn.is-active { background: rgba(226,93,58,0.14); color: #FFC7B8; }
+.proj-tools { display: flex; align-items: center; gap: 10px; }
+.proj-tool-btn {
+  border: 0; background: transparent; color: var(--text-tertiary);
+  cursor: pointer; padding: 4px; border-radius: 6px; font-size: 14px;
+  transition: color 0.2s;
+}
+.proj-tool-btn:hover { color: var(--text-secondary); }
+.proj-tool-btn:disabled { cursor: not-allowed; opacity: 0.35; }
+.proj-tool-btn.is-active { color: #FFC7B8; }
+.proj-search {
+  width: 0; opacity: 0; padding: 0; border: 0;
+  background: rgba(0,0,0,0.28); color: var(--text-primary);
+  font-family: inherit; font-size: 12px; border-radius: 8px;
+  transition: width 0.2s, opacity 0.2s, padding 0.2s;
+}
+.proj-search.is-open { width: 140px; opacity: 1; padding: 6px 10px; border: 1px solid rgba(255,255,255,0.1); }
+
+.proj-columns { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+@media (max-width: 640px) { .proj-columns { grid-template-columns: 1fr; } }
+.proj-columns.is-flat { grid-template-columns: 1fr; }
+.proj-col-label {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 10.5px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--text-tertiary); margin-bottom: 8px;
+}
+.proj-col-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+.proj-col[data-status="not-started"] .proj-col-label { color: var(--text-tertiary); }
+.proj-col[data-status="in-progress"] .proj-col-label { color: #7BA7E2; }
+.proj-col[data-status="done"]        .proj-col-label { color: var(--success); }
+
+.proj-card {
+  position: relative;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.03);
+  margin-bottom: 10px;
+}
+.proj-card[data-status="in-progress"] { border-color: rgba(123,167,226,0.30); background: rgba(123,167,226,0.05); }
+.proj-card[data-status="done"]        { border-color: rgba(107,227,164,0.30); background: rgba(107,227,164,0.05); }
+.proj-card-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.proj-card-title { font-size: 12.5px; font-weight: 600; color: var(--text-primary); }
+.proj-card-value { font-family: var(--font-mono); font-size: 10.5px; color: var(--text-tertiary); }
+.proj-card .dgt-bar { margin-top: 8px; }
+.proj-card-tag {
+  display: inline-block; margin-top: 8px;
+  padding: 2px 8px; border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.14);
+  font-family: var(--font-mono); font-size: 9px; font-weight: 700;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+.proj-card-tag[data-priority="high"]   { color: #FF9B8A; border-color: rgba(255,107,107,0.35); }
+.proj-card-tag[data-priority="medium"] { color: #F2C063; border-color: rgba(242,192,99,0.35); }
+.proj-card-tag[data-priority="low"]    { color: #8FDCC0; border-color: rgba(107,227,164,0.30); }
+.proj-card-del {
+  position: absolute; top: 8px; right: 8px;
+  border: 0; background: transparent; color: var(--text-tertiary);
+  font-size: 15px; cursor: pointer; opacity: 0; transition: opacity 0.2s;
+}
+.proj-card:hover .proj-card-del { opacity: 0.7; }
+.proj-card-del:hover { color: var(--danger); opacity: 1; }
+.proj-col-empty { font-size: 11.5px; font-style: italic; color: var(--text-tertiary); }
+
+.proj-gantt-stub {
+  padding: 26px; text-align: center;
+  font-size: 12px; font-style: italic; color: var(--text-tertiary);
+  border: 1px dashed rgba(255,255,255,0.1); border-radius: 12px;
+}
+
+.proj-add-toggle {
+  margin-top: 14px; width: 100%;
+  padding: 9px; border: 1px dashed rgba(255,255,255,0.14); border-radius: 10px;
+  background: transparent; color: var(--text-tertiary);
+  font-family: inherit; font-size: 11px; font-weight: 700;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  cursor: pointer;
+}
+.proj-add-toggle:hover { color: var(--text-primary); border-color: rgba(255,255,255,0.3); }
+.proj-add-form { margin-top: 10px; display: none; flex-wrap: wrap; gap: 8px; }
+.proj-add-form input, .proj-add-form select {
+  padding: 9px 11px; border: 1px solid rgba(255,255,255,0.08); border-radius: 10px;
+  background: rgba(0,0,0,0.28); color: var(--text-primary);
+  font-family: inherit; font-size: 12.5px; outline: none;
+}
+.proj-add-form input[type="text"] { flex: 1; min-width: 140px; }
+.proj-add-form button {
+  padding: 9px 16px; border: 0; border-radius: 10px;
+  background: linear-gradient(180deg, #FFFFFF 0%, #E8E5DD 100%);
+  color: #0A0A0B; font-family: inherit; font-size: 12.5px; font-weight: 700;
+  cursor: pointer;
+}
+
+/* ===== Component 9: Checklists + Quick Note (sidebar) ===== */
+.chk-card { margin-bottom: 12px; }
+.chk-head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.chk-icon { font-size: 15px; }
+.chk-name { font-size: 13.5px; font-weight: 700; color: var(--text-primary); }
+.chk-meta-label {
+  font-size: 9.5px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+.chk-meta-value {
+  font-family: var(--font-mono); font-size: 11px; color: var(--text-secondary);
+  margin: 2px 0 8px;
+}
+.chk-meta-value:last-child { margin-bottom: 0; }
+
+.qnote-wrap { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.qnote-btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 9px 18px; border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.04);
+  color: var(--text-primary);
+  font-family: inherit; font-size: 12px; font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+.qnote-btn:hover { border-color: rgba(255,255,255,0.22); background: rgba(255,255,255,0.07); }
+.qnote-area { width: 100%; display: none; }
+.qnote-area.is-open { display: block; }
+.qnote-area textarea {
+  width: 100%; min-height: 90px; resize: vertical;
+  padding: 10px 12px; border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(0,0,0,0.28); color: var(--text-primary);
+  font-family: inherit; font-size: 12.5px; outline: none;
+}
+.qnote-saved { font-size: 10px; color: var(--text-tertiary); margin-top: 4px; text-align: right; }
 </style>
 </head>
 <body>
@@ -642,6 +935,49 @@ body::after {
       <div class="day-ring-hours">8:00 AM – 12:00 AM</div>
     </div>
   </div>
+
+</div>
+
+<div class="page page-wide">
+
+  <div class="cat-tabs" id="catTabs" role="tablist" aria-label="Life categories">
+    <button type="button" class="cat-tab" data-cat="health" role="tab" aria-selected="false">
+      <span class="cat-tab-icon">❤️</span><span class="cat-tab-label">Health &amp;<br>Fitness</span>
+    </button>
+    <button type="button" class="cat-tab" data-cat="finance" role="tab" aria-selected="false">
+      <span class="cat-tab-icon">💰</span><span class="cat-tab-label">Personal<br>Finances</span>
+    </button>
+    <button type="button" class="cat-tab" data-cat="growth" role="tab" aria-selected="false">
+      <span class="cat-tab-icon">🌱</span><span class="cat-tab-label">Personal<br>Growth</span>
+    </button>
+    <button type="button" class="cat-tab" data-cat="assignments" role="tab" aria-selected="false">
+      <span class="cat-tab-icon">📋</span><span class="cat-tab-label">Assignments</span>
+    </button>
+    <button type="button" class="cat-tab" data-cat="relationships" role="tab" aria-selected="false">
+      <span class="cat-tab-icon">👥</span><span class="cat-tab-label">Relationships</span>
+    </button>
+    <button type="button" class="cat-tab" data-cat="lectures" role="tab" aria-selected="false">
+      <span class="cat-tab-icon">🎓</span><span class="cat-tab-label">Lectures</span>
+    </button>
+  </div>
+
+  <div class="dash-grid">
+
+    <!-- LEFT: Daily Goals Tracker -->
+    <aside class="dash-col dash-col-left">
+      <div class="gm-card">
+        <div class="proj-title" style="margin-bottom:14px;">Daily Goals Tracker</div>
+        <div id="dgtMetrics"></div>
+        <button type="button" class="dgt-toggle" id="dgtToggle">
+          <span>Not Started</span>
+          <span class="dgt-toggle-arrow">▾</span>
+        </button>
+        <div class="dgt-goals" id="dgtGoals"></div>
+      </div>
+    </aside>
+
+    <!-- CENTER: To Do List + Projects -->
+    <div class="dash-col dash-col-center">
 
   <div class="section">
     <div class="section-title">To Do List</div>
@@ -693,6 +1029,64 @@ body::after {
         <div class="gm-status" id="tomorrowStatus"></div>
       </div>
     </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Projects</div>
+    <div class="gm-card">
+      <div class="proj-header">
+        <div class="proj-title">📁 Projects</div>
+        <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+          <div class="proj-view-toggle">
+            <button type="button" class="proj-view-btn is-active" data-view="status">By Status</button>
+            <button type="button" class="proj-view-btn" data-view="all">All Projects</button>
+            <button type="button" class="proj-view-btn" data-view="gantt">Gantt</button>
+          </div>
+          <div class="proj-tools">
+            <button type="button" class="proj-tool-btn" id="projFilterBtn" disabled title="Filter — coming soon">⏷</button>
+            <button type="button" class="proj-tool-btn" id="projSortBtn" disabled title="Sort — coming soon">⇅</button>
+            <button type="button" class="proj-tool-btn" id="projSearchBtn" title="Search projects">🔍</button>
+            <input type="text" class="proj-search" id="projSearchInput" placeholder="Search…">
+          </div>
+        </div>
+      </div>
+
+      <div class="proj-columns" id="projColumns"></div>
+      <div class="proj-gantt-stub" id="projGanttStub" style="display:none;">Gantt view is coming soon.</div>
+
+      <button type="button" class="proj-add-toggle" id="projAddToggle">+ New Project</button>
+      <div class="proj-add-form" id="projAddForm">
+        <input type="text" id="projTitleInput" placeholder="Project title…">
+        <select id="projStatusInput">
+          <option value="not-started">Not started</option>
+          <option value="in-progress">In progress</option>
+          <option value="done">Done</option>
+        </select>
+        <select id="projPriorityInput">
+          <option value="low">Low</option>
+          <option value="medium">Medium</option>
+          <option value="high">High</option>
+        </select>
+        <button type="button" id="projAddBtn">Add</button>
+      </div>
+    </div>
+  </div>
+
+    </div>
+
+    <!-- RIGHT: Checklists + Quick Note -->
+    <aside class="dash-col dash-col-right">
+      <div id="chkList"></div>
+
+      <div class="qnote-wrap">
+        <button type="button" class="qnote-btn" id="qnoteBtn">📝 Quick Note</button>
+        <div class="qnote-area" id="qnoteArea">
+          <textarea id="qnoteText" placeholder="Jot something down…"></textarea>
+          <div class="qnote-saved" id="qnoteSaved"></div>
+        </div>
+      </div>
+    </aside>
+
   </div>
 
 </div>
@@ -874,6 +1268,7 @@ body::after {
   window.addEventListener('goals-changed', () => {
     cycleIdx = 0;
     tick();
+    renderDgtMetrics();
   });
 
   // ---------- Day Ring ----------
@@ -1295,6 +1690,330 @@ body::after {
     loadTomorrow
   );
 
+  // ---------- Category tabs ----------
+  function initCatTabs() {
+    const catTabs = document.getElementById('catTabs');
+    if (!catTabs) return;
+    const savedCat = storeGet('active_category_v1') || 'health';
+    const buttons = catTabs.querySelectorAll('.cat-tab');
+    buttons.forEach(btn => {
+      const active = btn.dataset.cat === savedCat;
+      btn.classList.toggle('is-active', active);
+      btn.setAttribute('aria-selected', active ? 'true' : 'false');
+      btn.addEventListener('click', () => {
+        buttons.forEach(b => {
+          const isThis = b === btn;
+          b.classList.toggle('is-active', isThis);
+          b.setAttribute('aria-selected', isThis ? 'true' : 'false');
+        });
+        storeSet('active_category_v1', btn.dataset.cat);
+      });
+    });
+  }
+
+  // ---------- Daily Goals Tracker (sidebar) ----------
+  const DGT_METRICS = ['Year', 'Month', 'Week', 'Day', 'Quarter', 'Life'];
+  function renderDgtMetrics() {
+    const wrap = document.getElementById('dgtMetrics');
+    if (!wrap) return;
+    const goals = getGoals(todayKey());
+    const dayPct = goals.length ? Math.round(goals.filter(g => g.done).length / goals.length * 100) : 0;
+    wrap.innerHTML = '';
+    DGT_METRICS.forEach(label => {
+      const isDay = label === 'Day';
+      const value = isDay ? dayPct : 0;
+      const row = document.createElement('div');
+      row.className = 'dgt-metric' + (isDay ? '' : ' is-placeholder');
+      if (!isDay) row.title = 'Tracked once multi-day history logging ships';
+      row.innerHTML =
+        '<div class="dgt-metric-row">' +
+          '<span class="dgt-metric-label">' + label + '</span>' +
+          '<span class="dgt-metric-value">' + value + '%</span>' +
+        '</div>' +
+        '<div class="dgt-bar"><div class="dgt-bar-fill" style="width:' + value + '%"></div></div>';
+      wrap.appendChild(row);
+    });
+  }
+
+  function getLongtermGoals() { const g = storeGet('longterm_goals_v1'); return Array.isArray(g) ? g : []; }
+  function setLongtermGoals(list) { storeSet('longterm_goals_v1', list); }
+
+  function renderLongtermGoals() {
+    const wrap = document.getElementById('dgtGoals');
+    if (!wrap) return;
+    const list = getLongtermGoals();
+    wrap.innerHTML = '';
+
+    if (list.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'dgt-empty';
+      empty.textContent = 'No long-term goals yet.';
+      wrap.appendChild(empty);
+    } else {
+      list.forEach((g, idx) => {
+        const item = document.createElement('div');
+        item.className = 'dgt-goal';
+        item.innerHTML =
+          '<button type="button" class="dgt-goal-del" aria-label="Delete goal">×</button>' +
+          '<div class="dgt-goal-row">' +
+            '<span class="dgt-goal-title"></span>' +
+            '<span class="dgt-goal-value">' + (g.value || 0) + '%</span>' +
+          '</div>' +
+          '<div class="dgt-goal-date"></div>' +
+          '<div class="dgt-goal-bar dgt-bar"><div class="dgt-bar-fill" style="width:' + (g.value || 0) + '%"></div></div>';
+        item.querySelector('.dgt-goal-title').textContent = g.title;
+        item.querySelector('.dgt-goal-date').textContent = g.date || '';
+        item.querySelector('.dgt-goal-del').addEventListener('click', () => {
+          const cur = getLongtermGoals();
+          cur.splice(idx, 1);
+          setLongtermGoals(cur);
+          renderLongtermGoals();
+        });
+        wrap.appendChild(item);
+      });
+    }
+
+    const addRow = document.createElement('div');
+    addRow.className = 'dgt-add-form';
+    addRow.innerHTML =
+      '<input type="text" id="dgtGoalTitle" placeholder="Goal title…">' +
+      '<input type="date" id="dgtGoalDate">' +
+      '<button type="button" id="dgtGoalAddBtn">+ Add Goal</button>';
+    wrap.appendChild(addRow);
+
+    document.getElementById('dgtGoalAddBtn').addEventListener('click', () => {
+      const titleEl = document.getElementById('dgtGoalTitle');
+      const dateEl = document.getElementById('dgtGoalDate');
+      const title = titleEl.value.trim();
+      if (!title) return;
+      let dateLabel = '';
+      if (dateEl.value) {
+        const parts = dateEl.value.split('-').map(Number);
+        const d = new Date(parts[0], parts[1] - 1, parts[2]);
+        const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        dateLabel = months[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear();
+      }
+      const cur = getLongtermGoals();
+      cur.push({ title, date: dateLabel, value: 0 });
+      setLongtermGoals(cur);
+      renderLongtermGoals();
+    });
+  }
+
+  function initDgtToggle() {
+    const toggle = document.getElementById('dgtToggle');
+    const goalsEl = document.getElementById('dgtGoals');
+    if (!toggle || !goalsEl) return;
+    toggle.addEventListener('click', () => {
+      const open = toggle.classList.toggle('is-open');
+      goalsEl.style.display = open ? 'flex' : 'none';
+    });
+  }
+
+  // ---------- Projects kanban ----------
+  const PROJECT_SEED = [
+    { id: 'p1', title: 'AI-Powered Chatbot', status: 'not-started', priority: 'low', value: 0 },
+    { id: 'p2', title: 'Password Manager with Encryption', status: 'in-progress', priority: 'high', value: 50 },
+    { id: 'p3', title: 'AI Video Generator from a Script', status: 'done', priority: 'medium', value: 100 }
+  ];
+  function getProjects() {
+    let list = storeGet('projects_v1');
+    if (!Array.isArray(list)) { list = PROJECT_SEED.slice(); storeSet('projects_v1', list); }
+    return list;
+  }
+  function setProjectsList(list) { storeSet('projects_v1', list); }
+
+  const PROJ_COLUMNS = [
+    { status: 'not-started', label: 'Not started' },
+    { status: 'in-progress', label: 'In progress' },
+    { status: 'done', label: 'Done' }
+  ];
+  let projView = 'status';
+  let projSearchTerm = '';
+
+  function buildProjCard(p) {
+    const card = document.createElement('div');
+    card.className = 'proj-card';
+    card.dataset.status = p.status;
+    card.innerHTML =
+      '<button type="button" class="proj-card-del" aria-label="Delete project">×</button>' +
+      '<div class="proj-card-row">' +
+        '<span class="proj-card-title"></span>' +
+        '<span class="proj-card-value">' + p.value + '%</span>' +
+      '</div>' +
+      '<div class="dgt-bar"><div class="dgt-bar-fill" style="width:' + p.value + '%"></div></div>' +
+      '<span class="proj-card-tag" data-priority="' + p.priority + '">' + p.priority + '</span>';
+    card.querySelector('.proj-card-title').textContent = p.title;
+    card.querySelector('.proj-card-del').addEventListener('click', () => {
+      setProjectsList(getProjects().filter(x => x.id !== p.id));
+      renderProjects();
+    });
+    return card;
+  }
+
+  function renderProjects() {
+    const columnsEl = document.getElementById('projColumns');
+    const ganttEl = document.getElementById('projGanttStub');
+    if (!columnsEl || !ganttEl) return;
+    columnsEl.style.display = projView === 'gantt' ? 'none' : 'grid';
+    ganttEl.style.display = projView === 'gantt' ? 'block' : 'none';
+    if (projView === 'gantt') return;
+
+    columnsEl.classList.toggle('is-flat', projView === 'all');
+    columnsEl.innerHTML = '';
+
+    let all = getProjects();
+    if (projSearchTerm) {
+      const term = projSearchTerm.toLowerCase();
+      all = all.filter(p => p.title.toLowerCase().indexOf(term) !== -1);
+    }
+
+    if (projView === 'all') {
+      const col = document.createElement('div');
+      col.className = 'proj-col';
+      if (all.length === 0) {
+        const e = document.createElement('div');
+        e.className = 'proj-col-empty';
+        e.textContent = 'No projects found.';
+        col.appendChild(e);
+      } else {
+        all.forEach(p => col.appendChild(buildProjCard(p)));
+      }
+      columnsEl.appendChild(col);
+      return;
+    }
+
+    PROJ_COLUMNS.forEach(colDef => {
+      const col = document.createElement('div');
+      col.className = 'proj-col';
+      col.dataset.status = colDef.status;
+      const items = all.filter(p => p.status === colDef.status);
+      const labelRow = document.createElement('div');
+      labelRow.className = 'proj-col-label';
+      labelRow.innerHTML = '<span class="proj-col-dot"></span>';
+      labelRow.appendChild(document.createTextNode(colDef.label + ' · ' + items.length));
+      col.appendChild(labelRow);
+      if (items.length === 0) {
+        const e = document.createElement('div');
+        e.className = 'proj-col-empty';
+        e.textContent = 'Nothing here yet.';
+        col.appendChild(e);
+      } else {
+        items.forEach(p => col.appendChild(buildProjCard(p)));
+      }
+      columnsEl.appendChild(col);
+    });
+  }
+
+  function initProjects() {
+    const columnsEl = document.getElementById('projColumns');
+    if (!columnsEl) return;
+
+    document.querySelectorAll('.proj-view-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        projView = btn.dataset.view;
+        document.querySelectorAll('.proj-view-btn').forEach(b => b.classList.toggle('is-active', b === btn));
+        renderProjects();
+      });
+    });
+
+    const searchBtn = document.getElementById('projSearchBtn');
+    const searchInput = document.getElementById('projSearchInput');
+    searchBtn.addEventListener('click', () => {
+      const willOpen = !searchInput.classList.contains('is-open');
+      searchInput.classList.toggle('is-open', willOpen);
+      searchBtn.classList.toggle('is-active', willOpen);
+      if (willOpen) { searchInput.focus(); }
+      else { searchInput.value = ''; projSearchTerm = ''; renderProjects(); }
+    });
+    searchInput.addEventListener('input', () => {
+      projSearchTerm = searchInput.value.trim();
+      renderProjects();
+    });
+
+    const addToggle = document.getElementById('projAddToggle');
+    const addForm = document.getElementById('projAddForm');
+    addToggle.addEventListener('click', () => {
+      const open = addForm.style.display === 'flex';
+      addForm.style.display = open ? 'none' : 'flex';
+    });
+    document.getElementById('projAddBtn').addEventListener('click', () => {
+      const titleEl = document.getElementById('projTitleInput');
+      const title = titleEl.value.trim();
+      if (!title) return;
+      const status = document.getElementById('projStatusInput').value;
+      const priority = document.getElementById('projPriorityInput').value;
+      const list = getProjects();
+      list.push({ id: 'p' + Date.now(), title, status, priority, value: status === 'done' ? 100 : 0 });
+      setProjectsList(list);
+      titleEl.value = '';
+      addForm.style.display = 'none';
+      renderProjects();
+    });
+
+    renderProjects();
+  }
+
+  // ---------- Checklists (sidebar) ----------
+  function formatFullDateTime(ts) {
+    const d = new Date(ts);
+    const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    return months[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear() + ' ' + formatClock(d);
+  }
+  const CHECKLISTS = [
+    { id: 'morning', icon: '🌅', name: 'Morning' },
+    { id: 'midday',  icon: '☀️', name: 'Mid-Day' },
+    { id: 'evening', icon: '🌙', name: 'Evening' }
+  ];
+  function renderChecklists() {
+    const wrap = document.getElementById('chkList');
+    if (!wrap) return;
+    let meta = storeGet('checklist_meta_v1');
+    if (!meta) meta = {};
+    const now = Date.now();
+    let dirty = false;
+    CHECKLISTS.forEach(c => {
+      if (!meta[c.id]) { meta[c.id] = { created: now, edited: now }; dirty = true; }
+    });
+    if (dirty) storeSet('checklist_meta_v1', meta);
+
+    wrap.innerHTML = '';
+    CHECKLISTS.forEach(c => {
+      const m = meta[c.id];
+      const card = document.createElement('div');
+      card.className = 'gm-card chk-card';
+      card.innerHTML =
+        '<div class="chk-head"><span class="chk-icon">' + c.icon + '</span><span class="chk-name">' + c.name + '</span></div>' +
+        '<div class="chk-meta-label">Created Time</div>' +
+        '<div class="chk-meta-value">' + formatFullDateTime(m.created) + '</div>' +
+        '<div class="chk-meta-label">Last Edited Time</div>' +
+        '<div class="chk-meta-value">' + formatFullDateTime(m.edited) + '</div>';
+      wrap.appendChild(card);
+    });
+  }
+
+  // ---------- Quick Note (sidebar) ----------
+  function initQuickNote() {
+    const btn = document.getElementById('qnoteBtn');
+    const area = document.getElementById('qnoteArea');
+    const text = document.getElementById('qnoteText');
+    const saved = document.getElementById('qnoteSaved');
+    if (!btn || !area || !text) return;
+    text.value = storeGet('quick_note_v1') || '';
+    btn.addEventListener('click', () => {
+      const open = area.classList.toggle('is-open');
+      if (open) text.focus();
+    });
+    let qnoteTimer = null;
+    text.addEventListener('input', () => {
+      clearTimeout(qnoteTimer);
+      qnoteTimer = setTimeout(() => {
+        storeSet('quick_note_v1', text.value);
+        saved.textContent = 'Saved ' + formatClock(new Date());
+      }, 500);
+    });
+  }
+
   // ---------- Boot ----------
   rollover();
   processStreak();
@@ -1305,9 +2024,17 @@ body::after {
   setInterval(updateDayRing, 60 * 1000);
   startTicker();
 
+  initCatTabs();
+  renderDgtMetrics();
+  renderLongtermGoals();
+  initDgtToggle();
+  initProjects();
+  renderChecklists();
+  initQuickNote();
+
   // Re-render when storage changes from another tab (or our bridged parent).
   window.addEventListener('storage', () => {
-    loadToday(); loadTomorrow(); renderStreak();
+    loadToday(); loadTomorrow(); renderStreak(); renderDgtMetrics();
   });
 })();
 </script>
