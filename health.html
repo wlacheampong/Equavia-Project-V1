@@ -884,8 +884,33 @@ main {
     // Extra electrolyte-serving bumps beyond fluid volume alone — each one
     // is a real physical-exertion signal caffeine/water-volume math misses.
     const CAFFEINE_ELECTROLYTE_THRESHOLD_MG = 100; // today's total caffeine >= this adds a serving
-    const STEPS_THRESHOLD = 10000;                 // steps_today > this adds a serving (skipped — WHOOP has no steps field yet)
-    const AVG_HR_ELEVATED_DELTA = 10;               // bpm above your own trailing 7-day avg HR counts as "elevated"
+    const STEPS_THRESHOLD = 10000;                 // steps_today > this adds a serving — sourced from Apple Health (see below), WHOOP has no steps field
+    const AVG_HR_ELEVATED_DELTA = 10;               // bpm above the trailing 7-day avg HR counts as "elevated" (WHOOP baseline preferred, Apple Health as fallback)
+    const ACTIVE_ENERGY_ELEVATED_KCAL = 600;        // Apple Health "Active Energy" above this adds a serving — catches exertion steps miss (swimming, cycling, lifting)
+
+    // ============================================================
+    // APPLE HEALTH BRIDGE — HealthKit has no web API of its own, so an
+    // iOS Shortcut (run manually or on a daily automation) POSTs steps /
+    // avg HR / active energy straight to this same Supabase project's
+    // generic app_state table, under key 'apple_health'. This just reads
+    // that row back. See the setup instructions given alongside this
+    // change for how to build the Shortcut.
+    // ============================================================
+    const APPLE_HEALTH_SUPABASE_URL = 'https://ubhjdibldkknviezrjys.supabase.co';
+    const APPLE_HEALTH_SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InViaGpkaWJsZGtrbnZpZXpyanlzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3NzAyNjEsImV4cCI6MjA5OTM0NjI2MX0.ODgzRHVYLEaDCUBXmmSd3oENXlSlarRYVERagHbVCK0';
+    async function fetchAppleHealth() {
+      try {
+        if (!window.supabase) return null;
+        const supa = window.supabase.createClient(APPLE_HEALTH_SUPABASE_URL, APPLE_HEALTH_SUPABASE_KEY);
+        const { data, error } = await supa.from('app_state').select('data').eq('key', 'apple_health').maybeSingle();
+        if (error || !data || !data.data) return null;
+        return data.data;
+      } catch (e) { return null; }
+    }
+    function todayDateKey() {
+      const d = new Date();
+      return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    }
 
     function load() { try { return JSON.parse(localStorage.getItem(KEY)); } catch { return null; } }
     function save(t) { try { localStorage.setItem(KEY, JSON.stringify(t)); } catch {} }
@@ -1143,6 +1168,7 @@ main {
       if (dosePlan.totalCaffeine >= CAFFEINE_ELECTROLYTE_THRESHOLD_MG) bumps.push({ n: 1, label: 'caffeine ≥' + CAFFEINE_ELECTROLYTE_THRESHOLD_MG + 'mg today' });
       if (ctx.stepsToday != null && ctx.stepsToday > STEPS_THRESHOLD) bumps.push({ n: 1, label: 'high step count' });
       if (ctx.avgHrToday != null && ctx.avgHrBaseline != null && ctx.avgHrToday > ctx.avgHrBaseline + AVG_HR_ELEVATED_DELTA) bumps.push({ n: 1, label: 'elevated average HR' });
+      if (ctx.activeKcalToday != null && ctx.activeKcalToday > ACTIVE_ENERGY_ELEVATED_KCAL) bumps.push({ n: 1, label: 'high active-energy burn' });
       if (electrolytesRecommended) bumps.push({ n: 1, label: 'hydration flag active' });
 
       const cappedAt = ELECTROLYTE_PRODUCT.maxServingsPerDay;
@@ -1221,7 +1247,7 @@ main {
 
       const formula = computeWaterFormula(
         dosePlan,
-        { yestStrain: ctx.yestStrain, todayStrain: ctx.todayStrain, stepsToday: ctx.stepsToday, avgHrToday: ctx.avgHrToday, avgHrBaseline: ctx.avgHrBaseline7 },
+        { yestStrain: ctx.yestStrain, todayStrain: ctx.todayStrain, stepsToday: ctx.stepsToday, avgHrToday: ctx.avgHrToday, avgHrBaseline: ctx.avgHrBaseline7, activeKcalToday: ctx.activeKcalToday },
         hydrate.electrolytesRecommended
       );
       $('whFormulaTotal').textContent = formula.totalMl.toLocaleString() + 'ml (' + (formula.totalMl / 1000).toFixed(2) + 'L)';
@@ -1306,14 +1332,22 @@ main {
       if (t.expires && Date.now() > t.expires - 60000) { const n = await refreshTok(t); if (n) t = n; }
       showErr('');
       try {
-        const [rec, sleep, cycle, bodyMeasure] = await Promise.all([
+        const [rec, sleep, cycle, bodyMeasure, appleHealth] = await Promise.all([
           whFetch('/recovery?limit=' + TREND_LOOKBACK_DAYS, t).catch((e)=>{console.error('[whoop] recovery', e.message); return null;}),
           whFetch('/activity/sleep?limit=' + TREND_LOOKBACK_DAYS, t).catch((e)=>{console.error('[whoop] sleep', e.message); return null;}),
           whFetch('/cycle?limit=' + TREND_LOOKBACK_DAYS, t).catch((e)=>{console.error('[whoop] cycle', e.message); return null;}),
           whFetch('/user/measurement/body', t).catch((e)=>{console.error('[whoop] body measurement', e.message); return null;}),
+          fetchAppleHealth(),
         ]);
         const recArr = (rec && rec.records) || [];
         const sleepArr = (sleep && sleep.records) || [];
+        // Only trust the synced Apple Health row if it's actually from
+        // today — a stale sync from yesterday shouldn't silently masquerade
+        // as today's steps/HR/energy.
+        const appleFresh = appleHealth && appleHealth.date === todayDateKey() ? appleHealth : null;
+        const appleStepsToday = appleFresh && appleFresh.steps != null ? Number(appleFresh.steps) : null;
+        const appleAvgHrToday = appleFresh && appleFresh.avgHr != null ? Number(appleFresh.avgHr) : null;
+        const appleActiveKcalToday = appleFresh && appleFresh.activeKcal != null ? Number(appleFresh.activeKcal) : null;
         // Keep the water-formula's WEIGHT_KG/HEIGHT_CM in sync with WHOOP's
         // own profile whenever it's available — falls back to the
         // hardcoded defaults above if this endpoint is missing/unauthorized.
@@ -1388,12 +1422,14 @@ main {
         // trailing week of completed cycles, not a hardcoded number, per
         // "check whoop stats" for this one.
         const cycleAvgHr = cycleArr.map(c => (c && c.score && c.score.average_heart_rate != null) ? { avgHr: Math.round(c.score.average_heart_rate) } : null).filter(Boolean);
-        const avgHrToday = cycleAvgHr[0] ? cycleAvgHr[0].avgHr : null;
+        // WHOOP's own cycle avg HR wins when present — it already has a
+        // matching 7-day baseline computed the same way. Apple Health's
+        // avg HR only fills in on days WHOOP doesn't have one.
+        const avgHrToday = cycleAvgHr[0] ? cycleAvgHr[0].avgHr : appleAvgHrToday;
         const avgHrBaseline7 = avg(cycleAvgHr.slice(1), 'avgHr');
-        // WHOOP's developer API doesn't expose a step-count field today —
-        // left null so the steps electrolyte bump always skips itself
-        // (per "skip if unavailable") until/unless a real source exists.
-        const stepsToday = null;
+        // WHOOP's developer API doesn't expose a step-count field at all —
+        // Apple Health (via the Shortcut bridge above) is the only source.
+        const stepsToday = appleStepsToday;
         if (c0 && c0.score && c0.score.strain != null) {
           strain = Number(c0.score.strain);
           $('whStrain').textContent = strain.toFixed(1);
@@ -1437,7 +1473,7 @@ main {
         const weekSleepPct = sleepArr.map(s => s && s.score && s.score.sleep_performance_percentage != null ? Math.round(s.score.sleep_performance_percentage) : null);
         renderReadiness({
           recScore, hrv, rhr, skin, resp: resp != null ? Number(resp) : null, sleepPerf, yestStrain,
-          todayStrain: strain, avgHrToday, avgHrBaseline7, stepsToday,
+          todayStrain: strain, avgHrToday, avgHrBaseline7, stepsToday, activeKcalToday: appleActiveKcalToday,
           trendDays, recAvg7, hrvAvg7, rhrAvg7,
           recDir: trendDir(trendDays[0] && trendDays[0].recovery, recAvg7),
           hrvDir: trendDir(trendDays[0] && trendDays[0].hrv, hrvAvg7),
