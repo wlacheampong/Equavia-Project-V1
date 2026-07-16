@@ -1318,13 +1318,28 @@ img, video, canvas, svg { max-width: 100%; }
 }
 
 /* Train, embedded via iframe (see comment above #poAppRoot for why) */
-.train-embed-wrap { margin-top: 22px; }
+/* Wider than .po-shell's own 720px cap — the classic "break out of a
+   centered max-width parent" trick: re-center against the viewport
+   instead of the parent, so Train gets more room on wide screens
+   without widening the rest of the Fitness tile (Weight/Photos). On
+   narrow viewports 100vw already ~= the parent's width, so this is a
+   no-op there, which is what we want. */
+.train-embed-wrap {
+  margin-top: 22px;
+  width: 100vw; max-width: 1040px;
+  margin-left: 50%; transform: translateX(-50%);
+  padding: 0 16px; box-sizing: border-box;
+}
 .train-embed-head { display: flex; align-items: center; gap: 16px; margin-bottom: 14px; }
 .train-embed-head::before, .train-embed-head::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.10); }
 .train-embed-eye { font-size: 11px; letter-spacing: 0.22em; font-weight: 600; color: rgba(255,255,255,0.85); }
 .train-embed-frame {
-  width: 100%; height: 1400px;
+  width: 100%;
+  /* No fixed height / no internal scroll: JS below resizes this to
+     match the iframe's actual content height so the page's own
+     scrollbar is the only one — see the resize script by the iframe. */
   border: 1px solid var(--border, rgba(255,255,255,0.08));
+  overflow: hidden;
   border-radius: 16px;
   background: #050506;
   display: block;
@@ -1801,9 +1816,45 @@ img, video, canvas, svg { max-width: 100%; }
   <!-- ===== Train (embedded) ===== -->
   <div class="train-embed-wrap">
     <div class="train-embed-head"><span class="train-embed-eye">Train</span></div>
-    <iframe class="train-embed-frame" src="train.html" title="Train — Push/Pull/Legs logger" loading="lazy"></iframe>
+    <iframe class="train-embed-frame" id="trainFrame" src="train.html" title="Train — Push/Pull/Legs logger" loading="lazy"></iframe>
   </div>
 </div>
+
+<script>
+(function () {
+  // Auto-sizes the Train iframe to its actual content height so it has
+  // no scrollbar of its own — the page's main scrollbar is the only one,
+  // matching every other section on this page. Same-origin, so reading
+  // the iframe's own document height directly (no postMessage needed).
+  var frame = document.getElementById('trainFrame');
+  if (!frame) return;
+  function measure() {
+    try {
+      var doc = frame.contentDocument;
+      if (!doc || !doc.documentElement) return;
+      var h = Math.max(doc.documentElement.scrollHeight, doc.body ? doc.body.scrollHeight : 0);
+      if (h > 0) frame.style.height = h + 'px';
+    } catch (e) {}
+  }
+  frame.addEventListener('load', function () {
+    measure();
+    try {
+      var doc = frame.contentDocument;
+      if (doc && window.ResizeObserver) {
+        var ro = new ResizeObserver(measure);
+        ro.observe(doc.documentElement);
+        if (doc.body) ro.observe(doc.body);
+      }
+    } catch (e) {}
+    // Belt-and-suspenders: Train's own JS boot is async (loads its state
+    // from the dashboard bridge before rendering), so the very first
+    // ResizeObserver tick can land before that content exists. A short
+    // poll catches that without needing to touch train.html itself.
+    var tries = 0;
+    var poll = setInterval(function () { measure(); if (++tries > 15) clearInterval(poll); }, 300);
+  });
+})();
+</script>
 
 <script>
 (function() {
