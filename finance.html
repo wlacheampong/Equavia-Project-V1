@@ -1545,6 +1545,59 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 @media (max-width: 600px) {
   .sub-auto-toggle { width: 100%; justify-content: space-between; padding: 12px 14px; }
 }
+
+/* ============================================================
+   BUDGET — Expenses / cash-flow trend / Income, sandwiched around
+   a linear monthly projection chart. Reuses .nw-list/.nw-row for
+   line items (same visual language as the Net Worth accounts) and
+   .nw-chart-* for the chart shell, so it feels native to this page
+   rather than a bolted-on new style.
+   ============================================================ */
+.bgt-section-head {
+  display: flex; align-items: center; gap: 10px;
+}
+.bgt-update-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-family: var(--font-mono); font-size: 9.5px; font-weight: 800;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: #F2C063; background: rgba(242,192,99,0.12);
+  border: 1px solid rgba(242,192,99,0.35);
+  padding: 3px 10px; border-radius: 999px;
+  animation: bgtBlink 1.3s ease-in-out infinite;
+}
+@keyframes bgtBlink { 0%, 100% { opacity: 1; } 50% { opacity: 0.32; } }
+
+.bgt-total-row { display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 12px; margin-bottom: 12px; }
+.bgt-total-label { font-size: 11px; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 500; }
+.bgt-total-val { font-size: 26px; font-weight: 700; color: var(--text-primary); line-height: 1.1; margin-top: 2px; font-variant-numeric: tabular-nums; }
+
+.bgt-chart-card { padding: 18px 20px 14px; }
+.bgt-chart-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+.bgt-chart-title { font-size: 9.5px; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; color: var(--text-tertiary); font-family: var(--font-mono); }
+.bgt-chart-delta { font-family: var(--font-mono); font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.bgt-chart-delta.up { color: #6BE3A4; }
+.bgt-chart-delta.down { color: #FF8A8A; }
+.bgt-chart-svg { display: block; width: 100%; height: 160px; overflow: visible; transition: color 0.4s ease; }
+.bgt-chart-grid { stroke: rgba(255,255,255,0.05); stroke-width: 1; stroke-dasharray: 2 4; vector-effect: non-scaling-stroke; }
+.bgt-chart-zero { stroke: rgba(255,255,255,0.14); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.bgt-chart-today-dot { fill: currentColor; filter: drop-shadow(0 0 5px currentColor); }
+.bgt-chart-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 10px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.05); }
+.bgt-stat { text-align: center; }
+.bgt-stat-label { font-size: 9px; letter-spacing: 0.14em; font-weight: 800; text-transform: uppercase; color: var(--text-tertiary); font-family: var(--font-mono); }
+.bgt-stat-val { font-size: 13px; font-weight: 700; color: var(--text-primary); font-variant-numeric: tabular-nums; font-family: var(--font-mono); margin-top: 4px; }
+
+.bgt-tips-card { border-left: 3px solid rgba(255,255,255,0.14); }
+.bgt-tips-card.deficit { border-left-color: #FF8A8A; background: rgba(255,138,138,0.04); }
+.bgt-tips-card.surplus { border-left-color: #6BE3A4; background: rgba(107,227,164,0.04); }
+.bgt-tips-head { font-size: 9.5px; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; color: var(--text-tertiary); font-family: var(--font-mono); margin-bottom: 10px; }
+.bgt-tip-line { font-size: 13px; color: var(--text-secondary); line-height: 1.65; margin-bottom: 6px; }
+.bgt-tip-line:last-child { margin-bottom: 0; }
+.bgt-tip-line b { color: var(--text-primary); font-weight: 700; }
+
+@media (max-width: 480px) {
+  .bgt-total-val { font-size: 22px; }
+  .bgt-chart-stats { grid-template-columns: repeat(3, 1fr); gap: 4px; }
+}
 </style>
 </head>
 <body>
@@ -1732,6 +1785,93 @@ input[type="date"]::-webkit-calendar-picker-indicator {
         </div>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- ===== BUDGET ===== -->
+<div class="section" data-section="budget">
+  <div class="section-title">
+    <span class="section-title-text bgt-section-head">BUDGET<span class="bgt-update-badge" id="bgtUpdateBadge" style="display:none">Update</span></span>
+  </div>
+
+  <!-- Expenses (top) -->
+  <div class="card" style="background:linear-gradient(135deg, rgba(255,138,138,0.06), rgba(83,74,183,0.04));border:1px solid rgba(255,138,138,0.16)">
+    <div class="bgt-total-row">
+      <div>
+        <div class="bgt-total-label">Monthly expenses</div>
+        <div class="bgt-total-val" id="bgtExpTotal">CHF 0</div>
+      </div>
+      <div id="bgtExpCount" style="font-size:11px;color:var(--text-tertiary)"></div>
+    </div>
+    <div id="bgtExpList" class="nw-list"></div>
+    <div class="empty-state" id="bgtExpEmpty">No expenses logged yet</div>
+    <div class="quick-add">
+      <input type="text" placeholder="Expense (e.g. Rent)" id="bgtExpName" />
+      <input type="number" placeholder="Amount / mo" id="bgtExpAmount" step="0.01" />
+      <button class="quick-add-btn" id="bgtExpAddBtn">+</button>
+    </div>
+  </div>
+
+  <!-- Cash-flow trend chart (middle) — connects Expenses above to Income below -->
+  <div class="card bgt-chart-card" id="bgtChartWrap">
+    <div class="bgt-chart-head">
+      <span class="bgt-chart-title">Cash flow this month</span>
+      <span class="bgt-chart-delta" id="bgtChartDelta">—</span>
+    </div>
+    <svg class="bgt-chart-svg" id="bgtChartSvg" viewBox="0 0 600 160" preserveAspectRatio="none" aria-hidden="true">
+      <defs>
+        <linearGradient id="bgtChartGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%"   stop-color="currentColor" stop-opacity="0.45"/>
+          <stop offset="100%" stop-color="currentColor" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+      <line class="bgt-chart-grid" x1="0" x2="600" y1="30"  y2="30"/>
+      <line class="bgt-chart-zero" id="bgtChartZero" x1="0" x2="600" y1="80" y2="80"/>
+      <line class="bgt-chart-grid" x1="0" x2="600" y1="130" y2="130"/>
+      <path id="bgtChartArea" fill="url(#bgtChartGrad)" d=""/>
+      <path id="bgtChartLine" fill="none" stroke="currentColor" stroke-width="2.4"
+            stroke-linejoin="round" stroke-linecap="round"
+            style="filter: drop-shadow(0 0 6px currentColor)" d=""/>
+      <circle id="bgtChartToday" class="bgt-chart-today-dot" r="4" cx="0" cy="80"/>
+    </svg>
+    <div class="bgt-chart-stats">
+      <div class="bgt-stat">
+        <div class="bgt-stat-label">Daily rate</div>
+        <div class="bgt-stat-val" id="bgtStatDaily">—</div>
+      </div>
+      <div class="bgt-stat">
+        <div class="bgt-stat-label">So far this month</div>
+        <div class="bgt-stat-val" id="bgtStatToday">—</div>
+      </div>
+      <div class="bgt-stat">
+        <div class="bgt-stat-label">Projected month-end</div>
+        <div class="bgt-stat-val" id="bgtStatEnd">—</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Income (bottom) -->
+  <div class="card" style="background:linear-gradient(135deg, rgba(107,227,164,0.06), rgba(83,74,183,0.04));border:1px solid rgba(107,227,164,0.16)">
+    <div class="bgt-total-row">
+      <div>
+        <div class="bgt-total-label">Monthly income</div>
+        <div class="bgt-total-val" id="bgtIncTotal">CHF 0</div>
+      </div>
+      <div id="bgtIncCount" style="font-size:11px;color:var(--text-tertiary)"></div>
+    </div>
+    <div id="bgtIncList" class="nw-list"></div>
+    <div class="empty-state" id="bgtIncEmpty">No income sources logged yet</div>
+    <div class="quick-add">
+      <input type="text" placeholder="Source (e.g. Salary)" id="bgtIncName" />
+      <input type="number" placeholder="Amount / mo" id="bgtIncAmount" step="0.01" />
+      <button class="quick-add-btn" id="bgtIncAddBtn">+</button>
+    </div>
+  </div>
+
+  <!-- Tips -->
+  <div class="card bgt-tips-card" id="bgtTipsCard">
+    <div class="bgt-tips-head">Tips</div>
+    <div id="bgtTipsBody"></div>
   </div>
 </div>
 
@@ -2063,6 +2203,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     if (typeof renderWishlist === 'function') renderWishlist();
     if (typeof renderOrders   === 'function') renderOrders();
     if (typeof updateOrdPreview === 'function') updateOrdPreview();
+    if (typeof renderBudget   === 'function') renderBudget();
   }
 
   // ============================================================
@@ -2385,6 +2526,214 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     });
   }
   renderAllNetWorth();
+
+  // ============================================================
+  // BUDGET — Expenses (top) / cash-flow chart (middle) / Income
+  // (bottom). Unlike Net Worth's chart (which plots real historical
+  // snapshots), there's no daily transaction data here — income and
+  // expenses are recurring monthly line items — so the chart is a
+  // straight linear projection: (income - expenses) accrued evenly
+  // from day 1 to today/month-end, recomputed fresh on every render
+  // rather than stored as history.
+  // ============================================================
+  function getBgtList(kind) { return storeGet('budget:' + kind) || []; }
+  function setBgtList(kind, list) { storeSet('budget:' + kind, list); }
+  function bgtSumCHF(list) { return list.reduce((s, x) => s + (Number(x.amount) || 0), 0); }
+  function fmtSigned(v) {
+    if (Math.abs(v) < 0.005) return fmtMoney(0);
+    return (v > 0 ? '+' : '−') + fmtMoney(Math.abs(v));
+  }
+
+  function renderBgtCategory(kind, listElId, emptyElId, totalElId, countElId) {
+    const items = getBgtList(kind);
+    const list = document.getElementById(listElId);
+    list.innerHTML = '';
+    let total = 0;
+    items.forEach((it, idx) => {
+      total += Number(it.amount) || 0;
+      const row = document.createElement('div');
+      row.className = 'nw-row';
+      const name = document.createElement('span');
+      name.className = 'nw-name nw-name-edit';
+      name.textContent = it.name;
+      name.title = 'Tap to rename';
+      name.addEventListener('click', () => beginBgtNameEdit(name, kind, idx));
+      const amt = document.createElement('span');
+      amt.className = 'nw-amt nw-amt-edit';
+      amt.textContent = fmtMoney(it.amount);
+      amt.title = 'Tap to edit · type +50 to add, -20 to subtract, or a new total';
+      amt.addEventListener('click', () => beginBgtAmountEdit(amt, kind, idx));
+      const del = document.createElement('button'); del.className = 'nw-del'; del.textContent = '×';
+      del.addEventListener('click', () => {
+        const cur = getBgtList(kind);
+        cur.splice(idx, 1);
+        setBgtList(kind, cur);
+        renderBudget();
+      });
+      row.appendChild(name); row.appendChild(amt); row.appendChild(del);
+      list.appendChild(row);
+    });
+    document.getElementById(emptyElId).style.display = items.length ? 'none' : 'flex';
+    document.getElementById(totalElId).textContent = fmtMoney(total);
+    document.getElementById(countElId).textContent = items.length + (items.length === 1 ? ' item' : ' items');
+    return total;
+  }
+
+  function beginBgtAmountEdit(amtEl, kind, idx) {
+    if (amtEl.querySelector('input')) return;
+    const items = getBgtList(kind);
+    const symbol = currencyEl ? currencyEl.value : 'CHF';
+    const rate = exchangeRates[symbol] || 1;
+    const curCHF = Number(items[idx].amount) || 0;
+    const curDisplay = curCHF * rate;
+    const input = document.createElement('input');
+    input.type = 'text'; input.inputMode = 'decimal';
+    input.value = String(curDisplay.toFixed(curDisplay % 1 === 0 ? 0 : 2));
+    input.style.cssText = 'width:100px;padding:4px 8px;font-family:var(--font-mono);font-size:12px;background:rgba(0,0,0,0.30);border:1px solid rgba(255,255,255,0.10);color:var(--text-primary);border-radius:6px;text-align:right;font-variant-numeric:tabular-nums;outline:none;';
+    amtEl.textContent = ''; amtEl.appendChild(input);
+    setTimeout(() => { input.focus(); input.select(); }, 0);
+    let saved = false;
+    function save() {
+      if (saved) return; saved = true;
+      const v = input.value.trim();
+      if (v === '') { renderBudget(); return; }
+      let nextDisplay = curDisplay;
+      if (/^[+\-]\s*\d/.test(v)) { const delta = parseFloat(v.replace(/\s+/g, '')); if (!isNaN(delta)) nextDisplay = curDisplay + delta; }
+      else { const n = parseFloat(v); if (!isNaN(n)) nextDisplay = n; }
+      if (nextDisplay < 0) nextDisplay = 0;
+      const nextCHF = nextDisplay / rate;
+      const cur2 = getBgtList(kind);
+      if (cur2[idx]) { cur2[idx].amount = nextCHF; setBgtList(kind, cur2); }
+      renderBudget();
+    }
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); save(); } else if (e.key === 'Escape') { saved = true; renderBudget(); } });
+    input.addEventListener('blur', save);
+  }
+  function beginBgtNameEdit(nameEl, kind, idx) {
+    if (nameEl.querySelector('input')) return;
+    const items = getBgtList(kind);
+    const cur = String(items[idx].name || '');
+    const input = document.createElement('input');
+    input.type = 'text'; input.value = cur;
+    input.style.cssText = 'width:100%;padding:4px 8px;font-family:inherit;font-size:13px;background:rgba(0,0,0,0.30);border:1px solid rgba(255,255,255,0.10);color:var(--text-primary);border-radius:6px;outline:none;';
+    nameEl.textContent = ''; nameEl.appendChild(input);
+    setTimeout(() => { input.focus(); input.select(); }, 0);
+    let saved = false;
+    function save() { if (saved) return; saved = true; const v = input.value.trim(); if (v) { const cur2 = getBgtList(kind); if (cur2[idx]) { cur2[idx].name = v; setBgtList(kind, cur2); } } renderBudget(); }
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); save(); } else if (e.key === 'Escape') { saved = true; renderBudget(); } });
+    input.addEventListener('blur', save);
+  }
+
+  function wireBgtAdd(kind, nameId, amtId, btnId) {
+    const nameInput = document.getElementById(nameId);
+    const amtInput = document.getElementById(amtId);
+    const addBtn = document.getElementById(btnId);
+    function doAdd() {
+      const n = nameInput.value.trim();
+      const a = parseFloat(amtInput.value);
+      if (!n || isNaN(a)) return;
+      const symbol = currencyEl ? currencyEl.value : 'CHF';
+      const rate = exchangeRates[symbol] || 1;
+      const items = getBgtList(kind);
+      items.push({ name: n, amount: a / rate });
+      setBgtList(kind, items);
+      nameInput.value = ''; amtInput.value = '';
+      renderBudget();
+    }
+    addBtn.addEventListener('click', doAdd);
+    nameInput.addEventListener('keydown', e => { if (e.key === 'Enter') doAdd(); });
+    amtInput.addEventListener('keydown', e => { if (e.key === 'Enter') doAdd(); });
+  }
+
+  function budgetProjection() {
+    const totalIncome = bgtSumCHF(getBgtList('income'));
+    const totalExpenses = bgtSumCHF(getBgtList('expenses'));
+    const netCHF = totalIncome - totalExpenses;
+    const now = new Date();
+    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    const todayDate = now.getDate();
+    const dailyRate = netCHF / daysInMonth;
+    return { totalIncome, totalExpenses, netCHF, daysInMonth, todayDate, dailyRate };
+  }
+
+  function renderBudgetChart() {
+    const svg = document.getElementById('bgtChartSvg');
+    if (!svg) return;
+    const linePath = document.getElementById('bgtChartLine');
+    const areaPath = document.getElementById('bgtChartArea');
+    const zeroLine = document.getElementById('bgtChartZero');
+    const todayDot = document.getElementById('bgtChartToday');
+    const deltaEl = document.getElementById('bgtChartDelta');
+    const { netCHF, daysInMonth, todayDate, dailyRate } = budgetProjection();
+
+    const W = 600, H = 160, PAD = 10;
+    const maxAbs = Math.max(Math.abs(dailyRate * daysInMonth), Math.abs(dailyRate * daysInMonth) || 1, 1);
+    const yFor = v => (H / 2) - (v / maxAbs) * (H / 2 - PAD);
+    const xFor = day => (day / daysInMonth) * W;
+
+    const points = [];
+    for (let day = 0; day <= daysInMonth; day++) points.push({ x: xFor(day), y: yFor(dailyRate * day) });
+    const lineD = points.map((p, i) => (i === 0 ? 'M' : 'L') + p.x + ',' + p.y).join(' ');
+    linePath.setAttribute('d', lineD);
+    const zeroY = yFor(0);
+    areaPath.setAttribute('d', lineD + ' L' + points[points.length - 1].x + ',' + zeroY + ' L' + points[0].x + ',' + zeroY + ' Z');
+    zeroLine.setAttribute('y1', zeroY); zeroLine.setAttribute('y2', zeroY);
+
+    const color = netCHF > 0.5 ? '#6BE3A4' : (netCHF < -0.5 ? '#FF8A8A' : 'rgba(255,255,255,0.35)');
+    svg.style.color = color;
+
+    const todayX = xFor(todayDate), todayY = yFor(dailyRate * todayDate);
+    todayDot.setAttribute('cx', todayX); todayDot.setAttribute('cy', todayY);
+
+    deltaEl.classList.remove('up', 'down');
+    if (Math.abs(netCHF) < 0.5) { deltaEl.textContent = 'Break-even'; }
+    else { deltaEl.classList.add(netCHF > 0 ? 'up' : 'down'); deltaEl.textContent = fmtSigned(netCHF) + ' / mo'; }
+
+    document.getElementById('bgtStatDaily').textContent = fmtSigned(dailyRate) + '/day';
+    document.getElementById('bgtStatToday').textContent = fmtSigned(dailyRate * todayDate);
+    document.getElementById('bgtStatEnd').textContent = fmtSigned(netCHF);
+  }
+
+  function renderBudgetTips() {
+    const card = document.getElementById('bgtTipsCard');
+    const body = document.getElementById('bgtTipsBody');
+    if (!card) return;
+    const { netCHF, totalIncome, totalExpenses } = budgetProjection();
+    card.classList.remove('deficit', 'surplus');
+    if (!totalIncome && !totalExpenses) {
+      body.innerHTML = '<div class="bgt-tip-line">Add your income and expenses above to get personalized tips here.</div>';
+      return;
+    }
+    if (netCHF < -0.5) {
+      card.classList.add('deficit');
+      const sorted = getBgtList('expenses').slice().sort((a, b) => (Number(b.amount) || 0) - (Number(a.amount) || 0));
+      const lines = ['<div class="bgt-tip-line">You are projected to run <b>' + fmtMoney(Math.abs(netCHF)) + '</b> short this month at your current pace.</div>'];
+      if (sorted.length) {
+        lines.push('<div class="bgt-tip-line">Your biggest expense is <b>' + escapeHtml(sorted[0].name) + '</b> at ' + fmtMoney(sorted[0].amount) + '/mo — trimming or pausing it would have the largest single impact.</div>');
+      }
+      const OPTIONAL_HINTS = ['stream', 'netflix', 'spotify', 'subscription', 'entertain', 'dining', 'takeout', 'coffee', 'gym', 'game', 'hobby', 'shopping'];
+      const optional = sorted.filter(x => OPTIONAL_HINTS.some(h => String(x.name || '').toLowerCase().includes(h))).slice(0, 3);
+      if (optional.length) {
+        lines.push('<div class="bgt-tip-line">These look more optional than essential: <b>' + optional.map(o => escapeHtml(o.name)).join(', ') + '</b> — worth a second look.</div>');
+      }
+      body.innerHTML = lines.join('');
+    } else {
+      card.classList.add('surplus');
+      body.innerHTML = '<div class="bgt-tip-line">You are projected to end the month <b>' + fmtMoney(Math.abs(netCHF)) + '</b> ahead — nice work. Consider parking some of that into savings or your Net Worth accounts above.</div>';
+    }
+  }
+
+  function renderBudget() {
+    renderBgtCategory('expenses', 'bgtExpList', 'bgtExpEmpty', 'bgtExpTotal', 'bgtExpCount');
+    renderBgtCategory('income', 'bgtIncList', 'bgtIncEmpty', 'bgtIncTotal', 'bgtIncCount');
+    renderBudgetChart();
+    renderBudgetTips();
+    const badge = document.getElementById('bgtUpdateBadge');
+    if (badge) badge.style.display = (new Date().getDate() === 1) ? 'inline-flex' : 'none';
+  }
+  wireBgtAdd('expenses', 'bgtExpName', 'bgtExpAmount', 'bgtExpAddBtn');
+  wireBgtAdd('income', 'bgtIncName', 'bgtIncAmount', 'bgtIncAddBtn');
+  renderBudget();
 
   // ============================================================
   // SUBSCRIPTIONS
