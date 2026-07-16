@@ -663,7 +663,6 @@ main {
     .wh-manual-field label { font-size:10.5px; color:var(--text-tertiary); font-weight:600; letter-spacing:0.03em; }
     .wh-manual-field input { width:100%; box-sizing:border-box; }
     .wh-manual-line { margin-top:10px; font-family:var(--font-mono); font-size:11px; }
-    .wh-manual-line + .wh-manual-line { margin-top:6px; }
     .wh-trend-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:2px; }
     .wh-trend-item { text-align:center; }
     .wh-trend-label { font-size:9.5px; color:var(--text-tertiary); text-transform:uppercase; letter-spacing:0.1em; font-weight:700; margin-bottom:5px; }
@@ -800,13 +799,8 @@ main {
                 <label for="whManualSteps">Steps (extra)</label>
                 <input type="number" inputmode="numeric" min="0" step="100" placeholder="0" class="stack-input" id="whManualSteps">
               </div>
-              <div class="wh-manual-field">
-                <label for="whManualElectrolytes">Electrolytes taken (servings)</label>
-                <input type="number" inputmode="decimal" min="0" step="1" placeholder="0" class="stack-input" id="whManualElectrolytes">
-              </div>
             </div>
             <div id="whManualWaterLine" class="wh-ready-sub wh-manual-line"></div>
-            <div id="whManualServingsLine" class="wh-ready-sub wh-manual-line"></div>
           </div>
 
           <div id="whSleepTargetCard" class="wh-ready-card" style="display:none">
@@ -1213,7 +1207,7 @@ main {
         const raw = JSON.parse(localStorage.getItem(MANUAL_ADJ_KEY));
         if (raw && raw.date === manualAdjDateKey()) return raw;
       } catch (e) {}
-      return { date: manualAdjDateKey(), caffeineMg: 0, steps: 0, electrolytesTaken: 0 };
+      return { date: manualAdjDateKey(), caffeineMg: 0, steps: 0 };
     }
     function saveManualAdj() {
       try { localStorage.setItem(MANUAL_ADJ_KEY, JSON.stringify(manualAdj)); } catch (e) {}
@@ -1234,28 +1228,16 @@ main {
         'WHOOP-based target: ' + lastFormula.totalMl.toLocaleString() + 'ml<br>'
         + '+ Manual adjustments: ' + (adjParts.length ? adjParts.join(' + ') : '0ml') + '<br>'
         + '= New total: ' + newTotalMl.toLocaleString() + 'ml';
-
-      const taken = manualAdj.electrolytesTaken || 0;
-      const remaining = Math.max(0, lastFormula.servings - taken);
-      $('whManualServingsLine').innerHTML =
-        'Electrolyte servings needed today: ' + lastFormula.servings + '<br>'
-        + '− ' + taken + ' logged<br>'
-        + '= ' + remaining + ' remaining';
     }
     function wireManualAdjustments() {
       $('whManualCaffeine').value = manualAdj.caffeineMg || '';
       $('whManualSteps').value = manualAdj.steps || '';
-      $('whManualElectrolytes').value = manualAdj.electrolytesTaken || '';
       $('whManualCaffeine').addEventListener('input', (e) => {
         manualAdj.caffeineMg = Math.max(0, parseFloat(e.target.value) || 0);
         saveManualAdj(); renderManualAdjustments();
       });
       $('whManualSteps').addEventListener('input', (e) => {
         manualAdj.steps = Math.max(0, parseInt(e.target.value, 10) || 0);
-        saveManualAdj(); renderManualAdjustments();
-      });
-      $('whManualElectrolytes').addEventListener('input', (e) => {
-        manualAdj.electrolytesTaken = Math.max(0, parseFloat(e.target.value) || 0);
         saveManualAdj(); renderManualAdjustments();
       });
     }
