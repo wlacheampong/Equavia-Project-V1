@@ -24,6 +24,15 @@
     var bottombar = document.getElementById('bottombar');
     if (bottombar) bottombar.remove();
     document.body.classList.remove('has-bottombar');
+    // Embedded (e.g. inside gym.html's Fitness tile) — the host page
+    // already has its own category-tab nav and starter banner, so this
+    // page's copies would just be a redundant second nav bar.
+    if (window.self !== window.top) {
+      var catTabs = document.querySelector('.cat-tabs');
+      if (catTabs) catTabs.remove();
+      var starterTag = document.querySelector('.starterTag');
+      if (starterTag) starterTag.remove();
+    }
   });
 })();
 </script>

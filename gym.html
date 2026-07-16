@@ -1316,6 +1316,19 @@ img, video, canvas, svg { max-width: 100%; }
   .cat-tabs { gap: 18px; }
   .cat-tab-label { font-size: 10px; }
 }
+
+/* Train, embedded via iframe (see comment above #poAppRoot for why) */
+.train-embed-wrap { margin-top: 22px; }
+.train-embed-head { display: flex; align-items: center; gap: 16px; margin-bottom: 14px; }
+.train-embed-head::before, .train-embed-head::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.10); }
+.train-embed-eye { font-size: 11px; letter-spacing: 0.22em; font-weight: 600; color: rgba(255,255,255,0.85); }
+.train-embed-frame {
+  width: 100%; height: 1400px;
+  border: 1px solid var(--border, rgba(255,255,255,0.08));
+  border-radius: 16px;
+  background: #050506;
+  display: block;
+}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -1521,6 +1534,13 @@ img, video, canvas, svg { max-width: 100%; }
 
   </div>
 
+  <!-- Progressive Overload Coach's own UI is kept in the DOM (hidden,
+       not deleted) rather than removed outright — its JS below is not
+       cleanly separable from the Weight/Progress Photos JS living in the
+       same <script> block, so deleting these elements risked crashing
+       shared init code on a null getElementById(). Hidden instead: safe,
+       and Train below is now the only thing actually visible here. -->
+  <div id="poAppRoot" style="display:none">
   <div class="po-header">
     <h1 class="po-title" id="appTitle">Progressive Overload Coach</h1>
     <button class="po-icon-btn" id="settingsBtn" title="Settings" aria-label="Settings">
@@ -1774,6 +1794,14 @@ img, video, canvas, svg { max-width: 100%; }
     <div class="po-modal-actions">
       <button class="po-btn-primary" id="setModalClose">Done</button>
     </div>
+  </div>
+  </div>
+  <!-- /poAppRoot -->
+
+  <!-- ===== Train (embedded) ===== -->
+  <div class="train-embed-wrap">
+    <div class="train-embed-head"><span class="train-embed-eye">Train</span></div>
+    <iframe class="train-embed-frame" src="train.html" title="Train — Push/Pull/Legs logger" loading="lazy"></iframe>
   </div>
 </div>
 
