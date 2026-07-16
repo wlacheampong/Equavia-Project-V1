@@ -655,6 +655,15 @@ main {
     .wh-dose-table th { text-align:left; font-size:9.5px; color:var(--text-tertiary); text-transform:uppercase; letter-spacing:0.10em; font-weight:700; padding-bottom:6px; border-bottom:1px solid rgba(255,255,255,0.06); }
     .wh-dose-table td { padding:7px 0; border-bottom:1px solid rgba(255,255,255,0.04); color:var(--text-primary); font-variant-numeric:tabular-nums; }
     .wh-dose-table th:last-child, .wh-dose-table td:last-child { text-align:right; }
+    /* Manual Adjustments — auto-fit grid so adding a 4th/5th field later
+       (alcohol, sauna, extra workouts) is just another .wh-manual-field,
+       no layout changes needed. */
+    .wh-manual-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(120px, 1fr)); gap:10px; margin-top:2px; }
+    .wh-manual-field { display:flex; flex-direction:column; gap:6px; }
+    .wh-manual-field label { font-size:10.5px; color:var(--text-tertiary); font-weight:600; letter-spacing:0.03em; }
+    .wh-manual-field input { width:100%; box-sizing:border-box; }
+    .wh-manual-line { margin-top:10px; font-family:var(--font-mono); font-size:11px; }
+    .wh-manual-line + .wh-manual-line { margin-top:6px; }
     .wh-trend-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:2px; }
     .wh-trend-item { text-align:center; }
     .wh-trend-label { font-size:9.5px; color:var(--text-tertiary); text-transform:uppercase; letter-spacing:0.1em; font-weight:700; margin-bottom:5px; }
@@ -780,6 +789,26 @@ main {
             <div class="wh-ready-sub" style="margin-top:8px;font-style:italic">General formula for personal tracking, not medical guidance.</div>
           </div>
 
+          <div id="whManualCard" class="wh-ready-card">
+            <div class="wh-ready-head"><span class="wh-ready-eye">Manual adjustments</span></div>
+            <div class="wh-manual-grid">
+              <div class="wh-manual-field">
+                <label for="whManualCaffeine">Caffeine (mg)</label>
+                <input type="number" inputmode="decimal" min="0" step="1" placeholder="0" class="stack-input" id="whManualCaffeine">
+              </div>
+              <div class="wh-manual-field">
+                <label for="whManualSteps">Steps (extra)</label>
+                <input type="number" inputmode="numeric" min="0" step="100" placeholder="0" class="stack-input" id="whManualSteps">
+              </div>
+              <div class="wh-manual-field">
+                <label for="whManualElectrolytes">Electrolytes taken (servings)</label>
+                <input type="number" inputmode="decimal" min="0" step="1" placeholder="0" class="stack-input" id="whManualElectrolytes">
+              </div>
+            </div>
+            <div id="whManualWaterLine" class="wh-ready-sub wh-manual-line"></div>
+            <div id="whManualServingsLine" class="wh-ready-sub wh-manual-line"></div>
+          </div>
+
           <div id="whSleepTargetCard" class="wh-ready-card" style="display:none">
             <div class="wh-ready-head"><span class="wh-ready-eye">Tonight's sleep target</span></div>
             <div id="whSleepTargetTake" class="wh-ready-take"></div>
@@ -879,6 +908,7 @@ main {
     const STEPS_THRESHOLD = 10000;                 // steps_today > this adds a serving — sourced from Apple Health (see below), WHOOP has no steps field
     const AVG_HR_ELEVATED_DELTA = 10;               // bpm above the trailing 7-day avg HR counts as "elevated" (WHOOP baseline preferred, Apple Health as fallback)
     const ACTIVE_ENERGY_ELEVATED_KCAL = 600;        // Apple Health "Active Energy" above this adds a serving — catches exertion steps miss (swimming, cycling, lifting)
+    const STEPS_HYDRATION_BONUS_ML = 300;           // flat water bump when manual step entry exceeds STEPS_THRESHOLD — mirrors HIGH_STRAIN_HYDRATION_BONUS_ML's flat-bonus pattern
 
     // ============================================================
     // APPLE HEALTH BRIDGE — HealthKit has no web API of its own, so an
@@ -1170,6 +1200,66 @@ main {
       return { baseMl, caffeineMl, strainMl, totalMl, baseServings, bumps, rawServings, servings, cappedAt };
     }
 
+    // ---- Manual Adjustments — layered on top of the formula above, not
+    // mixed into it, so the WHOOP-based numbers stay exactly as computed.
+    // Persisted per calendar day so a refresh mid-day keeps what you typed. ----
+    const MANUAL_ADJ_KEY = 'hydration_manual_v1';
+    function manualAdjDateKey() {
+      const d = new Date();
+      return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    }
+    function loadManualAdj() {
+      try {
+        const raw = JSON.parse(localStorage.getItem(MANUAL_ADJ_KEY));
+        if (raw && raw.date === manualAdjDateKey()) return raw;
+      } catch (e) {}
+      return { date: manualAdjDateKey(), caffeineMg: 0, steps: 0, electrolytesTaken: 0 };
+    }
+    function saveManualAdj() {
+      try { localStorage.setItem(MANUAL_ADJ_KEY, JSON.stringify(manualAdj)); } catch (e) {}
+    }
+    let manualAdj = loadManualAdj();
+    let lastFormula = null; // most recent computeWaterFormula() result, set in renderReadiness()
+
+    function renderManualAdjustments() {
+      if (!lastFormula) return;
+      const manualCaffeineMl = Math.round((manualAdj.caffeineMg / 50) * CAFFEINE_WATER_BUMP_ML);
+      const manualStepsMl = manualAdj.steps > STEPS_THRESHOLD ? STEPS_HYDRATION_BONUS_ML : 0;
+      const newTotalMl = lastFormula.totalMl + manualCaffeineMl + manualStepsMl;
+
+      const adjParts = [];
+      if (manualCaffeineMl) adjParts.push(manualCaffeineMl.toLocaleString() + 'ml (caffeine)');
+      if (manualStepsMl) adjParts.push(manualStepsMl.toLocaleString() + 'ml (steps)');
+      $('whManualWaterLine').innerHTML =
+        'WHOOP-based target: ' + lastFormula.totalMl.toLocaleString() + 'ml<br>'
+        + '+ Manual adjustments: ' + (adjParts.length ? adjParts.join(' + ') : '0ml') + '<br>'
+        + '= New total: ' + newTotalMl.toLocaleString() + 'ml';
+
+      const taken = manualAdj.electrolytesTaken || 0;
+      const remaining = Math.max(0, lastFormula.servings - taken);
+      $('whManualServingsLine').innerHTML =
+        'Electrolyte servings needed today: ' + lastFormula.servings + '<br>'
+        + '− ' + taken + ' logged<br>'
+        + '= ' + remaining + ' remaining';
+    }
+    function wireManualAdjustments() {
+      $('whManualCaffeine').value = manualAdj.caffeineMg || '';
+      $('whManualSteps').value = manualAdj.steps || '';
+      $('whManualElectrolytes').value = manualAdj.electrolytesTaken || '';
+      $('whManualCaffeine').addEventListener('input', (e) => {
+        manualAdj.caffeineMg = Math.max(0, parseFloat(e.target.value) || 0);
+        saveManualAdj(); renderManualAdjustments();
+      });
+      $('whManualSteps').addEventListener('input', (e) => {
+        manualAdj.steps = Math.max(0, parseInt(e.target.value, 10) || 0);
+        saveManualAdj(); renderManualAdjustments();
+      });
+      $('whManualElectrolytes').addEventListener('input', (e) => {
+        manualAdj.electrolytesTaken = Math.max(0, parseFloat(e.target.value) || 0);
+        saveManualAdj(); renderManualAdjustments();
+      });
+    }
+
     function buildFuelingNudge(yestStrain, sleepPerf) {
       if (yestStrain != null && yestStrain >= STRAIN_HIGH_THRESHOLD && sleepPerf != null && sleepPerf < SLEEP_POOR_PCT) {
         return 'Prioritize protein and carbs at breakfast today to support recovery.';
@@ -1255,6 +1345,9 @@ main {
         ? formula.rawServings + ', capped to ' + formula.servings + ' serving' + (formula.servings === 1 ? '' : 's') + ' (max ' + formula.cappedAt + '/day)'
         : formula.servings + ' serving' + (formula.servings === 1 ? '' : 's');
       $('whFormulaServingsBreakdown').textContent = 'Electrolytes: ' + servingParts.join(' + ') + ' = ' + servingsResult;
+
+      lastFormula = formula;
+      renderManualAdjustments();
 
       const sleepTarget = buildSleepTarget(ctx.debtInfo);
       if (sleepTarget) {
@@ -1487,6 +1580,7 @@ main {
       if (t && t.access) { $('whDisc').style.display = 'none'; $('whConn').style.display = ''; loadData(); }
       else { $('whDisc').style.display = ''; $('whConn').style.display = 'none'; }
     }
+    wireManualAdjustments();
     render();
   })();
   </script>
