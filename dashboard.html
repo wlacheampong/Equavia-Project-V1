@@ -191,6 +191,7 @@ body::after {
 
 /* ===== Component 3: Day Ring ===== */
 .day-ring-wrap {
+  position: relative;
   display: flex; flex-wrap: wrap;
   align-items: center; justify-content: center;
   gap: 26px;
@@ -202,6 +203,19 @@ body::after {
   -webkit-backdrop-filter: blur(24px) saturate(1.2);
   box-shadow: 0 12px 40px rgba(0,0,0,0.45);
 }
+.day-ring-edit-btn {
+  position: absolute; top: 12px; right: 12px;
+  width: 30px; height: 30px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.day-ring-edit-btn:hover { background: rgba(255,255,255,0.12); color: var(--text-primary); }
 .day-ring {
   position: relative;
   width: 168px; height: 168px;
@@ -257,6 +271,57 @@ body::after {
   .day-ring-percent { font-size: 32px; }
   .day-ring-status { font-size: 13px; }
 }
+
+/* ===== Wake/bedtime edit modal ===== */
+.dr-modal-bg {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.65); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  z-index: 200; align-items: center; justify-content: center;
+  padding: 24px;
+}
+.dr-modal-bg.show { display: flex; }
+.dr-modal {
+  width: 100%; max-width: 340px;
+  background: rgba(30, 30, 32, 0.92);
+  backdrop-filter: blur(24px) saturate(1.2);
+  -webkit-backdrop-filter: blur(24px) saturate(1.2);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 16px;
+  padding: 22px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.45);
+}
+.dr-modal h3 { margin: 0 0 16px; font-size: 16px; font-weight: 700; color: var(--text-primary); }
+.dr-field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+.dr-field label {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--text-tertiary);
+}
+.dr-field input[type="time"] {
+  padding: 11px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(0,0,0,0.28);
+  color: var(--text-primary);
+  font-family: inherit; font-size: 15px;
+  color-scheme: dark;
+}
+.dr-field input[type="time"]:focus {
+  outline: none; border-color: rgba(255,255,255,0.40);
+}
+.dr-modal-actions { display: flex; gap: 8px; margin-top: 18px; }
+.dr-modal-actions button {
+  flex: 1; padding: 11px; border-radius: 10px; cursor: pointer;
+  font-family: inherit; font-size: 13px; font-weight: 700;
+  -webkit-tap-highlight-color: transparent;
+}
+.dr-btn-save { border: none; background: linear-gradient(180deg, #ffffff 0%, #e8e5dd 100%); color: #0a0a0b; }
+.dr-btn-cancel { border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.04); color: var(--text-primary); }
+.dr-reset-link {
+  display: block; text-align: center; margin-top: 14px;
+  font-size: 12px; color: var(--text-tertiary); cursor: pointer;
+  text-decoration: underline;
+}
+.dr-reset-link:hover { color: var(--text-secondary); }
 
 /* ===== Component 4: section + To Do List ===== */
 .section { margin-top: 8px; }
@@ -1094,6 +1159,9 @@ body::after {
   </div>
 
   <div class="day-ring-wrap">
+    <button class="day-ring-edit-btn" id="dayRingEditBtn" type="button" aria-label="Edit wake-up and bedtime">
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
+    </button>
     <div class="day-ring">
       <svg viewBox="0 0 120 120">
         <defs>
@@ -1114,7 +1182,26 @@ body::after {
     <div class="day-ring-text">
       <div class="day-ring-status"    id="dayRingStatus">Loading…</div>
       <div class="day-ring-remaining" id="dayRingRemaining">—</div>
-      <div class="day-ring-hours">8:00 AM – 12:00 AM</div>
+      <div class="day-ring-hours" id="dayRingHours">8:00 AM – 12:00 AM</div>
+    </div>
+  </div>
+
+  <div class="dr-modal-bg" id="drModalBg">
+    <div class="dr-modal">
+      <h3>Edit wake / bedtime</h3>
+      <div class="dr-field">
+        <label for="drWakeInput">Wake-up time</label>
+        <input type="time" id="drWakeInput">
+      </div>
+      <div class="dr-field">
+        <label for="drBedInput">Bedtime target</label>
+        <input type="time" id="drBedInput">
+      </div>
+      <div class="dr-modal-actions">
+        <button type="button" class="dr-btn-cancel" id="drCancelBtn">Cancel</button>
+        <button type="button" class="dr-btn-save" id="drSaveBtn">Save</button>
+      </div>
+      <span class="dr-reset-link" id="drResetLink">Reset to default (8:00 AM – 12:00 AM)</span>
     </div>
   </div>
 
@@ -1308,8 +1395,8 @@ body::after {
   // Paste your Anthropic key here to enable ✨ Polish. Empty = falls back to plain add.
   const ANTHROPIC_API_KEY = '';
 
-  const WAKE_HOUR  = 8;
-  const SLEEP_HOUR = 24;
+  let WAKE_HOUR  = 8;
+  let SLEEP_HOUR = 24;
 
   // ---------- storage helpers ----------
   function storeGet(key) {
@@ -1330,6 +1417,45 @@ body::after {
     }
     return out;
   }
+
+  // ---------- Day-ring custom wake/bedtime ----------
+  // Stored as raw 0–24 hour-of-day values (what the time pickers show).
+  // SLEEP_HOUR is derived from bedHour by wrapping past midnight whenever
+  // bedHour <= wakeHour — e.g. wake 8, bed "12:00 AM" (0) -> SLEEP_HOUR 24,
+  // which reproduces the original hardcoded default exactly.
+  const DAY_RING_TIMES_KEY = 'day_ring_times_v1';
+  function timeStrToHour(timeStr) {
+    const [h, m] = timeStr.split(':').map(Number);
+    return h + (m || 0) / 60;
+  }
+  function hourToTimeStr(hourDecimal) {
+    const wrapped = ((hourDecimal % 24) + 24) % 24;
+    const h = Math.floor(wrapped);
+    const m = Math.round((wrapped - h) * 60);
+    return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+  }
+  function formatHourLabel(hourDecimal) {
+    const wrapped = ((hourDecimal % 24) + 24) % 24;
+    const h = Math.floor(wrapped);
+    const m = Math.round((wrapped - h) * 60);
+    const d = new Date();
+    d.setHours(h, m, 0, 0);
+    return formatClock(d);
+  }
+  function loadDayRingTimes() {
+    const saved = storeGet(DAY_RING_TIMES_KEY);
+    const wakeHour = saved && typeof saved.wakeHour === 'number' ? saved.wakeHour : 8;
+    const bedHour  = saved && typeof saved.bedHour  === 'number' ? saved.bedHour  : 0;
+    WAKE_HOUR  = wakeHour;
+    SLEEP_HOUR = bedHour <= wakeHour ? bedHour + 24 : bedHour;
+    return { wakeHour, bedHour };
+  }
+  function saveDayRingTimes(wakeHour, bedHour) {
+    storeSet(DAY_RING_TIMES_KEY, { wakeHour, bedHour });
+    WAKE_HOUR  = wakeHour;
+    SLEEP_HOUR = bedHour <= wakeHour ? bedHour + 24 : bedHour;
+  }
+  let dayRingTimes = loadDayRingTimes();
 
   // ---------- date helpers ----------
   function pad2(n) { return String(n).padStart(2, '0'); }
@@ -1530,14 +1656,22 @@ body::after {
 
   function updateDayRing() {
     const now = new Date();
-    const hours = now.getHours() + now.getMinutes() / 60 + now.getSeconds() / 3600;
+    let hours = now.getHours() + now.getMinutes() / 60 + now.getSeconds() / 3600;
+    // A custom bedtime that wraps past midnight (SLEEP_HOUR > 24, e.g.
+    // bedtime 1:00 AM -> 25) needs the current wall-clock hour shifted onto
+    // that same continuous scale whenever we're still in the tail end of
+    // yesterday's waking window (e.g. it's 12:30 AM and bedtime is 1:00 AM) —
+    // otherwise this would be mistaken for "still sleeping" before wake-up.
+    if (SLEEP_HOUR > 24 && hours < SLEEP_HOUR - 24) hours += 24;
     const percentEl   = document.getElementById('dayRingPercent');
     const phaseEl     = document.getElementById('dayRingPhase');
     const clockEl     = document.getElementById('dayRingClock');
     const statusEl    = document.getElementById('dayRingStatus');
     const remainingEl = document.getElementById('dayRingRemaining');
+    const hoursEl     = document.getElementById('dayRingHours');
 
     clockEl.textContent = formatClock(now);
+    hoursEl.textContent = formatHourLabel(WAKE_HOUR) + ' – ' + formatHourLabel(SLEEP_HOUR);
 
     if (hours < WAKE_HOUR) {
       fillEl.setAttribute('stroke-dashoffset', C);
@@ -2525,6 +2659,38 @@ body::after {
     });
     loadCalendar();
   }
+
+  // ---------- Day-ring edit modal ----------
+  function openDayRingModal() {
+    document.getElementById('drWakeInput').value = hourToTimeStr(dayRingTimes.wakeHour);
+    document.getElementById('drBedInput').value = hourToTimeStr(dayRingTimes.bedHour);
+    document.getElementById('drModalBg').classList.add('show');
+  }
+  function closeDayRingModal() {
+    document.getElementById('drModalBg').classList.remove('show');
+  }
+  document.getElementById('dayRingEditBtn').addEventListener('click', openDayRingModal);
+  document.getElementById('drCancelBtn').addEventListener('click', closeDayRingModal);
+  document.getElementById('drModalBg').addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) closeDayRingModal();
+  });
+  document.getElementById('drSaveBtn').addEventListener('click', () => {
+    const wakeStr = document.getElementById('drWakeInput').value;
+    const bedStr = document.getElementById('drBedInput').value;
+    if (!wakeStr || !bedStr) return;
+    const wakeHour = timeStrToHour(wakeStr);
+    const bedHour = timeStrToHour(bedStr);
+    saveDayRingTimes(wakeHour, bedHour);
+    dayRingTimes = { wakeHour, bedHour };
+    closeDayRingModal();
+    updateDayRing();
+  });
+  document.getElementById('drResetLink').addEventListener('click', () => {
+    storeDelete(DAY_RING_TIMES_KEY);
+    dayRingTimes = loadDayRingTimes();
+    closeDayRingModal();
+    updateDayRing();
+  });
 
   // ---------- Boot ----------
   rollover();
