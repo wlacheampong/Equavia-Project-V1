@@ -7,6 +7,25 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Finances</title>
 <script src="topbar.js" defer></script>
+<script>
+(function () {
+  // This page has its own top navigation (the category tab row, matching
+  // dashboard.html), so the shared bottom tab bar from topbar.js is
+  // redundant here — and since finance.html's own composer forms were
+  // already occupying position:fixed;bottom:0 (higher z-index than
+  // topbar.js's bottombar), the shared bar was rendering invisibly
+  // underneath, still reserving body padding. DOMContentLoaded always
+  // fires after every deferred script has run, so waiting for it
+  // guarantees the element exists before we remove it. (Note: `defer`
+  // has no effect on inline scripts, so we can't rely on script order
+  // alone — this listener is what actually delays us.)
+  document.addEventListener('DOMContentLoaded', function () {
+    var bottombar = document.getElementById('bottombar');
+    if (bottombar) bottombar.remove();
+    document.body.classList.remove('has-bottombar');
+  });
+})();
+</script>
 <style>
 :root {
   --bg: #0A0A0B;
@@ -75,83 +94,43 @@ body::after {
 .shell {
   max-width: 880px;
   margin: 0 auto;
-  padding: 24px 16px 100px;   /* extra bottom padding so tab bar doesn't cover content */
+  padding: 24px 16px 60px;
 }
 
-/* ===== Back to dashboard ===== */
-.fin-back-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 14px 8px 10px;
-  margin: 0 0 14px;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 999px;
-  color: var(--text-secondary);
-  font-family: var(--font);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  text-decoration: none;
-  -webkit-tap-highlight-color: transparent;
-  transition: background 0.15s ease, color 0.15s ease;
-}
-.fin-back-btn:hover, .fin-back-btn:active {
-  background: rgba(255,255,255,0.07);
-  color: var(--text-primary);
-}
-.fin-back-btn svg { display: block; }
-
-/* ===== Bottom tab bar ===== */
-.bottom-tabs {
-  position: fixed;
-  bottom: 0; left: 0; right: 0;
-  z-index: 100;
+/* ===== Category tabs (matches dashboard.html's top nav) ===== */
+.cat-tabs {
   display: flex;
   justify-content: center;
-  gap: 4px;
-  padding: 8px max(12px, env(safe-area-inset-left)) calc(8px + env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-right));
-  background: linear-gradient(180deg, transparent, rgba(5,5,6,0.92) 30%);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  flex-wrap: wrap;
+  gap: 32px;
+  margin: 4px 0 22px;
 }
-.bottom-tabs::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 12px; right: 12px;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.10), transparent);
-  pointer-events: none;
-}
-.bot-tab {
-  flex: 1; max-width: 140px;
-  display: flex; flex-direction: column; align-items: center; gap: 2px;
+.cat-tab {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 6px;
+  padding: 2px;
+  border: 0;
   background: transparent;
-  border: 1px solid transparent;
   color: var(--text-tertiary);
-  padding: 9px 14px 8px;
-  border-radius: 12px;
   font-family: inherit;
+  text-decoration: none;
   cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  transition: color 0.2s;
 }
-.bot-tab:hover { color: var(--text-secondary); background: rgba(255,255,255,0.025); }
-.bot-tab.active {
-  color: var(--text-primary);
-  background: rgba(255,255,255,0.06);
-  border-color: rgba(255,255,255,0.10);
+.cat-tab:hover { color: var(--text-secondary); }
+.cat-tab.is-active { color: var(--text-primary); }
+.cat-tab-icon { width: 22px; height: 22px; }
+.cat-tab-icon svg { width: 100%; height: 100%; display: block; }
+.cat-tab-label {
+  font-size: 11px; font-weight: 600;
+  line-height: 1.25;
+  text-align: center;
+  white-space: nowrap;
 }
-.bot-tab-icon { font-size: 18px; line-height: 1; }
-.bot-tab-label {
-  font-size: 10px; font-weight: 700;
-  letter-spacing: 0.10em;
-  text-transform: uppercase;
+@media (max-width: 480px) {
+  .cat-tabs { gap: 18px; }
+  .cat-tab-label { font-size: 10px; }
 }
-
-/* Sections: hide non-active when bottom tabs are in use */
-.section[hidden] { display: none !important; }
 
 /* Hide scrollbars everywhere */
 html, body { scrollbar-width: none; -ms-overflow-style: none; }
@@ -1571,11 +1550,41 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 <body>
 <div class="shell">
 
-<!-- ===== BACK BUTTON ===== -->
-<a href="index.html" class="fin-back-btn" aria-label="Back to dashboard">
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-  <span>Back</span>
-</a>
+<!-- ===== Category tabs (matches dashboard.html) ===== -->
+<div class="cat-tabs" role="tablist" aria-label="Site sections">
+  <a class="cat-tab" href="dashboard.html">
+    <span class="cat-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11 12 4l9 7"/><path d="M5 10v9a1 1 0 0 0 1 1h3v-6h6v6h3a1 1 0 0 0 1-1v-9"/></svg></span>
+    <span class="cat-tab-label">Main</span>
+  </a>
+  <a class="cat-tab" href="health.html">
+    <span class="cat-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M12 8v8M8 12h8"/></svg></span>
+    <span class="cat-tab-label">Health</span>
+  </a>
+  <a class="cat-tab" href="gym.html">
+    <span class="cat-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 9v6M17.5 9v6M3 10.5v3M21 10.5v3M6.5 12h11"/></svg></span>
+    <span class="cat-tab-label">Fitness</span>
+  </a>
+  <a class="cat-tab" href="fuel.html">
+    <span class="cat-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3v6a2 2 0 1 0 4 0V3"/><path d="M8 9v12"/><path d="M16 3c2 1 3 3 3 6s-1 5-3 6"/><path d="M16 3v18"/></svg></span>
+    <span class="cat-tab-label">Fuel</span>
+  </a>
+  <a class="cat-tab" href="peak.html">
+    <span class="cat-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20 9 8l4 6 2-3 6 9Z"/></svg></span>
+    <span class="cat-tab-label">Peak</span>
+  </a>
+  <a class="cat-tab" href="train.html">
+    <span class="cat-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="14" cy="4.5" r="1.6"/><path d="M6.5 20l2.5-5 2-2-1-4.2 3.2 1 1.8 3 3-.8"/><path d="M9 13l-3 3"/></svg></span>
+    <span class="cat-tab-label">Train</span>
+  </a>
+  <a class="cat-tab" href="vitals.html">
+    <span class="cat-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.8Z"/></svg></span>
+    <span class="cat-tab-label">Vitals</span>
+  </a>
+  <a class="cat-tab is-active" href="finance.html" aria-current="page">
+    <span class="cat-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h13a1 1 0 0 1 1 1v3"/><path d="M3 7v10a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1H6a2 2 0 0 1-2-2"/><circle cx="17" cy="13" r="1.4"/></svg></span>
+    <span class="cat-tab-label">Finance</span>
+  </a>
+</div>
 
 <!-- ===== FINANCE TICKER (rotating subscription renewals) ===== -->
 <div class="finance-ticker hidden" id="financeTicker">
@@ -1864,26 +1873,6 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 </div>
 
-<!-- ===== BOTTOM TAB BAR ===== -->
-<nav class="bottom-tabs" id="bottomTabs" aria-label="Sections">
-  <button class="bot-tab active" data-tab="net">
-    <span class="bot-tab-icon">💰</span>
-    <span class="bot-tab-label">Net Worth</span>
-  </button>
-  <button class="bot-tab" data-tab="subs">
-    <span class="bot-tab-icon">🔁</span>
-    <span class="bot-tab-label">Subs</span>
-  </button>
-  <button class="bot-tab" data-tab="incoming">
-    <span class="bot-tab-icon">📦</span>
-    <span class="bot-tab-label">Orders</span>
-  </button>
-  <button class="bot-tab" data-tab="wish">
-    <span class="bot-tab-icon">🎯</span>
-    <span class="bot-tab-label">Wishlist</span>
-  </button>
-</nav>
-
 <script>
 (function() {
 
@@ -1912,26 +1901,6 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     crypto: { name: 'Crypto', color: '#FBBF24' },
     other:  { name: 'Other',  color: '#B794F4' }
   };
-
-  // ============================================================
-  // BOTTOM TABS — switch between Net Worth / Subs / Orders.
-  // Active tab persisted in localStorage.
-  // ============================================================
-  const TAB_KEY = 'finance_active_tab';
-  const tabs = document.querySelectorAll('.bot-tab');
-  const sections = document.querySelectorAll('.section[data-section]');
-  function setActiveTab(name) {
-    tabs.forEach(b => b.classList.toggle('active', b.dataset.tab === name));
-    sections.forEach(s => {
-      if (s.dataset.section === name) s.removeAttribute('hidden');
-      else s.setAttribute('hidden', '');
-    });
-    storeSet(TAB_KEY, name);
-    window.scrollTo({ top: 0, behavior: 'instant' });
-  }
-  tabs.forEach(b => b.addEventListener('click', () => setActiveTab(b.dataset.tab)));
-  const savedTab = storeGet(TAB_KEY);
-  setActiveTab(savedTab && ['net','subs','incoming','wish'].includes(savedTab) ? savedTab : 'net');
 
   // ============================================================
   // NET WORTH (copied from the main dashboard, verbatim logic)
