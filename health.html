@@ -784,6 +784,7 @@ main {
             <div id="whFormulaTotal" class="wh-ready-take"></div>
             <div id="whFormulaServings" class="wh-ready-sub"></div>
             <div id="whFormulaBreakdown" class="wh-ready-sub" style="margin-top:4px;font-family:var(--font-mono);font-size:11px"></div>
+            <div id="whFormulaServingsBreakdown" class="wh-ready-sub" style="margin-top:2px;font-family:var(--font-mono);font-size:11px"></div>
             <div class="wh-ready-sub" style="margin-top:8px;font-style:italic">General formula for personal tracking, not medical guidance.</div>
           </div>
 
@@ -879,6 +880,12 @@ main {
       coverageMl: 1500,      // how much water one serving is meant to cover
       maxServingsPerDay: 3,  // check your label — defaulted, confirm/edit
     };
+
+    // Extra electrolyte-serving bumps beyond fluid volume alone — each one
+    // is a real physical-exertion signal caffeine/water-volume math misses.
+    const CAFFEINE_ELECTROLYTE_THRESHOLD_MG = 100; // today's total caffeine >= this adds a serving
+    const STEPS_THRESHOLD = 10000;                 // steps_today > this adds a serving (skipped — WHOOP has no steps field yet)
+    const AVG_HR_ELEVATED_DELTA = 10;               // bpm above your own trailing 7-day avg HR counts as "elevated"
 
     function load() { try { return JSON.parse(localStorage.getItem(KEY)); } catch { return null; } }
     function save(t) { try { localStorage.setItem(KEY, JSON.stringify(t)); } catch {} }
@@ -1127,10 +1134,22 @@ main {
                        || (ctx.todayStrain != null && ctx.todayStrain > STRAIN_HIGH_THRESHOLD);
       const strainMl = highStrain ? HIGH_STRAIN_HYDRATION_BONUS_ML : 0;
       const totalMl = baseMl + caffeineMl + strainMl;
-      let servings = Math.ceil(totalMl / ELECTROLYTE_PRODUCT.coverageMl);
-      if (electrolytesRecommended) servings += 1;
-      servings = Math.min(Math.max(servings, 0), ELECTROLYTE_PRODUCT.maxServingsPerDay);
-      return { baseMl, caffeineMl, strainMl, totalMl, servings };
+
+      const baseServings = Math.ceil(totalMl / ELECTROLYTE_PRODUCT.coverageMl);
+      // Each bump reflects a distinct real exertion/loss signal — they
+      // stack rather than picking one, and any bump with no reliable data
+      // (steps, today) is skipped instead of guessed at.
+      const bumps = [];
+      if (dosePlan.totalCaffeine >= CAFFEINE_ELECTROLYTE_THRESHOLD_MG) bumps.push({ n: 1, label: 'caffeine ≥' + CAFFEINE_ELECTROLYTE_THRESHOLD_MG + 'mg today' });
+      if (ctx.stepsToday != null && ctx.stepsToday > STEPS_THRESHOLD) bumps.push({ n: 1, label: 'high step count' });
+      if (ctx.avgHrToday != null && ctx.avgHrBaseline != null && ctx.avgHrToday > ctx.avgHrBaseline + AVG_HR_ELEVATED_DELTA) bumps.push({ n: 1, label: 'elevated average HR' });
+      if (electrolytesRecommended) bumps.push({ n: 1, label: 'hydration flag active' });
+
+      const cappedAt = ELECTROLYTE_PRODUCT.maxServingsPerDay;
+      const rawServings = baseServings + bumps.reduce((s, b) => s + b.n, 0);
+      const servings = Math.min(Math.max(rawServings, 0), cappedAt);
+
+      return { baseMl, caffeineMl, strainMl, totalMl, baseServings, bumps, rawServings, servings, cappedAt };
     }
 
     function buildFuelingNudge(yestStrain, sleepPerf) {
@@ -1200,13 +1219,24 @@ main {
       $('whHydrateTotal').textContent = 'Water target today: ' + hydrate.totalMl.toLocaleString() + 'ml (' + (hydrate.totalMl / 1000).toFixed(1) + 'L)';
       $('whHydrateText').textContent = hydrate.electrolyteLine;
 
-      const formula = computeWaterFormula(dosePlan, { yestStrain: ctx.yestStrain, todayStrain: ctx.todayStrain }, hydrate.electrolytesRecommended);
+      const formula = computeWaterFormula(
+        dosePlan,
+        { yestStrain: ctx.yestStrain, todayStrain: ctx.todayStrain, stepsToday: ctx.stepsToday, avgHrToday: ctx.avgHrToday, avgHrBaseline: ctx.avgHrBaseline7 },
+        hydrate.electrolytesRecommended
+      );
       $('whFormulaTotal').textContent = formula.totalMl.toLocaleString() + 'ml (' + (formula.totalMl / 1000).toFixed(2) + 'L)';
       $('whFormulaServings').textContent = formula.servings + ' serving' + (formula.servings === 1 ? '' : 's') + ' of electrolytes today (' + ELECTROLYTE_PRODUCT.name + ')';
-      const parts = ['Base ' + formula.baseMl.toLocaleString() + 'ml'];
-      if (formula.caffeineMl) parts.push(formula.caffeineMl.toLocaleString() + 'ml (caffeine)');
-      if (formula.strainMl) parts.push(formula.strainMl.toLocaleString() + 'ml (strain)');
-      $('whFormulaBreakdown').textContent = parts.join(' + ') + ' = ' + formula.totalMl.toLocaleString() + 'ml';
+      const waterParts = ['Base ' + formula.baseMl.toLocaleString() + 'ml'];
+      if (formula.caffeineMl) waterParts.push(formula.caffeineMl.toLocaleString() + 'ml (caffeine)');
+      if (formula.strainMl) waterParts.push(formula.strainMl.toLocaleString() + 'ml (strain)');
+      $('whFormulaBreakdown').textContent = waterParts.join(' + ') + ' = ' + formula.totalMl.toLocaleString() + 'ml';
+      const servingParts = [formula.baseServings + ' base serving' + (formula.baseServings === 1 ? '' : 's')]
+        .concat(formula.bumps.map(b => '1 (' + b.label + ')'));
+      const wasCapped = formula.rawServings > formula.cappedAt;
+      const servingsResult = wasCapped
+        ? formula.rawServings + ', capped to ' + formula.servings + ' serving' + (formula.servings === 1 ? '' : 's') + ' (max ' + formula.cappedAt + '/day)'
+        : formula.servings + ' serving' + (formula.servings === 1 ? '' : 's');
+      $('whFormulaServingsBreakdown').textContent = 'Electrolytes: ' + servingParts.join(' + ') + ' = ' + servingsResult;
 
       const sleepTarget = buildSleepTarget(ctx.debtInfo);
       if (sleepTarget) {
@@ -1279,7 +1309,7 @@ main {
         const [rec, sleep, cycle, bodyMeasure] = await Promise.all([
           whFetch('/recovery?limit=' + TREND_LOOKBACK_DAYS, t).catch((e)=>{console.error('[whoop] recovery', e.message); return null;}),
           whFetch('/activity/sleep?limit=' + TREND_LOOKBACK_DAYS, t).catch((e)=>{console.error('[whoop] sleep', e.message); return null;}),
-          whFetch('/cycle?limit=2', t).catch((e)=>{console.error('[whoop] cycle', e.message); return null;}),
+          whFetch('/cycle?limit=' + TREND_LOOKBACK_DAYS, t).catch((e)=>{console.error('[whoop] cycle', e.message); return null;}),
           whFetch('/user/measurement/body', t).catch((e)=>{console.error('[whoop] body measurement', e.message); return null;}),
         ]);
         const recArr = (rec && rec.records) || [];
@@ -1354,6 +1384,16 @@ main {
         // "yesterday's strain" means for the training-plan/fueling copy below.
         const yestCycle = cycleArr[1] || cycleArr[0];
         const yestStrain = yestCycle && yestCycle.score && yestCycle.score.strain != null ? Number(yestCycle.score.strain) : null;
+        // Average-HR baseline for the electrolyte bump — WHOOP's own
+        // trailing week of completed cycles, not a hardcoded number, per
+        // "check whoop stats" for this one.
+        const cycleAvgHr = cycleArr.map(c => (c && c.score && c.score.average_heart_rate != null) ? { avgHr: Math.round(c.score.average_heart_rate) } : null).filter(Boolean);
+        const avgHrToday = cycleAvgHr[0] ? cycleAvgHr[0].avgHr : null;
+        const avgHrBaseline7 = avg(cycleAvgHr.slice(1), 'avgHr');
+        // WHOOP's developer API doesn't expose a step-count field today —
+        // left null so the steps electrolyte bump always skips itself
+        // (per "skip if unavailable") until/unless a real source exists.
+        const stepsToday = null;
         if (c0 && c0.score && c0.score.strain != null) {
           strain = Number(c0.score.strain);
           $('whStrain').textContent = strain.toFixed(1);
@@ -1397,7 +1437,7 @@ main {
         const weekSleepPct = sleepArr.map(s => s && s.score && s.score.sleep_performance_percentage != null ? Math.round(s.score.sleep_performance_percentage) : null);
         renderReadiness({
           recScore, hrv, rhr, skin, resp: resp != null ? Number(resp) : null, sleepPerf, yestStrain,
-          todayStrain: strain,
+          todayStrain: strain, avgHrToday, avgHrBaseline7, stepsToday,
           trendDays, recAvg7, hrvAvg7, rhrAvg7,
           recDir: trendDir(trendDays[0] && trendDays[0].recovery, recAvg7),
           hrvDir: trendDir(trendDays[0] && trendDays[0].hrv, hrvAvg7),
