@@ -95,10 +95,14 @@
 
   /* day tabs */
   .daytabs { display:flex; gap:3px; background: var(--row); border:1px solid var(--line); border-radius:12px; padding:4px; margin-top:14px; }
-  .daytab { flex:1; background:none; border:none; color:var(--muted); font-family:var(--sans); font-size:13px; font-weight:600; padding:9px 6px; border-radius:9px; cursor:pointer; transition: color .2s, background .25s; }
+  .daytab { flex:1; background:none; border:none; color:var(--muted); font-family:var(--sans); font-size:13px; font-weight:600; padding:9px 6px; border-radius:9px; cursor:pointer; transition: color .2s, background .25s; user-select:none; -webkit-user-select:none; touch-action:manipulation; }
   .daytab.on { background: var(--mint); color: var(--ink); }
   .daytab .tnum { font-variant-numeric: tabular-nums; opacity:.6; font-size:10px; margin-left:5px; }
   .daytab.on .tnum { opacity:.55; }
+  /* long-press a tab to rename/delete it; the + tab always adds a new one */
+  .daytab.addtab { flex:0 0 auto; width:34px; display:flex; align-items:center; justify-content:center; padding:9px 0; }
+  .daytab.addtab svg { width:15px; height:15px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; }
+  .daytab.addtab:hover { color: var(--mint); }
 
   /* dotted per-exercise progress for the active day */
   .daydots { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:8px; margin-top:16px; min-height:9px; }
@@ -557,7 +561,7 @@ function buildState(){
         hist: (SEED&&SEED.hist&&SEED.hist[e.id]) ? JSON.parse(JSON.stringify(SEED.hist[e.id])) : [] };
     })};
   });
-  return { active:(SEED&&SEED.active)||'push', unit:'kg', submitted:false, days };
+  return { active:(SEED&&SEED.active)||'push', unit:'kg', submitted:false, order: ORDER.slice(), days };
 }
 /* STATE is filled by the async boot below once the dashboard bridge resolves. */
 let STATE = null;
@@ -598,10 +602,74 @@ function gripIcon(){ return '<svg viewBox="0 0 24 24"><circle cx="9" cy="6" r="1
 function render(){
   renderTabs(); renderDots(); renderHead(); renderProgress(); renderBody(); saveState();
 }
+const TAB_LONGPRESS_MS = 500;
 function renderTabs(){
   const el = $('#daytabs');
-  el.innerHTML = ORDER.map(k=>{ const d=STATE.days[k]; let suffix=''; if(!d.restDay){ const t=dayTotals(d); if(!d.off && t.total) suffix='<span class="tnum">'+t.logged+'/'+t.total+'</span>'; } return '<button class="daytab '+(k===STATE.active?'on':'')+'" data-k="'+k+'">'+d.name+suffix+'</button>'; }).join('');
-  el.querySelectorAll('.daytab').forEach(b=> b.onclick=()=>{ STATE.active=b.dataset.k; render(); });
+  el.innerHTML = STATE.order.map(k=>{ const d=STATE.days[k]; if(!d) return ''; let suffix=''; if(!d.restDay){ const t=dayTotals(d); if(!d.off && t.total) suffix='<span class="tnum">'+t.logged+'/'+t.total+'</span>'; } return '<button class="daytab '+(k===STATE.active?'on':'')+'" data-k="'+k+'">'+escapeHtml(d.name)+suffix+'</button>'; }).join('')
+    + '<button class="daytab addtab" id="addTabBtn" type="button" aria-label="Add a new tab" title="Add a new tab">'+svg('<path d="M12 5v14M5 12h14"/>',' fill="none" stroke="currentColor"')+'</button>';
+  el.querySelectorAll('.daytab:not(.addtab)').forEach(b=>{
+    const k = b.dataset.k;
+    let pressTimer=null, longPressed=false;
+    const clearPress=()=>{ if(pressTimer){ clearTimeout(pressTimer); pressTimer=null; } };
+    b.addEventListener('pointerdown', ()=>{ longPressed=false; pressTimer=setTimeout(()=>{ longPressed=true; openTabSettings(k); },TAB_LONGPRESS_MS); });
+    b.addEventListener('pointerup', ()=>{ clearPress(); if(!longPressed){ STATE.active=k; render(); } });
+    b.addEventListener('pointerleave', clearPress);
+    b.addEventListener('pointercancel', clearPress);
+  });
+  $('#addTabBtn').onclick = addTab;
+}
+
+/* ---- customizable tabs: add / rename / delete --------------------- */
+function newDayKey(){ let n=1; while(STATE.days['custom'+n]) n++; return 'custom'+n; }
+function addTab(){
+  const key=newDayKey();
+  STATE.days[key] = { name:'New tab', type:'', restDay:false, off:false, ex:[] };
+  STATE.order.push(key);
+  STATE.active=key;
+  render();
+  openTabSettings(key, true);
+}
+function openTabSettings(key, autoFocus){
+  const d = STATE.days[key];
+  if(!d) return;
+  const canDelete = STATE.order.length>1;
+  openPop(popHead('Tab', d.name)
+    + '<div style="margin-top:18px"></div>'
+    + '<div class="field" style="border-bottom:none;padding-bottom:0">'
+    +   '<input class="wInput" id="tabNameIn" type="text" value="'+escapeHtml(d.name)+'" maxlength="24" style="width:100%;text-align:left;font-size:18px">'
+    + '</div>'
+    + '<div class="popBtns"><button class="pbtn ghost" id="tabCancel">cancel</button><button class="pbtn save" id="tabSave">save</button></div>'
+    + (canDelete
+        ? '<button class="pbtn danger" id="tabDelete" style="width:100%;margin-top:10px">Delete this tab</button>'
+        : '<p class="formGist" style="font-size:13px;color:var(--muted);margin-top:14px">This is your only tab — add another before deleting this one.</p>'),
+    scrim=>{
+      const inp = scrim.querySelector('#tabNameIn');
+      if(autoFocus){ inp.focus(); inp.select(); }
+      const save=()=>{ const v=inp.value.trim(); if(v) d.name=v; closePop(); render(); };
+      scrim.querySelector('#tabSave').onclick=save;
+      inp.addEventListener('keydown', ev=>{ if(ev.key==='Enter'){ ev.preventDefault(); save(); } });
+      scrim.querySelector('#tabCancel').onclick=closePop;
+      const delBtn = scrim.querySelector('#tabDelete');
+      if(delBtn) delBtn.onclick=()=> confirmDeleteTab(key);
+    });
+}
+function confirmDeleteTab(key){
+  const d = STATE.days[key];
+  if(!d) return;
+  openPop(popHead('Delete tab', d.name)
+    + '<p class="formGist" style="font-size:15px;font-weight:500;color:var(--muted-strong)">This removes the '+escapeHtml(d.name)+' tab and the logged history for its exercises. This action cannot be undone.</p>'
+    + '<div class="popBtns"><button class="pbtn ghost" id="dtCancel">Keep it</button><button class="pbtn danger" id="dtYes">Delete</button></div>',
+    scrim=>{
+      scrim.querySelector('#dtCancel').onclick=()=>openTabSettings(key);
+      scrim.querySelector('#dtYes').onclick=()=>{
+        d.ex.forEach(e=>stopRest(e.id));
+        const i = STATE.order.indexOf(key);
+        if(i>=0) STATE.order.splice(i,1);
+        delete STATE.days[key];
+        if(STATE.active===key) STATE.active = STATE.order[0];
+        closePop(); render();
+      };
+    });
 }
 function renderDots(){
   const el=$('#daydots'); const d=curDay();
@@ -894,9 +962,21 @@ function openSwap(e){
   const day=curDay(); const adding=!e;
   const opts=(SWAPS[STATE.active]||[]).filter(o=> !day.ex.some(x=>x.id===o.id));
   const rows=opts.map(o=>'<button class="swapItem" data-id="'+o.id+'"><span><span class="nm">'+o.name+'</span><span class="mu">'+(TIER_LABEL[o.tier]||'')+(o.perHand?' · per hand':'')+'</span></span><span class="arr">'+svg('<path d="M5 12h14M13 6l6 6-6 6"/>',' fill="none" stroke="currentColor"')+'</span></button>').join('') || '<p class="emptyHist">No more options for this day.</p>';
+  // Custom exercises only make sense on the "add" flow — the recommended
+  // library above is tied to the built-in Push/Pull/Legs keys, so a
+  // renamed or brand-new tab (e.g. "Cardio") has nothing in it otherwise.
+  const customBlock = adding
+    ? '<div class="secLbl">Or add a custom exercise</div>'
+      + '<div class="searchRow" style="margin-bottom:10px">'
+      +   svg('<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/>',' fill="none" stroke="currentColor"')
+      +   '<input id="customExName" type="text" placeholder="Exercise name" maxlength="40">'
+      + '</div>'
+      + '<button class="pbtn save" id="customExAdd" style="width:100%;margin-bottom:20px">add custom exercise</button>'
+    : '';
   openPop(popHead(adding?'Add':'Swap', adding? day.name+' day' : e.name)
     + (adding? '<p class="formGist" style="font-size:15px;font-weight:500;color:var(--muted-strong)">Add a lift to today’s '+day.name.toLowerCase()+'. It starts fresh and you set the weight.</p>'
              : '<p class="formGist" style="font-size:15px;font-weight:500;color:var(--muted-strong)">Swap this lift for today. The new exercise starts fresh on this day.</p>')
+    + customBlock
     + '<div class="secLbl">'+(adding?'From the '+day.name.toLowerCase()+' library':'Recommended swaps')+'</div>'
     + '<div class="swapList">'+rows+'</div>',
     scrim=>{
@@ -907,6 +987,20 @@ function openSwap(e){
         else { const i=day.ex.findIndex(x=>x.id===e.id); if(i>=0) day.ex[i]=def; stopRest(e.id); }
         closePop(); render();
       });
+      const customBtn = scrim.querySelector('#customExAdd');
+      if(customBtn){
+        const nameField = scrim.querySelector('#customExName');
+        const doAddCustom=()=>{
+          const name = nameField.value.trim();
+          if(!name){ nameField.focus(); return; }
+          const id = 'custom_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+          const def={ id, name, tier:2, sets:3, reps:10, kg:20, perHand:false, rest:90, lastKg:null, pinned:false, collapsed:false, deload:false, note:'', log:Array(3).fill(null), hist:[] };
+          day.ex.push(def);
+          closePop(); render();
+        };
+        customBtn.onclick = doAddCustom;
+        nameField.addEventListener('keydown', ev=>{ if(ev.key==='Enter'){ ev.preventDefault(); doAddCustom(); } });
+      }
     });
 }
 
@@ -1019,6 +1113,13 @@ function spawnParticles(root){
   let d=null;
   try{ d = await window.Vitality.load(); }catch(e){ d=null; }
   STATE = (d && typeof d==='object' && !Array.isArray(d) && d.days) ? d : buildState();
+  // Back-compat: saved state from before tabs were customizable has no
+  // .order — derive one from whatever days exist. Also drop any stale
+  // order entries left over from a delete that didn't fully persist.
+  if(!STATE.order || !Array.isArray(STATE.order)) STATE.order = Object.keys(STATE.days);
+  STATE.order = STATE.order.filter(k=>STATE.days[k]);
+  if(!STATE.order.length) STATE.order = Object.keys(STATE.days);
+  if(!STATE.days[STATE.active]) STATE.active = STATE.order[0];
   render(); wireFresh();
   spawnParticles(document.querySelector('#vt-backdrop .wb-particles'));
 })();
