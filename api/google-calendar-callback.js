@@ -19,7 +19,12 @@ export default async function handler(req, res) {
       body,
     });
     const text = await tokenRes.text();
-    if (!tokenRes.ok) return res.status(500).send('Google token exchange failed: ' + text);
+    if (!tokenRes.ok) {
+      return res.status(500).send(
+        'Google token exchange failed: ' + text +
+        ' | redirect_uri sent (JSON-quoted to reveal hidden whitespace): ' + JSON.stringify(redirectUri)
+      );
+    }
     let json;
     try { json = JSON.parse(text); } catch { return res.status(500).send('Non-JSON: ' + text); }
     const access = json.access_token || '';
