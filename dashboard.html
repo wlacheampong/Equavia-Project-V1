@@ -897,6 +897,159 @@ body::after {
   transition: border-color 0.2s, background 0.2s;
 }
 .qnote-btn:hover { border-color: rgba(255,255,255,0.22); background: rgba(255,255,255,0.07); }
+
+/* ===== Component 10: Google Calendar ===== */
+.cal-toolbar {
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 12px;
+  margin-bottom: 16px;
+}
+.cal-toolbar-left { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.cal-label { font-size: 13.5px; font-weight: 700; color: var(--text-primary); min-width: 120px; }
+.cal-view-toggle {
+  display: flex; align-items: center; gap: 2px;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px; padding: 3px;
+}
+.cal-view-btn {
+  border: 0; background: transparent;
+  padding: 6px 12px; border-radius: 7px;
+  font-family: var(--font-mono);
+  font-size: 10.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+.cal-view-btn.is-active { background: rgba(226,93,58,0.14); color: #FFC7B8; }
+.cal-toolbar-right { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.cal-nav { display: flex; align-items: center; gap: 4px; }
+.cal-nav-btn {
+  border: 1px solid rgba(255,255,255,0.08); background: transparent;
+  color: var(--text-secondary);
+  width: 26px; height: 26px; border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 13px; line-height: 1;
+  transition: border-color 0.2s, color 0.2s;
+}
+.cal-nav-btn:hover { border-color: rgba(255,255,255,0.2); color: var(--text-primary); }
+.cal-nav-today {
+  border: 1px solid rgba(255,255,255,0.08); background: transparent;
+  color: var(--text-secondary);
+  padding: 5px 12px; border-radius: 7px;
+  font-family: var(--font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+  cursor: pointer;
+}
+.cal-nav-today:hover { color: var(--text-primary); border-color: rgba(255,255,255,0.2); }
+.cal-connect-btn {
+  padding: 6px 14px; border-radius: 999px;
+  border: 1px solid rgba(226,93,58,0.35);
+  background: rgba(226,93,58,0.10);
+  color: #FFC7B8;
+  font-family: inherit; font-size: 11.5px; font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.cal-connect-btn:hover { background: rgba(226,93,58,0.18); }
+.cal-connect-btn.is-connected {
+  border-color: rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.04);
+  color: var(--text-secondary);
+}
+.cal-status {
+  font-size: 11px; color: var(--text-tertiary); margin: -6px 0 12px;
+  min-height: 14px;
+}
+.cal-status.cal-status-error { color: var(--danger); }
+
+.cal-week-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(90px, 1fr));
+  gap: 1px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 12px;
+  overflow-x: auto;
+}
+.cal-day-col {
+  background: rgba(0,0,0,0.20);
+  min-height: 220px;
+  display: flex; flex-direction: column;
+}
+.cal-day-head {
+  padding: 10px 8px 8px;
+  text-align: center;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.cal-day-name {
+  font-family: var(--font-mono); font-size: 9.5px; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-tertiary);
+}
+.cal-day-num {
+  margin: 4px auto 0;
+  font-size: 15px; font-weight: 700; color: var(--text-primary);
+  width: 26px; height: 26px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+}
+.cal-day-col.is-today .cal-day-num { background: #E2755A; color: #fff; }
+.cal-day-events {
+  flex: 1; padding: 6px; display: flex; flex-direction: column; gap: 4px;
+  overflow-y: auto; max-height: 260px;
+}
+.cal-event {
+  padding: 5px 7px; border-radius: 7px;
+  background: rgba(226,93,58,0.12);
+  border-left: 2px solid #E2755A;
+  font-size: 10.5px; line-height: 1.3;
+  color: var(--text-primary);
+  overflow: hidden;
+}
+.cal-event-time {
+  display: block; font-family: var(--font-mono); font-size: 9px; color: #FFC7B8;
+  margin-bottom: 1px;
+}
+.cal-event-title {
+  display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.cal-day-empty { font-size: 10px; color: var(--text-tertiary); text-align: center; padding: 10px 4px; font-style: italic; }
+
+.cal-month-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.cal-month-dow {
+  padding: 8px 0;
+  text-align: center;
+  background: rgba(0,0,0,0.24);
+  font-family: var(--font-mono); font-size: 9.5px; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-tertiary);
+}
+.cal-month-cell {
+  background: rgba(0,0,0,0.20);
+  min-height: 58px;
+  padding: 6px;
+  cursor: pointer;
+  transition: background 0.15s;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+}
+.cal-month-cell:hover { background: rgba(255,255,255,0.03); }
+.cal-month-cell.is-outside { opacity: 0.32; }
+.cal-month-num {
+  font-size: 12.5px; font-weight: 600; color: var(--text-primary);
+  width: 22px; height: 22px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+}
+.cal-month-cell.is-today .cal-month-num { background: #E2755A; color: #fff; }
+.cal-month-dot { width: 4px; height: 4px; border-radius: 50%; background: #E2755A; }
+
+@media (max-width: 480px) {
+  .cal-day-name { font-size: 8px; }
+  .cal-day-num { width: 22px; height: 22px; font-size: 13px; }
+}
 </style>
 </head>
 <body>
@@ -1104,6 +1257,32 @@ body::after {
       </div>
     </aside>
 
+  </div>
+
+  <div class="section">
+    <div class="section-title">Calendar</div>
+    <div class="gm-card">
+      <div class="cal-toolbar">
+        <div class="cal-toolbar-left">
+          <span class="cal-label" id="calLabel">—</span>
+          <div class="cal-view-toggle">
+            <button type="button" class="cal-view-btn is-active" data-cal-view="week">Week</button>
+            <button type="button" class="cal-view-btn" data-cal-view="month">Month</button>
+          </div>
+        </div>
+        <div class="cal-toolbar-right">
+          <div class="cal-nav">
+            <button type="button" class="cal-nav-btn" id="calPrevBtn" aria-label="Previous">‹</button>
+            <button type="button" class="cal-nav-today" id="calTodayBtn">Today</button>
+            <button type="button" class="cal-nav-btn" id="calNextBtn" aria-label="Next">›</button>
+          </div>
+          <button type="button" class="cal-connect-btn" id="calConnectBtn">Connect Google Calendar</button>
+        </div>
+      </div>
+      <div class="cal-status" id="calStatus"></div>
+      <div class="cal-week-grid" id="calWeekGrid"></div>
+      <div class="cal-month-grid" id="calMonthGrid" style="display:none;"></div>
+    </div>
   </div>
 
 </div>
@@ -1988,6 +2167,330 @@ body::after {
     });
   }
 
+  // ---------- Google Calendar ----------
+  // Paste your Google OAuth Client ID here once you've created one in Google
+  // Cloud Console (APIs & Services > Credentials > OAuth client ID > Web
+  // application). The client ID is not secret. The client secret and
+  // redirect URI live server-side as Vercel env vars (GOOGLE_CLIENT_ID,
+  // GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI) read by
+  // api/google-calendar-callback.js and api/google-calendar-refresh.js.
+  const GOOGLE_CAL_CLIENT_ID = '';
+  const GOOGLE_CAL_SCOPE = 'https://www.googleapis.com/auth/calendar.readonly';
+  const GCAL_TOKENS_KEY = 'gcal_tokens_v1';
+
+  function getGcalTokens() { return storeGet(GCAL_TOKENS_KEY); }
+  function setGcalTokens(t) { storeSet(GCAL_TOKENS_KEY, t); }
+  function clearGcalTokens() { storeDelete(GCAL_TOKENS_KEY); }
+
+  function processGcalHashTokens() {
+    const hash = window.location.hash;
+    if (!hash || hash.indexOf('gcal_access=') === -1) return;
+    const params = new URLSearchParams(hash.slice(1));
+    const access = params.get('gcal_access');
+    const refresh = params.get('gcal_refresh');
+    const expires = params.get('gcal_expires');
+    if (access) {
+      const existing = getGcalTokens() || {};
+      setGcalTokens({
+        access_token: access,
+        refresh_token: refresh || existing.refresh_token || '',
+        expires_at: Number(expires) || (Date.now() + 3600 * 1000)
+      });
+    }
+    history.replaceState(null, '', window.location.pathname + window.location.search);
+  }
+
+  function gcalAuthUrl() {
+    const redirectUri = window.location.origin + '/api/google-calendar-callback';
+    const params = new URLSearchParams({
+      client_id: GOOGLE_CAL_CLIENT_ID,
+      redirect_uri: redirectUri,
+      response_type: 'code',
+      scope: GOOGLE_CAL_SCOPE,
+      access_type: 'offline',
+      prompt: 'consent'
+    });
+    return 'https://accounts.google.com/o/oauth2/v2/auth?' + params.toString();
+  }
+
+  function connectGoogleCalendar() {
+    if (!GOOGLE_CAL_CLIENT_ID) {
+      showCalStatus('Paste your Google OAuth Client ID into the GOOGLE_CAL_CLIENT_ID constant in dashboard.html to connect.', true);
+      return;
+    }
+    window.location.href = gcalAuthUrl();
+  }
+
+  function disconnectGoogleCalendar() {
+    clearGcalTokens();
+    loadCalendar();
+  }
+
+  async function ensureValidGcalToken() {
+    const tokens = getGcalTokens();
+    if (!tokens || !tokens.access_token) return null;
+    if (tokens.expires_at && Date.now() < tokens.expires_at - 60000) return tokens.access_token;
+    if (!tokens.refresh_token) { clearGcalTokens(); return null; }
+    try {
+      const res = await fetch('/api/google-calendar-refresh', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refresh_token: tokens.refresh_token })
+      });
+      const json = await res.json();
+      if (!res.ok || !json.access_token) { clearGcalTokens(); return null; }
+      setGcalTokens({
+        access_token: json.access_token,
+        refresh_token: tokens.refresh_token,
+        expires_at: Date.now() + (json.expires_in || 3600) * 1000
+      });
+      return json.access_token;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  async function fetchGcalEvents(timeMinISO, timeMaxISO) {
+    const token = await ensureValidGcalToken();
+    if (!token) return null;
+    const params = new URLSearchParams({
+      timeMin: timeMinISO, timeMax: timeMaxISO,
+      singleEvents: 'true', orderBy: 'startTime', maxResults: '250'
+    });
+    const res = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events?' + params.toString(), {
+      headers: { Authorization: 'Bearer ' + token }
+    });
+    if (res.status === 401) { clearGcalTokens(); throw new Error('Session expired — reconnect Google Calendar.'); }
+    if (!res.ok) throw new Error('Google Calendar request failed (' + res.status + ').');
+    const json = await res.json();
+    return json.items || [];
+  }
+
+  // ---------- Calendar date helpers ----------
+  const CAL_DOW = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const CAL_MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  function calMidnight(d) { return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
+  function calAddDays(d, n) { const x = new Date(d); x.setDate(x.getDate() + n); return x; }
+  function calAddMonths(d, n) { const x = new Date(d); x.setMonth(x.getMonth() + n); return x; }
+  function calStartOfWeek(d) { const x = calMidnight(d); return calAddDays(x, -x.getDay()); }
+  function calIsSameDay(a, b) { return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate(); }
+  function calEventDate(ev, which) {
+    const part = ev[which];
+    if (!part) return null;
+    if (part.date) {
+      const p = part.date.split('-').map(Number);
+      return new Date(p[0], p[1] - 1, p[2]);
+    }
+    if (part.dateTime) return new Date(part.dateTime);
+    return null;
+  }
+  function calEventIsAllDay(ev) { return !!(ev.start && ev.start.date); }
+
+  // ---------- Calendar state ----------
+  let calView = 'week';
+  let calAnchor = calMidnight(new Date());
+
+  function showCalStatus(msg, isError) {
+    const el = document.getElementById('calStatus');
+    if (!el) return;
+    el.textContent = msg || '';
+    el.classList.toggle('cal-status-error', !!isError);
+  }
+
+  function updateCalConnectBtn() {
+    const btn = document.getElementById('calConnectBtn');
+    if (!btn) return;
+    const tokens = getGcalTokens();
+    const connected = !!(tokens && tokens.access_token);
+    btn.textContent = connected ? 'Disconnect' : 'Connect Google Calendar';
+    btn.classList.toggle('is-connected', connected);
+  }
+
+  function renderCalLabel() {
+    const el = document.getElementById('calLabel');
+    if (!el) return;
+    if (calView === 'month') {
+      el.textContent = CAL_MONTHS[calAnchor.getMonth()] + ' ' + calAnchor.getFullYear();
+      return;
+    }
+    const start = calStartOfWeek(calAnchor);
+    const end = calAddDays(start, 6);
+    const sameMonth = start.getMonth() === end.getMonth();
+    const startLabel = CAL_MONTHS[start.getMonth()].slice(0, 3) + ' ' + start.getDate();
+    const endLabel = (sameMonth ? '' : CAL_MONTHS[end.getMonth()].slice(0, 3) + ' ') + end.getDate();
+    el.textContent = startLabel + ' – ' + endLabel + ', ' + end.getFullYear();
+  }
+
+  function buildCalEventEl(ev) {
+    const row = document.createElement('div');
+    row.className = 'cal-event';
+    const time = document.createElement('span');
+    time.className = 'cal-event-time';
+    time.textContent = calEventIsAllDay(ev) ? 'All day' : formatClock(calEventDate(ev, 'start'));
+    const title = document.createElement('span');
+    title.className = 'cal-event-title';
+    title.textContent = ev.summary || '(untitled)';
+    row.appendChild(time);
+    row.appendChild(title);
+    return row;
+  }
+
+  function renderWeekGrid(events) {
+    const grid = document.getElementById('calWeekGrid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    const weekStart = calStartOfWeek(calAnchor);
+    const today = calMidnight(new Date());
+    const byDay = [[], [], [], [], [], [], []];
+    (events || []).forEach(ev => {
+      const start = calEventDate(ev, 'start');
+      if (!start) return;
+      for (let i = 0; i < 7; i++) {
+        if (calIsSameDay(start, calAddDays(weekStart, i))) { byDay[i].push(ev); break; }
+      }
+    });
+    for (let i = 0; i < 7; i++) {
+      const dayDate = calAddDays(weekStart, i);
+      const col = document.createElement('div');
+      col.className = 'cal-day-col' + (calIsSameDay(dayDate, today) ? ' is-today' : '');
+      const head = document.createElement('div');
+      head.className = 'cal-day-head';
+      const dname = document.createElement('div');
+      dname.className = 'cal-day-name';
+      dname.textContent = CAL_DOW[i];
+      const dnum = document.createElement('div');
+      dnum.className = 'cal-day-num';
+      dnum.textContent = String(dayDate.getDate());
+      head.appendChild(dname);
+      head.appendChild(dnum);
+      col.appendChild(head);
+      const evWrap = document.createElement('div');
+      evWrap.className = 'cal-day-events';
+      const dayEvents = byDay[i].sort((a, b) => calEventDate(a, 'start') - calEventDate(b, 'start'));
+      if (!dayEvents.length) {
+        const empty = document.createElement('div');
+        empty.className = 'cal-day-empty';
+        empty.textContent = '—';
+        evWrap.appendChild(empty);
+      } else {
+        dayEvents.forEach(ev => evWrap.appendChild(buildCalEventEl(ev)));
+      }
+      col.appendChild(evWrap);
+      grid.appendChild(col);
+    }
+  }
+
+  function renderMonthGrid(events) {
+    const grid = document.getElementById('calMonthGrid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    CAL_DOW.forEach(name => {
+      const dow = document.createElement('div');
+      dow.className = 'cal-month-dow';
+      dow.textContent = name;
+      grid.appendChild(dow);
+    });
+    const monthStart = new Date(calAnchor.getFullYear(), calAnchor.getMonth(), 1);
+    const gridStart = calAddDays(monthStart, -monthStart.getDay());
+    const today = calMidnight(new Date());
+    const eventDatesSet = new Set();
+    (events || []).forEach(ev => {
+      const d = calEventDate(ev, 'start');
+      if (d) eventDatesSet.add(d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate());
+    });
+    for (let i = 0; i < 42; i++) {
+      const cellDate = calAddDays(gridStart, i);
+      const cell = document.createElement('div');
+      const outside = cellDate.getMonth() !== calAnchor.getMonth();
+      cell.className = 'cal-month-cell' + (outside ? ' is-outside' : '') + (calIsSameDay(cellDate, today) ? ' is-today' : '');
+      const num = document.createElement('div');
+      num.className = 'cal-month-num';
+      num.textContent = String(cellDate.getDate());
+      cell.appendChild(num);
+      const key = cellDate.getFullYear() + '-' + cellDate.getMonth() + '-' + cellDate.getDate();
+      if (eventDatesSet.has(key)) {
+        const dot = document.createElement('div');
+        dot.className = 'cal-month-dot';
+        cell.appendChild(dot);
+      }
+      cell.addEventListener('click', () => {
+        calAnchor = calMidnight(cellDate);
+        calView = 'week';
+        document.querySelectorAll('.cal-view-btn').forEach(b => b.classList.toggle('is-active', b.dataset.calView === 'week'));
+        document.getElementById('calWeekGrid').style.display = '';
+        document.getElementById('calMonthGrid').style.display = 'none';
+        loadCalendar();
+      });
+      grid.appendChild(cell);
+    }
+  }
+
+  async function loadCalendar() {
+    renderCalLabel();
+    updateCalConnectBtn();
+    const tokens = getGcalTokens();
+    if (!tokens || !tokens.access_token) {
+      showCalStatus('Connect your Google Calendar to show real events here.', false);
+      if (calView === 'week') renderWeekGrid([]); else renderMonthGrid([]);
+      return;
+    }
+    showCalStatus('Loading events…', false);
+    let rangeStart, rangeEnd;
+    if (calView === 'month') {
+      const monthStart = new Date(calAnchor.getFullYear(), calAnchor.getMonth(), 1);
+      rangeStart = calAddDays(monthStart, -monthStart.getDay());
+      rangeEnd = calAddDays(rangeStart, 42);
+    } else {
+      rangeStart = calStartOfWeek(calAnchor);
+      rangeEnd = calAddDays(rangeStart, 7);
+    }
+    try {
+      const events = await fetchGcalEvents(rangeStart.toISOString(), rangeEnd.toISOString());
+      if (events === null) {
+        showCalStatus('Connect your Google Calendar to show real events here.', false);
+        if (calView === 'week') renderWeekGrid([]); else renderMonthGrid([]);
+        return;
+      }
+      showCalStatus('', false);
+      if (calView === 'week') renderWeekGrid(events); else renderMonthGrid(events);
+    } catch (e) {
+      showCalStatus(e.message || 'Could not load Google Calendar events.', true);
+      updateCalConnectBtn();
+      if (calView === 'week') renderWeekGrid([]); else renderMonthGrid([]);
+    }
+  }
+
+  function initCalendar() {
+    processGcalHashTokens();
+    document.querySelectorAll('.cal-view-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        calView = btn.dataset.calView;
+        document.querySelectorAll('.cal-view-btn').forEach(b => b.classList.toggle('is-active', b === btn));
+        document.getElementById('calWeekGrid').style.display = calView === 'week' ? '' : 'none';
+        document.getElementById('calMonthGrid').style.display = calView === 'month' ? '' : 'none';
+        loadCalendar();
+      });
+    });
+    document.getElementById('calPrevBtn').addEventListener('click', () => {
+      calAnchor = calView === 'month' ? calAddMonths(calAnchor, -1) : calAddDays(calAnchor, -7);
+      loadCalendar();
+    });
+    document.getElementById('calNextBtn').addEventListener('click', () => {
+      calAnchor = calView === 'month' ? calAddMonths(calAnchor, 1) : calAddDays(calAnchor, 7);
+      loadCalendar();
+    });
+    document.getElementById('calTodayBtn').addEventListener('click', () => {
+      calAnchor = calMidnight(new Date());
+      loadCalendar();
+    });
+    document.getElementById('calConnectBtn').addEventListener('click', () => {
+      const tokens = getGcalTokens();
+      if (tokens && tokens.access_token) disconnectGoogleCalendar();
+      else connectGoogleCalendar();
+    });
+    loadCalendar();
+  }
+
   // ---------- Boot ----------
   rollover();
   processStreak();
@@ -2003,6 +2506,7 @@ body::after {
   initDgtToggle();
   initProjects();
   renderChecklists();
+  initCalendar();
 
   // Re-render when storage changes from another tab (or our bridged parent).
   window.addEventListener('storage', () => {
