@@ -48,12 +48,12 @@
   :root {
     /* Vitality tokens — reskin of the Patron logger */
     --bg:#050506; --surface:#0e0e11; --border:#1d1d22; --mint:#6EE7B7; --muted:#84848c; --fg:#ededf0;
-    /* semantic accents kept (like fuel.html keeps --neg) — gold flags a PR, fail a miss */
+    /* semantic accents kept (other sealed tiles keep --neg the same way) — gold flags a PR, fail a miss */
     --gold:#f59e0b; --fail:#e06a6c; --ink:#04140d;
     /* logger-internal aliases mapped onto the Vitality tokens */
     --card:#0e0e11; --row:#141419; --line:#1d1d22; --hair:#2a2a31; --border-strong:#2a2a31;
     --mint-ic:#6EE7B7; --text:#ededf0; --muted-strong:#a8a8b0;
-    /* system font stack only — no external fonts (from fuel.html) + a system serif for the italic display */
+    /* system font stack only — no external fonts + a system serif for the italic display */
     --font-display:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,sans-serif;
     --font-mono:ui-monospace,SFMono-Regular,Menlo,"JetBrains Mono",monospace;
     --vt-sans:var(--font-display); --vt-mono:var(--font-mono); --vt-serif:Georgia,"Times New Roman",serif;
@@ -408,10 +408,6 @@
   <a class="cat-tab" href="gym.html">
     <span class="cat-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 9v6M17.5 9v6M3 10.5v3M21 10.5v3M6.5 12h11"/></svg></span>
     <span class="cat-tab-label">Fitness</span>
-  </a>
-  <a class="cat-tab" href="fuel.html">
-    <span class="cat-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3v6a2 2 0 1 0 4 0V3"/><path d="M8 9v12"/><path d="M16 3c2 1 3 3 3 6s-1 5-3 6"/><path d="M16 3v18"/></svg></span>
-    <span class="cat-tab-label">Fuel</span>
   </a>
   <a class="cat-tab" href="peak.html">
     <span class="cat-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20 9 8l4 6 2-3 6 9Z"/></svg></span>

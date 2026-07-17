@@ -81,9 +81,6 @@ body.topbar-modal-open { overflow: hidden; touch-action: none; }
   <a href="gym.html" class="bottombar-tab" data-page="fitness">
     <span class="bottombar-tab-icon">💪</span><span>Fitness</span>
   </a>
-  <a href="fuel.html" class="bottombar-tab" data-page="fuel">
-    <span class="bottombar-tab-icon">🍽️</span><span>Fuel</span>
-  </a>
   <a href="peak.html" class="bottombar-tab" data-page="peak">
     <span class="bottombar-tab-icon">🏔️</span><span>Peak</span>
   </a>
@@ -110,7 +107,6 @@ body.topbar-modal-open { overflow: hidden; touch-action: none; }
     if (p.endsWith('finance.html')) return 'finance';
     if (p.endsWith('health.html')) return 'health';
     if (p.endsWith('gym.html')) return 'fitness';
-    if (p.endsWith('fuel.html')) return 'fuel';
     if (p.endsWith('peak.html')) return 'peak';
     if (p.endsWith('train.html')) return 'train';
     if (p.endsWith('notes.html')) return 'notes';
