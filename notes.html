@@ -5,18 +5,20 @@
 <script src="landing-guard.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="vitality-bridge.js"></script>
+<script src="obsidian-sync.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/easymde/dist/easymde.min.css">
+<script src="https://unpkg.com/easymde/dist/easymde.min.js"></script>
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <meta name="theme-color" content="#050506">
 <link rel="icon" type="image/webp" href="images/Index Landing Page.webp">
 <link rel="apple-touch-icon" href="images/Index Landing Page.webp">
-<title>Vee</title>
+<title>Notes</title>
 <script src="topbar.js" defer></script>
 <style>
-  /* Vee — the mentor, sealed. Ported from the Patron "Nova · AI Mentor" chat.
-     A sealed tile has no network, so Nova's live LLM chat can't run here.
-     What survives offline is the heart of it: a "drop a thought, nothing gets
-     lost" void + the mentor's reflection prompts. Reskinned to Vitality mint,
-     no external assets, persisting through the dashboard bridge (window.Vitality). */
+  /* Notes — Obsidian-backed notes app. Reskin of the former "Vee" sealed
+     tile: same Vitality mint dark theme, now backed by a real note model
+     (title/body/images) with a Markdown body so it maps 1:1 onto Obsidian
+     .md files via the Local REST API bridge (obsidian-sync.js). */
   :root{
     --bg:#050506;--surface:#0e0e11;--border:#1d1d22;--brand:#6EE7B7;
     --brand-soft:rgba(110,231,183,.08);--brand-line:rgba(110,231,183,.35);
@@ -29,101 +31,520 @@
   *{box-sizing:border-box}
   html,body{margin:0;height:100%}
   body{background:var(--bg);color:var(--fg);font:15px/1.5 var(--font-display);display:flex;justify-content:center;padding:40px 20px}
-  .shell{width:100%;max-width:620px}
+  .shell{width:100%;max-width:620px;display:flex;flex-direction:column}
   .header{display:flex;align-items:center;gap:14px;margin-bottom:22px}
   .orb{width:44px;height:44px;flex-shrink:0;border-radius:50%;
     background:radial-gradient(circle at 35% 30%,#c8ffe8,var(--brand) 46%,#2b8f6b 100%);
     box-shadow:0 0 26px rgba(110,231,183,.35);animation:orbBreathe 3.6s ease-in-out infinite}
   @keyframes orbBreathe{0%,100%{transform:scale(1);opacity:.92}50%{transform:scale(1.06);opacity:1}}
   @media(prefers-reduced-motion:reduce){.orb{animation:none}}
+  .headerText{flex:1;min-width:0}
   .title{font-size:24px;font-weight:600;letter-spacing:-.01em;margin:0}
   .subtitle{color:var(--muted);font-family:var(--font-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;margin:5px 0 0}
-  .card{border:1px solid var(--border);border-radius:16px;background:var(--surface);padding:18px}
-  .cardName{font-family:var(--font-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:14px}
-  .draft{width:100%;min-height:96px;resize:vertical;background:var(--bg);border:1px solid var(--border);color:var(--fg);border-radius:var(--radius-md);padding:13px 15px;font:inherit;line-height:1.55}
-  .draft:focus{outline:none;border-color:var(--brand)}
-  .draft::placeholder{color:#55555c}
-  .hint{color:var(--neg);font-size:12px;font-family:var(--font-mono);min-height:14px;margin:6px 2px 0}
-  .composerRow{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:10px}
-  .prompts{display:flex;flex-wrap:wrap;gap:8px;flex:1;min-width:0}
-  .prompt{font-size:12.5px;color:var(--muted-strong);background:var(--bg);border:1px solid var(--border);padding:7px 13px;border-radius:var(--radius-pill);cursor:pointer;transition:border-color var(--duration),color var(--duration)}
-  .prompt:hover{border-color:var(--brand);color:var(--fg)}
-  .btn{border:1px solid var(--border);background:var(--bg);color:var(--fg);border-radius:10px;padding:10px 16px;font:inherit;cursor:pointer}
-  .btn-primary{background:var(--brand);color:#04140d;border:none;font-weight:600}
-  .voidHead{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin:28px 0 0}
-  .sectionTitle{font-weight:600;font-size:17px;margin:0}
-  .count{font-family:var(--font-mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
-  .feed{display:flex;flex-direction:column;gap:8px;margin-top:12px}
-  .note{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:13px 15px;border:1px solid var(--border);border-left:3px solid var(--brand-line);border-radius:var(--radius-md);background:var(--surface)}
-  .noteBody{min-width:0}
-  .noteText{margin:0;font-size:14.5px;line-height:1.55;white-space:pre-wrap;word-break:break-word}
+  .gearBtn{background:transparent;border:1px solid var(--border);color:var(--muted-strong);width:38px;height:38px;border-radius:50%;cursor:pointer;font-size:16px;flex-shrink:0}
+  .gearBtn:hover{border-color:var(--brand);color:var(--fg)}
+  .searchWrap{margin-bottom:16px}
+  .searchInput{width:100%;background:var(--surface);border:1px solid var(--border);color:var(--fg);border-radius:var(--radius-pill);padding:11px 16px;font:inherit}
+  .searchInput:focus{outline:none;border-color:var(--brand)}
+  .searchInput::placeholder{color:#55555c}
+  .list{display:flex;flex-direction:column;gap:8px;order:1}
+  .empty{color:var(--muted);font-size:13px;padding:24px 0;text-align:center}
+  .noteRow{display:flex;align-items:flex-start;gap:12px;padding:14px 15px;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--surface);cursor:pointer;transition:border-color var(--duration)}
+  .noteRow:hover{border-color:var(--brand-line)}
+  .noteRow.is-pinned{border-left:3px solid var(--brand-line)}
+  .noteBody{min-width:0;flex:1}
+  .noteTitleRow{display:flex;align-items:center;gap:6px}
+  .noteTitle{margin:0;font-size:15px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .noteObsBadge{font-size:11px;flex-shrink:0}
+  .notePreview{margin:4px 0 0;font-size:13px;color:var(--muted-strong);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .noteMeta{display:block;margin-top:8px;font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
-  .xBtn{background:transparent;border:1px solid var(--border);color:var(--muted);width:26px;height:26px;border-radius:50%;cursor:pointer;flex-shrink:0;line-height:1}
-  .xBtn:hover{color:var(--neg);border-color:var(--neg-line)}
-  .empty{color:var(--muted);font-size:13px;padding:14px 0}
+  .pinBtn{background:transparent;border:none;color:var(--muted);font-size:16px;cursor:pointer;flex-shrink:0;line-height:1;padding:2px}
+  .pinBtn.is-active{color:var(--brand)}
+  .composerDock{order:100;position:sticky;bottom:calc(72px + env(safe-area-inset-bottom) + 12px);margin-top:14px;z-index:10}
+  .composerDock.expanded{order:-1;position:sticky;top:0;bottom:auto;margin-top:0;margin-bottom:14px;z-index:10}
+  .composerCard{border:1px solid var(--border);border-radius:16px;background:var(--surface);padding:10px 12px;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+  .composerInput{width:100%;background:transparent;border:none;color:var(--fg);font:inherit;padding:6px 4px;resize:none}
+  .composerInput:focus{outline:none}
+  .composerCollapsed .composerInput{height:22px}
+  .composerExpandedArea{display:none}
+  .composerDock.expanded .composerExpandedArea{display:block}
+  .composerDock.expanded .composerInput{min-height:90px}
+  .composerRow{display:flex;justify-content:flex-end;gap:8px;margin-top:6px}
+  .btn{border:1px solid var(--border);background:var(--bg);color:var(--fg);border-radius:10px;padding:9px 15px;font:inherit;font-size:13px;cursor:pointer}
+  .btn-primary{background:var(--brand);color:#04140d;border:none;font-weight:600}
+  .btn-danger{color:var(--neg);border-color:var(--neg-line)}
+
+  /* ---- Full-screen editor ---- */
+  .editor-overlay{position:fixed;inset:0;background:var(--bg);z-index:60;display:none;flex-direction:column;padding:20px 20px calc(20px + env(safe-area-inset-bottom))}
+  .editor-overlay.show{display:flex}
+  .editor-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+  .ic-btn{background:transparent;border:1px solid var(--border);color:var(--muted-strong);width:38px;height:38px;border-radius:50%;cursor:pointer;font-size:16px}
+  .ic-btn:hover{border-color:var(--brand);color:var(--fg)}
+  .ic-btn.is-active{color:var(--brand);border-color:var(--brand-line)}
+  .editor-head-actions{display:flex;gap:8px}
+  .editor-title{width:100%;background:transparent;border:none;color:var(--fg);font-size:22px;font-weight:600;padding:6px 2px;margin-bottom:4px}
+  .editor-title:focus{outline:none}
+  .editor-title::placeholder{color:#55555c}
+  .editor-sync-status{font-family:var(--font-mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+  .editor-body-wrap{flex:1;min-height:0;display:flex;flex-direction:column}
+
+  /* ---- Settings modal ---- */
+  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;z-index:70;padding:20px}
+  .modal-bg.show{display:flex}
+  .modal{width:100%;max-width:440px;max-height:88vh;overflow-y:auto;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:22px}
+  .modal h3{margin:0 0 6px}
+  .modal-help{font-size:12px;color:var(--muted);line-height:1.5;margin:0 0 16px}
+  .modal-help a{color:var(--brand)}
+  .set-section{margin-bottom:16px}
+  .set-section h4{font-family:var(--font-mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
+  .set-row{display:flex;align-items:center;justify-content:space-between;font-size:14px}
+  .field{margin-bottom:10px}
+  .field label{display:block;font-size:11px;color:var(--muted-strong);margin-bottom:5px}
+  .field input,.field select{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--fg);border-radius:8px;padding:9px 11px;font:inherit}
+  .field input:focus,.field select:focus{outline:none;border-color:var(--brand)}
+  .set-actions{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+  .set-test-result{font-size:12px;color:var(--muted-strong)}
+  .modal-actions{display:flex;justify-content:flex-end;gap:8px}
+
+  /* ---- EasyMDE dark theme override ---- */
+  .EasyMDEContainer{flex:1;min-height:0;display:flex;flex-direction:column}
+  .EasyMDEContainer .CodeMirror{flex:1;background:var(--surface);border:1px solid var(--border);color:var(--fg);border-radius:0 0 var(--radius-md) var(--radius-md);font-size:14.5px}
+  .CodeMirror-cursor{border-left-color:var(--fg)}
+  .editor-toolbar{background:var(--surface);border:1px solid var(--border);border-bottom:none;border-radius:var(--radius-md) var(--radius-md) 0 0}
+  .editor-toolbar a{color:var(--muted-strong)!important}
+  .editor-toolbar a.active,.editor-toolbar a:hover{background:var(--track);border-color:var(--border)}
+  .editor-toolbar i.separator{border-left:1px solid var(--border);border-right:none}
+  .editor-preview{background:var(--surface);color:var(--fg)}
+  .editor-preview img{max-width:100%;border-radius:8px}
+  .CodeMirror-selected{background:var(--brand-soft)!important}
 </style>
 </head>
 <body>
 <main><div class="shell" id="app"></div></main>
+
+<div class="editor-overlay" id="editorOverlay">
+  <div class="editor-head">
+    <button class="ic-btn" id="edBack" title="Back" aria-label="Back">←</button>
+    <div class="editor-head-actions">
+      <button class="ic-btn" id="edPin" title="Pin" aria-label="Pin note">📌</button>
+      <button class="ic-btn" id="edImage" title="Insert image" aria-label="Insert image">🖼️</button>
+      <button class="ic-btn" id="edDelete" title="Delete" aria-label="Delete note">🗑️</button>
+    </div>
+  </div>
+  <input class="editor-title" id="edTitle" placeholder="Title" maxlength="200" />
+  <div class="editor-sync-status" id="edSyncStatus"></div>
+  <div class="editor-body-wrap"><textarea id="edBody"></textarea></div>
+  <input type="file" id="edImageFile" accept="image/*" style="display:none">
+</div>
+
+<div class="modal-bg" id="setModalBg">
+  <div class="modal">
+    <h3>Obsidian Sync</h3>
+    <p class="modal-help">Requires the free "Local REST API" community plugin, installed in Obsidian and running while Obsidian is open on this device — sync only works from the machine/network where Obsidian is reachable.</p>
+    <div class="set-section">
+      <label class="set-row"><span>Enable sync</span><input type="checkbox" id="setEnabled"></label>
+    </div>
+    <div class="set-section">
+      <h4>Connection</h4>
+      <div class="field"><label>Host</label><input type="text" id="setHost" placeholder="127.0.0.1"></div>
+      <div class="field"><label>Port</label><input type="number" id="setPort" placeholder="27123"></div>
+      <div class="field"><label>Protocol</label>
+        <select id="setProtocol"><option value="http">http</option><option value="https">https</option></select>
+      </div>
+      <div class="field"><label>API Key</label><input type="password" id="setApiKey" placeholder="Paste from the plugin's settings tab"></div>
+      <div class="field"><label>Vault folder</label><input type="text" id="setFolder" placeholder="AppNotes"></div>
+    </div>
+    <div class="set-actions">
+      <button class="btn" id="setTest">Test connection</button>
+      <span class="set-test-result" id="setTestResult"></span>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" id="setClose">Cancel</button>
+      <button class="btn btn-primary" id="setSave">Save</button>
+    </div>
+  </div>
+</div>
+
 <script>
-/* Vee — offline notes / journal void. No network and no browser storage:
-   everything is kept through the dashboard bridge (window.Vitality). */
-const PROMPTS=[
-  "What's on your mind right now?",
-  'What went well today?',
-  "What are you avoiding?",
-  'One thing you are grateful for.',
-  'What would make tomorrow easier?'
-];
-let notes=[];
 const $=id=>document.getElementById(id);
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-function persist(){window.Vitality.save(notes);}
 function when(ts){const d=new Date(ts);return d.toLocaleDateString(undefined,{month:'short',day:'numeric'})+' · '+d.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'});}
-function newId(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+function newId(){return 'n'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
 
-function headerHtml(){return '<header class="header"><div class="orb" aria-hidden="true"></div><div><h1 class="title">Vee</h1><p class="subtitle">the void · nothing gets lost</p></div></header>';}
+let notes=[];
+let currentNoteId=null;
+let mde=null;
+let searchQuery='';
+let composerExpanded=false;
+let saveTimer=null;
+let syncTimer=null;
+let suppressChange=false;
+
+function persist(){window.Vitality.save(notes);}
+
+// ---------- One-time migration from the old "Vee" plain-text thoughts ----------
+async function migrateFromVee(){
+  if(localStorage.getItem('notes_migrated_from_vee'))return;
+  localStorage.setItem('notes_migrated_from_vee','1');
+  if(notes.length)return;
+  try{
+    if(!window.supabase)return;
+    const supa=window.supabase.createClient(
+      'https://ubhjdibldkknviezrjys.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InViaGpkaWJsZGtrbnZpZXpyanlzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3NzAyNjEsImV4cCI6MjA5OTM0NjI2MX0.ODgzRHVYLEaDCUBXmmSd3oENXlSlarRYVERagHbVCK0'
+    );
+    const {data,error}=await supa.from('app_state').select('data').eq('key','vitality_vee').maybeSingle();
+    if(error||!data||!Array.isArray(data.data)||!data.data.length)return;
+    const migrated=data.data.map(t=>({
+      id:newId(),title:'',body:t.text||'',images:[],pinned:false,
+      createdAt:new Date(t.ts||Date.now()).toISOString(),
+      updatedAt:new Date(t.ts||Date.now()).toISOString(),
+      obsidian:{path:null,lastSyncedAt:null,remoteMtime:null},
+    }));
+    notes=migrated.concat(notes);
+    persist();
+  }catch(e){/* migration is best-effort; never block the app */}
+}
+
+// ---------- List rendering ----------
+function previewText(body){
+  return (body||'')
+    .replace(/!\[\]\(attachment:[a-zA-Z0-9]+\)/g,'')
+    .replace(/!\[\[[^\]]*\]\]/g,'')
+    .replace(/!\[[^\]]*\]\([^)]*\)/g,'')
+    .replace(/\[(.*?)\]\([^)]*\)/g,'$1')
+    .replace(/[#>*_`~]/g,'')
+    .replace(/\s+/g,' ')
+    .trim();
+}
+function sortedFilteredNotes(){
+  const q=searchQuery.trim().toLowerCase();
+  let list=notes;
+  if(q)list=list.filter(n=>(n.title||'').toLowerCase().indexOf(q)!==-1||(n.body||'').toLowerCase().indexOf(q)!==-1);
+  return list.slice().sort((a,b)=>{
+    if(!!a.pinned!==!!b.pinned)return a.pinned?-1:1;
+    return new Date(b.updatedAt||0)-new Date(a.updatedAt||0);
+  });
+}
+function noteRowHtml(n){
+  const title=esc(n.title||'Untitled');
+  const preview=esc(previewText(n.body).slice(0,90));
+  const obsBadge=(n.obsidian&&n.obsidian.path)?'<span class="noteObsBadge" title="Linked to Obsidian">🔗</span>':'';
+  return '<div class="noteRow'+(n.pinned?' is-pinned':'')+'" data-id="'+n.id+'">'
+    +'<button class="pinBtn'+(n.pinned?' is-active':'')+'" data-pin="'+n.id+'" title="'+(n.pinned?'Unpin':'Pin')+'">📌</button>'
+    +'<div class="noteBody"><div class="noteTitleRow"><p class="noteTitle">'+title+'</p>'+obsBadge+'</div>'
+    +'<p class="notePreview">'+(preview||'No additional text')+'</p>'
+    +'<span class="noteMeta">'+when(n.updatedAt||n.createdAt||Date.now())+'</span></div>'
+    +'</div>';
+}
+function listInner(){
+  const list=sortedFilteredNotes();
+  if(!list.length)return '<p class="empty">'+(searchQuery?'No notes match your search.':'No notes yet — start typing below.')+'</p>';
+  return list.map(noteRowHtml).join('');
+}
+function headerHtml(){
+  return '<header class="header"><div class="orb" aria-hidden="true"></div>'
+    +'<div class="headerText"><h1 class="title">Notes</h1><p class="subtitle">synced with Obsidian</p></div>'
+    +'<button class="gearBtn" id="settingsBtn" title="Obsidian sync settings" aria-label="Settings">⚙️</button></header>';
+}
+function searchHtml(){
+  return '<div class="searchWrap"><input class="searchInput" id="searchInput" placeholder="Search notes…" value="'+esc(searchQuery)+'"></div>';
+}
 function composerHtml(){
-  const chips=PROMPTS.map((p,i)=>'<button class="prompt" data-prompt="'+i+'">'+esc(p)+'</button>').join('');
-  return '<section class="card"><span class="cardName">Drop a thought</span>'
-    +'<textarea class="draft" id="draft" placeholder="Say it here. Nothing gets lost — Vee keeps it."></textarea>'
-    +'<div class="hint" id="hint"></div>'
-    +'<div class="composerRow"><div class="prompts">'+chips+'</div><button class="btn btn-primary" id="drop">Drop</button></div></section>';
+  return '<div class="composerDock'+(composerExpanded?' expanded':'')+'" id="composerDock">'
+    +'<div class="composerCard">'
+    +'<textarea class="composerInput" id="composerInput" placeholder="New note…" rows="1"></textarea>'
+    +'<div class="composerExpandedArea"><div class="composerRow">'
+    +'<button class="btn" id="composerCancel">Cancel</button>'
+    +'<button class="btn btn-primary" id="composerSave">Add note</button>'
+    +'</div></div></div></div>';
 }
-function feedInner(){
-  if(!notes.length)return '<p class="empty">The void is empty. Drop your first thought — nothing gets lost.</p>';
-  return notes.slice().sort((a,b)=>b.ts-a.ts).map(n=>
-    '<div class="note"><div class="noteBody"><p class="noteText">'+esc(n.text)+'</p><span class="noteMeta">'+when(n.ts)+'</span></div>'
-    +'<button class="xBtn" data-del="'+n.id+'" title="Remove">×</button></div>'
-  ).join('');
-}
-function voidHtml(){return '<div class="voidHead"><h2 class="sectionTitle">The void</h2><span class="count" id="count"></span></div><div class="feed" id="feed"></div>';}
-function countText(){return notes.length?notes.length+(notes.length===1?' thought':' thoughts'):'empty';}
-function renderFeed(){$('feed').innerHTML=feedInner();$('count').textContent=countText();}
-function render(){$('app').innerHTML=headerHtml()+composerHtml()+voidHtml();renderFeed();}
-
-function drop(){
-  const el=$('draft'),text=(el.value||'').trim();
-  if(!text){$('hint').textContent='Write something first.';el.focus();return;}
-  notes.push({id:newId(),text,ts:Date.now()});
-  persist();el.value='';$('hint').textContent='';renderFeed();el.focus();
+function renderApp(){
+  const composerVal=$('composerInput')?$('composerInput').value:'';
+  $('app').innerHTML=headerHtml()+searchHtml()+'<div class="list" id="list">'+listInner()+'</div>'+composerHtml();
+  $('composerInput').value=composerVal;
+  autoGrowComposer();
 }
 
-document.addEventListener('click',e=>{
-  if(e.target.closest('#drop')){drop();return;}
-  const chip=e.target.closest('[data-prompt]');
-  if(chip){
-    const p=PROMPTS[Number(chip.getAttribute('data-prompt'))]||'';
-    const el=$('draft');el.value=el.value&&!/\n$/.test(el.value)?el.value+'\n'+p+'\n':p+'\n';
-    $('hint').textContent='';el.focus();el.selectionStart=el.selectionEnd=el.value.length;return;
+// ---------- Quick-add composer ----------
+function autoGrowComposer(){
+  const el=$('composerInput');if(!el)return;
+  el.style.height='auto';
+  el.style.height=Math.min(el.scrollHeight,260)+'px';
+}
+function expandComposer(){
+  if(composerExpanded)return;
+  composerExpanded=true;
+  $('composerDock').classList.add('expanded');
+  autoGrowComposer();
+}
+function collapseComposer(){
+  composerExpanded=false;
+  $('composerDock').classList.remove('expanded');
+  $('composerInput').value='';
+  autoGrowComposer();
+}
+function saveComposer(){
+  const raw=$('composerInput').value;
+  const text=raw.trim();
+  if(!text){collapseComposer();return;}
+  const lines=text.split('\n');
+  const title=lines[0].slice(0,120);
+  const body=lines.slice(1).join('\n').trim();
+  const now=new Date().toISOString();
+  const note={id:newId(),title,body,pinned:false,images:[],createdAt:now,updatedAt:now,obsidian:{path:null,lastSyncedAt:null,remoteMtime:null}};
+  notes.unshift(note);
+  persist();
+  collapseComposer();
+  renderApp();
+  scheduleSyncPush(note);
+}
+
+// ---------- Editor ----------
+function ensureEditor(){
+  if(mde)return mde;
+  mde=new EasyMDE({
+    element:$('edBody'),
+    spellChecker:false,
+    autofocus:false,
+    status:false,
+    toolbar:['bold','italic','heading','|','quote','unordered-list','ordered-list','|','link',
+      {name:'image',action:function(){triggerImagePick();},className:'fa fa-picture-o',title:'Insert image'},
+      '|','preview'],
+    previewRender:function(plainText){
+      const note=notes.find(n=>n.id===currentNoteId);
+      const images=(note&&note.images)||[];
+      const resolved=plainText.replace(/!\[\]\(attachment:([a-zA-Z0-9]+)\)/g,function(m,id){
+        const img=images.find(i=>i.id===id);
+        return img?'![]('+img.dataUrl+')':m;
+      });
+      return mde.markdown(resolved);
+    },
+  });
+  mde.codemirror.on('change',()=>{
+    if(suppressChange)return;
+    clearTimeout(saveTimer);
+    saveTimer=setTimeout(saveCurrentNoteFromEditor,300);
+  });
+  return mde;
+}
+function syncStatusText(note){
+  const cfg=window.ObsidianSync&&window.ObsidianSync.getConfig();
+  if(!cfg||!cfg.enabled)return 'Obsidian sync is off';
+  if(!note.obsidian||!note.obsidian.lastSyncedAt)return 'Not synced yet';
+  return 'Synced '+when(note.obsidian.lastSyncedAt);
+}
+function openEditor(id){
+  const note=notes.find(n=>n.id===id);
+  if(!note)return;
+  currentNoteId=id;
+  ensureEditor();
+  suppressChange=true;
+  $('edTitle').value=note.title||'';
+  mde.value(note.body||'');
+  setTimeout(()=>{suppressChange=false;},0);
+  $('edPin').classList.toggle('is-active',!!note.pinned);
+  $('edSyncStatus').textContent=syncStatusText(note);
+  $('editorOverlay').classList.add('show');
+  document.body.style.overflow='hidden';
+}
+function closeEditor(){
+  $('editorOverlay').classList.remove('show');
+  document.body.style.overflow='';
+  currentNoteId=null;
+  renderApp();
+}
+function saveCurrentNoteFromEditor(){
+  const note=notes.find(n=>n.id===currentNoteId);
+  if(!note)return;
+  note.title=$('edTitle').value.slice(0,200);
+  note.body=mde.value();
+  note.updatedAt=new Date().toISOString();
+  persist();
+  scheduleSyncPush(note);
+}
+function triggerImagePick(){$('edImageFile').click();}
+function fileToDataUrl(file){return new Promise(resolve=>{const r=new FileReader();r.onload=e=>resolve(e.target.result);r.onerror=()=>resolve(null);r.readAsDataURL(file);});}
+function compressDataUrl(dataUrl,maxDim,quality){
+  maxDim=maxDim||1080;quality=quality==null?0.75:quality;
+  return new Promise(resolve=>{
+    const img=new Image();
+    img.onload=()=>{
+      let w=img.naturalWidth||img.width,h=img.naturalHeight||img.height;
+      if(w>maxDim||h>maxDim){if(w>=h){h=Math.round(h*(maxDim/w));w=maxDim;}else{w=Math.round(w*(maxDim/h));h=maxDim;}}
+      const c=document.createElement('canvas');c.width=w;c.height=h;
+      c.getContext('2d').drawImage(img,0,0,w,h);
+      try{resolve(c.toDataURL('image/jpeg',quality));}catch(e){resolve(dataUrl);}
+    };
+    img.onerror=()=>resolve(dataUrl);
+    img.src=dataUrl;
+  });
+}
+async function handleImageFile(file){
+  const note=notes.find(n=>n.id===currentNoteId);
+  if(!note||!file)return;
+  const raw=await fileToDataUrl(file);
+  if(!raw)return;
+  const compressed=await compressDataUrl(raw);
+  const id='img'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+  note.images=note.images||[];
+  note.images.push({id,dataUrl:compressed});
+  mde.codemirror.replaceSelection('![](attachment:'+id+')');
+  mde.codemirror.focus();
+  saveCurrentNoteFromEditor();
+}
+function deleteCurrentNote(){
+  const note=notes.find(n=>n.id===currentNoteId);
+  if(!note)return;
+  if(!confirm('Delete this note? This cannot be undone.'))return;
+  if(window.ObsidianSync&&note.obsidian&&note.obsidian.path)ObsidianSync.deleteNote(note).catch(()=>{});
+  notes=notes.filter(n=>n.id!==currentNoteId);
+  persist();
+  closeEditor();
+}
+function togglePinCurrent(){
+  const note=notes.find(n=>n.id===currentNoteId);
+  if(!note)return;
+  note.pinned=!note.pinned;
+  note.updatedAt=new Date().toISOString();
+  $('edPin').classList.toggle('is-active',note.pinned);
+  persist();
+  scheduleSyncPush(note);
+}
+function togglePinById(id){
+  const note=notes.find(n=>n.id===id);
+  if(!note)return;
+  note.pinned=!note.pinned;
+  note.updatedAt=new Date().toISOString();
+  persist();
+  renderApp();
+  scheduleSyncPush(note);
+}
+
+// ---------- Obsidian sync ----------
+function scheduleSyncPush(note){
+  if(!window.ObsidianSync)return;
+  const cfg=ObsidianSync.getConfig();
+  if(!cfg.enabled)return;
+  clearTimeout(syncTimer);
+  syncTimer=setTimeout(async()=>{
+    const reachable=await ObsidianSync.testConnection();
+    if(!reachable)return;
+    const res=await ObsidianSync.pushNote(note);
+    if(res.ok){
+      note.body=res.body;
+      note.obsidian=Object.assign({},note.obsidian,{path:res.path,lastSyncedAt:res.syncedAt});
+      persist();
+      if(currentNoteId===note.id)$('edSyncStatus').textContent=syncStatusText(note);
+    }
+  },2000);
+}
+async function syncNowAll(){
+  if(!window.ObsidianSync)return;
+  const cfg=ObsidianSync.getConfig();
+  if(!cfg.enabled){alert('Enable Obsidian sync in Settings first.');return;}
+  const reachable=await ObsidianSync.testConnection();
+  if(!reachable){alert('Could not reach Obsidian. Make sure Obsidian is open on this device with the Local REST API plugin running.');return;}
+  for(const note of notes){
+    const dirty=!note.obsidian||!note.obsidian.lastSyncedAt||new Date(note.updatedAt)>new Date(note.obsidian.lastSyncedAt);
+    if(!dirty)continue;
+    const res=await ObsidianSync.pushNote(note);
+    if(res.ok){note.body=res.body;note.obsidian=Object.assign({},note.obsidian,{path:res.path,lastSyncedAt:res.syncedAt});}
   }
-  const del=e.target.closest('[data-del]');
-  if(del){const id=del.getAttribute('data-del');notes=notes.filter(n=>n.id!==id);persist();renderFeed();}
-});
-document.addEventListener('input',e=>{if(e.target.id==='draft'&&$('hint').textContent)$('hint').textContent='';});
-document.addEventListener('keydown',e=>{if(e.target.id==='draft'&&(e.metaKey||e.ctrlKey)&&e.key==='Enter'){e.preventDefault();drop();}});
+  const pullRes=await ObsidianSync.pullAll(notes);
+  if(pullRes.ok)notes=pullRes.notes;
+  persist();
+  renderApp();
+  if(currentNoteId){
+    const note=notes.find(n=>n.id===currentNoteId);
+    if(note)$('edSyncStatus').textContent=syncStatusText(note);
+  }
+}
 
-(async()=>{const d=await window.Vitality.load();notes=Array.isArray(d)?d:[];render();})();
+// ---------- Settings modal ----------
+function openSettings(){
+  const cfg=ObsidianSync.getConfig();
+  $('setEnabled').checked=cfg.enabled;
+  $('setHost').value=cfg.host;
+  $('setPort').value=cfg.port;
+  $('setProtocol').value=cfg.protocol;
+  $('setApiKey').value=cfg.apiKey;
+  $('setFolder').value=cfg.folder;
+  $('setTestResult').textContent='';
+  $('setModalBg').classList.add('show');
+}
+function closeSettings(){$('setModalBg').classList.remove('show');}
+function readSettingsForm(){
+  return{
+    enabled:$('setEnabled').checked,
+    host:$('setHost').value.trim()||'127.0.0.1',
+    port:Number($('setPort').value)||27123,
+    protocol:$('setProtocol').value,
+    apiKey:$('setApiKey').value.trim(),
+    folder:$('setFolder').value.trim()||'AppNotes',
+  };
+}
+
+// ---------- Event wiring ----------
+document.addEventListener('click',e=>{
+  if(e.target.closest('#settingsBtn')){openSettings();return;}
+  if(e.target.closest('#composerCancel')){collapseComposer();return;}
+  if(e.target.closest('#composerSave')){saveComposer();return;}
+  const pin=e.target.closest('[data-pin]');
+  if(pin){togglePinById(pin.getAttribute('data-pin'));return;}
+  const row=e.target.closest('.noteRow');
+  if(row){openEditor(row.getAttribute('data-id'));return;}
+  if(e.target.closest('#edBack')){closeEditor();return;}
+  if(e.target.closest('#edPin')){togglePinCurrent();return;}
+  if(e.target.closest('#edImage')){triggerImagePick();return;}
+  if(e.target.closest('#edDelete')){deleteCurrentNote();return;}
+  if(e.target.closest('#setClose')){closeSettings();return;}
+  if(e.target===$('setModalBg')){closeSettings();return;}
+  if(e.target.closest('#setSave')){ObsidianSync.setConfig(readSettingsForm());closeSettings();renderApp();return;}
+  if(e.target.closest('#setTest')){
+    ObsidianSync.setConfig(readSettingsForm());
+    $('setTestResult').textContent='Testing…';
+    ObsidianSync.testConnection().then(ok=>{$('setTestResult').textContent=ok?'✅ Connected':'❌ Not reachable';});
+    return;
+  }
+});
+document.addEventListener('input',e=>{
+  if(e.target.id==='searchInput'){searchQuery=e.target.value;$('list').innerHTML=listInner();return;}
+  if(e.target.id==='composerInput'){autoGrowComposer();return;}
+  if(e.target.id==='edTitle'){clearTimeout(saveTimer);saveTimer=setTimeout(saveCurrentNoteFromEditor,300);return;}
+});
+document.addEventListener('focusin',e=>{if(e.target.id==='composerInput')expandComposer();});
+document.addEventListener('keydown',e=>{
+  if(e.target.id==='composerInput'&&(e.metaKey||e.ctrlKey)&&e.key==='Enter'){e.preventDefault();saveComposer();}
+  if(e.key==='Escape'){
+    if($('editorOverlay').classList.contains('show')){closeEditor();return;}
+    if($('setModalBg').classList.contains('show')){closeSettings();return;}
+  }
+});
+$('edImageFile').addEventListener('change',e=>{
+  const file=e.target.files[0];
+  if(file)handleImageFile(file);
+  e.target.value='';
+});
+
+// ---------- Boot ----------
+(async()=>{
+  const d=await window.Vitality.load();
+  notes=Array.isArray(d)?d:[];
+  await migrateFromVee();
+  renderApp();
+  // Opportunistic, silent pull on load if sync is already enabled+reachable.
+  if(window.ObsidianSync){
+    const cfg=ObsidianSync.getConfig();
+    if(cfg.enabled){
+      const reachable=await ObsidianSync.testConnection();
+      if(reachable){
+        const pullRes=await ObsidianSync.pullAll(notes);
+        if(pullRes.ok){notes=pullRes.notes;persist();renderApp();}
+      }
+    }
+  }
+})();
 </script>
 </body>
 </html>
