@@ -90,8 +90,8 @@ body.topbar-modal-open { overflow: hidden; touch-action: none; }
   <a href="train.html" class="bottombar-tab" data-page="train">
     <span class="bottombar-tab-icon">🏃</span><span>Train</span>
   </a>
-  <a href="vee.html" class="bottombar-tab" data-page="vee">
-    <span class="bottombar-tab-icon">💬</span><span>Vee</span>
+  <a href="notes.html" class="bottombar-tab" data-page="notes">
+    <span class="bottombar-tab-icon">📝</span><span>Notes</span>
   </a>
   <a href="vitals.html" class="bottombar-tab" data-page="vitals">
     <span class="bottombar-tab-icon">❤️</span><span>Vitals</span>
@@ -113,7 +113,7 @@ body.topbar-modal-open { overflow: hidden; touch-action: none; }
     if (p.endsWith('fuel.html')) return 'fuel';
     if (p.endsWith('peak.html')) return 'peak';
     if (p.endsWith('train.html')) return 'train';
-    if (p.endsWith('vee.html')) return 'vee';
+    if (p.endsWith('notes.html')) return 'notes';
     if (p.endsWith('vitals.html')) return 'vitals';
     if (p.endsWith('brand.html')) return 'brand';
     return 'main';

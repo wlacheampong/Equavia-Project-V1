@@ -1,5 +1,5 @@
 // =============================================================
-// Bridge for the "sealed" Vitality tiles (fuel/peak/train/vee/vitals.html).
+// Bridge for the "sealed" Vitality tiles (fuel/peak/train/notes/vitals.html).
 // Each tile is deliberately network- and storage-agnostic -- it just calls
 // window.Vitality.load()/save() and expects "the dashboard" to handle
 // persistence. This is that dashboard: it backs onto the same Supabase
