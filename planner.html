@@ -6,6 +6,9 @@
 <meta name="theme-color" content="#0a0a0b">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Planner</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="sync.js" defer></script>
+<script src="obsidian-sync.js"></script>
 <script src="topbar.js" defer></script>
 <script>
 (function () {
@@ -303,10 +306,1008 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
 @media (max-width: 720px) {
   .shop-list-head { display: none; }
 }
+.dr-modal-bg {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.65); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  z-index: 200; align-items: center; justify-content: center;
+  padding: 24px;
+}
+.dr-modal-bg.show { display: flex; }
+.dr-modal {
+  width: 100%; max-width: 340px;
+  background: rgba(30, 30, 32, 0.92);
+  backdrop-filter: blur(24px) saturate(1.2);
+  -webkit-backdrop-filter: blur(24px) saturate(1.2);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 16px;
+  padding: 22px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.45);
+}
+.dr-modal h3 { margin: 0 0 16px; font-size: 16px; font-weight: 700; color: var(--text-primary); }
+.dr-field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+.dr-field label {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--text-tertiary);
+}
+.dr-field input[type="time"],
+.dr-field input[type="text"],
+.dr-field input[type="date"],
+.dr-field input[type="number"],
+.dr-field textarea {
+  padding: 11px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(0,0,0,0.28);
+  color: var(--text-primary);
+  font-family: inherit; font-size: 15px;
+  color-scheme: dark;
+}
+.dr-field textarea { font-size: 13px; resize: vertical; }
+.dr-field input:focus,
+.dr-field textarea:focus {
+  outline: none; border-color: rgba(255,255,255,0.40);
+}
+.dr-field input:disabled,
+.dr-field textarea:disabled {
+  opacity: 0.55; cursor: not-allowed;
+}
+.dr-modal-actions { display: flex; gap: 8px; margin-top: 18px; }
+.dr-modal-actions button {
+  flex: 1; padding: 11px; border-radius: 10px; cursor: pointer;
+  font-family: inherit; font-size: 13px; font-weight: 700;
+  -webkit-tap-highlight-color: transparent;
+}
+.dr-btn-save { border: none; background: linear-gradient(180deg, #ffffff 0%, #e8e5dd 100%); color: #0a0a0b; }
+.dr-btn-cancel { border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.04); color: var(--text-primary); }
+.dr-reset-link {
+  display: block; text-align: center; margin-top: 14px;
+  font-size: 12px; color: var(--text-tertiary); cursor: pointer;
+  text-decoration: underline;
+}
+.dr-reset-link:hover { color: var(--text-secondary); }
+
+
+.gm-card {
+  position: relative;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 14px;
+  backdrop-filter: blur(24px) saturate(1.2);
+  -webkit-backdrop-filter: blur(24px) saturate(1.2);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.45);
+  transition: background 0.4s;
+  overflow: hidden;
+}
+.card.gm-all-done::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(circle at 50% 0%, rgba(107,227,164,0.10), transparent 60%);
+  pointer-events: none;
+}
+.card.gm-all-done .gm-progress-num,
+.card.gm-all-done .gm-progress-label { color: var(--success); }
+
+.gm-header {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  flex-wrap: wrap; gap: 12px;
+  margin-bottom: 14px;
+  position: relative;
+}
+.gm-header-left { display: flex; flex-direction: column; }
+.gm-eyebrow {
+  font-size: 10.5px; font-weight: 700;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--text-tertiary);
+  margin-bottom: 6px;
+}
+.gm-progress-row { display: flex; align-items: baseline; gap: 6px; }
+.gm-progress-num {
+  font-size: 42px; font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.045em;
+  color: var(--text-primary);
+  line-height: 1;
+}
+.gm-progress-total {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  color: var(--text-tertiary);
+}
+.gm-progress-label {
+  font-size: 11px; font-weight: 600;
+  letter-spacing: 0.10em; text-transform: uppercase;
+  color: var(--text-tertiary);
+  margin-left: 4px;
+}
+.gm-tomorrow-sub { font-size: 12px; color: var(--text-tertiary); margin-top: 4px; }
+.gm-tomorrow-count {
+  font-family: var(--font-mono);
+  font-size: 11px; font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em; text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+.gm-card-tomorrow .gm-progress-row { display: none; }
+
+.gm-streak {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
+  color: var(--text-tertiary);
+  font-size: 11px; font-weight: 600;
+  letter-spacing: 0.10em; text-transform: uppercase;
+  transition: background 0.25s, color 0.25s, border-color 0.25s;
+}
+.gm-streak-icon { font-size: 13px; }
+.gm-streak-num {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.gm-streak.gm-streak-active {
+  background: rgba(242,192,99,0.10);
+  color: #F2C063;
+  border-color: rgba(242,192,99,0.32);
+}
+.gm-streak.gm-streak-active .gm-streak-icon {
+  filter: drop-shadow(0 0 6px rgba(242,192,99,0.6));
+}
+
+.gm-bar {
+  display: flex; gap: 4px;
+  height: 6px;
+  margin-bottom: 16px;
+}
+.gm-bar:empty { display: none; }
+.gm-bar-seg {
+  flex: 1;
+  background: rgba(255,255,255,0.06);
+  border-radius: 3px;
+  transition: background 0.3s, box-shadow 0.3s;
+}
+.gm-bar-seg-done {
+  background: #6BE3A4;
+  box-shadow: 0 0 6px rgba(107,227,164,0.40);
+}
+
+.goal-list { list-style: none; margin: 0; padding: 0; }
+.empty-state {
+  text-align: center;
+  font-size: 12px; font-style: italic;
+  color: var(--text-tertiary);
+  padding: 14px 0;
+}
+
+.gm-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 14px;
+  margin-bottom: 6px;
+  background: rgba(255,255,255,0.035);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 12px;
+  transition: background 0.2s, opacity 0.3s;
+  position: relative;
+}
+.gm-row:hover { background: rgba(255,255,255,0.06); }
+.gm-row.gm-row-done {
+  opacity: 0.45;
+  background: rgba(107,227,164,0.04);
+}
+.gm-row.gm-row-done .gm-text {
+  text-decoration: line-through;
+  text-decoration-color: rgba(255,255,255,0.4);
+}
+.gm-row.gm-row-queued {
+  background: rgba(242,192,99,0.10);
+  box-shadow: inset 3px 0 0 0 #F2C063;
+}
+.gm-row.gm-row-queued .gm-text { color: #FFE2A8; }
+.gm-row.is-drag-over { border-top: 2px solid #6BE3A4; }
+.gm-row.is-queue-flashing { animation: gm-queue-flash 0.48s ease-out; }
+@keyframes gm-queue-flash {
+  0%   { background: rgba(255,255,255,0.035); transform: scale(1); }
+  40%  { background: rgba(242,192,99,0.32); transform: scale(1.015); }
+  100% { background: rgba(255,255,255,0.035); transform: scale(1); }
+}
+
+.gm-handle {
+  width: 14px; flex-shrink: 0;
+  color: var(--text-tertiary);
+  font-weight: 700; font-size: 14px;
+  letter-spacing: -2px;
+  cursor: grab;
+  opacity: 0;
+  transition: opacity 0.2s;
+  user-select: none;
+}
+.gm-row:hover .gm-handle { opacity: 1; }
+.gm-handle:active { cursor: grabbing; }
+
+.gm-check {
+  appearance: none; -webkit-appearance: none;
+  width: 22px; height: 22px; flex-shrink: 0;
+  margin: 0;
+  border: 1.5px solid rgba(255,255,255,0.18);
+  background: rgba(0,0,0,0.28);
+  border-radius: 7px;
+  position: relative;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, box-shadow 0.25s;
+}
+.gm-check:checked {
+  background: #6BE3A4;
+  border-color: #6BE3A4;
+  box-shadow: 0 0 12px rgba(107,227,164,0.40);
+}
+.gm-check:checked::after {
+  content: '';
+  position: absolute; left: 6px; top: 2px;
+  width: 6px; height: 11px;
+  border: solid #0A0A0B;
+  border-width: 0 2.5px 2.5px 0;
+  transform: rotate(45deg);
+  animation: gm-check-pop 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes gm-check-pop {
+  from { transform: rotate(45deg) scale(0); }
+  to   { transform: rotate(45deg) scale(1); }
+}
+.gm-check:disabled { cursor: not-allowed; opacity: 0.55; }
+
+.gm-text {
+  flex: 1;
+  font-size: 14px;
+  color: var(--text-primary);
+  cursor: text;
+  outline: none;
+  border-radius: 4px;
+  padding: 2px 4px;
+  margin: -2px -4px;
+}
+.gm-text[contenteditable="true"] {
+  outline: 1px solid rgba(255,255,255,0.18);
+  background: rgba(0,0,0,0.28);
+}
+
+.gm-queue-btn {
+  border: 0; background: transparent;
+  color: var(--text-tertiary);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 6px;
+  opacity: 0.55;
+  transition: opacity 0.2s, color 0.2s, transform 0.1s;
+}
+.gm-queue-btn:hover { opacity: 1; }
+.gm-queue-btn.gm-queue-active {
+  color: #F2C063;
+  opacity: 1;
+  filter: drop-shadow(0 0 4px rgba(242,192,99,0.65));
+}
+.gm-queue-btn:disabled { cursor: not-allowed; opacity: 0.3; }
+
+.goal-delete {
+  border: 0; background: transparent;
+  color: var(--text-tertiary);
+  font-size: 18px;
+  cursor: pointer;
+  padding: 0 4px;
+  opacity: 0.5;
+  transition: opacity 0.2s, color 0.2s;
+}
+.gm-row:hover .goal-delete { opacity: 1; }
+.goal-delete:hover { color: var(--danger); }
+
+.gm-show-toggle {
+  width: 100%;
+  margin: 6px 0 0;
+  padding: 9px;
+  border: 1px dashed rgba(255,255,255,0.12);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text-tertiary);
+  font-family: inherit;
+  font-size: 11px; font-weight: 600;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+}
+.gm-show-toggle:hover { color: var(--text-primary); border-color: rgba(255,255,255,0.22); }
+
+.gm-push-btn {
+  width: 100%;
+  margin-top: 14px;
+  padding: 11px;
+  border: 1px dashed rgba(255,255,255,0.16);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--text-tertiary);
+  font-family: inherit;
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 0.10em; text-transform: uppercase;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
+}
+.gm-push-btn:hover {
+  color: var(--text-primary);
+  border-color: rgba(255,255,255,0.30);
+  border-style: solid;
+  background: rgba(255,255,255,0.04);
+}
+
+.goal-input-wrap.gm-input-wrap {
+  display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+.gm-input {
+  flex: 1; min-width: 0;
+  padding: 11px 14px;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  background: rgba(0,0,0,0.28);
+  color: var(--text-primary);
+  font-family: inherit; font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s, background 0.2s;
+}
+.gm-input::placeholder { color: var(--text-tertiary); }
+.gm-input:focus { border-color: rgba(255,255,255,0.28); background: rgba(0,0,0,0.36); }
+
+.gm-add {
+  padding: 11px 20px;
+  border: 0; border-radius: 12px;
+  background: linear-gradient(180deg, #FFFFFF 0%, #E8E5DD 100%);
+  color: #0A0A0B;
+  font-family: inherit; font-size: 13px; font-weight: 700;
+  cursor: pointer;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.9),
+    0 2px 8px rgba(0,0,0,0.35),
+    0 8px 22px rgba(0,0,0,0.25);
+  transition: transform 0.1s, filter 0.15s;
+}
+.gm-add:hover { filter: brightness(1.06); transform: translateY(-1px); }
+.gm-add:active { transform: translateY(0); }
+
+.gm-polish {
+  padding: 11px 18px;
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 12px;
+  background: rgba(255,255,255,0.04);
+  color: var(--text-primary);
+  font-family: inherit; font-size: 13px; font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.gm-polish:hover {
+  background: rgba(255,255,255,0.07);
+  border-color: rgba(255,255,255,0.18);
+}
+
+.gm-status {
+  flex-basis: 100%;
+  font-size: 11px;
+  color: var(--text-tertiary);
+  min-height: 14px;
+  margin-top: 4px;
+}
+.gm-status.gm-status-error { color: var(--danger); }
+
+@media (max-width: 480px) {
+  body { padding: max(20px, env(safe-area-inset-top)) 14px 50px; }
+  .gm-card { padding: 16px; }
+  .gm-progress-num { font-size: 36px; }
+}
+
+
+/* ===== Component 7: Goals (sidebar) ===== */
+.dgt-add-form { margin-bottom: 14px; display: flex; flex-direction: column; gap: 6px; }
+.dgt-add-form input,
+.dgt-add-form select {
+  padding: 8px 10px;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+  background: rgba(0,0,0,0.28);
+  color: var(--text-primary);
+  font-family: inherit; font-size: 12px;
+  outline: none;
+}
+.dgt-add-form button {
+  padding: 8px 10px;
+  border: 1px dashed rgba(255,255,255,0.16);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-tertiary);
+  font-family: inherit; font-size: 11px; font-weight: 700;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  cursor: pointer;
+}
+.dgt-add-form button:hover { color: var(--text-primary); border-color: rgba(255,255,255,0.3); }
+.dgt-empty { font-size: 11.5px; font-style: italic; color: var(--text-tertiary); padding: 6px 2px; }
+
+.dgt-goals { display: flex; flex-direction: column; gap: 14px; }
+.dgt-rank-group { display: flex; flex-direction: column; gap: 8px; }
+.dgt-rank-header {
+  font-size: 10.5px; font-weight: 700;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+.dgt-bar {
+  height: 5px; border-radius: 3px;
+  background: rgba(255,255,255,0.06);
+  overflow: hidden;
+}
+.dgt-bar-fill {
+  height: 100%; border-radius: 3px;
+  background: #E25D3A;
+  transition: width 0.4s ease;
+}
+.dgt-goal {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.06);
+  background: rgba(0,0,0,0.24);
+  position: relative;
+}
+.dgt-goal-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-right: 40px; }
+.dgt-goal-title { font-size: 12.5px; font-weight: 600; color: var(--text-primary); }
+.dgt-goal-rank-badge {
+  font-family: var(--font-mono);
+  font-size: 9.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+  color: #FFC7B8;
+  background: rgba(226,93,58,0.14);
+  border-radius: 5px;
+  padding: 2px 6px;
+  white-space: nowrap;
+}
+.dgt-goal-countdown {
+  font-family: var(--font-mono);
+  font-size: 10.5px; color: var(--text-secondary);
+  margin-top: 4px;
+}
+.dgt-goal-countdown.is-overdue { color: var(--danger); font-weight: 700; }
+.dgt-goal-value { font-family: var(--font-mono); font-size: 10.5px; color: var(--text-tertiary); }
+.dgt-goal-slider-row {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-top: 8px; margin-bottom: 2px;
+}
+.dgt-goal-slider {
+  width: 100%; display: block;
+  accent-color: #E25D3A;
+  cursor: pointer;
+}
+.dgt-goal-actions {
+  position: absolute; top: 8px; right: 8px;
+  display: flex; align-items: center; gap: 6px;
+  opacity: 0; transition: opacity 0.2s;
+}
+.dgt-goal:hover .dgt-goal-actions { opacity: 0.7; }
+.dgt-goal-actions:hover { opacity: 1; }
+.dgt-goal-edit, .dgt-goal-del {
+  border: 0; background: transparent; color: var(--text-tertiary);
+  font-size: 13px; cursor: pointer; padding: 0;
+}
+.dgt-goal-edit:hover { color: var(--text-primary); }
+.dgt-goal-del:hover { color: var(--danger); }
+
+/* ===== Component 8: Projects kanban ===== */
+.proj-header {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+  gap: 12px; margin-bottom: 16px;
+}
+.proj-title { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; color: var(--text-primary); }
+.proj-view-toggle {
+  display: flex; align-items: center; gap: 2px;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px; padding: 3px;
+}
+.proj-view-btn {
+  border: 0; background: transparent;
+  padding: 6px 10px; border-radius: 7px;
+  font-family: var(--font-mono);
+  font-size: 10.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+.proj-view-btn.is-active { background: rgba(226,93,58,0.14); color: #FFC7B8; }
+.proj-tools { display: flex; align-items: center; gap: 10px; }
+.proj-tool-btn {
+  border: 0; background: transparent; color: var(--text-tertiary);
+  cursor: pointer; padding: 4px; border-radius: 6px; font-size: 14px;
+  transition: color 0.2s;
+}
+.proj-tool-btn:hover { color: var(--text-secondary); }
+.proj-tool-btn:disabled { cursor: not-allowed; opacity: 0.35; }
+.proj-tool-btn.is-active { color: #FFC7B8; }
+.proj-search {
+  width: 0; opacity: 0; padding: 0; border: 0;
+  background: rgba(0,0,0,0.28); color: var(--text-primary);
+  font-family: inherit; font-size: 12px; border-radius: 8px;
+  transition: width 0.2s, opacity 0.2s, padding 0.2s;
+}
+.proj-search.is-open { width: 140px; opacity: 1; padding: 6px 10px; border: 1px solid rgba(255,255,255,0.1); }
+
+.proj-columns { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+@media (max-width: 640px) { .proj-columns { grid-template-columns: 1fr; } }
+.proj-columns.is-flat { grid-template-columns: 1fr; }
+.proj-col-label {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 10.5px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--text-tertiary); margin-bottom: 8px;
+}
+.proj-col-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+.proj-col[data-status="not-started"] .proj-col-label { color: var(--text-tertiary); }
+.proj-col[data-status="in-progress"] .proj-col-label { color: #7BA7E2; }
+.proj-col[data-status="done"]        .proj-col-label { color: var(--success); }
+
+.proj-card {
+  position: relative;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.03);
+  margin-bottom: 10px;
+}
+.proj-card[data-status="in-progress"] { border-color: rgba(123,167,226,0.30); background: rgba(123,167,226,0.05); }
+.proj-card[data-status="done"]        { border-color: rgba(107,227,164,0.30); background: rgba(107,227,164,0.05); }
+.proj-card-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.proj-card-title { font-size: 12.5px; font-weight: 600; color: var(--text-primary); }
+.proj-card-value { font-family: var(--font-mono); font-size: 10.5px; color: var(--text-tertiary); }
+.proj-card .dgt-bar { margin-top: 8px; }
+.proj-card-tag {
+  display: inline-block; margin-top: 8px;
+  padding: 2px 8px; border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.14);
+  font-family: var(--font-mono); font-size: 9px; font-weight: 700;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+.proj-card-tag[data-priority="high"]   { color: #FF9B8A; border-color: rgba(255,107,107,0.35); }
+.proj-card-tag[data-priority="medium"] { color: #F2C063; border-color: rgba(242,192,99,0.35); }
+.proj-card-tag[data-priority="low"]    { color: #8FDCC0; border-color: rgba(107,227,164,0.30); }
+.proj-card-del {
+  position: absolute; top: 8px; right: 8px;
+  border: 0; background: transparent; color: var(--text-tertiary);
+  font-size: 15px; cursor: pointer; opacity: 0; transition: opacity 0.2s;
+}
+.proj-card:hover .proj-card-del { opacity: 0.7; }
+.proj-card-del:hover { color: var(--danger); opacity: 1; }
+.proj-col-empty { font-size: 11.5px; font-style: italic; color: var(--text-tertiary); }
+
+.proj-gantt-stub {
+  padding: 26px; text-align: center;
+  font-size: 12px; font-style: italic; color: var(--text-tertiary);
+  border: 1px dashed rgba(255,255,255,0.1); border-radius: 12px;
+}
+
+.proj-add-toggle {
+  margin-top: 14px; width: 100%;
+  padding: 9px; border: 1px dashed rgba(255,255,255,0.14); border-radius: 10px;
+  background: transparent; color: var(--text-tertiary);
+  font-family: inherit; font-size: 11px; font-weight: 700;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  cursor: pointer;
+}
+.proj-add-toggle:hover { color: var(--text-primary); border-color: rgba(255,255,255,0.3); }
+.proj-add-form { margin-top: 10px; display: none; flex-wrap: wrap; gap: 8px; }
+.proj-add-form input, .proj-add-form select {
+  padding: 9px 11px; border: 1px solid rgba(255,255,255,0.08); border-radius: 10px;
+  background: rgba(0,0,0,0.28); color: var(--text-primary);
+  font-family: inherit; font-size: 12.5px; outline: none;
+}
+.proj-add-form input[type="text"] { flex: 1; min-width: 140px; }
+.proj-add-form button {
+  padding: 9px 16px; border: 0; border-radius: 10px;
+  background: linear-gradient(180deg, #FFFFFF 0%, #E8E5DD 100%);
+  color: #0A0A0B; font-family: inherit; font-size: 12.5px; font-weight: 700;
+  cursor: pointer;
+}
+
+/* ===== Component 9: Checklists + Quick Note (sidebar) ===== */
+.chk-card { margin-bottom: 12px; }
+.chk-head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.chk-icon { font-size: 15px; }
+.chk-name { font-size: 13.5px; font-weight: 700; color: var(--text-primary); flex: 1; }
+.chk-edit-toggle {
+  flex: 0 0 auto; border: 0; background: transparent; cursor: pointer; font-size: 12px;
+  color: var(--text-tertiary); padding: 4px 6px; border-radius: 8px; line-height: 1;
+  transition: background 0.2s, color 0.2s;
+}
+.chk-edit-toggle:hover { background: rgba(255,255,255,0.06); color: var(--text-primary); }
+.chk-edit-toggle.active { color: #7CD9A8; }
+
+.chk-items { display: flex; flex-direction: column; gap: 2px; }
+.chk-empty { font-size: 11.5px; color: var(--text-tertiary); padding: 4px 0 2px; }
+
+.chk-item-row { display: flex; align-items: flex-start; gap: 9px; padding: 5px 4px; border-radius: 8px; }
+.chk-item-row:hover { background: rgba(255,255,255,0.03); }
+
+.chk-checkbox {
+  flex: 0 0 auto; width: 16px; height: 16px; margin-top: 1px; position: relative;
+  border-radius: 5px; border: 1.5px solid rgba(255,255,255,0.25);
+  background: transparent; cursor: pointer; padding: 0;
+  transition: background 0.15s, border-color 0.15s;
+}
+.chk-checkbox:hover { border-color: rgba(255,255,255,0.45); }
+.chk-checkbox.checked { background: linear-gradient(180deg, #FFFFFF 0%, #E8E5DD 100%); border-color: transparent; }
+.chk-checkbox.checked::after {
+  content: '\2713'; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 800; color: #0A0A0B; line-height: 1;
+}
+
+.chk-item-text { font-size: 12.5px; color: var(--text-secondary); cursor: pointer; line-height: 1.4; word-break: break-word; }
+.chk-item-done .chk-item-text { color: var(--text-tertiary); text-decoration: line-through; opacity: 0.7; }
+
+.chk-item-notes { padding: 2px 4px 8px 29px; }
+.chk-notes-input {
+  width: 100%; min-height: 44px; resize: vertical; box-sizing: border-box;
+  padding: 7px 9px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(0,0,0,0.28); color: var(--text-primary);
+  font-family: inherit; font-size: 11.5px; outline: none;
+}
+
+.chk-item-editrow { display: flex; align-items: center; gap: 6px; padding: 3px 2px; }
+.chk-item-input {
+  flex: 1; min-width: 0; padding: 6px 9px; border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.08); background: rgba(0,0,0,0.28);
+  color: var(--text-primary); font-family: inherit; font-size: 12px; outline: none;
+}
+.chk-item-del {
+  flex: 0 0 auto; border: 0; background: transparent; cursor: pointer;
+  font-size: 12px; padding: 4px 6px; border-radius: 8px; opacity: 0.75;
+}
+.chk-item-del:hover { opacity: 1; background: rgba(255,255,255,0.06); }
+
+.chk-add-row { display: flex; gap: 6px; margin-top: 8px; }
+.chk-add-input {
+  flex: 1; min-width: 0; padding: 8px 10px; border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.08); background: rgba(0,0,0,0.28);
+  color: var(--text-primary); font-family: inherit; font-size: 12px; outline: none;
+}
+.chk-add-btn {
+  padding: 8px 14px; border: 0; border-radius: 10px;
+  background: linear-gradient(180deg, #FFFFFF 0%, #E8E5DD 100%);
+  color: #0A0A0B; font-family: inherit; font-size: 12px; font-weight: 700; cursor: pointer;
+}
+
+
+/* ===== Component 10: Google Calendar ===== */
+.cal-toolbar {
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 12px;
+  margin-bottom: 16px;
+}
+.cal-toolbar-left { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.cal-label { font-size: 13.5px; font-weight: 700; color: var(--text-primary); min-width: 120px; }
+.cal-view-toggle {
+  display: flex; align-items: center; gap: 2px;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px; padding: 3px;
+}
+.cal-view-btn {
+  border: 0; background: transparent;
+  padding: 6px 12px; border-radius: 7px;
+  font-family: var(--font-mono);
+  font-size: 10.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+.cal-view-btn.is-active { background: rgba(226,93,58,0.14); color: #FFC7B8; }
+.cal-toolbar-right { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.cal-nav { display: flex; align-items: center; gap: 4px; }
+.cal-nav-btn {
+  border: 1px solid rgba(255,255,255,0.08); background: transparent;
+  color: var(--text-secondary);
+  width: 26px; height: 26px; border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 13px; line-height: 1;
+  transition: border-color 0.2s, color 0.2s;
+}
+.cal-nav-btn:hover { border-color: rgba(255,255,255,0.2); color: var(--text-primary); }
+.cal-nav-today {
+  border: 1px solid rgba(255,255,255,0.08); background: transparent;
+  color: var(--text-secondary);
+  padding: 5px 12px; border-radius: 7px;
+  font-family: var(--font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+  cursor: pointer;
+}
+.cal-nav-today:hover { color: var(--text-primary); border-color: rgba(255,255,255,0.2); }
+.cal-connect-btn {
+  padding: 6px 14px; border-radius: 999px;
+  border: 1px solid rgba(226,93,58,0.35);
+  background: rgba(226,93,58,0.10);
+  color: #FFC7B8;
+  font-family: inherit; font-size: 11.5px; font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.cal-connect-btn:hover { background: rgba(226,93,58,0.18); }
+.cal-connect-btn.is-connected {
+  border-color: rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.04);
+  color: var(--text-secondary);
+}
+.cal-status {
+  font-size: 11px; color: var(--text-tertiary); margin: -6px 0 12px;
+  min-height: 14px;
+}
+.cal-status.cal-status-error { color: var(--danger); }
+
+.cal-week-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(90px, 1fr));
+  gap: 1px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 12px;
+  overflow-x: auto;
+}
+.cal-day-col {
+  background: rgba(0,0,0,0.20);
+  min-height: 220px;
+  display: flex; flex-direction: column;
+}
+.cal-day-head {
+  padding: 10px 8px 8px;
+  text-align: center;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.cal-day-name {
+  font-family: var(--font-mono); font-size: 9.5px; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-tertiary);
+}
+.cal-day-num {
+  margin: 4px auto 0;
+  font-size: 15px; font-weight: 700; color: var(--text-primary);
+  width: 26px; height: 26px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+}
+.cal-day-col.is-today .cal-day-num { background: #E2755A; color: #fff; }
+.cal-day-events {
+  flex: 1; padding: 6px; display: flex; flex-direction: column; gap: 4px;
+  overflow-y: auto; max-height: 260px;
+}
+.cal-event {
+  padding: 5px 7px; border-radius: 7px;
+  background: rgba(226,93,58,0.12);
+  border-left: 2px solid #E2755A;
+  font-size: 10.5px; line-height: 1.3;
+  color: var(--text-primary);
+  overflow: hidden;
+}
+.cal-event-time {
+  display: block; font-family: var(--font-mono); font-size: 9px; color: #FFC7B8;
+  margin-bottom: 1px;
+}
+.cal-event-title {
+  display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.cal-day-empty { font-size: 10px; color: var(--text-tertiary); text-align: center; padding: 10px 4px; font-style: italic; }
+
+.cal-month-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.cal-month-dow {
+  padding: 8px 0;
+  text-align: center;
+  background: rgba(0,0,0,0.24);
+  font-family: var(--font-mono); font-size: 9.5px; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-tertiary);
+}
+.cal-month-cell {
+  background: rgba(0,0,0,0.20);
+  min-height: 96px;
+  padding: 6px;
+  cursor: pointer;
+  transition: background 0.15s;
+  display: flex; flex-direction: column; align-items: flex-start; gap: 3px;
+  overflow: hidden;
+}
+.cal-month-cell:hover { background: rgba(255,255,255,0.03); }
+.cal-month-cell.is-outside { opacity: 0.32; }
+.cal-month-num {
+  flex-shrink: 0;
+  font-size: 12px; font-weight: 600; color: var(--text-primary);
+  width: 20px; height: 20px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+}
+.cal-month-cell.is-today .cal-month-num { background: #E2755A; color: #fff; }
+.cal-month-events { width: 100%; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.cal-month-event {
+  width: 100%;
+  font-size: 9.5px; line-height: 1.35;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgba(226,93,58,0.14);
+  border-left: 2px solid #E2755A;
+  color: var(--text-primary);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.cal-month-more {
+  font-size: 9px; color: var(--text-tertiary); padding-left: 5px;
+}
+
+.cal-day-grid {
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 12px;
+  background: rgba(0,0,0,0.20);
+  overflow: hidden;
+}
+.cal-day-allday {
+  padding: 8px 10px;
+  display: flex; flex-wrap: wrap; gap: 6px;
+}
+.cal-day-allday:empty { display: none; padding: 0; }
+.cal-day-allday:not(:empty) { border-bottom: 1px solid rgba(255,255,255,0.05); }
+.cal-day-timeline {
+  max-height: 560px;
+  overflow-y: auto;
+}
+.cal-day-row {
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  min-height: 52px;
+}
+.cal-day-row:last-child { border-bottom: none; }
+.cal-day-row-time {
+  padding: 6px 10px 0 0;
+  text-align: right;
+  font-family: var(--font-mono); font-size: 9.5px; color: var(--text-tertiary);
+}
+.cal-day-row.is-current-hour .cal-day-row-time { color: #FFC7B8; }
+.cal-day-row-slot {
+  padding: 5px 8px;
+  border-left: 1px solid rgba(255,255,255,0.05);
+  cursor: pointer;
+  display: flex; flex-direction: column; gap: 4px;
+  transition: background 0.15s;
+}
+.cal-day-row-slot:hover { background: rgba(255,255,255,0.03); }
+.cal-day-row.is-current-hour .cal-day-row-slot { background: rgba(226,93,58,0.07); }
+.cal-day-event-block {
+  padding: 6px 9px; border-radius: 8px;
+  background: rgba(226,93,58,0.14);
+  border-left: 2px solid #E2755A;
+  font-size: 11.5px; line-height: 1.3;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+.cal-day-event-block.is-local { background: rgba(255,255,255,0.07); border-left-color: rgba(255,255,255,0.4); }
+.cal-day-event-time {
+  display: block; font-family: var(--font-mono); font-size: 9.5px; color: #FFC7B8;
+  margin-bottom: 1px;
+}
+.cal-day-event-block.is-local .cal-day-event-time { color: var(--text-secondary); }
+.cal-day-event-title { display: block; }
+.cal-event-modal-source {
+  font-size: 11px; color: var(--text-tertiary); margin: -4px 0 14px;
+  padding: 8px 10px; border-radius: 8px; background: rgba(255,255,255,0.04);
+}
+#calEventDeleteLink:hover { color: var(--danger); }
+
+@media (max-width: 480px) {
+  .cal-day-row { grid-template-columns: 50px 1fr; }
+  .cal-day-row-time { font-size: 8.5px; padding-right: 6px; }
+}
+
+@media (max-width: 720px) {
+  .cal-month-cell { min-height: 74px; }
+  .cal-month-event { font-size: 8.5px; }
+}
+@media (max-width: 480px) {
+  .cal-day-name { font-size: 8px; }
+  .cal-day-num { width: 22px; height: 22px; font-size: 13px; }
+  .cal-month-cell { min-height: 60px; padding: 4px; }
+  .cal-month-event { display: none; }
+  .cal-month-more { display: block; }
+}
+
+/* ===== Planner-specific layout widening ===== */
+.shell.shell-wide { max-width: 1240px; }
+
+.task-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
+@media (max-width: 780px) { .task-cols { grid-template-columns: 1fr; } }
+
+.dgt-goals-wide { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; align-items: start; }
+
+.chk-list-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+
+/* ===== Projects: goal filter + Obsidian toolbar row ===== */
+.proj-toolbar-row {
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 10px;
+  margin-bottom: 14px;
+}
+.proj-goal-filter {
+  padding: 8px 10px; border: 1px solid rgba(255,255,255,0.08); border-radius: 8px;
+  background: rgba(0,0,0,0.28); color: var(--text-primary);
+  font-family: inherit; font-size: 12px; outline: none; color-scheme: dark;
+}
+.proj-obsidian-gear {
+  border: 1px solid rgba(255,255,255,0.08); background: transparent;
+  color: var(--text-tertiary); cursor: pointer;
+  width: 30px; height: 30px; border-radius: 8px; font-size: 14px;
+  transition: color 0.2s, border-color 0.2s;
+}
+.proj-obsidian-gear:hover { color: var(--text-primary); border-color: rgba(255,255,255,0.22); }
+.proj-obsidian-status { font-size: 11px; color: var(--text-tertiary); min-height: 14px; margin: -6px 0 10px; }
+.proj-obsidian-status.is-error { color: var(--danger); }
+
+/* ===== Projects: card slider / actions / tags / archive ===== */
+.proj-card { cursor: pointer; }
+.proj-card-actions {
+  position: absolute; top: 8px; right: 8px;
+  display: flex; align-items: center; gap: 6px;
+  opacity: 0; transition: opacity 0.2s;
+}
+.proj-card:hover .proj-card-actions { opacity: 0.85; }
+.proj-card-actions:hover { opacity: 1; }
+.proj-obsidian-badge { font-size: 11px; opacity: 0.85; }
+.proj-card-edit {
+  border: 0; background: transparent; color: var(--text-tertiary);
+  font-size: 12px; cursor: pointer; padding: 0;
+}
+.proj-card-edit:hover { color: var(--text-primary); }
+.proj-card-slider-row { margin-top: 8px; }
+.proj-card-slider { width: 100%; display: block; }
+.proj-card-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.proj-card-tag-goal { color: #B8D4F2; border-color: rgba(123,167,226,0.35); }
+.proj-card-archive {
+  margin-top: 10px; width: 100%;
+  padding: 7px; border: 1px dashed rgba(255,255,255,0.16); border-radius: 8px;
+  background: transparent; color: var(--text-tertiary);
+  font-family: inherit; font-size: 10.5px; font-weight: 700;
+  letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer;
+}
+.proj-card-archive:hover { color: var(--text-primary); border-color: rgba(255,255,255,0.3); }
+.proj-card-editing { cursor: default; }
+.proj-card-editing .proj-add-form { display: flex; flex-wrap: wrap; }
+
+/* ===== Projects: History (archived) ===== */
+.proj-history { margin-top: 16px; }
+.proj-history-summary {
+  cursor: pointer; list-style: none;
+  display: flex; align-items: center; gap: 8px;
+  font-size: 10.5px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--text-tertiary); padding: 4px 0;
+}
+.proj-history-summary::-webkit-details-marker { display: none; }
+.proj-history-summary::before { content: '▸'; transition: transform 0.15s; }
+.proj-history[open] .proj-history-summary::before { transform: rotate(90deg); }
+.proj-history-list { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+.proj-history-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 10px; border-radius: 8px;
+  background: rgba(255,255,255,0.025);
+  cursor: pointer;
+}
+.proj-history-title { flex: 1; font-size: 12px; color: var(--text-secondary); }
+.proj-history-value { font-family: var(--font-mono); font-size: 10.5px; color: var(--text-tertiary); }
+.proj-history-unarchive {
+  border: 1px solid rgba(255,255,255,0.1); background: transparent;
+  color: var(--text-tertiary); cursor: pointer;
+  padding: 4px 8px; border-radius: 6px; font-family: inherit; font-size: 10.5px;
+}
+.proj-history-unarchive:hover { color: var(--text-primary); border-color: rgba(255,255,255,0.24); }
 </style>
 </head>
 <body>
-<div class="shell">
+<div class="shell shell-wide">
 
 <!-- ===== Category tabs (matches dashboard.html) ===== -->
 <div class="cat-tabs" role="tablist" aria-label="Site sections">
@@ -338,6 +1339,10 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
     <span class="cat-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1"/><path d="M9 12l2 2 4-4"/></svg></span>
     <span class="cat-tab-label">Planner</span>
   </a>
+  <a class="cat-tab" href="ability.html">
+    <span class="cat-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2c1 4-4 5-4 9a4 4 0 0 0 8 0c0-2-1-3-1-3s2 1 2 5a6 6 0 0 1-12 0c0-6 5-6 7-11Z"/></svg></span>
+    <span class="cat-tab-label">Ability</span>
+  </a>
 </div>
 
 <!-- ===== SHOPPING LIST ===== -->
@@ -368,6 +1373,260 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
       <div id="shopList"></div>
     </div>
     <div class="empty-state" id="shopEmptyState" style="display:none;">No shopping list items yet — add one above.</div>
+  </div>
+</div>
+
+<!-- ===== GOALS ===== -->
+<div class="section" data-section="goals" id="goals">
+  <div class="section-title">
+    <span class="section-title-text">GOALS</span>
+  </div>
+  <div class="card">
+    <div class="dgt-add-form" id="dgtAddForm">
+      <input type="text" id="dgtGoalTitle" placeholder="Goal name…">
+      <select id="dgtGoalRank">
+        <option value="Year">Year</option>
+        <option value="Quarter">Quarter</option>
+        <option value="Month">Month</option>
+        <option value="Week">Week</option>
+        <option value="Day">Day</option>
+      </select>
+      <input type="date" id="dgtGoalDeadline">
+      <button type="button" id="dgtGoalAddBtn">+ Add Goal</button>
+    </div>
+    <div class="dgt-goals dgt-goals-wide" id="dgtGoals"></div>
+  </div>
+</div>
+
+<!-- ===== TASKS ===== -->
+<div class="section" data-section="tasks" id="tasks">
+  <div class="section-title">
+    <span class="section-title-text">TASKS</span>
+  </div>
+  <div class="task-cols">
+    <div class="card" id="gmCardToday">
+      <div class="gm-header">
+        <div class="gm-header-left">
+          <div class="gm-eyebrow" id="todayLabel">Today —</div>
+          <div class="gm-progress-row">
+            <span class="gm-progress-num"   id="gmProgressNum">0</span>
+            <span class="gm-progress-total" id="gmProgressTotal">/ 0</span>
+            <span class="gm-progress-label" id="gmProgressLabel">no goals yet</span>
+          </div>
+        </div>
+        <div class="gm-streak" id="gmStreak">
+          <span class="gm-streak-icon">⚡</span>
+          <span class="gm-streak-num" id="gmStreakNum">0</span>
+          <span>day streak</span>
+        </div>
+      </div>
+      <div class="gm-bar" id="gmBar"></div>
+      <ul id="goalList" class="goal-list gm-list"></ul>
+      <div id="emptyState" class="empty-state">No goals for today yet — add one below.</div>
+      <button type="button" id="gmPushBtn" class="gm-push-btn" style="display:none;">Push remaining to tomorrow</button>
+      <div class="goal-input-wrap gm-input-wrap">
+        <input id="goalInput" class="gm-input" type="text" placeholder="Add a goal for today…" autocomplete="off">
+        <button type="button" id="goalAddBtn"    class="gm-add">+ Add</button>
+        <button type="button" id="goalPolishBtn" class="gm-polish">✨ Polish</button>
+        <div class="gm-status" id="polishStatus"></div>
+      </div>
+    </div>
+
+    <div class="card" id="gmCardTomorrow">
+      <div class="gm-header">
+        <div class="gm-header-left">
+          <div class="gm-eyebrow" id="tomorrowLabel">Plan tomorrow —</div>
+          <div class="gm-tomorrow-sub">Write tonight, locked until 6 AM.</div>
+        </div>
+        <div class="gm-tomorrow-count" id="gmTomorrowCount">0 planned</div>
+      </div>
+      <ul id="tomorrowList" class="goal-list gm-list"></ul>
+      <div id="tomorrowEmpty" class="empty-state">Nothing planned for tomorrow yet</div>
+      <div class="goal-input-wrap gm-input-wrap">
+        <input id="tomorrowInput" class="gm-input" type="text" placeholder="Add a goal for tomorrow…" autocomplete="off">
+        <button type="button" id="tomorrowAddBtn"    class="gm-add">+ Add</button>
+        <button type="button" id="tomorrowPolishBtn" class="gm-polish">✨ Polish</button>
+        <div class="gm-status" id="tomorrowStatus"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== CALENDAR ===== -->
+<div class="section" data-section="calendar" id="calendar">
+  <div class="section-title">
+    <span class="section-title-text">CALENDAR</span>
+  </div>
+  <div class="card">
+    <div class="cal-toolbar">
+      <div class="cal-toolbar-left">
+        <span class="cal-label" id="calLabel">—</span>
+        <div class="cal-view-toggle">
+          <button type="button" class="cal-view-btn" data-cal-view="day">Day</button>
+          <button type="button" class="cal-view-btn is-active" data-cal-view="week">Week</button>
+          <button type="button" class="cal-view-btn" data-cal-view="month">Month</button>
+        </div>
+      </div>
+      <div class="cal-toolbar-right">
+        <div class="cal-nav">
+          <button type="button" class="cal-nav-btn" id="calPrevBtn" aria-label="Previous">‹</button>
+          <button type="button" class="cal-nav-today" id="calTodayBtn">Today</button>
+          <button type="button" class="cal-nav-btn" id="calNextBtn" aria-label="Next">›</button>
+        </div>
+        <button type="button" class="cal-connect-btn" id="calConnectBtn">Connect Google Calendar</button>
+      </div>
+    </div>
+    <div class="cal-status" id="calStatus"></div>
+    <div class="cal-day-grid" id="calDayGrid" style="display:none;">
+      <div class="cal-day-allday" id="calDayAllDay"></div>
+      <div class="cal-day-timeline" id="calDayTimeline"></div>
+    </div>
+    <div class="cal-week-grid" id="calWeekGrid"></div>
+    <div class="cal-month-grid" id="calMonthGrid" style="display:none;"></div>
+  </div>
+</div>
+
+<div class="dr-modal-bg" id="calEventModalBg">
+  <div class="dr-modal" id="calEventModal">
+    <h3 id="calEventModalTitle">Add event</h3>
+    <div class="cal-event-modal-source" id="calEventModalSource" style="display:none;"></div>
+    <div class="dr-field">
+      <label for="calEventTitleInput">Title</label>
+      <input type="text" id="calEventTitleInput" placeholder="Event name…">
+    </div>
+    <div class="dr-field">
+      <label for="calEventDateInput">Date</label>
+      <input type="date" id="calEventDateInput">
+    </div>
+    <div class="dr-field">
+      <label for="calEventTimeInput">Time</label>
+      <input type="time" id="calEventTimeInput">
+    </div>
+    <div class="dr-field">
+      <label for="calEventDurationInput">Duration (minutes)</label>
+      <input type="number" id="calEventDurationInput" min="5" step="5">
+    </div>
+    <div class="dr-field">
+      <label for="calEventNotesInput">Notes</label>
+      <textarea id="calEventNotesInput" rows="3" placeholder="Optional details…"></textarea>
+    </div>
+    <div class="dr-modal-actions">
+      <button type="button" class="dr-btn-cancel" id="calEventCancelBtn">Cancel</button>
+      <button type="button" class="dr-btn-save" id="calEventSaveBtn">Save</button>
+    </div>
+    <span class="dr-reset-link" id="calEventDeleteLink" style="display:none;">Delete event</span>
+  </div>
+</div>
+
+<!-- ===== CHECKLISTS ===== -->
+<div class="section" data-section="checklists" id="checklists">
+  <div class="section-title">
+    <span class="section-title-text">CHECKLISTS</span>
+  </div>
+  <div class="chk-list-row" id="chkList"></div>
+</div>
+
+<!-- ===== PROJECTS ===== -->
+<div class="section" data-section="projects" id="projects">
+  <div class="section-title">
+    <span class="section-title-text">PROJECTS</span>
+  </div>
+  <div class="card">
+    <div class="proj-header">
+      <div class="proj-title">📁 Projects</div>
+      <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+        <div class="proj-view-toggle">
+          <button type="button" class="proj-view-btn is-active" data-view="status">By Status</button>
+          <button type="button" class="proj-view-btn" data-view="all">All Projects</button>
+          <button type="button" class="proj-view-btn" data-view="gantt">Gantt</button>
+        </div>
+        <div class="proj-tools">
+          <button type="button" class="proj-tool-btn" id="projFilterBtn" disabled title="Filter — coming soon">⏷</button>
+          <button type="button" class="proj-tool-btn" id="projSortBtn" disabled title="Sort — coming soon">⇅</button>
+          <button type="button" class="proj-tool-btn" id="projSearchBtn" title="Search projects">🔍</button>
+          <input type="text" class="proj-search" id="projSearchInput" placeholder="Search…">
+        </div>
+      </div>
+    </div>
+
+    <div class="proj-toolbar-row">
+      <select class="proj-goal-filter" id="projGoalFilter">
+        <option value="all">All Projects</option>
+        <option value="unassigned">Unassigned</option>
+      </select>
+      <button type="button" class="proj-obsidian-gear" id="projObsidianGearBtn" title="Obsidian sync settings">⚙️</button>
+    </div>
+    <div class="proj-obsidian-status" id="projObsidianStatus"></div>
+
+    <div class="proj-columns" id="projColumns"></div>
+    <div class="proj-gantt-stub" id="projGanttStub" style="display:none;">Gantt view is coming soon.</div>
+
+    <details class="proj-history" id="projHistoryToggle">
+      <summary class="proj-history-summary">History <span id="projHistoryCount">0</span></summary>
+      <div class="proj-history-list" id="projHistoryList"></div>
+    </details>
+
+    <button type="button" class="proj-add-toggle" id="projAddToggle">+ New Project</button>
+    <div class="proj-add-form" id="projAddForm">
+      <input type="text" id="projTitleInput" placeholder="Project title…">
+      <select id="projStatusInput">
+        <option value="not-started">Not started</option>
+        <option value="in-progress">In progress</option>
+        <option value="done">Done</option>
+      </select>
+      <select id="projPriorityInput">
+        <option value="low">Low</option>
+        <option value="medium">Medium</option>
+        <option value="high">High</option>
+      </select>
+      <select id="projGoalInput">
+        <option value="">No linked goal</option>
+      </select>
+      <button type="button" id="projAddBtn">Add</button>
+    </div>
+  </div>
+</div>
+
+<div class="dr-modal-bg" id="projObsModalBg">
+  <div class="dr-modal">
+    <h3>Obsidian Sync</h3>
+    <p class="modal-help" style="font-size:11.5px; color:var(--text-tertiary); margin:-8px 0 14px;">Requires the free "Local REST API" community plugin, installed in Obsidian and running while Obsidian is open on this device. Shared with the Notes page's sync settings.</p>
+    <div class="dr-field" style="flex-direction:row; align-items:center; gap:8px;">
+      <input type="checkbox" id="projObsEnabled" style="width:auto;">
+      <label for="projObsEnabled" style="margin:0;">Enable sync</label>
+    </div>
+    <div class="dr-field">
+      <label for="projObsHost">Host</label>
+      <input type="text" id="projObsHost" placeholder="127.0.0.1">
+    </div>
+    <div class="dr-field">
+      <label for="projObsPort">Port</label>
+      <input type="number" id="projObsPort" placeholder="27123">
+    </div>
+    <div class="dr-field">
+      <label for="projObsProtocol">Protocol</label>
+      <select id="projObsProtocol"><option value="http">http</option><option value="https">https</option></select>
+    </div>
+    <div class="dr-field">
+      <label for="projObsApiKey">API Key</label>
+      <input type="password" id="projObsApiKey" placeholder="Paste from the plugin's settings tab">
+    </div>
+    <div class="dr-field">
+      <label for="projObsVaultName">Vault name</label>
+      <input type="text" id="projObsVaultName" placeholder="e.g. My Vault">
+    </div>
+    <div class="dr-field">
+      <label for="projObsFolder">Projects folder</label>
+      <input type="text" id="projObsFolder" placeholder="AppProjects">
+    </div>
+    <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
+      <button type="button" class="dr-btn-cancel" id="projObsTest" style="flex:0 0 auto; padding:8px 14px;">Test connection</button>
+      <span id="projObsTestResult" style="font-size:11.5px; color:var(--text-tertiary);"></span>
+    </div>
+    <div class="dr-modal-actions">
+      <button type="button" class="dr-btn-cancel" id="projObsClose">Cancel</button>
+      <button type="button" class="dr-btn-save" id="projObsSave">Save</button>
+    </div>
   </div>
 </div>
 
@@ -535,5 +1794,1816 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
 })();
 </script>
 
+<script>
+(function () {
+  'use strict';
+
+  // Paste your Anthropic key here to enable ✨ Polish. Empty = falls back to plain add.
+  const ANTHROPIC_API_KEY = '';
+
+  // ---------- storage helpers (same interface as dashboard.html) ----------
+  function storeGet(key) {
+    try { return JSON.parse(localStorage.getItem(key)); } catch (e) { return null; }
+  }
+  function storeSet(key, value) {
+    try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) {}
+    if (typeof key === 'string' && key.indexOf('goals:') === 0) {
+      window.dispatchEvent(new CustomEvent('goals-changed'));
+    }
+  }
+  function storeDelete(key) { try { localStorage.removeItem(key); } catch (e) {} }
+  function storeListKeys(prefix) {
+    const out = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.indexOf(prefix) === 0) out.push(k);
+    }
+    return out;
+  }
+
+  // ---------- date / clock helpers ----------
+  function pad2(n) { return String(n).padStart(2, '0'); }
+  function dateToKey(d) { return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); }
+  function getActiveDateString() {
+    const now = new Date();
+    if (now.getHours() < 6) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - 1);
+      return dateToKey(d);
+    }
+    return dateToKey(now);
+  }
+  function getTomorrowDateString() {
+    const now = new Date();
+    const d = new Date(now);
+    if (now.getHours() >= 6) d.setDate(d.getDate() + 1);
+    return dateToKey(d);
+  }
+  function formatDate(yyyy_mm_dd) {
+    const parts = yyyy_mm_dd.split('-').map(Number);
+    const d = new Date(parts[0], parts[1] - 1, parts[2]);
+    const wk = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()];
+    const mo = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()];
+    return wk + ', ' + mo + ' ' + d.getDate();
+  }
+  function formatClock(d) {
+    let h = d.getHours();
+    const m = d.getMinutes();
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12;
+    if (h === 0) h = 12;
+    return h + ':' + pad2(m) + ' ' + ampm;
+  }
+  function hourToTimeStr(hourDecimal) {
+    const wrapped = ((hourDecimal % 24) + 24) % 24;
+    const h = Math.floor(wrapped);
+    const m = Math.round((wrapped - h) * 60);
+    return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+  }
+  function formatHourLabel(hourDecimal) {
+    const wrapped = ((hourDecimal % 24) + 24) % 24;
+    const h = Math.floor(wrapped);
+    const m = Math.round((wrapped - h) * 60);
+    const d = new Date();
+    d.setHours(h, m, 0, 0);
+    return formatClock(d);
+  }
+
+  function todayKey()    { return 'goals:' + getActiveDateString(); }
+  function tomorrowKey() { return 'goals:' + getTomorrowDateString(); }
+
+  function getGoals(key) {
+    const g = storeGet(key);
+    return Array.isArray(g) ? g : [];
+  }
+  function setGoals(key, list) { storeSet(key, list); }
+
+  // ---------- rollover: pull undone older goals into today ----------
+  function rollover() {
+    const todayDateStr = getActiveDateString();
+    const todayK = 'goals:' + todayDateStr;
+    let today = getGoals(todayK);
+    const texts = new Set(today.map(g => g.text));
+
+    storeListKeys('goals:').forEach(k => {
+      const dateStr = k.slice('goals:'.length);
+      if (dateStr >= todayDateStr) return;
+      const old = getGoals(k);
+      old.forEach(g => {
+        if (!g.done && g.text && !texts.has(g.text)) {
+          today.push({ text: g.text, done: false });
+          texts.add(g.text);
+        }
+      });
+      storeDelete(k);
+    });
+    setGoals(todayK, today);
+  }
+
+  // ---------- streak ----------
+  function loadStreak() {
+    const s = storeGet('goal_streak_v1');
+    if (s && typeof s.count === 'number') return s;
+    return { count: 0, lastProcessedDate: '' };
+  }
+  function saveStreak(s) { storeSet('goal_streak_v1', s); }
+
+  function processStreak() {
+    const s = loadStreak();
+    const todayDateStr = getActiveDateString();
+    const keys = storeListKeys('goals:')
+      .map(k => k.slice('goals:'.length))
+      .filter(d => d < todayDateStr)
+      .sort();
+    keys.forEach(dateStr => {
+      if (s.lastProcessedDate && dateStr <= s.lastProcessedDate) return;
+      const list = getGoals('goals:' + dateStr);
+      if (list.length === 0) { /* don't break the streak on empty days */ }
+      else if (list.every(g => g.done)) s.count += 1;
+      else s.count = 0;
+      s.lastProcessedDate = dateStr;
+    });
+    saveStreak(s);
+  }
+
+  // ---------- Row building (Tasks) ----------
+  function makeInlineEdit(textEl, goals, idx, key, reload) {
+    textEl.addEventListener('click', () => {
+      if (textEl.getAttribute('contenteditable') === 'true') return;
+      const original = textEl.textContent;
+      textEl.setAttribute('contenteditable', 'true');
+      textEl.focus();
+      const range = document.createRange();
+      range.selectNodeContents(textEl);
+      range.collapse(false);
+      const sel = window.getSelection();
+      sel.removeAllRanges(); sel.addRange(range);
+
+      function commit() {
+        const next = textEl.textContent.trim();
+        textEl.removeAttribute('contenteditable');
+        if (next && next !== original) {
+          const list = getGoals(key);
+          if (list[idx]) { list[idx].text = next; setGoals(key, list); }
+          reload();
+        } else {
+          textEl.textContent = original;
+        }
+      }
+      function cancel() {
+        textEl.removeAttribute('contenteditable');
+        textEl.textContent = original;
+      }
+      textEl.addEventListener('blur', commit, { once: true });
+      textEl.addEventListener('keydown', function onKey(e) {
+        if (e.key === 'Enter') { e.preventDefault(); textEl.removeEventListener('keydown', onKey); textEl.blur(); }
+        else if (e.key === 'Escape') { e.preventDefault(); textEl.removeEventListener('keydown', onKey); cancel(); }
+      });
+    });
+  }
+
+  function wireDragReorder(row, listEl, key, reload) {
+    row.setAttribute('draggable', 'true');
+    row.addEventListener('dragstart', (e) => {
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', row.dataset.idx);
+    });
+    row.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      row.classList.add('is-drag-over');
+    });
+    row.addEventListener('dragleave', () => row.classList.remove('is-drag-over'));
+    row.addEventListener('drop', (e) => {
+      e.preventDefault();
+      row.classList.remove('is-drag-over');
+      const from = parseInt(e.dataTransfer.getData('text/plain'), 10);
+      const to   = parseInt(row.dataset.idx, 10);
+      if (isNaN(from) || isNaN(to) || from === to) return;
+      const list = getGoals(key);
+      const [moved] = list.splice(from, 1);
+      list.splice(to, 0, moved);
+      setGoals(key, list);
+      reload();
+    });
+  }
+
+  function buildGoalRow(goal, idx, key, readOnly, reload) {
+    const li = document.createElement('li');
+    li.className = 'gm-row';
+    li.dataset.idx = String(idx);
+    if (goal.done) li.classList.add('gm-row-done');
+    if (goal.queued) li.classList.add('gm-row-queued');
+
+    const handle = document.createElement('span');
+    handle.className = 'gm-handle';
+    handle.textContent = '⋮⋮';
+    li.appendChild(handle);
+
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.className = 'gm-check';
+    cb.checked = !!goal.done;
+    if (readOnly) { cb.disabled = true; cb.title = 'Activates at 6 AM tomorrow'; }
+    cb.addEventListener('change', () => {
+      const list = getGoals(key);
+      if (!list[idx]) return;
+      list[idx].done = cb.checked;
+      if (cb.checked) list[idx].doneAt = Date.now();
+      else delete list[idx].doneAt;
+      setGoals(key, list);
+      reload();
+    });
+    li.appendChild(cb);
+
+    const text = document.createElement('span');
+    text.className = 'gm-text';
+    text.textContent = goal.text;
+    li.appendChild(text);
+    makeInlineEdit(text, null, idx, key, reload);
+
+    const queueBtn = document.createElement('button');
+    queueBtn.type = 'button';
+    queueBtn.className = 'gm-queue-btn' + (goal.queued ? ' gm-queue-active' : '');
+    queueBtn.textContent = '⚡';
+    queueBtn.title = 'Queue for productivity window';
+    if (readOnly) queueBtn.disabled = true;
+    queueBtn.addEventListener('click', () => {
+      const list = getGoals(key);
+      if (!list[idx]) return;
+      list[idx].queued = !list[idx].queued;
+      setGoals(key, list);
+      li.classList.add('is-queue-flashing');
+      setTimeout(reload, 480);
+    });
+    li.appendChild(queueBtn);
+
+    const del = document.createElement('button');
+    del.type = 'button';
+    del.className = 'goal-delete';
+    del.setAttribute('aria-label', 'Delete goal');
+    del.textContent = '×';
+    del.addEventListener('click', () => {
+      const list = getGoals(key);
+      list.splice(idx, 1);
+      setGoals(key, list);
+      reload();
+    });
+    li.appendChild(del);
+
+    wireDragReorder(li, null, key, reload);
+    return li;
+  }
+
+  // ---------- Renderers (Tasks) ----------
+  function renderTodayHeader() {
+    const goals = getGoals(todayKey());
+    const total = goals.length;
+    const done  = goals.filter(g => g.done).length;
+    document.getElementById('gmProgressNum').textContent   = done;
+    document.getElementById('gmProgressTotal').textContent = '/ ' + total;
+    const label = document.getElementById('gmProgressLabel');
+    if (total === 0)        label.textContent = 'no goals yet';
+    else if (done === total) label.textContent = 'all done — solid day';
+    else                     label.textContent = 'complete';
+
+    document.getElementById('todayLabel').textContent =
+      'Today — ' + formatDate(getActiveDateString());
+
+    const bar = document.getElementById('gmBar');
+    bar.innerHTML = '';
+    goals.forEach(g => {
+      const seg = document.createElement('div');
+      seg.className = 'gm-bar-seg' + (g.done ? ' gm-bar-seg-done' : '');
+      bar.appendChild(seg);
+    });
+
+    const card = document.getElementById('gmCardToday');
+    card.classList.toggle('gm-all-done', total > 0 && done === total);
+
+    const pushBtn = document.getElementById('gmPushBtn');
+    pushBtn.style.display = (total > 0 && done < total) ? 'block' : 'none';
+  }
+
+  function renderStreak() {
+    const s = loadStreak();
+    document.getElementById('gmStreakNum').textContent = s.count;
+    document.getElementById('gmStreak').classList.toggle('gm-streak-active', s.count > 0);
+  }
+
+  function renderTomorrowCount() {
+    const list = getGoals(tomorrowKey());
+    document.getElementById('gmTomorrowCount').textContent = list.length + ' planned';
+    document.getElementById('tomorrowLabel').textContent =
+      'Plan tomorrow — ' + formatDate(getTomorrowDateString());
+  }
+
+  function renderListInto(goals, listEl, emptyEl, key, readOnly) {
+    listEl.innerHTML = '';
+    emptyEl.style.display = goals.length === 0 ? 'block' : 'none';
+    const reload = () => (key === todayKey() ? loadToday() : loadTomorrow());
+
+    const visible = goals.length > 5 ? goals.slice(0, 5) : goals;
+    visible.forEach((g, i) => listEl.appendChild(buildGoalRow(g, i, key, readOnly, reload)));
+
+    if (goals.length > 5) {
+      let expanded = false;
+      const toggle = document.createElement('button');
+      toggle.type = 'button';
+      toggle.className = 'gm-show-toggle';
+      const updateLabel = () => {
+        toggle.textContent = expanded ? 'Show less ▴' : ('Show ' + (goals.length - 5) + ' more ▾');
+      };
+      updateLabel();
+      toggle.addEventListener('click', () => {
+        expanded = !expanded;
+        if (expanded) {
+          goals.slice(5).forEach((g, i) => {
+            const row = buildGoalRow(g, i + 5, key, readOnly, reload);
+            listEl.insertBefore(row, toggle);
+          });
+        } else {
+          Array.from(listEl.querySelectorAll('.gm-row')).slice(5).forEach(r => r.remove());
+        }
+        updateLabel();
+      });
+      listEl.appendChild(toggle);
+    }
+
+    if (key === todayKey()) renderTodayHeader();
+    else                    renderTomorrowCount();
+  }
+
+  function loadToday() {
+    const goals = getGoals(todayKey());
+    renderListInto(goals, document.getElementById('goalList'), document.getElementById('emptyState'), todayKey(), false);
+  }
+  function loadTomorrow() {
+    const goals = getGoals(tomorrowKey());
+    renderListInto(goals, document.getElementById('tomorrowList'), document.getElementById('tomorrowEmpty'), tomorrowKey(), true);
+  }
+
+  document.getElementById('gmPushBtn').addEventListener('click', () => {
+    const today    = getGoals(todayKey());
+    const remaining = today.filter(g => !g.done);
+    if (remaining.length === 0) return;
+    if (!confirm('Move ' + remaining.length + ' unchecked goal' + (remaining.length === 1 ? '' : 's') + ' to tomorrow?')) return;
+    const tomorrow = getGoals(tomorrowKey());
+    const seen = new Set(tomorrow.map(g => g.text));
+    remaining.forEach(g => {
+      if (!seen.has(g.text)) { tomorrow.push({ text: g.text, done: false }); seen.add(g.text); }
+    });
+    setGoals(tomorrowKey(), tomorrow);
+    setGoals(todayKey(), today.filter(g => g.done));
+    loadToday(); loadTomorrow();
+  });
+
+  // ---------- Add + Polish handlers (Tasks) ----------
+  function showStatus(el, message, isError) {
+    el.textContent = message;
+    el.classList.toggle('gm-status-error', !!isError);
+    clearTimeout(el._t);
+    el._t = setTimeout(() => { el.textContent = ''; el.classList.remove('gm-status-error'); }, 3500);
+  }
+
+  async function polishOne(text) {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-5',
+        max_tokens: 1000,
+        messages: [{
+          role: 'user',
+          content:
+            'Rewrite this single goal so it is concrete, action-oriented, and under 60 characters. ' +
+            'Return ONLY a JSON array with exactly one string, no preamble, no code fences.\n\nGoal: ' + text
+        }]
+      })
+    });
+    const data = await res.json();
+    const content = (data && data.content && data.content[0] && data.content[0].text) || '';
+    const arr = JSON.parse(content);
+    if (!Array.isArray(arr) || arr.length < 1 || typeof arr[0] !== 'string') throw new Error('bad response');
+    return arr[0].trim();
+  }
+
+  function makeAddHandlers(input, addBtn, polishBtn, key, statusEl, reload) {
+    function plainAdd(text) {
+      const list = getGoals(key);
+      list.push({ text, done: false });
+      setGoals(key, list);
+      input.value = '';
+      reload();
+    }
+    addBtn.addEventListener('click', () => {
+      const text = input.value.trim();
+      if (!text) return;
+      plainAdd(text);
+    });
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); addBtn.click(); }
+    });
+    polishBtn.addEventListener('click', async () => {
+      const text = input.value.trim();
+      if (!text) return;
+      if (!ANTHROPIC_API_KEY) {
+        plainAdd(text);
+        showStatus(statusEl, 'Polish needs an Anthropic API key — added as-typed.', false);
+        return;
+      }
+      polishBtn.disabled = true;
+      try {
+        const polished = await polishOne(text);
+        plainAdd(polished);
+      } catch (e) {
+        plainAdd(text);
+        showStatus(statusEl, 'Polish failed — added as-typed.', true);
+      } finally {
+        polishBtn.disabled = false;
+      }
+    });
+  }
+
+  makeAddHandlers(
+    document.getElementById('goalInput'),
+    document.getElementById('goalAddBtn'),
+    document.getElementById('goalPolishBtn'),
+    todayKey(),
+    document.getElementById('polishStatus'),
+    loadToday
+  );
+  makeAddHandlers(
+    document.getElementById('tomorrowInput'),
+    document.getElementById('tomorrowAddBtn'),
+    document.getElementById('tomorrowPolishBtn'),
+    tomorrowKey(),
+    document.getElementById('tomorrowStatus'),
+    loadTomorrow
+  );
+
+  // ---------- Goals (Year/Quarter/Month/Week/Day) ----------
+  const GOAL_RANKS = ['Year', 'Quarter', 'Month', 'Week', 'Day'];
+  let goalEditingId = null;
+
+  function getLongtermGoals() { const g = storeGet('longterm_goals_v1'); return Array.isArray(g) ? g : []; }
+  function setLongtermGoals(list) { storeSet('longterm_goals_v1', list); }
+
+  function goalDeadlineMs(g) {
+    if (!g.deadline) return null;
+    const d = new Date(g.deadline + 'T23:59:59');
+    return isNaN(d.getTime()) ? null : d.getTime();
+  }
+
+  function formatCountdown(ms) {
+    if (ms === null) return '—';
+    if (ms <= 0) return 'Overdue';
+    const totalSeconds = Math.floor(ms / 1000);
+    const days = Math.floor(totalSeconds / 86400);
+    const hours = Math.floor((totalSeconds % 86400) / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    return days + 'd ' + hours + 'h ' + minutes + 'm ' + seconds + 's';
+  }
+
+  function buildGoalEditCard(g) {
+    const item = document.createElement('div');
+    item.className = 'dgt-goal';
+    item.dataset.id = g.id;
+    item.innerHTML =
+      '<div class="dgt-add-form">' +
+        '<input type="text" class="dgt-edit-title">' +
+        '<select class="dgt-edit-rank">' +
+          GOAL_RANKS.map(r => '<option value="' + r + '">' + r + '</option>').join('') +
+        '</select>' +
+        '<input type="date" class="dgt-edit-deadline">' +
+        '<button type="button" class="dgt-edit-save">Save</button>' +
+        '<button type="button" class="dgt-edit-cancel">Cancel</button>' +
+      '</div>';
+    item.querySelector('.dgt-edit-title').value = g.title;
+    item.querySelector('.dgt-edit-rank').value = g.rank;
+    item.querySelector('.dgt-edit-deadline').value = g.deadline || '';
+
+    item.querySelector('.dgt-edit-save').addEventListener('click', () => {
+      const title = item.querySelector('.dgt-edit-title').value.trim();
+      if (!title) return;
+      const rank = item.querySelector('.dgt-edit-rank').value;
+      const deadline = item.querySelector('.dgt-edit-deadline').value;
+      const cur = getLongtermGoals();
+      const idx = cur.findIndex(x => x.id === g.id);
+      if (idx !== -1) {
+        cur[idx] = Object.assign({}, cur[idx], { title, rank, deadline });
+        setLongtermGoals(cur);
+      }
+      goalEditingId = null;
+      renderLongtermGoals();
+    });
+    item.querySelector('.dgt-edit-cancel').addEventListener('click', () => {
+      goalEditingId = null;
+      renderLongtermGoals();
+    });
+    return item;
+  }
+
+  function buildGoalCard(g) {
+    if (goalEditingId === g.id) return buildGoalEditCard(g);
+
+    const item = document.createElement('div');
+    item.className = 'dgt-goal';
+    item.dataset.id = g.id;
+
+    const deadlineMs = goalDeadlineMs(g);
+    const remaining = deadlineMs === null ? null : deadlineMs - Date.now();
+    const isOverdue = remaining !== null && remaining <= 0;
+    item.dataset.deadlineMs = deadlineMs === null ? '' : String(deadlineMs);
+
+    item.innerHTML =
+      '<div class="dgt-goal-actions">' +
+        '<button type="button" class="dgt-goal-edit" aria-label="Edit goal">✎</button>' +
+        '<button type="button" class="dgt-goal-del" aria-label="Delete goal">×</button>' +
+      '</div>' +
+      '<div class="dgt-goal-row">' +
+        '<span class="dgt-goal-title"></span>' +
+        '<span class="dgt-goal-rank-badge"></span>' +
+      '</div>' +
+      '<div class="dgt-goal-countdown' + (isOverdue ? ' is-overdue' : '') + '">' + formatCountdown(remaining) + '</div>' +
+      '<div class="dgt-goal-slider-row">' +
+        '<span class="dgt-goal-value">' + (g.value || 0) + '%</span>' +
+      '</div>' +
+      '<input type="range" class="dgt-goal-slider" min="0" max="100" value="' + (g.value || 0) + '">';
+
+    item.querySelector('.dgt-goal-title').textContent = g.title;
+    item.querySelector('.dgt-goal-rank-badge').textContent = g.rank;
+
+    item.querySelector('.dgt-goal-edit').addEventListener('click', () => {
+      goalEditingId = g.id;
+      renderLongtermGoals();
+    });
+    item.querySelector('.dgt-goal-del').addEventListener('click', () => {
+      setLongtermGoals(getLongtermGoals().filter(x => x.id !== g.id));
+      renderLongtermGoals();
+    });
+
+    const slider = item.querySelector('.dgt-goal-slider');
+    const valueLabel = item.querySelector('.dgt-goal-value');
+    slider.addEventListener('input', () => {
+      valueLabel.textContent = slider.value + '%';
+    });
+    slider.addEventListener('change', () => {
+      const cur = getLongtermGoals();
+      const idx = cur.findIndex(x => x.id === g.id);
+      if (idx !== -1) {
+        cur[idx] = Object.assign({}, cur[idx], { value: Number(slider.value) });
+        setLongtermGoals(cur);
+      }
+    });
+
+    return item;
+  }
+
+  function renderLongtermGoals() {
+    const wrap = document.getElementById('dgtGoals');
+    if (!wrap) return;
+    const list = getLongtermGoals();
+    wrap.innerHTML = '';
+
+    if (list.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'dgt-empty';
+      empty.textContent = 'No goals yet — add one above.';
+      wrap.appendChild(empty);
+      return;
+    }
+
+    GOAL_RANKS.forEach(rank => {
+      const goalsInRank = list.filter(g => g.rank === rank);
+      if (goalsInRank.length === 0) return;
+      const group = document.createElement('div');
+      group.className = 'dgt-rank-group';
+      const header = document.createElement('div');
+      header.className = 'dgt-rank-header';
+      header.textContent = rank;
+      group.appendChild(header);
+      goalsInRank.forEach(g => group.appendChild(buildGoalCard(g)));
+      wrap.appendChild(group);
+    });
+
+    renderProjGoalFilterOptions();
+    renderProjGoalSelectOptions();
+  }
+
+  function tickGoalCountdowns() {
+    if (goalEditingId !== null) return;
+    document.querySelectorAll('#dgtGoals .dgt-goal[data-deadline-ms]').forEach(el => {
+      const raw = el.dataset.deadlineMs;
+      const countdownEl = el.querySelector('.dgt-goal-countdown');
+      if (!countdownEl) return;
+      if (!raw) { countdownEl.textContent = '—'; return; }
+      const remaining = Number(raw) - Date.now();
+      countdownEl.textContent = formatCountdown(remaining);
+      countdownEl.classList.toggle('is-overdue', remaining <= 0);
+    });
+  }
+  setInterval(tickGoalCountdowns, 1000);
+
+  function initGoalAddForm() {
+    const btn = document.getElementById('dgtGoalAddBtn');
+    if (!btn) return;
+    btn.addEventListener('click', () => {
+      const titleEl = document.getElementById('dgtGoalTitle');
+      const rankEl = document.getElementById('dgtGoalRank');
+      const deadlineEl = document.getElementById('dgtGoalDeadline');
+      const title = titleEl.value.trim();
+      if (!title) return;
+      const cur = getLongtermGoals();
+      cur.push({
+        id: 'g' + Date.now() + Math.random().toString(36).slice(2, 7),
+        title,
+        rank: rankEl.value,
+        deadline: deadlineEl.value,
+        value: 0
+      });
+      setLongtermGoals(cur);
+      titleEl.value = '';
+      deadlineEl.value = '';
+      renderLongtermGoals();
+    });
+  }
+
+  // ---------- Checklists (Morning / Mid-Day / Evening) ----------
+  const CHECKLISTS = [
+    { id: 'morning', icon: '🌅', name: 'Morning Checklist' },
+    { id: 'midday',  icon: '☀️', name: 'Mid-Day Checklist' },
+    { id: 'evening', icon: '🌙', name: 'Evening Checklist' }
+  ];
+  let chkEditMode = {};
+  let chkExpandedItem = {};
+
+  function getChecklistItems(id) {
+    const items = storeGet('checklist:items:' + id);
+    return Array.isArray(items) ? items : [];
+  }
+  function setChecklistItems(id, items) { storeSet('checklist:items:' + id, items); }
+  function getChecklistDone(id) {
+    const done = storeGet('checklist:done:' + id + ':' + getActiveDateString());
+    return (done && typeof done === 'object') ? done : {};
+  }
+  function setChecklistDone(id, done) { storeSet('checklist:done:' + id + ':' + getActiveDateString(), done); }
+
+  function buildChecklistCard(c) {
+    const items = getChecklistItems(c.id);
+    const done = getChecklistDone(c.id);
+    const editing = !!chkEditMode[c.id];
+
+    const card = document.createElement('div');
+    card.className = 'card chk-card';
+
+    const head = document.createElement('div');
+    head.className = 'chk-head';
+    const iconSpan = document.createElement('span');
+    iconSpan.className = 'chk-icon';
+    iconSpan.textContent = c.icon;
+    const nameSpan = document.createElement('span');
+    nameSpan.className = 'chk-name';
+    nameSpan.textContent = c.name;
+    const editBtn = document.createElement('button');
+    editBtn.type = 'button';
+    editBtn.className = 'chk-edit-toggle' + (editing ? ' active' : '');
+    editBtn.title = editing ? 'Done editing' : 'Edit checklist';
+    editBtn.textContent = editing ? '✓' : '✏️';
+    editBtn.addEventListener('click', () => {
+      chkEditMode[c.id] = !chkEditMode[c.id];
+      renderChecklists();
+    });
+    head.appendChild(iconSpan);
+    head.appendChild(nameSpan);
+    head.appendChild(editBtn);
+    card.appendChild(head);
+
+    const list = document.createElement('div');
+    list.className = 'chk-items';
+
+    if (!items.length) {
+      const empty = document.createElement('div');
+      empty.className = 'chk-empty';
+      empty.textContent = editing ? 'Add a task below.' : 'No tasks yet — tap ✏️ to add one.';
+      list.appendChild(empty);
+    }
+
+    items.forEach(item => {
+      const row = document.createElement('div');
+      row.className = 'chk-item' + (done[item.id] ? ' chk-item-done' : '');
+
+      if (editing) {
+        const editRow = document.createElement('div');
+        editRow.className = 'chk-item-editrow';
+
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'chk-item-input';
+        input.value = item.text;
+        input.addEventListener('change', () => {
+          const list2 = getChecklistItems(c.id);
+          const it = list2.find(x => x.id === item.id);
+          if (it) { it.text = input.value.trim() || it.text; setChecklistItems(c.id, list2); }
+        });
+        input.addEventListener('keydown', (e) => { if (e.key === 'Enter') input.blur(); });
+
+        const delBtn = document.createElement('button');
+        delBtn.type = 'button';
+        delBtn.className = 'chk-item-del';
+        delBtn.title = 'Remove task';
+        delBtn.textContent = '🗑️';
+        delBtn.addEventListener('click', () => {
+          setChecklistItems(c.id, getChecklistItems(c.id).filter(x => x.id !== item.id));
+          const d = getChecklistDone(c.id);
+          delete d[item.id];
+          setChecklistDone(c.id, d);
+          renderChecklists();
+        });
+
+        editRow.appendChild(input);
+        editRow.appendChild(delBtn);
+        row.appendChild(editRow);
+      } else {
+        const mainRow = document.createElement('div');
+        mainRow.className = 'chk-item-row';
+
+        const checkbox = document.createElement('button');
+        checkbox.type = 'button';
+        checkbox.className = 'chk-checkbox' + (done[item.id] ? ' checked' : '');
+        checkbox.setAttribute('aria-label', 'Toggle task complete');
+        checkbox.addEventListener('click', () => {
+          const d = getChecklistDone(c.id);
+          if (d[item.id]) delete d[item.id]; else d[item.id] = true;
+          setChecklistDone(c.id, d);
+          renderChecklists();
+        });
+
+        const text = document.createElement('span');
+        text.className = 'chk-item-text';
+        text.textContent = item.text;
+        text.addEventListener('click', () => {
+          chkExpandedItem[c.id] = (chkExpandedItem[c.id] === item.id) ? null : item.id;
+          renderChecklists();
+        });
+
+        mainRow.appendChild(checkbox);
+        mainRow.appendChild(text);
+        row.appendChild(mainRow);
+
+        if (chkExpandedItem[c.id] === item.id) {
+          const notesWrap = document.createElement('div');
+          notesWrap.className = 'chk-item-notes';
+          const textarea = document.createElement('textarea');
+          textarea.className = 'chk-notes-input';
+          textarea.placeholder = 'Add notes…';
+          textarea.value = item.notes || '';
+          textarea.addEventListener('change', () => {
+            const list2 = getChecklistItems(c.id);
+            const it = list2.find(x => x.id === item.id);
+            if (it) { it.notes = textarea.value; setChecklistItems(c.id, list2); }
+          });
+          notesWrap.appendChild(textarea);
+          row.appendChild(notesWrap);
+        }
+      }
+
+      list.appendChild(row);
+    });
+
+    card.appendChild(list);
+
+    if (editing) {
+      const addRow = document.createElement('div');
+      addRow.className = 'chk-add-row';
+      const addInput = document.createElement('input');
+      addInput.type = 'text';
+      addInput.className = 'chk-add-input';
+      addInput.placeholder = 'New task…';
+      const addBtn = document.createElement('button');
+      addBtn.type = 'button';
+      addBtn.className = 'chk-add-btn';
+      addBtn.textContent = 'Add';
+      const doAdd = () => {
+        const val = addInput.value.trim();
+        if (!val) return;
+        const list2 = getChecklistItems(c.id);
+        list2.push({ id: 'ci' + Date.now() + Math.random().toString(36).slice(2, 6), text: val, notes: '' });
+        setChecklistItems(c.id, list2);
+        renderChecklists();
+      };
+      addBtn.addEventListener('click', doAdd);
+      addInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') doAdd(); });
+      addRow.appendChild(addInput);
+      addRow.appendChild(addBtn);
+      card.appendChild(addRow);
+    }
+
+    return card;
+  }
+
+  function renderChecklists() {
+    const wrap = document.getElementById('chkList');
+    if (!wrap) return;
+    wrap.innerHTML = '';
+    CHECKLISTS.forEach(c => wrap.appendChild(buildChecklistCard(c)));
+  }
+
+  // ---------- Google Calendar ----------
+  // Paste your Google OAuth Client ID here once you've created one in Google
+  // Cloud Console (APIs & Services > Credentials > OAuth client ID > Web
+  // application). Shared with dashboard.html's GOOGLE_CAL_CLIENT_ID.
+  const GOOGLE_CAL_CLIENT_ID = '83878675540-40tpq4hkpd05jarl8m8nj9i8vhm5rnel.apps.googleusercontent.com';
+  const GOOGLE_CAL_SCOPE = 'https://www.googleapis.com/auth/calendar.readonly';
+  const GCAL_TOKENS_KEY = 'gcal_tokens_v1';
+
+  function getGcalTokens() { return storeGet(GCAL_TOKENS_KEY); }
+  function setGcalTokens(t) { storeSet(GCAL_TOKENS_KEY, t); }
+  function clearGcalTokens() { storeDelete(GCAL_TOKENS_KEY); }
+
+  function processGcalHashTokens() {
+    const hash = window.location.hash;
+    if (!hash || hash.indexOf('gcal_access=') === -1) return;
+    const params = new URLSearchParams(hash.slice(1));
+    const access = params.get('gcal_access');
+    const refresh = params.get('gcal_refresh');
+    const expires = params.get('gcal_expires');
+    if (access) {
+      const existing = getGcalTokens() || {};
+      setGcalTokens({
+        access_token: access,
+        refresh_token: refresh || existing.refresh_token || '',
+        expires_at: Number(expires) || (Date.now() + 3600 * 1000)
+      });
+    }
+    history.replaceState(null, '', window.location.pathname + window.location.search);
+  }
+
+  function gcalAuthUrl() {
+    const redirectUri = window.location.origin + '/api/google-calendar-callback';
+    const params = new URLSearchParams({
+      client_id: GOOGLE_CAL_CLIENT_ID,
+      redirect_uri: redirectUri,
+      response_type: 'code',
+      scope: GOOGLE_CAL_SCOPE,
+      access_type: 'offline',
+      prompt: 'consent'
+    });
+    return 'https://accounts.google.com/o/oauth2/v2/auth?' + params.toString();
+  }
+
+  function connectGoogleCalendar() {
+    if (!GOOGLE_CAL_CLIENT_ID) {
+      showCalStatus('Google Calendar isn\'t configured yet.', true);
+      return;
+    }
+    window.location.href = gcalAuthUrl();
+  }
+
+  function disconnectGoogleCalendar() {
+    clearGcalTokens();
+    loadCalendar();
+  }
+
+  async function ensureValidGcalToken() {
+    const tokens = getGcalTokens();
+    if (!tokens || !tokens.access_token) return null;
+    if (tokens.expires_at && Date.now() < tokens.expires_at - 60000) return tokens.access_token;
+    if (!tokens.refresh_token) { clearGcalTokens(); return null; }
+    try {
+      const res = await fetch('/api/google-calendar-refresh', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refresh_token: tokens.refresh_token })
+      });
+      const json = await res.json();
+      if (!res.ok || !json.access_token) { clearGcalTokens(); return null; }
+      setGcalTokens({
+        access_token: json.access_token,
+        refresh_token: tokens.refresh_token,
+        expires_at: Date.now() + (json.expires_in || 3600) * 1000
+      });
+      return json.access_token;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  async function fetchGcalEvents(timeMinISO, timeMaxISO) {
+    const token = await ensureValidGcalToken();
+    if (!token) return null;
+    const params = new URLSearchParams({
+      timeMin: timeMinISO, timeMax: timeMaxISO,
+      singleEvents: 'true', orderBy: 'startTime', maxResults: '250'
+    });
+    const res = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events?' + params.toString(), {
+      headers: { Authorization: 'Bearer ' + token }
+    });
+    if (res.status === 401) { clearGcalTokens(); throw new Error('Session expired — reconnect Google Calendar.'); }
+    if (!res.ok) throw new Error('Google Calendar request failed (' + res.status + ').');
+    const json = await res.json();
+    return json.items || [];
+  }
+
+  // ---------- Calendar date helpers ----------
+  const CAL_DOW = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const CAL_MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  function calMidnight(d) { return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
+  function calAddDays(d, n) { const x = new Date(d); x.setDate(x.getDate() + n); return x; }
+  function calAddMonths(d, n) { const x = new Date(d); x.setMonth(x.getMonth() + n); return x; }
+  function calStartOfWeek(d) { const x = calMidnight(d); return calAddDays(x, -x.getDay()); }
+  function calIsSameDay(a, b) { return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate(); }
+  function calEventDate(ev, which) {
+    const part = ev[which];
+    if (!part) return null;
+    if (part.date) {
+      const p = part.date.split('-').map(Number);
+      return new Date(p[0], p[1] - 1, p[2]);
+    }
+    if (part.dateTime) return new Date(part.dateTime);
+    return null;
+  }
+  function calEventIsAllDay(ev) { return !!(ev.start && ev.start.date); }
+  function calDateKey(d) { return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); }
+
+  // ---------- Local (planner-only) events — shared with dashboard.html ----------
+  const LOCAL_CAL_EVENTS_KEY = 'local_cal_events_v1';
+  function getLocalCalEvents() { const v = storeGet(LOCAL_CAL_EVENTS_KEY); return Array.isArray(v) ? v : []; }
+  function setLocalCalEvents(list) { storeSet(LOCAL_CAL_EVENTS_KEY, list); }
+
+  // ---------- Calendar state ----------
+  let calView = 'week';
+  let calAnchor = calMidnight(new Date());
+
+  function showCalStatus(msg, isError) {
+    const el = document.getElementById('calStatus');
+    if (!el) return;
+    el.textContent = msg || '';
+    el.classList.toggle('cal-status-error', !!isError);
+  }
+
+  function updateCalConnectBtn() {
+    const btn = document.getElementById('calConnectBtn');
+    if (!btn) return;
+    const tokens = getGcalTokens();
+    const connected = !!(tokens && tokens.access_token);
+    btn.textContent = connected ? 'Disconnect' : 'Connect Google Calendar';
+    btn.classList.toggle('is-connected', connected);
+  }
+
+  function renderCalLabel() {
+    const el = document.getElementById('calLabel');
+    if (!el) return;
+    if (calView === 'month') {
+      el.textContent = CAL_MONTHS[calAnchor.getMonth()] + ' ' + calAnchor.getFullYear();
+      return;
+    }
+    if (calView === 'day') {
+      el.textContent = CAL_DOW[calAnchor.getDay()] + ', ' + CAL_MONTHS[calAnchor.getMonth()].slice(0, 3) + ' ' + calAnchor.getDate() + ', ' + calAnchor.getFullYear();
+      return;
+    }
+    const start = calStartOfWeek(calAnchor);
+    const end = calAddDays(start, 6);
+    const sameMonth = start.getMonth() === end.getMonth();
+    const startLabel = CAL_MONTHS[start.getMonth()].slice(0, 3) + ' ' + start.getDate();
+    const endLabel = (sameMonth ? '' : CAL_MONTHS[end.getMonth()].slice(0, 3) + ' ') + end.getDate();
+    el.textContent = startLabel + ' – ' + endLabel + ', ' + end.getFullYear();
+  }
+
+  function buildCalEventEl(ev) {
+    const row = document.createElement('div');
+    row.className = 'cal-event';
+    const time = document.createElement('span');
+    time.className = 'cal-event-time';
+    time.textContent = calEventIsAllDay(ev) ? 'All day' : formatClock(calEventDate(ev, 'start'));
+    const title = document.createElement('span');
+    title.className = 'cal-event-title';
+    title.textContent = ev.summary || '(untitled)';
+    row.appendChild(time);
+    row.appendChild(title);
+    return row;
+  }
+
+  // ---------- Day view + local event modal ----------
+  let calEventModalMode = null; // 'create' | 'edit' | 'view'
+  let calEventModalEditingId = null;
+
+  function openCalEventModal(mode, opts) {
+    calEventModalMode = mode;
+    calEventModalEditingId = (opts && opts.id) || null;
+    const titleEl = document.getElementById('calEventModalTitle');
+    const sourceEl = document.getElementById('calEventModalSource');
+    const nameInput = document.getElementById('calEventTitleInput');
+    const dateInput = document.getElementById('calEventDateInput');
+    const timeInput = document.getElementById('calEventTimeInput');
+    const durationInput = document.getElementById('calEventDurationInput');
+    const notesInput = document.getElementById('calEventNotesInput');
+    const saveBtn = document.getElementById('calEventSaveBtn');
+    const cancelBtn = document.getElementById('calEventCancelBtn');
+    const deleteLink = document.getElementById('calEventDeleteLink');
+
+    const readOnly = mode === 'view';
+    [nameInput, dateInput, timeInput, durationInput, notesInput].forEach(el => { el.disabled = readOnly; });
+    saveBtn.style.display = readOnly ? 'none' : '';
+    deleteLink.style.display = (mode === 'edit') ? '' : 'none';
+    cancelBtn.textContent = readOnly ? 'Close' : 'Cancel';
+    sourceEl.style.display = readOnly ? '' : 'none';
+    if (readOnly) sourceEl.textContent = 'From Google Calendar — view only.';
+
+    titleEl.textContent = mode === 'view' ? (opts.title || '(untitled)') : (mode === 'edit' ? 'Edit event' : 'Add event');
+    nameInput.value = (opts && opts.title) || '';
+    dateInput.value = (opts && opts.dateKey) || calDateKey(calAnchor);
+    timeInput.value = (opts && opts.time) || '09:00';
+    durationInput.value = (opts && opts.duration) || (mode === 'view' ? '' : 60);
+    notesInput.value = (opts && opts.notes) || '';
+
+    document.getElementById('calEventModalBg').classList.add('show');
+  }
+
+  function closeCalEventModal() {
+    document.getElementById('calEventModalBg').classList.remove('show');
+    calEventModalMode = null;
+    calEventModalEditingId = null;
+  }
+
+  function initCalEventModal() {
+    document.getElementById('calEventCancelBtn').addEventListener('click', closeCalEventModal);
+    document.getElementById('calEventModalBg').addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) closeCalEventModal();
+    });
+    document.getElementById('calEventSaveBtn').addEventListener('click', () => {
+      const title = document.getElementById('calEventTitleInput').value.trim();
+      const dateKey = document.getElementById('calEventDateInput').value;
+      const time = document.getElementById('calEventTimeInput').value;
+      const duration = Number(document.getElementById('calEventDurationInput').value) || 60;
+      const notes = document.getElementById('calEventNotesInput').value.trim();
+      if (!title || !dateKey || !time) return;
+      const list = getLocalCalEvents();
+      if (calEventModalMode === 'edit' && calEventModalEditingId) {
+        const idx = list.findIndex(x => x.id === calEventModalEditingId);
+        if (idx !== -1) list[idx] = Object.assign({}, list[idx], { title, dateKey, time, duration, notes });
+      } else {
+        list.push({ id: 'ce' + Date.now() + Math.random().toString(36).slice(2, 7), title, dateKey, time, duration, notes });
+      }
+      setLocalCalEvents(list);
+      closeCalEventModal();
+      loadCalendar();
+    });
+    document.getElementById('calEventDeleteLink').addEventListener('click', () => {
+      if (!calEventModalEditingId) return;
+      setLocalCalEvents(getLocalCalEvents().filter(x => x.id !== calEventModalEditingId));
+      closeCalEventModal();
+      loadCalendar();
+    });
+  }
+
+  function buildDayEventChip(item) {
+    const chip = document.createElement('div');
+    chip.className = 'cal-day-event-block' + (item.isLocal ? ' is-local' : '');
+    const time = document.createElement('span');
+    time.className = 'cal-day-event-time';
+    time.textContent = item.allDay ? 'All day' : formatClock(item.start);
+    const title = document.createElement('span');
+    title.className = 'cal-day-event-title';
+    title.textContent = item.title;
+    chip.appendChild(time);
+    chip.appendChild(title);
+    chip.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (item.isLocal) {
+        openCalEventModal('edit', {
+          id: item.raw.id, title: item.raw.title, dateKey: item.raw.dateKey,
+          time: item.raw.time, duration: item.raw.duration, notes: item.raw.notes
+        });
+      } else {
+        const end = calEventDate(item.raw, 'end');
+        const durationMins = (!item.allDay && end) ? Math.round((end - item.start) / 60000) : '';
+        openCalEventModal('view', {
+          title: item.title,
+          dateKey: calDateKey(item.start),
+          time: item.allDay ? '' : hourToTimeStr(item.start.getHours() + item.start.getMinutes() / 60),
+          duration: durationMins,
+          notes: item.raw.description || ''
+        });
+      }
+    });
+    return chip;
+  }
+
+  function renderDayGrid(events) {
+    const allDayWrap = document.getElementById('calDayAllDay');
+    const timeline = document.getElementById('calDayTimeline');
+    if (!allDayWrap || !timeline) return;
+    allDayWrap.innerHTML = '';
+    timeline.innerHTML = '';
+
+    const dateKey = calDateKey(calAnchor);
+    const items = [];
+    (events || []).forEach(ev => {
+      const start = calEventDate(ev, 'start');
+      if (!start) return;
+      items.push({ title: ev.summary || '(untitled)', start, allDay: calEventIsAllDay(ev), isLocal: false, raw: ev });
+    });
+    getLocalCalEvents().filter(e => e.dateKey === dateKey).forEach(e => {
+      const parts = (e.time || '00:00').split(':').map(Number);
+      const start = new Date(calAnchor.getFullYear(), calAnchor.getMonth(), calAnchor.getDate(), parts[0], parts[1] || 0);
+      items.push({ title: e.title, start, allDay: false, isLocal: true, raw: e });
+    });
+
+    const allDayItems = items.filter(i => i.allDay);
+    const timedItems = items.filter(i => !i.allDay).sort((a, b) => a.start - b.start);
+
+    allDayItems.forEach(item => allDayWrap.appendChild(buildDayEventChip(item)));
+
+    const now = new Date();
+    const isToday = calIsSameDay(calAnchor, now);
+    for (let hour = 0; hour < 24; hour++) {
+      const row = document.createElement('div');
+      row.className = 'cal-day-row' + (isToday && now.getHours() === hour ? ' is-current-hour' : '');
+      const timeLabel = document.createElement('div');
+      timeLabel.className = 'cal-day-row-time';
+      timeLabel.textContent = formatHourLabel(hour);
+      const slot = document.createElement('div');
+      slot.className = 'cal-day-row-slot';
+      slot.addEventListener('click', () => {
+        openCalEventModal('create', { dateKey, time: pad2(hour) + ':00' });
+      });
+      timedItems.filter(i => i.start.getHours() === hour).forEach(item => slot.appendChild(buildDayEventChip(item)));
+      row.appendChild(timeLabel);
+      row.appendChild(slot);
+      timeline.appendChild(row);
+    }
+  }
+
+  function renderWeekGrid(events) {
+    const grid = document.getElementById('calWeekGrid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    const weekStart = calStartOfWeek(calAnchor);
+    const today = calMidnight(new Date());
+    const byDay = [[], [], [], [], [], [], []];
+    (events || []).forEach(ev => {
+      const start = calEventDate(ev, 'start');
+      if (!start) return;
+      for (let i = 0; i < 7; i++) {
+        if (calIsSameDay(start, calAddDays(weekStart, i))) { byDay[i].push(ev); break; }
+      }
+    });
+    for (let i = 0; i < 7; i++) {
+      const dayDate = calAddDays(weekStart, i);
+      const col = document.createElement('div');
+      col.className = 'cal-day-col' + (calIsSameDay(dayDate, today) ? ' is-today' : '');
+      const head = document.createElement('div');
+      head.className = 'cal-day-head';
+      const dname = document.createElement('div');
+      dname.className = 'cal-day-name';
+      dname.textContent = CAL_DOW[i];
+      const dnum = document.createElement('div');
+      dnum.className = 'cal-day-num';
+      dnum.textContent = String(dayDate.getDate());
+      head.appendChild(dname);
+      head.appendChild(dnum);
+      col.appendChild(head);
+      const evWrap = document.createElement('div');
+      evWrap.className = 'cal-day-events';
+      const dayEvents = byDay[i].sort((a, b) => calEventDate(a, 'start') - calEventDate(b, 'start'));
+      if (!dayEvents.length) {
+        const empty = document.createElement('div');
+        empty.className = 'cal-day-empty';
+        empty.textContent = '—';
+        evWrap.appendChild(empty);
+      } else {
+        dayEvents.forEach(ev => evWrap.appendChild(buildCalEventEl(ev)));
+      }
+      col.appendChild(evWrap);
+      grid.appendChild(col);
+    }
+  }
+
+  const CAL_MONTH_MAX_VISIBLE = 3;
+
+  function renderMonthGrid(events) {
+    const grid = document.getElementById('calMonthGrid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    CAL_DOW.forEach(name => {
+      const dow = document.createElement('div');
+      dow.className = 'cal-month-dow';
+      dow.textContent = name;
+      grid.appendChild(dow);
+    });
+    const monthStart = new Date(calAnchor.getFullYear(), calAnchor.getMonth(), 1);
+    const gridStart = calAddDays(monthStart, -monthStart.getDay());
+    const today = calMidnight(new Date());
+    const eventsByDay = new Map();
+    (events || []).forEach(ev => {
+      const d = calEventDate(ev, 'start');
+      if (!d) return;
+      const key = d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate();
+      if (!eventsByDay.has(key)) eventsByDay.set(key, []);
+      eventsByDay.get(key).push(ev);
+    });
+    for (let i = 0; i < 42; i++) {
+      const cellDate = calAddDays(gridStart, i);
+      const cell = document.createElement('div');
+      const outside = cellDate.getMonth() !== calAnchor.getMonth();
+      cell.className = 'cal-month-cell' + (outside ? ' is-outside' : '') + (calIsSameDay(cellDate, today) ? ' is-today' : '');
+      const num = document.createElement('div');
+      num.className = 'cal-month-num';
+      num.textContent = String(cellDate.getDate());
+      cell.appendChild(num);
+
+      const key = cellDate.getFullYear() + '-' + cellDate.getMonth() + '-' + cellDate.getDate();
+      const dayEvents = (eventsByDay.get(key) || []).sort((a, b) => calEventDate(a, 'start') - calEventDate(b, 'start'));
+      if (dayEvents.length) {
+        const evWrap = document.createElement('div');
+        evWrap.className = 'cal-month-events';
+        dayEvents.slice(0, CAL_MONTH_MAX_VISIBLE).forEach(ev => {
+          const pill = document.createElement('div');
+          pill.className = 'cal-month-event';
+          const timePrefix = calEventIsAllDay(ev) ? '' : formatClock(calEventDate(ev, 'start')) + ' ';
+          pill.textContent = timePrefix + (ev.summary || '(untitled)');
+          evWrap.appendChild(pill);
+        });
+        if (dayEvents.length > CAL_MONTH_MAX_VISIBLE) {
+          const more = document.createElement('div');
+          more.className = 'cal-month-more';
+          more.textContent = '+' + (dayEvents.length - CAL_MONTH_MAX_VISIBLE) + ' more';
+          evWrap.appendChild(more);
+        }
+        cell.appendChild(evWrap);
+      }
+
+      cell.addEventListener('click', () => {
+        calAnchor = calMidnight(cellDate);
+        calView = 'week';
+        document.querySelectorAll('.cal-view-btn').forEach(b => b.classList.toggle('is-active', b.dataset.calView === 'week'));
+        setCalGridVisibility();
+        loadCalendar();
+      });
+      grid.appendChild(cell);
+    }
+  }
+
+  function renderCalGrid(events) {
+    if (calView === 'day') renderDayGrid(events);
+    else if (calView === 'month') renderMonthGrid(events);
+    else renderWeekGrid(events);
+  }
+
+  async function loadCalendar() {
+    renderCalLabel();
+    updateCalConnectBtn();
+    const tokens = getGcalTokens();
+    if (!tokens || !tokens.access_token) {
+      showCalStatus('Connect your Google Calendar to show real events here.', false);
+      renderCalGrid([]);
+      return;
+    }
+    showCalStatus('Loading events…', false);
+    let rangeStart, rangeEnd;
+    if (calView === 'month') {
+      const monthStart = new Date(calAnchor.getFullYear(), calAnchor.getMonth(), 1);
+      rangeStart = calAddDays(monthStart, -monthStart.getDay());
+      rangeEnd = calAddDays(rangeStart, 42);
+    } else if (calView === 'day') {
+      rangeStart = calMidnight(calAnchor);
+      rangeEnd = calAddDays(rangeStart, 1);
+    } else {
+      rangeStart = calStartOfWeek(calAnchor);
+      rangeEnd = calAddDays(rangeStart, 7);
+    }
+    try {
+      const events = await fetchGcalEvents(rangeStart.toISOString(), rangeEnd.toISOString());
+      if (events === null) {
+        showCalStatus('Connect your Google Calendar to show real events here.', false);
+        renderCalGrid([]);
+        return;
+      }
+      showCalStatus('', false);
+      renderCalGrid(events);
+    } catch (e) {
+      showCalStatus(e.message || 'Could not load Google Calendar events.', true);
+      updateCalConnectBtn();
+      renderCalGrid([]);
+    }
+  }
+
+  function calStepDate(dir) {
+    if (calView === 'month') return calAddMonths(calAnchor, dir);
+    if (calView === 'day') return calAddDays(calAnchor, dir);
+    return calAddDays(calAnchor, dir * 7);
+  }
+
+  function setCalGridVisibility() {
+    document.getElementById('calDayGrid').style.display = calView === 'day' ? '' : 'none';
+    document.getElementById('calWeekGrid').style.display = calView === 'week' ? '' : 'none';
+    document.getElementById('calMonthGrid').style.display = calView === 'month' ? '' : 'none';
+  }
+
+  function initCalendar() {
+    processGcalHashTokens();
+    initCalEventModal();
+    document.querySelectorAll('.cal-view-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        calView = btn.dataset.calView;
+        document.querySelectorAll('.cal-view-btn').forEach(b => b.classList.toggle('is-active', b === btn));
+        setCalGridVisibility();
+        loadCalendar();
+      });
+    });
+    document.getElementById('calPrevBtn').addEventListener('click', () => {
+      calAnchor = calStepDate(-1);
+      loadCalendar();
+    });
+    document.getElementById('calNextBtn').addEventListener('click', () => {
+      calAnchor = calStepDate(1);
+      loadCalendar();
+    });
+    document.getElementById('calTodayBtn').addEventListener('click', () => {
+      calAnchor = calMidnight(new Date());
+      loadCalendar();
+    });
+    document.getElementById('calConnectBtn').addEventListener('click', () => {
+      const tokens = getGcalTokens();
+      if (tokens && tokens.access_token) disconnectGoogleCalendar();
+      else connectGoogleCalendar();
+    });
+
+    // Swipe left/right on the Day timeline to navigate to the next/previous day.
+    let calTouchStartX = null;
+    const dayGrid = document.getElementById('calDayGrid');
+    dayGrid.addEventListener('touchstart', (e) => {
+      calTouchStartX = e.touches[0].clientX;
+    }, { passive: true });
+    dayGrid.addEventListener('touchend', (e) => {
+      if (calTouchStartX === null) return;
+      const dx = e.changedTouches[0].clientX - calTouchStartX;
+      calTouchStartX = null;
+      if (Math.abs(dx) < 50) return;
+      calAnchor = calAddDays(calAnchor, dx < 0 ? 1 : -1);
+      loadCalendar();
+    }, { passive: true });
+
+    loadCalendar();
+  }
+
+  // ============================================================
+  // Projects — status kanban + progress slider + archive/History
+  // + goal-linked filter + inline edit + Obsidian page link
+  // ============================================================
+  const PROJECT_SEED = [
+    { id: 'p1', title: 'AI-Powered Chatbot', status: 'not-started', priority: 'low', value: 0, goalId: null, archived: false, obsidian: null },
+    { id: 'p2', title: 'Password Manager with Encryption', status: 'in-progress', priority: 'high', value: 50, goalId: null, archived: false, obsidian: null },
+    { id: 'p3', title: 'AI Video Generator from a Script', status: 'done', priority: 'medium', value: 100, goalId: null, archived: false, obsidian: null }
+  ];
+  function getProjects() {
+    let list = storeGet('projects_v1');
+    if (!Array.isArray(list)) { list = PROJECT_SEED.slice(); storeSet('projects_v1', list); }
+    return list;
+  }
+  function setProjectsList(list) { storeSet('projects_v1', list); }
+
+  const PROJ_COLUMNS = [
+    { status: 'not-started', label: 'Not started' },
+    { status: 'in-progress', label: 'In progress' },
+    { status: 'done', label: 'Done' }
+  ];
+  let projView = 'status';
+  let projSearchTerm = '';
+  let projGoalFilter = 'all'; // 'all' | 'unassigned' | goal id
+  let projEditingId = null;
+
+  function goalTitleById(goalId) {
+    const g = getLongtermGoals().find(x => x.id === goalId);
+    return g ? g.title : null;
+  }
+
+  function appendGoalOptions(selectEl, goals) {
+    goals.forEach(g => {
+      const opt = document.createElement('option');
+      opt.value = g.id;
+      opt.textContent = g.title;
+      selectEl.appendChild(opt);
+    });
+  }
+
+  function renderProjGoalFilterOptions() {
+    const sel = document.getElementById('projGoalFilter');
+    if (!sel) return;
+    const goals = getLongtermGoals();
+    const prev = projGoalFilter;
+    sel.innerHTML = '<option value="all">All Projects</option><option value="unassigned">Unassigned</option>';
+    appendGoalOptions(sel, goals);
+    sel.value = goals.some(g => g.id === prev) || prev === 'all' || prev === 'unassigned' ? prev : 'all';
+    projGoalFilter = sel.value;
+  }
+
+  function renderProjGoalSelectOptions() {
+    const goals = getLongtermGoals();
+    const addSel = document.getElementById('projGoalInput');
+    if (!addSel) return;
+    addSel.innerHTML = '<option value="">No linked goal</option>';
+    appendGoalOptions(addSel, goals);
+  }
+
+  function buildProjEditForm(p) {
+    const card = document.createElement('div');
+    card.className = 'proj-card proj-card-editing';
+    card.dataset.status = p.status;
+    const goals = getLongtermGoals();
+    card.innerHTML =
+      '<div class="proj-add-form" style="display:flex; margin-top:0;">' +
+        '<input type="text" class="proj-edit-title" placeholder="Project title…">' +
+        '<select class="proj-edit-status">' +
+          '<option value="not-started">Not started</option>' +
+          '<option value="in-progress">In progress</option>' +
+          '<option value="done">Done</option>' +
+        '</select>' +
+        '<select class="proj-edit-priority">' +
+          '<option value="low">Low</option>' +
+          '<option value="medium">Medium</option>' +
+          '<option value="high">High</option>' +
+        '</select>' +
+        '<select class="proj-edit-goal">' +
+          '<option value="">No linked goal</option>' +
+        '</select>' +
+        '<button type="button" class="proj-edit-save">Save</button>' +
+        '<button type="button" class="proj-edit-cancel">Cancel</button>' +
+      '</div>';
+    appendGoalOptions(card.querySelector('.proj-edit-goal'), goals);
+    card.querySelector('.proj-edit-title').value = p.title;
+    card.querySelector('.proj-edit-status').value = p.status;
+    card.querySelector('.proj-edit-priority').value = p.priority;
+    card.querySelector('.proj-edit-goal').value = p.goalId || '';
+
+    card.querySelector('.proj-edit-save').addEventListener('click', () => {
+      const title = card.querySelector('.proj-edit-title').value.trim();
+      if (!title) return;
+      const status = card.querySelector('.proj-edit-status').value;
+      const priority = card.querySelector('.proj-edit-priority').value;
+      const goalId = card.querySelector('.proj-edit-goal').value || null;
+      const cur = getProjects();
+      const idx = cur.findIndex(x => x.id === p.id);
+      if (idx !== -1) {
+        cur[idx] = Object.assign({}, cur[idx], { title, status, priority, goalId });
+        setProjectsList(cur);
+      }
+      projEditingId = null;
+      renderProjects();
+    });
+    card.querySelector('.proj-edit-cancel').addEventListener('click', () => {
+      projEditingId = null;
+      renderProjects();
+    });
+    return card;
+  }
+
+  function buildProjCard(p) {
+    if (projEditingId === p.id) return buildProjEditForm(p);
+
+    const card = document.createElement('div');
+    card.className = 'proj-card';
+    card.dataset.status = p.status;
+
+    const goalTitle = p.goalId ? goalTitleById(p.goalId) : null;
+    const obsLinked = !!(p.obsidian && p.obsidian.path);
+
+    card.innerHTML =
+      '<div class="proj-card-actions">' +
+        (obsLinked ? '<span class="proj-obsidian-badge" title="Linked to Obsidian">🔗</span>' : '') +
+        '<button type="button" class="proj-card-edit" aria-label="Edit project">✎</button>' +
+        '<button type="button" class="proj-card-del" aria-label="Delete project">×</button>' +
+      '</div>' +
+      '<div class="proj-card-row">' +
+        '<span class="proj-card-title"></span>' +
+        '<span class="proj-card-value">' + (p.value || 0) + '%</span>' +
+      '</div>' +
+      '<div class="proj-card-slider-row">' +
+        '<input type="range" class="proj-card-slider dgt-goal-slider" min="0" max="100" value="' + (p.value || 0) + '">' +
+      '</div>' +
+      '<div class="proj-card-tags">' +
+        '<span class="proj-card-tag" data-priority="' + p.priority + '">' + p.priority + '</span>' +
+        (goalTitle ? '<span class="proj-card-tag proj-card-tag-goal"></span>' : '') +
+      '</div>' +
+      (p.status === 'done' ? '<button type="button" class="proj-card-archive">Archive</button>' : '');
+
+    card.querySelector('.proj-card-title').textContent = p.title;
+    if (goalTitle) card.querySelector('.proj-card-tag-goal').textContent = goalTitle;
+
+    card.querySelector('.proj-card-edit').addEventListener('click', (e) => {
+      e.stopPropagation();
+      projEditingId = p.id;
+      renderProjects();
+    });
+    card.querySelector('.proj-card-del').addEventListener('click', (e) => {
+      e.stopPropagation();
+      setProjectsList(getProjects().filter(x => x.id !== p.id));
+      renderProjects();
+    });
+    const archiveBtn = card.querySelector('.proj-card-archive');
+    if (archiveBtn) {
+      archiveBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const cur = getProjects();
+        const idx = cur.findIndex(x => x.id === p.id);
+        if (idx !== -1) { cur[idx] = Object.assign({}, cur[idx], { archived: true }); setProjectsList(cur); }
+        renderProjects();
+      });
+    }
+
+    const slider = card.querySelector('.proj-card-slider');
+    const valueLabel = card.querySelector('.proj-card-value');
+    slider.addEventListener('click', (e) => e.stopPropagation());
+    slider.addEventListener('input', () => { valueLabel.textContent = slider.value + '%'; });
+    slider.addEventListener('change', () => {
+      const cur = getProjects();
+      const idx = cur.findIndex(x => x.id === p.id);
+      if (idx !== -1) { cur[idx] = Object.assign({}, cur[idx], { value: Number(slider.value) }); setProjectsList(cur); }
+    });
+
+    card.addEventListener('click', () => openProjectObsidianPage(p.id));
+
+    return card;
+  }
+
+  function buildProjHistoryRow(p) {
+    const row = document.createElement('div');
+    row.className = 'proj-history-row';
+    row.innerHTML =
+      '<span class="proj-history-title"></span>' +
+      '<span class="proj-history-value">' + (p.value || 0) + '%</span>' +
+      '<button type="button" class="proj-history-unarchive">Unarchive</button>';
+    row.querySelector('.proj-history-title').textContent = p.title;
+    row.querySelector('.proj-history-unarchive').addEventListener('click', (e) => {
+      e.stopPropagation();
+      const cur = getProjects();
+      const idx = cur.findIndex(x => x.id === p.id);
+      if (idx !== -1) { cur[idx] = Object.assign({}, cur[idx], { archived: false }); setProjectsList(cur); }
+      renderProjects();
+    });
+    row.addEventListener('click', () => openProjectObsidianPage(p.id));
+    return row;
+  }
+
+  function renderProjHistory(archived) {
+    const wrap = document.getElementById('projHistoryList');
+    const countEl = document.getElementById('projHistoryCount');
+    if (!wrap) return;
+    wrap.innerHTML = '';
+    if (countEl) countEl.textContent = String(archived.length);
+    if (!archived.length) {
+      const e = document.createElement('div');
+      e.className = 'proj-col-empty';
+      e.textContent = 'No archived projects yet.';
+      wrap.appendChild(e);
+      return;
+    }
+    archived.forEach(p => wrap.appendChild(buildProjHistoryRow(p)));
+  }
+
+  function renderProjects() {
+    const columnsEl = document.getElementById('projColumns');
+    const ganttEl = document.getElementById('projGanttStub');
+    if (!columnsEl || !ganttEl) return;
+    columnsEl.style.display = projView === 'gantt' ? 'none' : 'grid';
+    ganttEl.style.display = projView === 'gantt' ? 'block' : 'none';
+
+    const everything = getProjects();
+    renderProjHistory(everything.filter(p => p.archived));
+
+    if (projView === 'gantt') return;
+
+    columnsEl.classList.toggle('is-flat', projView === 'all');
+    columnsEl.innerHTML = '';
+
+    let all = everything.filter(p => !p.archived);
+    if (projGoalFilter === 'unassigned') all = all.filter(p => !p.goalId);
+    else if (projGoalFilter !== 'all') all = all.filter(p => p.goalId === projGoalFilter);
+    if (projSearchTerm) {
+      const term = projSearchTerm.toLowerCase();
+      all = all.filter(p => p.title.toLowerCase().indexOf(term) !== -1);
+    }
+
+    if (projView === 'all') {
+      const col = document.createElement('div');
+      col.className = 'proj-col';
+      if (all.length === 0) {
+        const e = document.createElement('div');
+        e.className = 'proj-col-empty';
+        e.textContent = 'No projects found.';
+        col.appendChild(e);
+      } else {
+        all.forEach(p => col.appendChild(buildProjCard(p)));
+      }
+      columnsEl.appendChild(col);
+      return;
+    }
+
+    PROJ_COLUMNS.forEach(colDef => {
+      const col = document.createElement('div');
+      col.className = 'proj-col';
+      col.dataset.status = colDef.status;
+      const items = all.filter(p => p.status === colDef.status);
+      const labelRow = document.createElement('div');
+      labelRow.className = 'proj-col-label';
+      labelRow.innerHTML = '<span class="proj-col-dot"></span>';
+      labelRow.appendChild(document.createTextNode(colDef.label + ' · ' + items.length));
+      col.appendChild(labelRow);
+      if (items.length === 0) {
+        const e = document.createElement('div');
+        e.className = 'proj-col-empty';
+        e.textContent = 'Nothing here yet.';
+        col.appendChild(e);
+      } else {
+        items.forEach(p => col.appendChild(buildProjCard(p)));
+      }
+      columnsEl.appendChild(col);
+    });
+  }
+
+  function initProjects() {
+    const columnsEl = document.getElementById('projColumns');
+    if (!columnsEl) return;
+
+    document.querySelectorAll('.proj-view-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        projView = btn.dataset.view;
+        document.querySelectorAll('.proj-view-btn').forEach(b => b.classList.toggle('is-active', b === btn));
+        renderProjects();
+      });
+    });
+
+    const searchBtn = document.getElementById('projSearchBtn');
+    const searchInput = document.getElementById('projSearchInput');
+    searchBtn.addEventListener('click', () => {
+      const willOpen = !searchInput.classList.contains('is-open');
+      searchInput.classList.toggle('is-open', willOpen);
+      searchBtn.classList.toggle('is-active', willOpen);
+      if (willOpen) { searchInput.focus(); }
+      else { searchInput.value = ''; projSearchTerm = ''; renderProjects(); }
+    });
+    searchInput.addEventListener('input', () => {
+      projSearchTerm = searchInput.value.trim();
+      renderProjects();
+    });
+
+    const goalFilterEl = document.getElementById('projGoalFilter');
+    if (goalFilterEl) {
+      goalFilterEl.addEventListener('change', () => {
+        projGoalFilter = goalFilterEl.value;
+        renderProjects();
+      });
+    }
+
+    const historyToggle = document.getElementById('projHistoryToggle');
+    if (historyToggle) {
+      historyToggle.addEventListener('toggle', () => {});
+    }
+
+    const addToggle = document.getElementById('projAddToggle');
+    const addForm = document.getElementById('projAddForm');
+    addToggle.addEventListener('click', () => {
+      const open = addForm.style.display === 'flex';
+      addForm.style.display = open ? 'none' : 'flex';
+    });
+    document.getElementById('projAddBtn').addEventListener('click', () => {
+      const titleEl = document.getElementById('projTitleInput');
+      const title = titleEl.value.trim();
+      if (!title) return;
+      const status = document.getElementById('projStatusInput').value;
+      const priority = document.getElementById('projPriorityInput').value;
+      const goalId = document.getElementById('projGoalInput').value || null;
+      const list = getProjects();
+      list.push({ id: 'p' + Date.now(), title, status, priority, value: status === 'done' ? 100 : 0, goalId, archived: false, obsidian: null });
+      setProjectsList(list);
+      titleEl.value = '';
+      addForm.style.display = 'none';
+      renderProjects();
+    });
+
+    renderProjGoalFilterOptions();
+    renderProjGoalSelectOptions();
+    renderProjects();
+    initObsidianSettingsModal();
+  }
+
+  // ---------- Obsidian project pages ----------
+  async function openProjectObsidianPage(projectId) {
+    if (!window.ObsidianSync) return;
+    const cfg = ObsidianSync.getConfig();
+    if (!cfg.enabled) { openObsidianSettingsModal(); return; }
+    const cur = getProjects();
+    const idx = cur.findIndex(x => x.id === projectId);
+    if (idx === -1) return;
+    let project = cur[idx];
+
+    let path = project.obsidian && project.obsidian.path;
+    if (!path) {
+      const res = await ObsidianSync.pushProjectPage(project);
+      if (!res.ok) { showProjObsidianStatus('Could not reach Obsidian — check Settings.', true); return; }
+      path = res.path;
+      cur[idx] = Object.assign({}, project, { obsidian: { path, lastSyncedAt: new Date().toISOString() } });
+      setProjectsList(cur);
+      renderProjects();
+    }
+
+    if (!cfg.vaultName) { showProjObsidianStatus('Add your vault name in Settings to open Obsidian directly.', true); return; }
+    const fileParam = path.replace(/\.md$/, '');
+    window.open('obsidian://open?vault=' + encodeURIComponent(cfg.vaultName) + '&file=' + encodeURIComponent(fileParam), '_blank');
+  }
+
+  function showProjObsidianStatus(msg, isError) {
+    const el = document.getElementById('projObsidianStatus');
+    if (!el) return;
+    el.textContent = msg;
+    el.classList.toggle('is-error', !!isError);
+    clearTimeout(el._t);
+    el._t = setTimeout(() => { el.textContent = ''; }, 4000);
+  }
+
+  function openObsidianSettingsModal() {
+    if (!window.ObsidianSync) return;
+    const cfg = ObsidianSync.getConfig();
+    document.getElementById('projObsEnabled').checked = !!cfg.enabled;
+    document.getElementById('projObsHost').value = cfg.host;
+    document.getElementById('projObsPort').value = cfg.port;
+    document.getElementById('projObsProtocol').value = cfg.protocol;
+    document.getElementById('projObsApiKey').value = cfg.apiKey;
+    document.getElementById('projObsVaultName').value = cfg.vaultName || '';
+    document.getElementById('projObsFolder').value = cfg.projectsFolder || 'AppProjects';
+    document.getElementById('projObsModalBg').classList.add('show');
+  }
+  function closeObsidianSettingsModal() {
+    document.getElementById('projObsModalBg').classList.remove('show');
+  }
+  function readObsidianSettingsForm() {
+    return {
+      enabled: document.getElementById('projObsEnabled').checked,
+      host: document.getElementById('projObsHost').value.trim() || '127.0.0.1',
+      port: Number(document.getElementById('projObsPort').value) || 27123,
+      protocol: document.getElementById('projObsProtocol').value,
+      apiKey: document.getElementById('projObsApiKey').value.trim(),
+      vaultName: document.getElementById('projObsVaultName').value.trim(),
+      projectsFolder: document.getElementById('projObsFolder').value.trim() || 'AppProjects'
+    };
+  }
+  function initObsidianSettingsModal() {
+    const gearBtn = document.getElementById('projObsidianGearBtn');
+    if (!gearBtn || !window.ObsidianSync) return;
+    gearBtn.addEventListener('click', openObsidianSettingsModal);
+    document.getElementById('projObsClose').addEventListener('click', closeObsidianSettingsModal);
+    document.getElementById('projObsModalBg').addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) closeObsidianSettingsModal();
+    });
+    document.getElementById('projObsSave').addEventListener('click', () => {
+      ObsidianSync.setConfig(readObsidianSettingsForm());
+      closeObsidianSettingsModal();
+    });
+    document.getElementById('projObsTest').addEventListener('click', () => {
+      ObsidianSync.setConfig(Object.assign({}, ObsidianSync.getConfig(), readObsidianSettingsForm()));
+      const resultEl = document.getElementById('projObsTestResult');
+      resultEl.textContent = 'Testing…';
+      ObsidianSync.testConnection().then(ok => { resultEl.textContent = ok ? '✅ Connected' : '❌ Not reachable'; });
+    });
+  }
+
+  // ---------- Boot ----------
+  rollover();
+  processStreak();
+  loadToday();
+  loadTomorrow();
+  renderStreak();
+
+  renderLongtermGoals();
+  initGoalAddForm();
+  renderChecklists();
+  initCalendar();
+  initProjects();
+
+  window.addEventListener('storage', () => {
+    loadToday(); loadTomorrow(); renderStreak(); renderLongtermGoals(); renderChecklists(); renderProjects();
+  });
+})();
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  if (typeof initCloudSync !== 'function') return;
+  initCloudSync({
+    appKey: 'goals',
+    syncedKeys: ['longterm_goals_v1', 'projects_v1', 'local_cal_events_v1'],
+    syncedPrefixes: ['goals:', 'checklist:items:', 'checklist:done:'],
+    onApplied: function () {
+      window.dispatchEvent(new CustomEvent('goals-changed'));
+      window.dispatchEvent(new Event('storage'));
+    }
+  });
+});
+</script>
 </body>
 </html>

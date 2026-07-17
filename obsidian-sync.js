@@ -15,7 +15,13 @@
 (function () {
   'use strict';
   const CONFIG_KEY = 'obsidian_sync_config';
-  const DEFAULT_CONFIG = { enabled: false, host: '127.0.0.1', port: 27123, protocol: 'http', apiKey: '', folder: 'AppNotes' };
+  const DEFAULT_CONFIG = {
+    enabled: false, host: '127.0.0.1', port: 27123, protocol: 'http', apiKey: '', folder: 'AppNotes',
+    // Used by the Planner's Projects section: vaultName opens the desktop app via the
+    // obsidian:// URI scheme (the Local REST API alone can only read/write vault files,
+    // it can't focus/open the app UI), projectsFolder keeps project pages out of AppNotes.
+    vaultName: '', projectsFolder: 'AppProjects'
+  };
   const IMAGE_EXT_RE = /\.(png|jpe?g|gif|webp)$/i;
 
   function getConfig() {
@@ -150,6 +156,24 @@
     return { body: resolvedBody, images };
   }
 
+  // Auto-creates a project's Obsidian page the first time it's opened (Planner's
+  // Projects section). Unlike pushNote/pullAll this is one-directional and idempotent
+  // by design — the spec asks only to create-if-missing, not keep the page in sync on
+  // every edit, so re-pushing an already-linked project is a no-op the caller should
+  // simply skip (checked via project.obsidian.path before calling this).
+  async function pushProjectPage(project) {
+    const cfg = getConfig();
+    if (!cfg.enabled) return { ok: false, reason: 'disabled' };
+    const folder = cfg.projectsFolder || 'AppProjects';
+    const relPath = folder + '/' + project.id + '.md';
+    const content = '# ' + (project.title || 'Untitled project') + '\n\n';
+    try {
+      const res = await apiFetch(vaultPath(cfg, relPath), { method: 'PUT', body: content, headers: { 'Content-Type': 'text/markdown' } });
+      if (!res.ok) return { ok: false, reason: 'http_' + res.status };
+      return { ok: true, path: relPath, syncedAt: new Date().toISOString() };
+    } catch (e) { return { ok: false, reason: 'network' }; }
+  }
+
   async function pullAll(existingNotes) {
     const cfg = getConfig();
     if (!cfg.enabled) return { ok: false, reason: 'disabled', notes: existingNotes };
@@ -206,5 +230,5 @@
     return { ok: true, notes };
   }
 
-  window.ObsidianSync = { getConfig, setConfig, testConnection, pushNote, deleteNote, pullAll };
+  window.ObsidianSync = { getConfig, setConfig, testConnection, pushNote, deleteNote, pullAll, pushProjectPage };
 })();
