@@ -1060,6 +1060,29 @@ img, video, canvas, svg { max-width: 100%; }
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Goal weight */
+.wt-goal-card {
+  background: var(--bg-card);
+  border: 1px solid rgba(110,231,183,0.10);
+  border-radius: 16px;
+  padding: 16px 18px;
+  margin-top: 12px;
+}
+.wt-goal-head { margin-bottom: 10px; }
+.wt-goal-label {
+  font-size: 11px; letter-spacing: 0.20em; font-weight: 600;
+  color: var(--text-3);
+}
+.wt-goal-input-row {
+  display: grid; grid-template-columns: 1fr auto auto;
+  align-items: center; gap: 10px;
+}
+.wt-goal-summary {
+  margin-top: 12px; padding-top: 12px;
+  border-top: 1px solid var(--border);
+  font-size: 13px; line-height: 1.5; color: var(--text-2);
+}
+
 /* Progress link */
 .wt-progress-link {
   display: flex; align-items: center; justify-content: space-between;
@@ -1426,6 +1449,18 @@ img, video, canvas, svg { max-width: 100%; }
           <button class="wt-save-btn" id="wtSaveBtn">Save</button>
         </div>
       </div>
+    </div>
+
+    <div class="wt-goal-card">
+      <div class="wt-goal-head">
+        <span class="wt-goal-label">GOAL WEIGHT</span>
+      </div>
+      <div class="wt-goal-input-row">
+        <input type="number" step="0.1" class="wt-input" id="wtGoalInput" placeholder="e.g. 75" inputmode="decimal" aria-label="Goal weight">
+        <span class="wt-unit-static">kg</span>
+        <button class="wt-save-btn" id="wtGoalSaveBtn">Save</button>
+      </div>
+      <div class="wt-goal-summary hidden" id="wtGoalSummary"></div>
     </div>
 
     <button class="wt-progress-link" id="wtProgressLink" type="button" aria-label="Open progress photos">
@@ -2696,11 +2731,13 @@ img, video, canvas, svg { max-width: 100%; }
   // ============================================================
   // WEIGHT TRACKER + COMPOSITION ESTIMATE + PROGRESS PHOTOS
   // All persisted to localStorage:
-  //   po_coach_weights : [{ dateKey:'YYYY-MM-DD', weight:Number }]
-  //   po_coach_photos  : [{ id, dataUrl, dateKey, weight }]
+  //   po_coach_weights     : [{ dateKey:'YYYY-MM-DD', weight:Number }]
+  //   po_coach_photos      : [{ id, dataUrl, dateKey, weight }]
+  //   po_coach_goal_weight : Number | absent
   // ============================================================
   const WT_KEY = 'po_coach_weights';
   const PHOTO_KEY = 'po_coach_photos';
+  const GOAL_KEY = 'po_coach_goal_weight';
 
   function wtLoad() {
     try {
@@ -2782,6 +2819,7 @@ img, video, canvas, svg { max-width: 100%; }
       $('wtComp').classList.add('hidden');
     }
     wtRenderStreak();
+    wtRenderGoal();
   }
 
   // Streak — consecutive days ending at today (or yesterday if today
@@ -2803,6 +2841,92 @@ img, video, canvas, svg { max-width: 100%; }
     } else {
       el.classList.add('hidden');
     }
+  }
+
+  // ---- Goal weight ----
+  function goalLoad() {
+    try {
+      const raw = localStorage.getItem(GOAL_KEY);
+      const v = raw != null ? parseFloat(raw) : null;
+      return (v != null && !isNaN(v) && v > 0) ? v : null;
+    } catch (e) { return null; }
+  }
+  function goalSave(v) {
+    try {
+      if (v == null) localStorage.removeItem(GOAL_KEY);
+      else localStorage.setItem(GOAL_KEY, String(v));
+    } catch (e) {}
+  }
+  let goalWeight = goalLoad();
+
+  // Rolling-window pace: compares the earliest vs latest entry inside a
+  // 21-day (3-week) window rather than day-to-day deltas, so a single
+  // water-weight swing doesn't wildly swing the estimate. Needs at least
+  // 3 entries spanning 3+ days inside that window to trust the trend.
+  const GOAL_WINDOW_DAYS = 21;
+  const GOAL_MIN_ENTRIES = 3;
+  const GOAL_FLAT_KG_PER_WEEK = 0.05; // below this, treat the trend as "steady" rather than up/down
+  function wtGoalRate() {
+    if (wtEntries.length < GOAL_MIN_ENTRIES) return null;
+    const last = wtEntries[wtEntries.length - 1];
+    const lastDate = wtParseKey(last.dateKey);
+    const cutoff = new Date(lastDate); cutoff.setDate(cutoff.getDate() - GOAL_WINDOW_DAYS);
+    const windowEntries = wtEntries.filter(e => wtParseKey(e.dateKey) >= cutoff);
+    if (windowEntries.length < GOAL_MIN_ENTRIES) return null;
+    const first = windowEntries[0];
+    const days = Math.round((wtParseKey(last.dateKey) - wtParseKey(first.dateKey)) / 86400000);
+    if (days < 3) return null; // window too tight (e.g. all entries logged the same couple of days)
+    const weeks = days / 7;
+    return { ratePerWeek: (last.weight - first.weight) / weeks, weeks };
+  }
+
+  function wtRenderGoal() {
+    const el = $('wtGoalSummary');
+    if (goalWeight == null) { el.classList.add('hidden'); el.textContent = ''; return; }
+    el.classList.remove('hidden');
+
+    if (!wtEntries.length) {
+      el.textContent = 'Log a weigh-in to see your progress toward your goal.';
+      return;
+    }
+
+    const current = wtEntries[wtEntries.length - 1].weight;
+    const diff = goalWeight - current; // + means goal is above current (gain), - means below (lose)
+    const remaining = Math.abs(diff);
+    const u = state.units;
+
+    if (remaining < 0.05) {
+      el.textContent = 'You\'re at your goal weight — nice work.';
+      return;
+    }
+
+    const direction = diff < 0 ? 'lose' : 'gain';
+    const diffLine = remaining.toFixed(1) + u + ' to ' + direction;
+    const rate = wtGoalRate();
+
+    if (!rate) {
+      el.innerHTML = diffLine + ' · Goal: ' + goalWeight.toFixed(1) + u + '<br>Log a few more weigh-ins to see your pace';
+      return;
+    }
+
+    if (Math.abs(rate.ratePerWeek) < GOAL_FLAT_KG_PER_WEEK) {
+      el.innerHTML = diffLine + ' · Goal: ' + goalWeight.toFixed(1) + u + '<br>Weight has been steady — no clear pace yet';
+      return;
+    }
+
+    const movingTowardGoal = (direction === 'lose' && rate.ratePerWeek < 0) || (direction === 'gain' && rate.ratePerWeek > 0);
+    if (!movingTowardGoal) {
+      const changeOverWindow = rate.ratePerWeek * rate.weeks;
+      const roundedWeeks = Math.max(1, Math.round(rate.weeks));
+      const awayDir = changeOverWindow > 0 ? 'up' : 'down';
+      el.textContent = 'Trending away from your goal — ' + awayDir + ' ' + Math.abs(changeOverWindow).toFixed(1) + u
+        + ' over the last ' + roundedWeeks + ' week' + (roundedWeeks === 1 ? '' : 's');
+      return;
+    }
+
+    const weeksToGoal = remaining / Math.abs(rate.ratePerWeek);
+    const etaStr = weeksToGoal < 1 ? 'under a week' : '~' + Math.round(weeksToGoal) + ' week' + (Math.round(weeksToGoal) === 1 ? '' : 's');
+    el.textContent = diffLine + ' · ' + etaStr + ' at current pace · Goal: ' + goalWeight.toFixed(1) + u;
   }
 
   function wtRenderChart() {
@@ -3026,6 +3150,20 @@ img, video, canvas, svg { max-width: 100%; }
     const todayEntry = wtEntries.find(e => e.dateKey === wtDateKey(new Date()));
     if (todayEntry) $('wtInput').value = todayEntry.weight.toFixed(1);
     $('wtInput').focus(); $('wtInput').select();
+  });
+
+  // Wire goal-weight UI
+  if (goalWeight != null) $('wtGoalInput').value = goalWeight;
+  $('wtGoalSaveBtn').addEventListener('click', () => {
+    const raw = $('wtGoalInput').value;
+    const v = raw === '' ? null : parseFloat(raw);
+    goalWeight = (v != null && !isNaN(v) && v > 0) ? v : null;
+    goalSave(goalWeight);
+    if (goalWeight != null) $('wtGoalInput').value = goalWeight; else $('wtGoalInput').value = '';
+    wtRenderGoal();
+  });
+  $('wtGoalInput').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') $('wtGoalSaveBtn').click();
   });
 
   // ============================================================
@@ -3363,7 +3501,7 @@ img, video, canvas, svg { max-width: 100%; }
   const SUPABASE_URL = 'https://ubhjdibldkknviezrjys.supabase.co';
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InViaGpkaWJsZGtrbnZpZXpyanlzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3NzAyNjEsImV4cCI6MjA5OTM0NjI2MX0.ODgzRHVYLEaDCUBXmmSd3oENXlSlarRYVERagHbVCK0';
   const APP_KEY = 'po-coach';
-  const PC_SYNCED_KEYS = ['po_coach_v1', 'po_coach_workout_done', 'po_coach_weights', 'po_coach_photos'];
+  const PC_SYNCED_KEYS = ['po_coach_v1', 'po_coach_workout_done', 'po_coach_weights', 'po_coach_photos', 'po_coach_goal_weight'];
 
   let pcSupa = null;
   let pcPushTimer = null;
@@ -3416,6 +3554,7 @@ img, video, canvas, svg { max-width: 100%; }
     // in-memory copies from before the remote pull.
     try { state = loadState(); } catch {}
     try { wtEntries = wtLoad(); } catch {}
+    try { goalWeight = goalLoad(); if (goalWeight != null) $('wtGoalInput').value = goalWeight; } catch {}
     try {
       const raw = localStorage.getItem(PHOTO_KEY);
       photos = raw ? JSON.parse(raw) : [];
