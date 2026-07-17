@@ -1073,7 +1073,7 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
 .cal-day-col.is-today .cal-day-num { background: #E2755A; color: #fff; }
 .cal-day-events {
   flex: 1; padding: 6px; display: flex; flex-direction: column; gap: 4px;
-  overflow-y: auto; max-height: 260px;
+  overflow-y: auto; max-height: 640px;
 }
 .cal-event {
   padding: 5px 7px; border-radius: 7px;
@@ -1110,7 +1110,7 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
 }
 .cal-month-cell {
   background: rgba(0,0,0,0.20);
-  min-height: 96px;
+  min-height: 168px;
   padding: 6px;
   cursor: pointer;
   transition: background 0.15s;
@@ -1206,7 +1206,7 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
 }
 
 @media (max-width: 720px) {
-  .cal-month-cell { min-height: 74px; }
+  .cal-month-cell { min-height: 130px; }
   .cal-month-event { font-size: 8.5px; }
 }
 @media (max-width: 480px) {
@@ -2985,7 +2985,7 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
     }
   }
 
-  const CAL_MONTH_MAX_VISIBLE = 3;
+  const CAL_MONTH_MAX_VISIBLE = 6;
 
   function renderMonthGrid(events) {
     const grid = document.getElementById('calMonthGrid');
@@ -3168,6 +3168,23 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
     return list;
   }
   function setProjectsList(list) { storeSet('projects_v1', list); }
+
+  // Derives a stable id from a project's title at creation time (used as its
+  // Obsidian project-page filename too, via pushProjectPage). Only called when
+  // a project is first created -- edits that change the title must never touch
+  // this, since that would orphan any existing Obsidian file/links pointing at
+  // the original id.
+  function slugifyId(title, fallbackPrefix) {
+    const slug = String(title || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60);
+    return slug || (fallbackPrefix + Date.now().toString(36) + Math.random().toString(36).slice(2, 6));
+  }
+  function uniqueIdFromTitle(title, existingIds, fallbackPrefix) {
+    const base = slugifyId(title, fallbackPrefix);
+    if (!existingIds.has(base)) return base;
+    let n = 2;
+    while (existingIds.has(base + '-' + n)) n++;
+    return base + '-' + n;
+  }
 
   const PROJ_COLUMNS = [
     { status: 'not-started', label: 'Not started' },
@@ -3480,7 +3497,8 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
       const priority = document.getElementById('projPriorityInput').value;
       const goalId = document.getElementById('projGoalInput').value || null;
       const list = getProjects();
-      list.push({ id: 'p' + Date.now(), title, status, priority, value: status === 'done' ? 100 : 0, goalId, archived: false, obsidian: null });
+      const id = uniqueIdFromTitle(title, new Set(list.map(x => x.id)), 'project-');
+      list.push({ id, title, status, priority, value: status === 'done' ? 100 : 0, goalId, archived: false, obsidian: null });
       setProjectsList(list);
       titleEl.value = '';
       addForm.style.display = 'none';

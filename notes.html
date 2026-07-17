@@ -172,6 +172,21 @@ const $=id=>document.getElementById(id);
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function when(ts){const d=new Date(ts);return d.toLocaleDateString(undefined,{month:'short',day:'numeric'})+' · '+d.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'});}
 function newId(){return 'n'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+// Derives a note's id from its title at creation time -- it's also the Obsidian
+// sync filename (AppNotes/<id>.md), so a readable slug beats an opaque random
+// string. Only called on creation: a later title edit must never touch id, or
+// it would orphan the existing Obsidian file and any links pointing at it.
+function slugifyId(title,fallbackPrefix){
+  const slug=String(title||'').toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,60);
+  return slug||(fallbackPrefix+newId());
+}
+function uniqueIdFromTitle(title,existingIds,fallbackPrefix){
+  const base=slugifyId(title,fallbackPrefix);
+  if(!existingIds.has(base))return base;
+  let n=2;
+  while(existingIds.has(base+'-'+n))n++;
+  return base+'-'+n;
+}
 
 let notes=[];
 let currentNoteId=null;
@@ -197,12 +212,17 @@ async function migrateFromVee(){
     );
     const {data,error}=await supa.from('app_state').select('data').eq('key','vitality_vee').maybeSingle();
     if(error||!data||!Array.isArray(data.data)||!data.data.length)return;
-    const migrated=data.data.map(t=>({
-      id:newId(),title:'',body:t.text||'',images:[],pinned:false,
-      createdAt:new Date(t.ts||Date.now()).toISOString(),
-      updatedAt:new Date(t.ts||Date.now()).toISOString(),
-      obsidian:{path:null,lastSyncedAt:null,remoteMtime:null},
-    }));
+    const usedIds=new Set(notes.map(n=>n.id));
+    const migrated=data.data.map(t=>{
+      const id=uniqueIdFromTitle('',usedIds,'note-');
+      usedIds.add(id);
+      return{
+        id,title:'',body:t.text||'',images:[],pinned:false,
+        createdAt:new Date(t.ts||Date.now()).toISOString(),
+        updatedAt:new Date(t.ts||Date.now()).toISOString(),
+        obsidian:{path:null,lastSyncedAt:null,remoteMtime:null},
+      };
+    });
     notes=migrated.concat(notes);
     persist();
   }catch(e){/* migration is best-effort; never block the app */}
@@ -294,7 +314,8 @@ function saveComposer(){
   const title=lines[0].slice(0,120);
   const body=lines.slice(1).join('\n').trim();
   const now=new Date().toISOString();
-  const note={id:newId(),title,body,pinned:false,images:[],createdAt:now,updatedAt:now,obsidian:{path:null,lastSyncedAt:null,remoteMtime:null}};
+  const id=uniqueIdFromTitle(title,new Set(notes.map(n=>n.id)),'note-');
+  const note={id,title,body,pinned:false,images:[],createdAt:now,updatedAt:now,obsidian:{path:null,lastSyncedAt:null,remoteMtime:null}};
   notes.unshift(note);
   persist();
   collapseComposer();
