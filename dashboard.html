@@ -729,76 +729,10 @@ body::after {
   .dash-col-right  { order: 3; }
 }
 
-/* ===== Component 7: Daily Goals Tracker (sidebar) ===== */
-.dgt-metric { margin-bottom: 12px; }
-.dgt-metric:last-child { margin-bottom: 0; }
-.dgt-metric-row {
-  display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 6px;
-}
-.dgt-metric-label {
-  font-size: 10.5px; font-weight: 700;
-  letter-spacing: 0.14em; text-transform: uppercase;
-  color: var(--text-tertiary);
-}
-.dgt-metric-value {
-  font-family: var(--font-mono);
-  font-size: 11px; color: var(--text-secondary);
-}
-.dgt-bar {
-  height: 5px; border-radius: 3px;
-  background: rgba(255,255,255,0.06);
-  overflow: hidden;
-}
-.dgt-bar-fill {
-  height: 100%; border-radius: 3px;
-  background: #E25D3A;
-  transition: width 0.4s ease;
-}
-.dgt-metric.is-placeholder .dgt-bar-fill { background: rgba(255,255,255,0.14); }
-.dgt-metric.is-placeholder .dgt-metric-value { color: var(--text-tertiary); }
-
-.dgt-toggle {
-  width: 100%; margin-top: 16px;
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 9px 12px;
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 10px;
-  background: transparent;
-  color: var(--text-tertiary);
-  font-family: inherit;
-  font-size: 10.5px; font-weight: 700;
-  letter-spacing: 0.14em; text-transform: uppercase;
-  cursor: pointer;
-  transition: border-color 0.2s, color 0.2s;
-}
-.dgt-toggle:hover { color: var(--text-secondary); border-color: rgba(255,255,255,0.16); }
-.dgt-toggle-arrow { display: inline-block; transition: transform 0.2s; }
-.dgt-toggle.is-open .dgt-toggle-arrow { transform: rotate(180deg); }
-
-.dgt-goals { margin-top: 10px; display: none; flex-direction: column; gap: 8px; }
-.dgt-goal {
-  padding: 10px 12px;
-  border-radius: 10px;
-  border: 1px solid rgba(255,255,255,0.06);
-  background: rgba(0,0,0,0.24);
-  position: relative;
-}
-.dgt-goal-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.dgt-goal-title { font-size: 12.5px; font-weight: 600; color: var(--text-primary); }
-.dgt-goal-value { font-family: var(--font-mono); font-size: 10.5px; color: var(--text-tertiary); }
-.dgt-goal-date { font-family: var(--font-mono); font-size: 9.5px; color: var(--text-tertiary); margin-top: 2px; }
-.dgt-goal-bar { margin-top: 8px; }
-.dgt-goal-del {
-  position: absolute; top: 6px; right: 8px;
-  border: 0; background: transparent; color: var(--text-tertiary);
-  font-size: 15px; cursor: pointer; opacity: 0; transition: opacity 0.2s;
-}
-.dgt-goal:hover .dgt-goal-del { opacity: 0.7; }
-.dgt-goal-del:hover { color: var(--danger); opacity: 1; }
-
-.dgt-add-form { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
-.dgt-add-form input {
+/* ===== Component 7: Goals (sidebar) ===== */
+.dgt-add-form { margin-bottom: 14px; display: flex; flex-direction: column; gap: 6px; }
+.dgt-add-form input,
+.dgt-add-form select {
   padding: 8px 10px;
   border: 1px solid rgba(255,255,255,0.08);
   border-radius: 8px;
@@ -819,6 +753,71 @@ body::after {
 }
 .dgt-add-form button:hover { color: var(--text-primary); border-color: rgba(255,255,255,0.3); }
 .dgt-empty { font-size: 11.5px; font-style: italic; color: var(--text-tertiary); padding: 6px 2px; }
+
+.dgt-goals { display: flex; flex-direction: column; gap: 14px; }
+.dgt-rank-group { display: flex; flex-direction: column; gap: 8px; }
+.dgt-rank-header {
+  font-size: 10.5px; font-weight: 700;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+.dgt-bar {
+  height: 5px; border-radius: 3px;
+  background: rgba(255,255,255,0.06);
+  overflow: hidden;
+}
+.dgt-bar-fill {
+  height: 100%; border-radius: 3px;
+  background: #E25D3A;
+  transition: width 0.4s ease;
+}
+.dgt-goal {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.06);
+  background: rgba(0,0,0,0.24);
+  position: relative;
+}
+.dgt-goal-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-right: 40px; }
+.dgt-goal-title { font-size: 12.5px; font-weight: 600; color: var(--text-primary); }
+.dgt-goal-rank-badge {
+  font-family: var(--font-mono);
+  font-size: 9.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+  color: #FFC7B8;
+  background: rgba(226,93,58,0.14);
+  border-radius: 5px;
+  padding: 2px 6px;
+  white-space: nowrap;
+}
+.dgt-goal-countdown {
+  font-family: var(--font-mono);
+  font-size: 10.5px; color: var(--text-secondary);
+  margin-top: 4px;
+}
+.dgt-goal-countdown.is-overdue { color: var(--danger); font-weight: 700; }
+.dgt-goal-value { font-family: var(--font-mono); font-size: 10.5px; color: var(--text-tertiary); }
+.dgt-goal-slider-row {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-top: 8px; margin-bottom: 2px;
+}
+.dgt-goal-slider {
+  width: 100%; display: block;
+  accent-color: #E25D3A;
+  cursor: pointer;
+}
+.dgt-goal-actions {
+  position: absolute; top: 8px; right: 8px;
+  display: flex; align-items: center; gap: 6px;
+  opacity: 0; transition: opacity 0.2s;
+}
+.dgt-goal:hover .dgt-goal-actions { opacity: 0.7; }
+.dgt-goal-actions:hover { opacity: 1; }
+.dgt-goal-edit, .dgt-goal-del {
+  border: 0; background: transparent; color: var(--text-tertiary);
+  font-size: 13px; cursor: pointer; padding: 0;
+}
+.dgt-goal-edit:hover { color: var(--text-primary); }
+.dgt-goal-del:hover { color: var(--danger); }
 
 /* ===== Component 8: Projects kanban ===== */
 .proj-header {
@@ -938,16 +937,68 @@ body::after {
 .chk-card { margin-bottom: 12px; }
 .chk-head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
 .chk-icon { font-size: 15px; }
-.chk-name { font-size: 13.5px; font-weight: 700; color: var(--text-primary); }
-.chk-meta-label {
-  font-size: 9.5px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
-  color: var(--text-tertiary);
+.chk-name { font-size: 13.5px; font-weight: 700; color: var(--text-primary); flex: 1; }
+.chk-edit-toggle {
+  flex: 0 0 auto; border: 0; background: transparent; cursor: pointer; font-size: 12px;
+  color: var(--text-tertiary); padding: 4px 6px; border-radius: 8px; line-height: 1;
+  transition: background 0.2s, color 0.2s;
 }
-.chk-meta-value {
-  font-family: var(--font-mono); font-size: 11px; color: var(--text-secondary);
-  margin: 2px 0 8px;
+.chk-edit-toggle:hover { background: rgba(255,255,255,0.06); color: var(--text-primary); }
+.chk-edit-toggle.active { color: #7CD9A8; }
+
+.chk-items { display: flex; flex-direction: column; gap: 2px; }
+.chk-empty { font-size: 11.5px; color: var(--text-tertiary); padding: 4px 0 2px; }
+
+.chk-item-row { display: flex; align-items: flex-start; gap: 9px; padding: 5px 4px; border-radius: 8px; }
+.chk-item-row:hover { background: rgba(255,255,255,0.03); }
+
+.chk-checkbox {
+  flex: 0 0 auto; width: 16px; height: 16px; margin-top: 1px; position: relative;
+  border-radius: 5px; border: 1.5px solid rgba(255,255,255,0.25);
+  background: transparent; cursor: pointer; padding: 0;
+  transition: background 0.15s, border-color 0.15s;
 }
-.chk-meta-value:last-child { margin-bottom: 0; }
+.chk-checkbox:hover { border-color: rgba(255,255,255,0.45); }
+.chk-checkbox.checked { background: linear-gradient(180deg, #FFFFFF 0%, #E8E5DD 100%); border-color: transparent; }
+.chk-checkbox.checked::after {
+  content: '\2713'; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 800; color: #0A0A0B; line-height: 1;
+}
+
+.chk-item-text { font-size: 12.5px; color: var(--text-secondary); cursor: pointer; line-height: 1.4; word-break: break-word; }
+.chk-item-done .chk-item-text { color: var(--text-tertiary); text-decoration: line-through; opacity: 0.7; }
+
+.chk-item-notes { padding: 2px 4px 8px 29px; }
+.chk-notes-input {
+  width: 100%; min-height: 44px; resize: vertical; box-sizing: border-box;
+  padding: 7px 9px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(0,0,0,0.28); color: var(--text-primary);
+  font-family: inherit; font-size: 11.5px; outline: none;
+}
+
+.chk-item-editrow { display: flex; align-items: center; gap: 6px; padding: 3px 2px; }
+.chk-item-input {
+  flex: 1; min-width: 0; padding: 6px 9px; border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.08); background: rgba(0,0,0,0.28);
+  color: var(--text-primary); font-family: inherit; font-size: 12px; outline: none;
+}
+.chk-item-del {
+  flex: 0 0 auto; border: 0; background: transparent; cursor: pointer;
+  font-size: 12px; padding: 4px 6px; border-radius: 8px; opacity: 0.75;
+}
+.chk-item-del:hover { opacity: 1; background: rgba(255,255,255,0.06); }
+
+.chk-add-row { display: flex; gap: 6px; margin-top: 8px; }
+.chk-add-input {
+  flex: 1; min-width: 0; padding: 8px 10px; border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.08); background: rgba(0,0,0,0.28);
+  color: var(--text-primary); font-family: inherit; font-size: 12px; outline: none;
+}
+.chk-add-btn {
+  padding: 8px 14px; border: 0; border-radius: 10px;
+  background: linear-gradient(180deg, #FFFFFF 0%, #E8E5DD 100%);
+  color: #0A0A0B; font-family: inherit; font-size: 12px; font-weight: 700; cursor: pointer;
+}
 
 .qnote-wrap { display: flex; flex-direction: column; align-items: center; gap: 10px; }
 .qnote-btn {
@@ -1238,15 +1289,22 @@ body::after {
 
   <div class="dash-grid">
 
-    <!-- LEFT: Daily Goals Tracker -->
+    <!-- LEFT: Goals -->
     <aside class="dash-col dash-col-left">
       <div class="gm-card">
-        <div class="proj-title" style="margin-bottom:14px;">Daily Goals Tracker</div>
-        <div id="dgtMetrics"></div>
-        <button type="button" class="dgt-toggle" id="dgtToggle">
-          <span>Not Started</span>
-          <span class="dgt-toggle-arrow">▾</span>
-        </button>
+        <div class="proj-title" style="margin-bottom:14px;">Goals</div>
+        <div class="dgt-add-form" id="dgtAddForm">
+          <input type="text" id="dgtGoalTitle" placeholder="Goal name…">
+          <select id="dgtGoalRank">
+            <option value="Year">Year</option>
+            <option value="Quarter">Quarter</option>
+            <option value="Month">Month</option>
+            <option value="Week">Week</option>
+            <option value="Day">Day</option>
+          </select>
+          <input type="date" id="dgtGoalDeadline">
+          <button type="button" id="dgtGoalAddBtn">+ Add Goal</button>
+        </div>
         <div class="dgt-goals" id="dgtGoals"></div>
       </div>
     </aside>
@@ -1604,7 +1662,6 @@ body::after {
   window.addEventListener('goals-changed', () => {
     cycleIdx = 0;
     tick();
-    renderDgtMetrics();
   });
 
   // ---------- Day Ring ----------
@@ -2034,32 +2091,124 @@ body::after {
     loadTomorrow
   );
 
-  // ---------- Daily Goals Tracker (sidebar) ----------
-  const DGT_METRICS = ['Year', 'Month', 'Week', 'Day', 'Quarter', 'Life'];
-  function renderDgtMetrics() {
-    const wrap = document.getElementById('dgtMetrics');
-    if (!wrap) return;
-    const goals = getGoals(todayKey());
-    const dayPct = goals.length ? Math.round(goals.filter(g => g.done).length / goals.length * 100) : 0;
-    wrap.innerHTML = '';
-    DGT_METRICS.forEach(label => {
-      const isDay = label === 'Day';
-      const value = isDay ? dayPct : 0;
-      const row = document.createElement('div');
-      row.className = 'dgt-metric' + (isDay ? '' : ' is-placeholder');
-      if (!isDay) row.title = 'Tracked once multi-day history logging ships';
-      row.innerHTML =
-        '<div class="dgt-metric-row">' +
-          '<span class="dgt-metric-label">' + label + '</span>' +
-          '<span class="dgt-metric-value">' + value + '%</span>' +
-        '</div>' +
-        '<div class="dgt-bar"><div class="dgt-bar-fill" style="width:' + value + '%"></div></div>';
-      wrap.appendChild(row);
-    });
-  }
+  // ---------- Goals (sidebar) ----------
+  const GOAL_RANKS = ['Year', 'Quarter', 'Month', 'Week', 'Day'];
+  let goalEditingId = null;
 
   function getLongtermGoals() { const g = storeGet('longterm_goals_v1'); return Array.isArray(g) ? g : []; }
   function setLongtermGoals(list) { storeSet('longterm_goals_v1', list); }
+
+  function goalDeadlineMs(g) {
+    if (!g.deadline) return null;
+    const d = new Date(g.deadline + 'T23:59:59');
+    return isNaN(d.getTime()) ? null : d.getTime();
+  }
+
+  function formatCountdown(ms) {
+    if (ms === null) return '—';
+    if (ms <= 0) return 'Overdue';
+    const totalSeconds = Math.floor(ms / 1000);
+    const days = Math.floor(totalSeconds / 86400);
+    const hours = Math.floor((totalSeconds % 86400) / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    return days + 'd ' + hours + 'h ' + minutes + 'm ' + seconds + 's';
+  }
+
+  function buildGoalEditCard(g) {
+    const item = document.createElement('div');
+    item.className = 'dgt-goal';
+    item.dataset.id = g.id;
+    item.innerHTML =
+      '<div class="dgt-add-form">' +
+        '<input type="text" class="dgt-edit-title">' +
+        '<select class="dgt-edit-rank">' +
+          GOAL_RANKS.map(r => '<option value="' + r + '">' + r + '</option>').join('') +
+        '</select>' +
+        '<input type="date" class="dgt-edit-deadline">' +
+        '<button type="button" class="dgt-edit-save">Save</button>' +
+        '<button type="button" class="dgt-edit-cancel">Cancel</button>' +
+      '</div>';
+    item.querySelector('.dgt-edit-title').value = g.title;
+    item.querySelector('.dgt-edit-rank').value = g.rank;
+    item.querySelector('.dgt-edit-deadline').value = g.deadline || '';
+
+    item.querySelector('.dgt-edit-save').addEventListener('click', () => {
+      const title = item.querySelector('.dgt-edit-title').value.trim();
+      if (!title) return;
+      const rank = item.querySelector('.dgt-edit-rank').value;
+      const deadline = item.querySelector('.dgt-edit-deadline').value;
+      const cur = getLongtermGoals();
+      const idx = cur.findIndex(x => x.id === g.id);
+      if (idx !== -1) {
+        cur[idx] = Object.assign({}, cur[idx], { title, rank, deadline });
+        setLongtermGoals(cur);
+      }
+      goalEditingId = null;
+      renderLongtermGoals();
+    });
+    item.querySelector('.dgt-edit-cancel').addEventListener('click', () => {
+      goalEditingId = null;
+      renderLongtermGoals();
+    });
+    return item;
+  }
+
+  function buildGoalCard(g) {
+    if (goalEditingId === g.id) return buildGoalEditCard(g);
+
+    const item = document.createElement('div');
+    item.className = 'dgt-goal';
+    item.dataset.id = g.id;
+
+    const deadlineMs = goalDeadlineMs(g);
+    const remaining = deadlineMs === null ? null : deadlineMs - Date.now();
+    const isOverdue = remaining !== null && remaining <= 0;
+    item.dataset.deadlineMs = deadlineMs === null ? '' : String(deadlineMs);
+
+    item.innerHTML =
+      '<div class="dgt-goal-actions">' +
+        '<button type="button" class="dgt-goal-edit" aria-label="Edit goal">✎</button>' +
+        '<button type="button" class="dgt-goal-del" aria-label="Delete goal">×</button>' +
+      '</div>' +
+      '<div class="dgt-goal-row">' +
+        '<span class="dgt-goal-title"></span>' +
+        '<span class="dgt-goal-rank-badge"></span>' +
+      '</div>' +
+      '<div class="dgt-goal-countdown' + (isOverdue ? ' is-overdue' : '') + '">' + formatCountdown(remaining) + '</div>' +
+      '<div class="dgt-goal-slider-row">' +
+        '<span class="dgt-goal-value">' + (g.value || 0) + '%</span>' +
+      '</div>' +
+      '<input type="range" class="dgt-goal-slider" min="0" max="100" value="' + (g.value || 0) + '">';
+
+    item.querySelector('.dgt-goal-title').textContent = g.title;
+    item.querySelector('.dgt-goal-rank-badge').textContent = g.rank;
+
+    item.querySelector('.dgt-goal-edit').addEventListener('click', () => {
+      goalEditingId = g.id;
+      renderLongtermGoals();
+    });
+    item.querySelector('.dgt-goal-del').addEventListener('click', () => {
+      setLongtermGoals(getLongtermGoals().filter(x => x.id !== g.id));
+      renderLongtermGoals();
+    });
+
+    const slider = item.querySelector('.dgt-goal-slider');
+    const valueLabel = item.querySelector('.dgt-goal-value');
+    slider.addEventListener('input', () => {
+      valueLabel.textContent = slider.value + '%';
+    });
+    slider.addEventListener('change', () => {
+      const cur = getLongtermGoals();
+      const idx = cur.findIndex(x => x.id === g.id);
+      if (idx !== -1) {
+        cur[idx] = Object.assign({}, cur[idx], { value: Number(slider.value) });
+        setLongtermGoals(cur);
+      }
+    });
+
+    return item;
+  }
 
   function renderLongtermGoals() {
     const wrap = document.getElementById('dgtGoals');
@@ -2070,66 +2219,60 @@ body::after {
     if (list.length === 0) {
       const empty = document.createElement('div');
       empty.className = 'dgt-empty';
-      empty.textContent = 'No long-term goals yet.';
+      empty.textContent = 'No goals yet — add one above.';
       wrap.appendChild(empty);
-    } else {
-      list.forEach((g, idx) => {
-        const item = document.createElement('div');
-        item.className = 'dgt-goal';
-        item.innerHTML =
-          '<button type="button" class="dgt-goal-del" aria-label="Delete goal">×</button>' +
-          '<div class="dgt-goal-row">' +
-            '<span class="dgt-goal-title"></span>' +
-            '<span class="dgt-goal-value">' + (g.value || 0) + '%</span>' +
-          '</div>' +
-          '<div class="dgt-goal-date"></div>' +
-          '<div class="dgt-goal-bar dgt-bar"><div class="dgt-bar-fill" style="width:' + (g.value || 0) + '%"></div></div>';
-        item.querySelector('.dgt-goal-title').textContent = g.title;
-        item.querySelector('.dgt-goal-date').textContent = g.date || '';
-        item.querySelector('.dgt-goal-del').addEventListener('click', () => {
-          const cur = getLongtermGoals();
-          cur.splice(idx, 1);
-          setLongtermGoals(cur);
-          renderLongtermGoals();
-        });
-        wrap.appendChild(item);
-      });
+      return;
     }
 
-    const addRow = document.createElement('div');
-    addRow.className = 'dgt-add-form';
-    addRow.innerHTML =
-      '<input type="text" id="dgtGoalTitle" placeholder="Goal title…">' +
-      '<input type="date" id="dgtGoalDate">' +
-      '<button type="button" id="dgtGoalAddBtn">+ Add Goal</button>';
-    wrap.appendChild(addRow);
-
-    document.getElementById('dgtGoalAddBtn').addEventListener('click', () => {
-      const titleEl = document.getElementById('dgtGoalTitle');
-      const dateEl = document.getElementById('dgtGoalDate');
-      const title = titleEl.value.trim();
-      if (!title) return;
-      let dateLabel = '';
-      if (dateEl.value) {
-        const parts = dateEl.value.split('-').map(Number);
-        const d = new Date(parts[0], parts[1] - 1, parts[2]);
-        const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-        dateLabel = months[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear();
-      }
-      const cur = getLongtermGoals();
-      cur.push({ title, date: dateLabel, value: 0 });
-      setLongtermGoals(cur);
-      renderLongtermGoals();
+    GOAL_RANKS.forEach(rank => {
+      const goalsInRank = list.filter(g => g.rank === rank);
+      if (goalsInRank.length === 0) return;
+      const group = document.createElement('div');
+      group.className = 'dgt-rank-group';
+      const header = document.createElement('div');
+      header.className = 'dgt-rank-header';
+      header.textContent = rank;
+      group.appendChild(header);
+      goalsInRank.forEach(g => group.appendChild(buildGoalCard(g)));
+      wrap.appendChild(group);
     });
   }
 
-  function initDgtToggle() {
-    const toggle = document.getElementById('dgtToggle');
-    const goalsEl = document.getElementById('dgtGoals');
-    if (!toggle || !goalsEl) return;
-    toggle.addEventListener('click', () => {
-      const open = toggle.classList.toggle('is-open');
-      goalsEl.style.display = open ? 'flex' : 'none';
+  function tickGoalCountdowns() {
+    if (goalEditingId !== null) return;
+    document.querySelectorAll('#dgtGoals .dgt-goal[data-deadline-ms]').forEach(el => {
+      const raw = el.dataset.deadlineMs;
+      const countdownEl = el.querySelector('.dgt-goal-countdown');
+      if (!countdownEl) return;
+      if (!raw) { countdownEl.textContent = '—'; return; }
+      const remaining = Number(raw) - Date.now();
+      countdownEl.textContent = formatCountdown(remaining);
+      countdownEl.classList.toggle('is-overdue', remaining <= 0);
+    });
+  }
+  setInterval(tickGoalCountdowns, 1000);
+
+  function initGoalAddForm() {
+    const btn = document.getElementById('dgtGoalAddBtn');
+    if (!btn) return;
+    btn.addEventListener('click', () => {
+      const titleEl = document.getElementById('dgtGoalTitle');
+      const rankEl = document.getElementById('dgtGoalRank');
+      const deadlineEl = document.getElementById('dgtGoalDeadline');
+      const title = titleEl.value.trim();
+      if (!title) return;
+      const cur = getLongtermGoals();
+      cur.push({
+        id: 'g' + Date.now() + Math.random().toString(36).slice(2, 7),
+        title,
+        rank: rankEl.value,
+        deadline: deadlineEl.value,
+        value: 0
+      });
+      setLongtermGoals(cur);
+      titleEl.value = '';
+      deadlineEl.value = '';
+      renderLongtermGoals();
     });
   }
 
@@ -2278,41 +2421,183 @@ body::after {
   }
 
   // ---------- Checklists (sidebar) ----------
-  function formatFullDateTime(ts) {
-    const d = new Date(ts);
-    const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-    return months[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear() + ' ' + formatClock(d);
-  }
   const CHECKLISTS = [
-    { id: 'morning', icon: '🌅', name: 'Morning' },
-    { id: 'midday',  icon: '☀️', name: 'Mid-Day' },
-    { id: 'evening', icon: '🌙', name: 'Evening' }
+    { id: 'morning', icon: '🌅', name: 'Morning Checklist' },
+    { id: 'midday',  icon: '☀️', name: 'Mid-Day Checklist' },
+    { id: 'evening', icon: '🌙', name: 'Evening Checklist' }
   ];
+  let chkEditMode = {};
+  let chkExpandedItem = {};
+
+  function getChecklistItems(id) {
+    const items = storeGet('checklist:items:' + id);
+    return Array.isArray(items) ? items : [];
+  }
+  function setChecklistItems(id, items) { storeSet('checklist:items:' + id, items); }
+  function getChecklistDone(id) {
+    const done = storeGet('checklist:done:' + id + ':' + getActiveDateString());
+    return (done && typeof done === 'object') ? done : {};
+  }
+  function setChecklistDone(id, done) { storeSet('checklist:done:' + id + ':' + getActiveDateString(), done); }
+
+  function buildChecklistCard(c) {
+    const items = getChecklistItems(c.id);
+    const done = getChecklistDone(c.id);
+    const editing = !!chkEditMode[c.id];
+
+    const card = document.createElement('div');
+    card.className = 'gm-card chk-card';
+
+    const head = document.createElement('div');
+    head.className = 'chk-head';
+    const iconSpan = document.createElement('span');
+    iconSpan.className = 'chk-icon';
+    iconSpan.textContent = c.icon;
+    const nameSpan = document.createElement('span');
+    nameSpan.className = 'chk-name';
+    nameSpan.textContent = c.name;
+    const editBtn = document.createElement('button');
+    editBtn.type = 'button';
+    editBtn.className = 'chk-edit-toggle' + (editing ? ' active' : '');
+    editBtn.title = editing ? 'Done editing' : 'Edit checklist';
+    editBtn.textContent = editing ? '✓' : '✏️';
+    editBtn.addEventListener('click', () => {
+      chkEditMode[c.id] = !chkEditMode[c.id];
+      renderChecklists();
+    });
+    head.appendChild(iconSpan);
+    head.appendChild(nameSpan);
+    head.appendChild(editBtn);
+    card.appendChild(head);
+
+    const list = document.createElement('div');
+    list.className = 'chk-items';
+
+    if (!items.length) {
+      const empty = document.createElement('div');
+      empty.className = 'chk-empty';
+      empty.textContent = editing ? 'Add a task below.' : 'No tasks yet — tap ✏️ to add one.';
+      list.appendChild(empty);
+    }
+
+    items.forEach(item => {
+      const row = document.createElement('div');
+      row.className = 'chk-item' + (done[item.id] ? ' chk-item-done' : '');
+
+      if (editing) {
+        const editRow = document.createElement('div');
+        editRow.className = 'chk-item-editrow';
+
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'chk-item-input';
+        input.value = item.text;
+        input.addEventListener('change', () => {
+          const list2 = getChecklistItems(c.id);
+          const it = list2.find(x => x.id === item.id);
+          if (it) { it.text = input.value.trim() || it.text; setChecklistItems(c.id, list2); }
+        });
+        input.addEventListener('keydown', (e) => { if (e.key === 'Enter') input.blur(); });
+
+        const delBtn = document.createElement('button');
+        delBtn.type = 'button';
+        delBtn.className = 'chk-item-del';
+        delBtn.title = 'Remove task';
+        delBtn.textContent = '🗑️';
+        delBtn.addEventListener('click', () => {
+          setChecklistItems(c.id, getChecklistItems(c.id).filter(x => x.id !== item.id));
+          const d = getChecklistDone(c.id);
+          delete d[item.id];
+          setChecklistDone(c.id, d);
+          renderChecklists();
+        });
+
+        editRow.appendChild(input);
+        editRow.appendChild(delBtn);
+        row.appendChild(editRow);
+      } else {
+        const mainRow = document.createElement('div');
+        mainRow.className = 'chk-item-row';
+
+        const checkbox = document.createElement('button');
+        checkbox.type = 'button';
+        checkbox.className = 'chk-checkbox' + (done[item.id] ? ' checked' : '');
+        checkbox.setAttribute('aria-label', 'Toggle task complete');
+        checkbox.addEventListener('click', () => {
+          const d = getChecklistDone(c.id);
+          if (d[item.id]) delete d[item.id]; else d[item.id] = true;
+          setChecklistDone(c.id, d);
+          renderChecklists();
+        });
+
+        const text = document.createElement('span');
+        text.className = 'chk-item-text';
+        text.textContent = item.text;
+        text.addEventListener('click', () => {
+          chkExpandedItem[c.id] = (chkExpandedItem[c.id] === item.id) ? null : item.id;
+          renderChecklists();
+        });
+
+        mainRow.appendChild(checkbox);
+        mainRow.appendChild(text);
+        row.appendChild(mainRow);
+
+        if (chkExpandedItem[c.id] === item.id) {
+          const notesWrap = document.createElement('div');
+          notesWrap.className = 'chk-item-notes';
+          const textarea = document.createElement('textarea');
+          textarea.className = 'chk-notes-input';
+          textarea.placeholder = 'Add notes…';
+          textarea.value = item.notes || '';
+          textarea.addEventListener('change', () => {
+            const list2 = getChecklistItems(c.id);
+            const it = list2.find(x => x.id === item.id);
+            if (it) { it.notes = textarea.value; setChecklistItems(c.id, list2); }
+          });
+          notesWrap.appendChild(textarea);
+          row.appendChild(notesWrap);
+        }
+      }
+
+      list.appendChild(row);
+    });
+
+    card.appendChild(list);
+
+    if (editing) {
+      const addRow = document.createElement('div');
+      addRow.className = 'chk-add-row';
+      const addInput = document.createElement('input');
+      addInput.type = 'text';
+      addInput.className = 'chk-add-input';
+      addInput.placeholder = 'New task…';
+      const addBtn = document.createElement('button');
+      addBtn.type = 'button';
+      addBtn.className = 'chk-add-btn';
+      addBtn.textContent = 'Add';
+      const doAdd = () => {
+        const val = addInput.value.trim();
+        if (!val) return;
+        const list2 = getChecklistItems(c.id);
+        list2.push({ id: 'ci' + Date.now() + Math.random().toString(36).slice(2, 6), text: val, notes: '' });
+        setChecklistItems(c.id, list2);
+        renderChecklists();
+      };
+      addBtn.addEventListener('click', doAdd);
+      addInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') doAdd(); });
+      addRow.appendChild(addInput);
+      addRow.appendChild(addBtn);
+      card.appendChild(addRow);
+    }
+
+    return card;
+  }
+
   function renderChecklists() {
     const wrap = document.getElementById('chkList');
     if (!wrap) return;
-    let meta = storeGet('checklist_meta_v1');
-    if (!meta) meta = {};
-    const now = Date.now();
-    let dirty = false;
-    CHECKLISTS.forEach(c => {
-      if (!meta[c.id]) { meta[c.id] = { created: now, edited: now }; dirty = true; }
-    });
-    if (dirty) storeSet('checklist_meta_v1', meta);
-
     wrap.innerHTML = '';
-    CHECKLISTS.forEach(c => {
-      const m = meta[c.id];
-      const card = document.createElement('div');
-      card.className = 'gm-card chk-card';
-      card.innerHTML =
-        '<div class="chk-head"><span class="chk-icon">' + c.icon + '</span><span class="chk-name">' + c.name + '</span></div>' +
-        '<div class="chk-meta-label">Created Time</div>' +
-        '<div class="chk-meta-value">' + formatFullDateTime(m.created) + '</div>' +
-        '<div class="chk-meta-label">Last Edited Time</div>' +
-        '<div class="chk-meta-value">' + formatFullDateTime(m.edited) + '</div>';
-      wrap.appendChild(card);
-    });
+    CHECKLISTS.forEach(c => wrap.appendChild(buildChecklistCard(c)));
   }
 
   // ---------- Google Calendar ----------
@@ -2702,16 +2987,15 @@ body::after {
   setInterval(updateDayRing, 60 * 1000);
   startTicker();
 
-  renderDgtMetrics();
   renderLongtermGoals();
-  initDgtToggle();
+  initGoalAddForm();
   initProjects();
   renderChecklists();
   initCalendar();
 
   // Re-render when storage changes from another tab (or our bridged parent).
   window.addEventListener('storage', () => {
-    loadToday(); loadTomorrow(); renderStreak(); renderDgtMetrics();
+    loadToday(); loadTomorrow(); renderStreak();
   });
 })();
 </script>
@@ -2720,7 +3004,7 @@ document.addEventListener('DOMContentLoaded', function () {
   if (typeof initCloudSync !== 'function') return;
   initCloudSync({
     appKey: 'goals',
-    syncedPrefixes: ['goals:'],
+    syncedPrefixes: ['goals:', 'checklist:items:', 'checklist:done:'],
     onApplied: function () {
       window.dispatchEvent(new CustomEvent('goals-changed'));
       window.dispatchEvent(new Event('storage'));
