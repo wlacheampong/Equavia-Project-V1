@@ -1693,26 +1693,15 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
   <div class="section-title">
     <span class="section-title-text">RELATIONSHIPS</span>
   </div>
-  <div class="card">
-    <div class="contact-add-row">
-      <input type="text" class="contact-name-input" id="ctNameInput" placeholder="Name…">
-      <select id="ctTypeInput">
-        <option value="family">Family</option>
-        <option value="friend">Friend</option>
-        <option value="colleague">Colleague</option>
-        <option value="other">Other</option>
-      </select>
-      <select id="ctTierInput">
-        <option value="inner">Inner circle</option>
-        <option value="close">Close</option>
-        <option value="network">Network</option>
-      </select>
-      <input type="number" class="contact-cadence-input" id="ctCadenceInput" placeholder="Days" min="1" value="7">
-      <button type="button" class="contact-add-btn" id="ctAddBtn">+ Add</button>
+  <a class="card" href="interactions.html" style="display:block; text-decoration:none; color:inherit; position:relative;">
+    <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+      <div>
+        <div style="font-weight:700; font-size:14px;" id="relSummaryLine">Loading…</div>
+        <div style="font-size:11.5px; color:var(--text-tertiary); margin-top:2px;">Moved to Interactions — tap to open</div>
+      </div>
+      <span style="color:var(--text-tertiary); font-size:18px;">&rsaquo;</span>
     </div>
-    <div id="ctList"></div>
-    <div class="empty-state" id="ctEmptyState" style="display:none;">No contacts yet — add one above.</div>
-  </div>
+  </a>
 </div>
 
 </div>
@@ -4167,192 +4156,31 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
   // ============================================================
   // RELATIONSHIP TRACKER
   // ============================================================
+  // Full contact manager moved to interactions.html (Phase 5.1/5.2) -- this
+  // is read-only here, just enough to compute the overdue count for the
+  // summary card above. Tier cadences/schema (history log, not a single
+  // lastContactedAt) are interactions.html's source of truth now; kept in
+  // sync here only via that same read, never written back from Planner.
   const CONTACTS_KEY = 'contacts_v1';
-  const TIER_CADENCE = { inner: 7, close: 14, network: 30 };
-  const TIER_LABELS = { inner: 'Inner circle', close: 'Close', network: 'Network' };
-
+  const TIER_CADENCE = { inner: 7, close: 21, acquaintance: 60, networking: 90 };
   function getContacts() { const v = storeGet(CONTACTS_KEY); return Array.isArray(v) ? v : []; }
-  function setContacts(list) { storeSet(CONTACTS_KEY, list); }
-
-  function daysSince(iso) {
-    if (!iso) return Infinity;
-    return Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
+  function contactIsOverdue(c) {
+    if (c.snoozedUntil && new Date(c.snoozedUntil).getTime() > Date.now()) return false;
+    const history = Array.isArray(c.history) ? c.history : (c.lastContactedAt ? [{ date: c.lastContactedAt }] : []);
+    if (!history.length) return true;
+    const last = history.reduce((latest, h) => (!latest || h.date > latest) ? h.date : latest, null);
+    const days = Math.floor((Date.now() - new Date(last).getTime()) / 86400000);
+    const cadence = TIER_CADENCE[c.tier] || TIER_CADENCE[{ network: 'networking' }[c.tier]] || 21;
+    return days >= cadence;
   }
-  function overdueBy(contact) {
-    const days = daysSince(contact.lastContactedAt);
-    if (days === Infinity) return Infinity;
-    return days - (contact.cadenceDays || 7);
-  }
-  function isBirthdayUpcoming(mmdd) {
-    if (!mmdd) return false;
-    const parts = mmdd.split('-').map(Number);
-    const m = parts[0], d = parts[1];
-    if (!m || !d) return false;
-    const now = new Date();
-    const todayMid = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    let target = new Date(now.getFullYear(), m - 1, d);
-    if (target < todayMid) target = new Date(now.getFullYear() + 1, m - 1, d);
-    const days = Math.floor((target - todayMid) / 86400000);
-    return days >= 0 && days <= 14;
-  }
-
-  function buildContactRow(contact) {
-    const row = document.createElement('div');
-    const overdueDays = overdueBy(contact);
-    const isOverdue = overdueDays !== Infinity && overdueDays > 0;
-    row.className = 'contact-row' + (isOverdue ? ' is-overdue' : '');
-    row.dataset.id = contact.id;
-
-    const top = document.createElement('div');
-    top.className = 'contact-row-top';
-
-    const nameEl = document.createElement('span');
-    nameEl.className = 'contact-name';
-    nameEl.textContent = contact.name;
-    top.appendChild(nameEl);
-
-    const typeTag = document.createElement('span');
-    typeTag.className = 'contact-tag';
-    typeTag.textContent = contact.type;
-    top.appendChild(typeTag);
-
-    const tierTag = document.createElement('span');
-    tierTag.className = 'contact-tag' + (contact.tier === 'inner' ? ' is-inner' : '');
-    tierTag.textContent = TIER_LABELS[contact.tier] || contact.tier;
-    top.appendChild(tierTag);
-
-    if (isBirthdayUpcoming(contact.birthday)) {
-      const bTag = document.createElement('span');
-      bTag.className = 'contact-tag is-birthday';
-      bTag.textContent = '🎂 soon';
-      top.appendChild(bTag);
-    }
-
-    const statusEl = document.createElement('span');
-    statusEl.className = 'contact-cadence-status' + (isOverdue ? ' is-overdue' : '');
-    if (!contact.lastContactedAt) {
-      statusEl.textContent = 'Never logged';
-    } else {
-      const days = daysSince(contact.lastContactedAt);
-      statusEl.textContent = isOverdue ? (overdueDays + 'd overdue') : (days + ' / ' + contact.cadenceDays + 'd');
-    }
-    top.appendChild(statusEl);
-
-    const delBtn = document.createElement('button');
-    delBtn.type = 'button';
-    delBtn.className = 'contact-del';
-    delBtn.setAttribute('aria-label', 'Delete contact');
-    delBtn.textContent = '×';
-    delBtn.addEventListener('click', () => {
-      setContacts(getContacts().filter(c => c.id !== contact.id));
-      renderContacts();
-    });
-    top.appendChild(delBtn);
-    row.appendChild(top);
-
-    const meta = document.createElement('div');
-    meta.className = 'contact-meta-row';
-
-    const logRow = document.createElement('div');
-    logRow.className = 'contact-log-row';
-    const dateInput = document.createElement('input');
-    dateInput.type = 'date';
-    dateInput.className = 'contact-log-date';
-    dateInput.value = new Date().toISOString().slice(0, 10);
-    const logBtn = document.createElement('button');
-    logBtn.type = 'button';
-    logBtn.className = 'contact-log-btn';
-    logBtn.textContent = 'Log contact';
-    logBtn.title = 'Uses the date on the left — defaults to today, change it first to backdate';
-    logBtn.addEventListener('click', () => {
-      const list = getContacts();
-      const idx = list.findIndex(c => c.id === contact.id);
-      if (idx === -1 || !dateInput.value) return;
-      const isToday = dateInput.value === new Date().toISOString().slice(0, 10);
-      const iso = isToday ? new Date().toISOString() : new Date(dateInput.value + 'T12:00:00').toISOString();
-      list[idx] = Object.assign({}, list[idx], { lastContactedAt: iso });
-      setContacts(list);
-      renderContacts();
-    });
-    logRow.appendChild(dateInput);
-    logRow.appendChild(logBtn);
-    meta.appendChild(logRow);
-
-    const bLabel = document.createElement('span');
-    bLabel.className = 'contact-birthday-label';
-    bLabel.textContent = 'Birthday';
-    const bInput = document.createElement('input');
-    bInput.type = 'date';
-    bInput.className = 'contact-birthday-input';
-    if (contact.birthday) bInput.value = '2000-' + contact.birthday;
-    bInput.addEventListener('change', () => {
-      const list = getContacts();
-      const idx = list.findIndex(c => c.id === contact.id);
-      if (idx === -1) return;
-      let mmdd = null;
-      if (bInput.value) { const p = bInput.value.split('-'); mmdd = p[1] + '-' + p[2]; }
-      list[idx] = Object.assign({}, list[idx], { birthday: mmdd });
-      setContacts(list);
-      renderContacts();
-    });
-    meta.appendChild(bLabel);
-    meta.appendChild(bInput);
-    row.appendChild(meta);
-
-    const notes = document.createElement('textarea');
-    notes.className = 'contact-notes-input';
-    notes.rows = 1;
-    notes.placeholder = 'What did you last talk about…';
-    notes.value = contact.notes || '';
-    notes.addEventListener('change', () => {
-      const list = getContacts();
-      const idx = list.findIndex(c => c.id === contact.id);
-      if (idx === -1) return;
-      list[idx] = Object.assign({}, list[idx], { notes: notes.value.trim() });
-      setContacts(list);
-    });
-    row.appendChild(notes);
-
-    return row;
-  }
-
-  function renderContacts() {
-    const wrap = document.getElementById('ctList');
-    const emptyState = document.getElementById('ctEmptyState');
-    if (!wrap) return;
-    const list = getContacts().slice().sort((a, b) => {
-      const oa = overdueBy(a), ob = overdueBy(b);
-      return (ob === Infinity ? 1e9 : ob) - (oa === Infinity ? 1e9 : oa);
-    });
-    wrap.innerHTML = '';
-    emptyState.style.display = list.length ? 'none' : '';
-    list.forEach(c => wrap.appendChild(buildContactRow(c)));
-  }
-
-  function initContactAddForm() {
-    const tierSel = document.getElementById('ctTierInput');
-    const cadenceInput = document.getElementById('ctCadenceInput');
-    tierSel.addEventListener('change', () => { cadenceInput.value = TIER_CADENCE[tierSel.value] || 7; });
-    document.getElementById('ctAddBtn').addEventListener('click', () => {
-      const nameInput = document.getElementById('ctNameInput');
-      const name = nameInput.value.trim();
-      if (!name) return;
-      const list = getContacts();
-      list.push({
-        id: 'ct' + Date.now() + Math.random().toString(36).slice(2, 7),
-        name,
-        type: document.getElementById('ctTypeInput').value,
-        tier: tierSel.value,
-        cadenceDays: Number(cadenceInput.value) || TIER_CADENCE[tierSel.value] || 7,
-        lastContactedAt: null,
-        birthday: null,
-        notes: '',
-        createdAt: new Date().toISOString()
-      });
-      setContacts(list);
-      nameInput.value = '';
-      renderContacts();
-    });
+  function renderRelationshipsSummary() {
+    const line = document.getElementById('relSummaryLine');
+    if (!line) return;
+    const list = getContacts();
+    if (!list.length) { line.textContent = 'No contacts yet'; return; }
+    const overdueCount = list.filter(contactIsOverdue).length;
+    line.textContent = list.length + ' contact' + (list.length === 1 ? '' : 's') +
+      (overdueCount > 0 ? ' · ' + overdueCount + ' overdue' : ' · up to date');
   }
 
   // ---------- Boot ----------
@@ -4367,12 +4195,11 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
   renderChecklists();
   initCalendar();
   initProjects();
-  renderContacts();
-  initContactAddForm();
+  renderRelationshipsSummary();
   initSuggestSlot();
 
   window.addEventListener('storage', () => {
-    loadToday(); loadTomorrow(); renderStreak(); renderLongtermGoals(); renderChecklists(); renderProjects(); renderContacts();
+    loadToday(); loadTomorrow(); renderStreak(); renderLongtermGoals(); renderChecklists(); renderProjects(); renderRelationshipsSummary();
   });
 })();
 </script>

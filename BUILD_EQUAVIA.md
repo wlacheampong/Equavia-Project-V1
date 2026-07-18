@@ -323,6 +323,130 @@ ASK FIRST:
 
 ---
 
+# PHASE 5 — INTERACTIONS PAGE + NEWS PAGE (two pages, deliberately separate)
+
+Requires Phase 0 (nav, settings, backup), Phase 2 (serverless /api/chat), and benefits from Phase 4 (tools, audit, rules). Work section by section; ask every `ASK FIRST` question before building.
+
+**Purpose:** two pages with one purpose each, kept separate on purpose.
+- **Interactions** = *people I know*: who to reach out to, what arrived, what to say. Visited when being social.
+- **News** = *the world*: category feed + weekly digest. Visited deliberately, not ambiently.
+
+Do NOT co-locate the news feed with the message inbox — pairing a feed with an inbox recreates the exact check-messages-then-scroll pattern this build exists to escape. The data still flows between them (news→talking topics, digest→audit) regardless of page placement; the split is about attention, not architecture.
+
+**A React prototype exists for the contact manager** (component name "Keep", light theme). Treat it as a UX reference ONLY: port its concepts and layout logic into the app's existing dark plain-HTML + localStorage patterns. Do NOT paste React into the codebase, do NOT adopt its light palette, and do NOT keep its direct client-side `api.anthropic.com` call — every AI call in this phase routes through the existing serverless `/api/chat` so the key stays server-side.
+
+## 5.1 New "Interactions" page + nav slot
+
+- New `interactions.html`. Nav placement: **Interactions gets a first-class tab slot; News (5.6) lives in the More sheet** — the dashboard digest card covers the daily glance, and one extra tap to reach the full feed is intentional friction for the page most at risk of becoming a scroll. (ASK FIRST: which existing page yields its tab slot to Interactions.)
+- Two stacked zones only: **People** (contact manager, 5.2–5.4) · **Inbox** (message funnel, 5.5). No news content anywhere on this page — the only news that appears near a contact is matched talking-topic items inside that contact's profile (5.3), which is destination, not feed.
+- The Relationship Tracker built in Phase 1.3 MOVES here from Planner (single source of truth; Planner keeps only the overdue-count summary card, dashboard summary card now points here).
+
+## 5.2 Contact manager (port + upgrade of the prototype)
+
+Adopt from the prototype:
+- Tier system with cadences — **Inner every 7d · Close every 21d · Acquaintance every 60d · Networking every 90d** (this answers Phase 1.3's tier question; migrate any existing contacts). Tier colors adapted to the dark theme.
+- Sidebar list sorted by overdue-ratio (most overdue first), search, tier filter chips, "due" flag, birthday flag when ≤ 14 days out.
+- Profile fields: name, birthday, tier, last spoke, free notes.
+
+Fix and extend beyond the prototype:
+- **No hardcoded date** — the prototype pins `today` to a fixed date; use real current date everywhere.
+- **Interaction history, not a single date** — replace lone `lastSpoke` with an append-only log: `{date, channel (call/text/in-person/other), optional one-line note}`. "Log a chat today" opens a 2-tap sheet (channel + optional note). Last-spoke derives from the log. History renders on the profile, newest first.
+- **Interest tags** — alongside free notes, a tag field per contact (e.g. `judo`, `gaming`, `NHS`, `climbing`). Powers talking topics (5.3) and news matching (5.6).
+- **Birthday pipeline** — birthdays ≤ 7 days surface on the Morning Brief (4.4) and as a default standing rule (4.6). On the birthday itself, the contact jumps to top of list with a distinct flag regardless of cadence.
+- **Snooze** — per contact: "not now, remind in N days" so an overdue flag can be deliberately deferred without logging fake contact.
+- ASK FIRST:
+  - Confirm the four tier names/cadences or give replacements (note: tiers are labeled by closeness, not usefulness — cadence already encodes priority).
+  - Channels list for the history log — call/text/in-person/other enough?
+  - Import: start empty, or do you have a contact list (CSV/paste) to seed?
+
+## 5.3 Talking topics + prompts (per contact)
+
+New tab on each contact profile: **"What to talk about."** Three stacked sources, clearly labeled:
+
+1. **Open threads (manual)** — a per-contact checklist of topics to raise ("ask how the 6c project went", "sister's wedding — September"). Add/check-off/edit. Checked items move into that day's interaction history note. The weekly audit may NOT read private notes content — only counts (ASK FIRST to confirm privacy boundary).
+2. **From their interests (generated)** — button: "Suggest topics." Serverless call sends the contact's tags + notes + last 2 history notes → Claude returns 4–6 specific conversation prompts tuned to that person (JSON array, rendered as tappable cards, tap = copy). Cached per contact until notes/tags change; regenerate button.
+3. **From this week's news (auto)** — any news item (5.6) whose category/keywords match the contact's interest tags appears here as "You could mention: [headline]" with the link. Zero API cost — plain keyword/category matching client-side.
+
+Also port the prototype's **Toolkit** as a page-level (not per-contact) reference card: conversation starters, follow-up questions, open-ended prompts, meeting-spot ideas — static lists, click-to-copy. Keep the content editable in a small settings block so the lists are mine, not hardcoded.
+
+## 5.4 Reply helper (ported through serverless)
+
+Port the prototype's reply helper per contact:
+- Inputs: "what they said" (paste), optional "my rough draft."
+- Four modes: Open-ended reply · Follow-up question · Change subject · Smooth my draft.
+- Output: exactly 3 ready-to-send options, tap-to-copy. Context sent: contact notes + tags + tier + last 2 history notes, so replies fit the actual relationship.
+- Route through `/api/chat` (never client-side key). Model: ASK FIRST — Haiku is likely fine here and keeps each generation ~free; confirm.
+- Add a fifth mode the prototype lacks: **"Re-open after silence"** — a warm re-engagement opener for overdue contacts, referencing an open thread if one exists. Surface this as the quick action directly on overdue contacts in the list.
+
+## 5.5 Inbox — the notification funnel (honest constraints)
+
+**Platform reality, stated up front so we don't build fiction:** Instagram, WhatsApp (personal), Snapchat, and TikTok expose **no API access to personal DMs**. Meta killed Basic Display; WhatsApp's API is business-messaging only; Snapchat and TikTok have none. No web app can read these directly, and iOS forbids notification interception entirely. What IS buildable:
+
+- **Tier A — Gmail (already built, Phase 1.4):** mirrors here as well as the dashboard. Tracked-contact matching already exists.
+- **Tier B — Android notification relay (optional, the only real DM funnel):** if my daily phone is Android, an automation app (MacroDroid / Tasker / BuzzKill) can catch notifications from WhatsApp/Instagram/Snapchat/TikTok and POST `{app, sender, text, time}` to a new Vercel serverless endpoint `/api/inbox` (secured with a secret token in the URL/header). The endpoint stores recent items (Vercel KV or simplest available store) and the Inbox panel polls it. Result: sender + message preview visible in-app, read-only, no social app opened. Claude Code: build the endpoint + panel and write me the exact MacroDroid setup steps as a doc.
+- **Tier C — manual quick-log fallback:** whatever can't be relayed, one tap on a contact logs "they messaged me on [app]" so the cadence tracker stays truthful even without automation.
+
+Inbox behavior (all tiers):
+- Unified list: source icon (Gmail/WhatsApp/IG/etc.), sender, preview, time. Read-only — no replying from here (reply helper 5.4 is for composing, then I paste into the real app on my own terms).
+- Sender-name matching against contacts: matched items show the contact chip; one tap = "count as contact received" (logged in history as inbound). Inbound does NOT reset the cadence clock by default — ASK FIRST: should receiving a message count as contact, or only when I reply?
+- A "clear/dismiss" per item; auto-expire after 7 days.
+- ASK FIRST:
+  - Is your daily phone Android or iPhone? (Determines whether Tier B is buildable at all. If iPhone: state clearly in the UI that DM funneling isn't possible and hide Tier B, leaving Gmail + manual.)
+  - If Android: which apps to relay (WhatsApp, IG, Snapchat, TikTok, SMS?), and quiet hours where the relay drops or holds items?
+
+## 5.6 News — standalone page (`news.html`, reached via More sheet)
+
+Own page, NOT on interactions.html. A compact digest card on the dashboard links here.
+
+Design stance — this is a briefing page, not a feed:
+- The **weekly digest is the centrepiece** at the top; the live category feed sits below it, collapsed by default.
+- No infinite scroll: each category shows a fixed batch (e.g. 10 stories) with an explicit "load more" — ending is a feature.
+- Optional "daily cap" indicator (ASK FIRST: want a soft "you've checked news N times today" counter, or is that overkill?).
+
+**Sources (free, no scraping):**
+- **The Guardian Open Platform API** — free key, excellent UK/London coverage: `section=uk-news` + `q=London` for local, `world` for global, `politics`, `technology`, `sport`, `games`.
+- **RSS via serverless proxy** — `/api/news` endpoint fetches + parses feeds server-side (avoids CORS): BBC London, BBC Sport, The Verge, Eurogamer/PC Gamer, plus any feed I add in settings. Cache responses ~30 min server-side to stay polite.
+- ASK FIRST: confirm category list — **London/local · Global · Gaming · Sports (which sports/teams?) · Politics · Tech** — and 2–3 preferred outlets per category. NBA/judo/basketball feeds worth adding given interests?
+
+**Display:**
+- Category tabs; each story: headline, source, time, one-line standfirst, **external link opening the original article** (target=_blank). Never reproduce article text beyond title + short snippet — link out for reading.
+- "Mark seen" per story; seen stories collapse.
+
+**Weekly digest (the talking-ammunition feature):**
+- At week close (same trigger as the audit), a serverless call sends the week's collected headlines+snippets per category → Claude writes a tight per-category summary: 3–5 bullets of "what actually happened this week," each bullet linking its source article. Stored (`eq.news.digests.*`), browsable history, and written to Obsidian as `News/2026-W29.md`.
+- The digest is context ammunition: the audit (4.5) and talking topics (5.3) both read from it.
+- ASK FIRST: digest on the same weekly API call as the audit (cheaper, one big call) or separate button-triggered call?
+
+## 5.7 Interaction score (feeds the weekly audit)
+
+One number that makes "maintain relationships while off the apps" measurable:
+- Weekly score from: % of due contacts actually contacted · overdue count trend vs last week · breadth (distinct people contacted) · inbound left unanswered > 72h (only if Inbox tiers make inbound visible).
+- Displayed on the Interactions page header and included as a domain in the Phase 4.5 weekly audit — the audit can now praise/criticize social upkeep with numbers and suggest specific people ("Daniel is 28d over cadence; you have an open thread about his Berlin move").
+- ASK FIRST: confirm the inputs and weighting, and whether the score shows as /100 or a simple A–F.
+
+---
+
+## Interconnections summary (why this page multiplies the rest)
+- Contacts → Morning Brief (overdue + birthdays) and Rules engine (default rules).
+- News tags → per-contact talking topics (free, client-side matching).
+- News digest → weekly audit context + Obsidian archive.
+- Inbox sender-matching → contact history (inbound logging).
+- Interaction score → weekly audit domain; audit suggestions can Implement new contacts' cadence changes or rules via Phase 4 tools.
+- Assistant tools (4.1): add `log_contact` variants — `log_interaction(name, channel, note?)`, `add_open_thread(name, topic)`, `snooze_contact(name, days)`.
+
+## Phase 5 acceptance checklist
+- [ ] Interactions page holds People/Inbox only; tracker no longer duplicated on Planner
+- [ ] News is its own page in the More sheet; no feed content on Interactions; digest card on dashboard links to it
+- [ ] Contact history is append-only log; last-spoke derived, never hand-edited except backfill
+- [ ] All AI calls (topics, reply helper, digest) go through serverless — zero client-side keys
+- [ ] Reply helper produces 3 options in my voice using contact context; overdue contacts expose "re-open" quick action
+- [ ] Inbox states platform limits honestly; Tier B only if Android confirmed; relay endpoint token-secured
+- [ ] News links out to originals; snippets stay short; digest bullets each carry a source link
+- [ ] Digest + interaction score flow into the Phase 4.5 audit
+- [ ] All new stores namespaced and covered by global export/import
+
+---
+
 # BUILD LOG (progress notes — updated as work proceeds, not part of the original prompt)
 
 Kept here so a fresh session can pick up exactly where a previous one left off without re-deriving decisions. Format: section, date, decision/outcome.
@@ -489,6 +613,21 @@ This closes out Phase 3 (3.1–3.6) and the master build prompt's phased feature
   - **A hard `MAX_TOOL_ROUNDS = 6` cap** on the silent-tool loop, client-side — not in the spec, added because a loop with no cap and a model that keeps reaching for tools has no natural stopping point other than running up API spend against the user's own key.
   - Verified end-to-end with a scripted, stateful mock of `/api/chat` (and the Google Calendar create endpoint) driving six real scenarios through the actual page: a silent add_task followed by its Undo (task removed, activity entry marked undone, no button left to double-click); log_weight silent on a fresh day *then* correctly switching to a confirm card on a same-day re-log, with the stored value verified unchanged until the actual confirm click; add_calendar_event's confirm writing to both `local_cal_events_v1` and a mocked Google Calendar create in one action; log_contact against a nonexistent name failing gracefully with the right tool_result text back to Claude; and the round cap stopping a deliberately infinite tool-call sequence at exactly the limit with a visible error rather than hanging or silently truncating. Zero console errors across all six.
   - **Re-verified from scratch in a follow-up session-continuity check** (asked explicitly since the build had spanned a context/usage boundary) — re-read every touched file end to end for structural completeness (balanced braces, proper closing tags, all 13 registry entries matched to a real `exec_*` function) before re-running a fresh, wider test hitting all 12 tools individually. That pass caught one real gap: `add_task`/`add_shopping_item`/`add_book`'s tool_result summaries never included the id they'd just generated, so a same-conversation "add X, then do Y to it" couldn't chain without an extra `get_data` round-trip (the tool's own description anticipated this as a fallback, so nothing was actually broken — just less direct than it should be). Fixed by including `(id: ...)` in those three summaries; re-tested with a corrected harness that reads the id back out of the mocked tool_result the way Claude actually would, rather than assuming a reference upfront. (Also caught two bugs in the *test* harness itself along the way, not the app — an operator-precedence mistake that silently swallowed one assertion's label, and an unrealistic hardcoded task reference — both fixed before trusting the result.)
+
+## Phase 5
+
+- **Phase 5 appended 2026-07-18.** Only requires Phase 0 + Phase 2 (has); "benefits from" Phase 4's tools/audit/rules, but 4.2-4.8 aren't built yet, so 5.2's birthday→rules-engine link and any audit/digest cross-links from later sections are deferred, not faked.
+- **5.1/5.2 questions** — answered before building: no React "Keep" prototype available (checked both this repo and the other accessible directory, `tiles-library`, which turned out to be this app's own plain-HTML template origin, not a React prototype) — built from the written spec text alone; **Peak** yields its core nav slot to Interactions (moved to the More sheet); tiers/cadences used exactly as specified (Inner 7d / Close 21d / Acquaintance 60d / Networking 90d); existing contacts just migrate, no separate import.
+- **5.1 New Interactions page + nav slot** and **5.2 Contact manager** — DONE (2026-07-18), built together since 5.1's only real content *is* 5.2's contact manager (Inbox, 5.5, is a separate not-yet-built section — the page currently holds People only, on purpose, not a placeholder "coming soon" Inbox zone).
+  - New `interactions.html`: search + tier filter chips + a single list/detail view that toggles in place (mobile-first single-pane, no side-by-side split) rather than a true master-detail layout, since the app's whole audience is "primary use is a phone."
+  - **Schema migration is read-time and idempotent** (`migrateContact()`, gated on a `__v2` flag), not a one-time destructive pass: old `tier` values remap (`inner`→`inner`, `close`→`close`, `network`→`networking`; `acquaintance` is new, nothing to remap), a single `lastContactedAt` becomes a one-entry `history` seed (`channel: 'other'`), and `cadenceDays` is dropped entirely — cadence is now always derived from tier via one shared map, never stored, so the two can't drift apart the way they could before (tier and cadence were independently editable in the old form).
+  - **Cadence changed for existing tiers, not just added a new one** — Close moved 14d→21d and Network(→Networking) moved 30d→90d, per the answered tier question. Anyone already using those tiers gets the new cadence on next read, not the old one — flagging since it's a real behavior change for existing data, not just new contacts.
+  - Kept the existing `type` field (family/friend/colleague/other) even though the prototype's own field list (as described in the spec) didn't include it — the spec never said to remove it, and dropping a working, already-populated field without being asked would be destructive-by-omission rather than a real decision.
+  - **Every touchpoint outside interactions.html was found by grep before changing the schema, not assumed** — exactly 4 files reference `contacts_v1`/`lastContactedAt`: this page (owns it now), `planner.html` (old full tracker, replaced), `dashboard.html` (overdue badge), and `ask.html` (Phase 4.1's `log_contact` tool + `buildRelationshipsContext`). All four updated together in the same pass so nothing was left reading the old single-field shape.
+  - Planner's full Relationships section (add-row + list, ~190 lines of JS) replaced with a compact read-only card (contact count + overdue count) linking to `interactions.html`; old CSS classes (`.contact-row` etc.) left in place, inert, matching this build's established precedent for low-risk dead CSS. Dashboard's overdue count moved off the Tasks card's text entirely into its own new 7th `.dsum-card` ("Interactions"), matching the existing 6-card pattern exactly (icon/title/arrow/body).
+  - `log_contact` (4.1) now appends a `{date, channel:'other', note:''}` history entry and clears any active snooze on log, instead of setting a since-removed `lastContactedAt` field; its undo matches the new entry back out by date+channel (object identity doesn't survive the JSON round-trip through `logAssistantActivity`'s closure once storage has been re-read).
+  - **Real bug caught by testing, not code review**: `planner.html`'s and `dashboard.html`'s ported overdue-check both tested "history is empty" *before* checking snooze, so a snoozed contact with no prior history (exactly what snooze is for — someone you haven't gotten to yet) still showed as overdue, silently ignoring the snooze. `interactions.html`'s own logic and `ask.html`'s already had the correct order (snooze checked first); these two didn't, from copying the shape without re-deriving the ordering. Fixed by swapping the check order in both places; re-verified with a contact that is simultaneously snoozed *and* has empty history, confirming it no longer counts as overdue in either file.
+  - Verified end-to-end across all four touched pages in one pass: seeded old-shape data (old tier keys, single `lastContactedAt`, no `history`/`tags`/`snoozedUntil`), confirmed migration output directly; list sort (never-contacted above overdue), search, tier filter, tag add, log-a-chat (history grows, status clears, correct channel/note), snooze (and the bug above), add contact, and delete all confirmed through the real UI; Planner and Dashboard's cards confirmed reading the same migrated data correctly (including the post-fix overdue count); the `log_contact` tool confirmed appending correctly and `buildRelationshipsContext`'s output confirmed sane. Zero console errors across every page.
 
 ## Acceptance Checklist pass
 

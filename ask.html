@@ -569,13 +569,24 @@ body {
     const needle = (input.contact_name || '').trim().toLowerCase();
     const contact = list.find((c) => (c.name || '').trim().toLowerCase() === needle);
     if (!contact) return { ok: false, summary: 'No contact named "' + input.contact_name + '" found.' };
-    const prev = contact.lastContactedAt;
-    contact.lastContactedAt = input.date ? new Date(input.date + 'T12:00:00').toISOString() : new Date().toISOString();
+    contact.history = Array.isArray(contact.history) ? contact.history : [];
+    const entry = { date: input.date ? new Date(input.date + 'T12:00:00').toISOString() : new Date().toISOString(), channel: 'other', note: '' };
+    contact.history.push(entry);
+    const prevSnooze = contact.snoozedUntil;
+    contact.snoozedUntil = null; // a fresh log is a live "back in touch" signal, same as interactions.html's own log-a-chat sheet
     storeSet('contacts_v1', list);
     const activityId = logAssistantActivity('log_contact', 'Logged contact: ' + contact.name, async () => {
       const l2 = storeGet('contacts_v1') || [];
       const c2 = l2.find((c) => c.id === contact.id);
-      if (c2) { c2.lastContactedAt = prev; storeSet('contacts_v1', l2); }
+      if (c2 && Array.isArray(c2.history)) {
+        // entry won't be reference-equal after a JSON round-trip through
+        // storeSet/storeGet -- date (millisecond ISO) + channel is unique
+        // enough to find the exact entry this call just added.
+        const i = c2.history.findIndex((h) => h.date === entry.date && h.channel === entry.channel);
+        if (i !== -1) c2.history.splice(i, 1);
+        c2.snoozedUntil = prevSnooze;
+        storeSet('contacts_v1', l2);
+      }
     });
     return { ok: true, summary: 'Logged contact with ' + contact.name + '.', activityId };
   }
@@ -869,14 +880,26 @@ body {
     if (skills.length) s += 'Skills: ' + skills.slice(0, 10).map(sk => sk.name + ' (' + (sk.sessions || []).reduce((a, x) => a + (x.minutes || 0), 0) + 'm logged)').join(', ') + '\n';
     return s;
   }
+  // Phase 5.2 schema: history log (not a single lastContactedAt) + tier-
+  // derived cadence (not a freely-set cadenceDays) + snooze. 'network' kept
+  // in the cadence map for contacts a migration hasn't touched yet (read-
+  // only here; interactions.html owns the actual migration).
+  const REL_TIER_CADENCE = { inner: 7, close: 21, acquaintance: 60, networking: 90, network: 90 };
+  function contactLastContact(c) {
+    const history = Array.isArray(c.history) ? c.history : (c.lastContactedAt ? [{ date: c.lastContactedAt }] : []);
+    return history.length ? history.reduce((latest, h) => (!latest || h.date > latest) ? h.date : latest, null) : null;
+  }
+  function contactIsOverdue(c) {
+    if (c.snoozedUntil && new Date(c.snoozedUntil).getTime() > Date.now()) return false;
+    const last = contactLastContact(c);
+    if (!last) return true;
+    const days = Math.floor((Date.now() - new Date(last).getTime()) / 86400000);
+    return days >= (REL_TIER_CADENCE[c.tier] || 21);
+  }
   function buildRelationshipsContext() {
     const list = storeGet('contacts_v1') || [];
     if (!list.length) return 'RELATIONSHIPS: no contacts tracked yet.\n';
-    const overdue = list.filter(c => {
-      if (!c.lastContactedAt) return false;
-      const days = Math.floor((Date.now() - new Date(c.lastContactedAt).getTime()) / 86400000);
-      return days > (c.cadenceDays || 7);
-    });
+    const overdue = list.filter(contactIsOverdue);
     let s = 'RELATIONSHIPS:\n' + list.length + ' contacts tracked.';
     if (overdue.length) s += ' Overdue: ' + overdue.map(c => c.name).join(', ') + '.';
     return s + '\n';

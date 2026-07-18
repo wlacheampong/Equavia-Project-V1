@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0a0a0b">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="icon" type="image/webp" href="images/Index Landing Page.webp">
+<link rel="apple-touch-icon" href="images/apple-touch-icon.png">
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Equavia">
+<title>Interactions — Equavia</title>
+<script src="topbar.js" defer></script>
+<style>
+:root {
+  --bg-deep: #050506;
+  --bg-card: rgba(255, 255, 255, 0.04);
+  --bg-input: rgba(0, 0, 0, 0.28);
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.14);
+  --text-primary: #FAFAFA;
+  --text-secondary: #B8B6B0;
+  --text-tertiary: #76746E;
+  --text-quaternary: #4D4B47;
+  --accent: #E07658;
+  --success: #6BE3A4;
+  --warning: #F2C063;
+  --danger: #FF6B6B;
+  --font: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg-deep); color: var(--text-primary);
+  font-family: var(--font); -webkit-font-smoothing: antialiased;
+  padding-bottom: 40px;
+}
+.shell { max-width: 720px; margin: 0 auto; padding: 20px 16px 12px; }
+.section-title { font-size: 10.5px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 10px; }
+.int-title { font-size: 22px; font-weight: 700; margin: 0 0 4px; }
+.int-subtitle { font-size: 12.5px; color: var(--text-tertiary); margin: 0 0 18px; line-height: 1.5; }
+
+/* ---- toolbar / list ---- */
+.int-toolbar { display: flex; gap: 8px; margin-bottom: 10px; }
+.int-search {
+  flex: 1; background: var(--bg-input); border: 1px solid var(--border-strong); border-radius: 10px;
+  padding: 9px 12px; color: var(--text-primary); font-family: inherit; font-size: 13.5px; outline: none;
+}
+.int-search:focus { border-color: rgba(255,255,255,0.3); }
+.int-add-btn {
+  flex-shrink: 0; background: linear-gradient(180deg, #FFFFFF 0%, #E8E5DD 100%); color: #0A0A0B;
+  border: 0; border-radius: 10px; padding: 9px 16px; font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer;
+}
+.int-tier-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+.int-chip {
+  padding: 5px 12px; border-radius: 999px; border: 1px solid var(--border-strong);
+  background: rgba(255,255,255,0.03); color: var(--text-tertiary);
+  font-family: inherit; font-size: 11px; font-weight: 600; cursor: pointer;
+}
+.int-chip.is-on { background: rgba(224,118,88,0.14); border-color: rgba(224,118,88,0.4); color: var(--accent); }
+
+.ct-row {
+  display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 12px;
+  background: var(--bg-card); margin-bottom: 6px; cursor: pointer; border: 1px solid transparent;
+}
+.ct-row:hover { border-color: var(--border-strong); }
+.ct-row.is-overdue { background: rgba(255, 107, 107, 0.08); }
+.ct-row.is-due { background: rgba(242, 192, 99, 0.07); }
+.ct-row.is-birthday-today { background: rgba(224, 118, 88, 0.14); }
+.ct-row-main { flex: 1; min-width: 0; }
+.ct-row-name { font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.ct-tier-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.ct-row-status { font-size: 11.5px; color: var(--text-tertiary); margin-top: 3px; }
+.ct-row-status.is-overdue { color: #FF8A8A; }
+.ct-row-status.is-due { color: var(--warning); }
+.ct-cake { font-size: 12px; }
+.ct-chevron { color: var(--text-quaternary); flex-shrink: 0; }
+
+/* ---- detail / profile ---- */
+.int-back-btn {
+  background: none; border: none; color: var(--text-secondary); font-family: inherit; font-size: 13px;
+  font-weight: 600; cursor: pointer; padding: 0; margin-bottom: 16px; display: flex; align-items: center; gap: 4px;
+}
+.ct-profile-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 4px; }
+.ct-profile-name { font-size: 20px; font-weight: 700; }
+.ct-del-btn { background: none; border: none; color: var(--text-quaternary); font-size: 20px; cursor: pointer; padding: 0 4px; line-height: 1; }
+.ct-del-btn:hover { color: var(--danger); }
+.ct-profile-status { font-size: 12.5px; color: var(--text-tertiary); margin-bottom: 16px; }
+.ct-profile-status.is-overdue { color: #FF8A8A; }
+.ct-profile-status.is-due { color: var(--warning); }
+.ct-actions-row { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
+.ct-action-btn {
+  background: rgba(255,255,255,0.06); color: var(--text-primary); border: 1px solid var(--border-strong);
+  border-radius: 10px; padding: 8px 14px; font-family: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer;
+}
+.ct-action-btn.is-primary { background: var(--accent); color: #1a0f0a; border-color: transparent; }
+.ct-field { margin-bottom: 14px; }
+.ct-field label { display: block; font-size: 10.5px; font-weight: 700; color: var(--text-tertiary); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.05em; }
+.ct-field input[type="text"], .ct-field input[type="date"], .ct-field select, .ct-field textarea {
+  width: 100%; background: var(--bg-input); border: 1px solid var(--border-strong); border-radius: 8px;
+  padding: 8px 10px; font-size: 13px; font-family: inherit; color: var(--text-primary); outline: none;
+}
+.ct-field textarea { resize: vertical; min-height: 44px; }
+.ct-field-row { display: flex; gap: 10px; }
+.ct-field-row .ct-field { flex: 1; }
+.ct-tags-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.ct-tag-pill { background: rgba(255,255,255,0.06); border: 1px solid var(--border-strong); border-radius: 999px; padding: 4px 10px 4px 12px; font-size: 11.5px; display: flex; align-items: center; gap: 6px; }
+.ct-tag-pill button { background: none; border: none; color: var(--text-quaternary); cursor: pointer; padding: 0; font-size: 13px; line-height: 1; }
+
+.ct-history-item { padding: 10px 0; border-bottom: 1px solid var(--border); }
+.ct-history-item:last-child { border-bottom: none; }
+.ct-history-top { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-secondary); }
+.ct-history-channel { font-weight: 700; text-transform: capitalize; }
+.ct-history-note { font-size: 12.5px; color: var(--text-tertiary); margin-top: 3px; }
+.ct-empty-history { font-size: 12.5px; color: var(--text-quaternary); padding: 8px 0; }
+
+.empty-state { text-align: center; padding: 40px 20px; color: var(--text-tertiary); font-size: 13px; }
+
+/* ---- sheets (modal) ---- */
+.int-sheet-bg {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: flex-end; justify-content: center; z-index: 50;
+}
+.int-sheet {
+  width: 100%; max-width: 480px; background: #121214; border-radius: 20px 20px 0 0; padding: 20px 18px calc(20px + env(safe-area-inset-bottom));
+  max-height: 85vh; overflow-y: auto;
+}
+.int-sheet h2 { font-size: 16px; margin: 0 0 14px; }
+.ct-channel-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+.ct-channel-btn {
+  flex: 1; min-width: 80px; background: rgba(255,255,255,0.06); border: 1px solid var(--border-strong); border-radius: 10px;
+  padding: 12px 8px; font-family: inherit; font-size: 12.5px; font-weight: 600; color: var(--text-primary); cursor: pointer; text-align: center;
+}
+.ct-channel-btn:hover { border-color: var(--accent); }
+.int-sheet-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 6px; }
+.int-sheet-cancel { background: none; border: none; color: var(--text-tertiary); font-family: inherit; font-size: 13px; cursor: pointer; }
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="section-title">Interactions</div>
+  <h1 class="int-title">People</h1>
+  <p class="int-subtitle">Who to reach out to, what to say. The Relationship Tracker moved here from Planner.</p>
+
+  <div id="intListView">
+    <div class="int-toolbar">
+      <input type="text" class="int-search" id="ctSearchInput" placeholder="Search people…">
+      <button type="button" class="int-add-btn" id="ctAddOpenBtn">+ Add</button>
+    </div>
+    <div class="int-tier-chips" id="ctTierChips"></div>
+    <div id="ctListWrap"></div>
+    <div class="empty-state" id="ctEmptyState" style="display:none;">No contacts yet — add one above.</div>
+  </div>
+
+  <div id="intDetailView" style="display:none;">
+    <button type="button" class="int-back-btn" id="ctBackBtn">&larr; Back</button>
+    <div class="ct-profile-head">
+      <div class="ct-profile-name" id="ctpName"></div>
+      <button type="button" class="ct-del-btn" id="ctpDelBtn" aria-label="Delete contact">&times;</button>
+    </div>
+    <div class="ct-profile-status" id="ctpStatus"></div>
+    <div class="ct-actions-row">
+      <button type="button" class="ct-action-btn is-primary" id="ctpLogBtn">Log a chat</button>
+      <button type="button" class="ct-action-btn" id="ctpSnoozeBtn">Snooze</button>
+    </div>
+
+    <div class="ct-field-row">
+      <div class="ct-field">
+        <label for="ctpType">Type</label>
+        <select id="ctpType">
+          <option value="family">Family</option>
+          <option value="friend">Friend</option>
+          <option value="colleague">Colleague</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+      <div class="ct-field">
+        <label for="ctpTier">Tier</label>
+        <select id="ctpTier"></select>
+      </div>
+    </div>
+    <div class="ct-field">
+      <label for="ctpBirthday">Birthday</label>
+      <input type="date" id="ctpBirthday">
+    </div>
+    <div class="ct-field">
+      <label for="ctpTagInput">Interest tags</label>
+      <input type="text" id="ctpTagInput" placeholder="Type a tag and press Enter…">
+      <div class="ct-tags-row" id="ctpTagsRow"></div>
+    </div>
+    <div class="ct-field">
+      <label for="ctpNotes">Notes</label>
+      <textarea id="ctpNotes" placeholder="What did you last talk about…"></textarea>
+    </div>
+
+    <div class="section-title" style="margin-top:22px;">History</div>
+    <div id="ctpHistoryList"></div>
+  </div>
+</div>
+
+<div class="int-sheet-bg" id="ctAddSheetBg" style="display:none;">
+  <div class="int-sheet">
+    <h2>Add contact</h2>
+    <div class="ct-field"><label for="ctNameInput">Name</label><input type="text" id="ctNameInput" placeholder="Name…"></div>
+    <div class="ct-field-row">
+      <div class="ct-field">
+        <label for="ctTypeInput">Type</label>
+        <select id="ctTypeInput">
+          <option value="family">Family</option>
+          <option value="friend">Friend</option>
+          <option value="colleague">Colleague</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+      <div class="ct-field">
+        <label for="ctTierInput">Tier</label>
+        <select id="ctTierInput"></select>
+      </div>
+    </div>
+    <div class="int-sheet-actions">
+      <button type="button" class="int-sheet-cancel" id="ctAddCancelBtn">Cancel</button>
+      <button type="button" class="ct-action-btn is-primary" id="ctAddSaveBtn">Add</button>
+    </div>
+  </div>
+</div>
+
+<div class="int-sheet-bg" id="ctLogSheetBg" style="display:none;">
+  <div class="int-sheet">
+    <h2>Log a chat</h2>
+    <div class="ct-field"><label for="ctLogNote">Note (optional)</label><input type="text" id="ctLogNote" placeholder="What you talked about…"></div>
+    <p style="font-size:11.5px;color:var(--text-tertiary);margin:0 0 10px;">Tap a channel to log it now:</p>
+    <div class="ct-channel-row">
+      <button type="button" class="ct-channel-btn" data-channel="call">Call</button>
+      <button type="button" class="ct-channel-btn" data-channel="text">Text</button>
+      <button type="button" class="ct-channel-btn" data-channel="in-person">In-person</button>
+      <button type="button" class="ct-channel-btn" data-channel="other">Other</button>
+    </div>
+    <div class="int-sheet-actions">
+      <button type="button" class="int-sheet-cancel" id="ctLogCancelBtn">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  function storeGet(k) { try { const v = JSON.parse(localStorage.getItem(k)); return v; } catch (e) { return null; } }
+  function storeSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+
+  const CONTACTS_KEY = 'contacts_v1';
+  // Phase 5.2 tiers/cadences, as answered -- 'close' cadence changed 14->21,
+  // 'network' renamed to 'networking' at 30->90, 'acquaintance' is new.
+  const TIER_DEFS = [
+    { key: 'inner', label: 'Inner', cadenceDays: 7, color: '#E07658' },
+    { key: 'close', label: 'Close', cadenceDays: 21, color: '#6BE3A4' },
+    { key: 'acquaintance', label: 'Acquaintance', cadenceDays: 60, color: '#F2C063' },
+    { key: 'networking', label: 'Networking', cadenceDays: 90, color: '#76746E' },
+  ];
+  const TIER_MAP = {}; TIER_DEFS.forEach((t) => { TIER_MAP[t.key] = t; });
+  const CHANNEL_LABELS = { call: 'Call', text: 'Text', 'in-person': 'In-person', other: 'Other' };
+
+  // ---------- Migration (read-time, idempotent via __v2) ----------
+  // Old shape (Phase 1.3): {type, tier: inner|close|network, cadenceDays,
+  // lastContactedAt, birthday, notes}. New shape adds a real history log
+  // (derived last-spoke, not a hand-set field), tags, and snooze -- cadence
+  // is now always derived from tier, never stored, so they can't drift.
+  function migrateContact(c) {
+    if (c.__v2) return c;
+    const tierRemap = { inner: 'inner', close: 'close', network: 'networking' };
+    const tier = tierRemap[c.tier] || (TIER_MAP[c.tier] ? c.tier : 'close');
+    const history = Array.isArray(c.history) ? c.history.slice()
+      : (c.lastContactedAt ? [{ date: c.lastContactedAt, channel: 'other', note: '' }] : []);
+    return {
+      id: c.id, name: c.name, type: c.type || 'friend', tier,
+      history, tags: Array.isArray(c.tags) ? c.tags : [],
+      birthday: c.birthday || null, notes: c.notes || '',
+      snoozedUntil: c.snoozedUntil || null,
+      createdAt: c.createdAt || new Date().toISOString(),
+      __v2: true,
+    };
+  }
+  function getContacts() {
+    const raw = storeGet(CONTACTS_KEY) || [];
+    let changed = false;
+    const migrated = raw.map((c) => { const m = migrateContact(c); if (m !== c) changed = true; return m; });
+    if (changed) storeSet(CONTACTS_KEY, migrated);
+    return migrated;
+  }
+  function setContacts(list) { storeSet(CONTACTS_KEY, list); }
+
+  // ---------- Derived values ----------
+  function lastContactDate(c) {
+    if (!c.history || !c.history.length) return null;
+    return c.history.reduce((latest, h) => (!latest || h.date > latest) ? h.date : latest, null);
+  }
+  function daysSince(iso) {
+    if (!iso) return Infinity;
+    return Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
+  }
+  function cadenceDaysOf(c) { return (TIER_MAP[c.tier] || TIER_MAP.close).cadenceDays; }
+  function isSnoozed(c) { return !!(c.snoozedUntil && new Date(c.snoozedUntil).getTime() > Date.now()); }
+  // ratio >= 1 = overdue, 0.8-1 = "due soon" -- Infinity (never contacted)
+  // sorts above everything via the same 1e9 substitution used everywhere
+  // else in this app for "never" beating "very overdue".
+  function overdueRatio(c) {
+    const last = lastContactDate(c);
+    if (!last) return Infinity;
+    return daysSince(last) / cadenceDaysOf(c);
+  }
+  function isOverdue(c) { return !isSnoozed(c) && overdueRatio(c) >= 1; }
+  function isDue(c) { const r = overdueRatio(c); return !isSnoozed(c) && r >= 0.8 && r < 1; }
+  function bdayParts(mmdd) {
+    if (!mmdd) return null;
+    const p = mmdd.split('-').map(Number);
+    return (p[0] && p[1]) ? { m: p[0], d: p[1] } : null;
+  }
+  function isBirthdayToday(mmdd) {
+    const p = bdayParts(mmdd); if (!p) return false;
+    const now = new Date();
+    return now.getMonth() + 1 === p.m && now.getDate() === p.d;
+  }
+  function isBirthdayUpcoming(mmdd) {
+    const p = bdayParts(mmdd); if (!p) return false;
+    const now = new Date();
+    const todayMid = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    let target = new Date(now.getFullYear(), p.m - 1, p.d);
+    if (target < todayMid) target = new Date(now.getFullYear() + 1, p.m - 1, p.d);
+    const days = Math.floor((target - todayMid) / 86400000);
+    return days >= 0 && days <= 14;
+  }
+  function statusText(c) {
+    if (isSnoozed(c)) return 'Snoozed until ' + new Date(c.snoozedUntil).toLocaleDateString();
+    const last = lastContactDate(c);
+    if (!last) return 'Never logged';
+    const days = daysSince(last);
+    const cad = cadenceDaysOf(c);
+    if (isOverdue(c)) return (days - cad) + 'd overdue';
+    return days + ' / ' + cad + 'd';
+  }
+  function sortValue(c) {
+    if (isBirthdayToday(c.birthday)) return 1e12;
+    const r = overdueRatio(c);
+    return r === Infinity ? 1e9 : r;
+  }
+
+  // ---------- Add-contact tier select (shared between add sheet + profile) ----------
+  function fillTierSelect(sel) {
+    sel.innerHTML = '';
+    TIER_DEFS.forEach((t) => {
+      const opt = document.createElement('option');
+      opt.value = t.key; opt.textContent = t.label + ' (every ' + t.cadenceDays + 'd)';
+      sel.appendChild(opt);
+    });
+  }
+
+  // ---------- List view ----------
+  let activeTierFilter = 'all';
+  let searchQuery = '';
+
+  function renderTierChips() {
+    const wrap = $('ctTierChips');
+    wrap.innerHTML = '';
+    const defs = [{ key: 'all', label: 'All' }].concat(TIER_DEFS.map((t) => ({ key: t.key, label: t.label })));
+    defs.forEach((d) => {
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'int-chip' + (activeTierFilter === d.key ? ' is-on' : '');
+      chip.textContent = d.label;
+      chip.addEventListener('click', () => { activeTierFilter = d.key; renderList(); });
+      wrap.appendChild(chip);
+    });
+  }
+
+  function buildContactRow(c) {
+    const row = document.createElement('div');
+    const overdue = isOverdue(c), due = isDue(c), bdayToday = isBirthdayToday(c.birthday);
+    row.className = 'ct-row' + (overdue ? ' is-overdue' : '') + (due ? ' is-due' : '') + (bdayToday ? ' is-birthday-today' : '');
+    row.addEventListener('click', () => openDetail(c.id));
+
+    const dot = document.createElement('span');
+    dot.className = 'ct-tier-dot';
+    dot.style.background = (TIER_MAP[c.tier] || TIER_MAP.close).color;
+
+    const main = document.createElement('div');
+    main.className = 'ct-row-main';
+    const nameLine = document.createElement('div');
+    nameLine.className = 'ct-row-name';
+    nameLine.appendChild(dot);
+    const nameSpan = document.createElement('span');
+    nameSpan.textContent = c.name;
+    nameLine.appendChild(nameSpan);
+    if (bdayToday) { const cake = document.createElement('span'); cake.className = 'ct-cake'; cake.textContent = '🎂 today'; nameLine.appendChild(cake); }
+    else if (isBirthdayUpcoming(c.birthday)) { const cake = document.createElement('span'); cake.className = 'ct-cake'; cake.textContent = '🎂'; nameLine.appendChild(cake); }
+    main.appendChild(nameLine);
+    const status = document.createElement('div');
+    status.className = 'ct-row-status' + (overdue ? ' is-overdue' : '') + (due ? ' is-due' : '');
+    status.textContent = statusText(c);
+    main.appendChild(status);
+    row.appendChild(main);
+
+    const chevron = document.createElement('span');
+    chevron.className = 'ct-chevron';
+    chevron.textContent = '›';
+    row.appendChild(chevron);
+    return row;
+  }
+
+  function renderList() {
+    renderTierChips();
+    const wrap = $('ctListWrap');
+    const all = getContacts();
+    const q = searchQuery.trim().toLowerCase();
+    const filtered = all.filter((c) => {
+      if (activeTierFilter !== 'all' && c.tier !== activeTierFilter) return false;
+      if (q && c.name.toLowerCase().indexOf(q) === -1 && !(c.tags || []).some((t) => t.toLowerCase().indexOf(q) !== -1)) return false;
+      return true;
+    }).sort((a, b) => sortValue(b) - sortValue(a));
+    wrap.innerHTML = '';
+    $('ctEmptyState').style.display = all.length ? 'none' : '';
+    filtered.forEach((c) => wrap.appendChild(buildContactRow(c)));
+  }
+
+  // ---------- Detail view ----------
+  let activeContactId = null;
+
+  function renderHistory(c) {
+    const wrap = $('ctpHistoryList');
+    wrap.innerHTML = '';
+    const hist = (c.history || []).slice().sort((a, b) => b.date.localeCompare(a.date));
+    if (!hist.length) { wrap.innerHTML = '<div class="ct-empty-history">No logged chats yet.</div>'; return; }
+    hist.forEach((h) => {
+      const item = document.createElement('div');
+      item.className = 'ct-history-item';
+      const top = document.createElement('div');
+      top.className = 'ct-history-top';
+      const chan = document.createElement('span');
+      chan.className = 'ct-history-channel';
+      chan.textContent = CHANNEL_LABELS[h.channel] || h.channel;
+      top.appendChild(chan);
+      const date = document.createElement('span');
+      date.textContent = new Date(h.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+      top.appendChild(date);
+      item.appendChild(top);
+      if (h.note) { const note = document.createElement('div'); note.className = 'ct-history-note'; note.textContent = h.note; item.appendChild(note); }
+      wrap.appendChild(item);
+    });
+  }
+
+  function renderTags(c) {
+    const wrap = $('ctpTagsRow');
+    wrap.innerHTML = '';
+    (c.tags || []).forEach((tag, i) => {
+      const pill = document.createElement('span');
+      pill.className = 'ct-tag-pill';
+      const txt = document.createElement('span'); txt.textContent = tag; pill.appendChild(txt);
+      const del = document.createElement('button'); del.type = 'button'; del.textContent = '×';
+      del.addEventListener('click', () => {
+        const list = getContacts();
+        const idx = list.findIndex((x) => x.id === c.id);
+        if (idx === -1) return;
+        list[idx].tags.splice(i, 1);
+        setContacts(list);
+        openDetail(c.id);
+      });
+      pill.appendChild(del);
+      wrap.appendChild(pill);
+    });
+  }
+
+  function openDetail(id) {
+    activeContactId = id;
+    const c = getContacts().find((x) => x.id === id);
+    if (!c) { closeDetail(); return; }
+    $('intListView').style.display = 'none';
+    $('intDetailView').style.display = '';
+    $('ctpName').textContent = c.name;
+    const overdue = isOverdue(c), due = isDue(c);
+    const statusEl = $('ctpStatus');
+    statusEl.className = 'ct-profile-status' + (overdue ? ' is-overdue' : '') + (due ? ' is-due' : '');
+    statusEl.textContent = statusText(c) + (isBirthdayToday(c.birthday) ? ' · 🎂 Birthday today!' : '');
+    $('ctpType').value = c.type;
+    fillTierSelect($('ctpTier'));
+    $('ctpTier').value = c.tier;
+    $('ctpBirthday').value = c.birthday ? '2000-' + c.birthday : '';
+    $('ctpNotes').value = c.notes || '';
+    renderTags(c);
+    renderHistory(c);
+    window.scrollTo(0, 0);
+  }
+  function closeDetail() {
+    activeContactId = null;
+    $('intDetailView').style.display = 'none';
+    $('intListView').style.display = '';
+    renderList();
+  }
+  function updateActiveContact(patch) {
+    const list = getContacts();
+    const idx = list.findIndex((x) => x.id === activeContactId);
+    if (idx === -1) return;
+    Object.assign(list[idx], patch);
+    setContacts(list);
+  }
+
+  $('ctBackBtn').addEventListener('click', closeDetail);
+  $('ctpDelBtn').addEventListener('click', () => {
+    if (!confirm('Delete this contact? This can\'t be undone.')) return;
+    setContacts(getContacts().filter((x) => x.id !== activeContactId));
+    closeDetail();
+  });
+  $('ctpType').addEventListener('change', (e) => updateActiveContact({ type: e.target.value }));
+  $('ctpTier').addEventListener('change', (e) => { updateActiveContact({ tier: e.target.value }); openDetail(activeContactId); });
+  $('ctpBirthday').addEventListener('change', (e) => {
+    let mmdd = null;
+    if (e.target.value) { const p = e.target.value.split('-'); mmdd = p[1] + '-' + p[2]; }
+    updateActiveContact({ birthday: mmdd });
+  });
+  $('ctpNotes').addEventListener('change', (e) => updateActiveContact({ notes: e.target.value.trim() }));
+  $('ctpTagInput').addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    const val = e.target.value.trim();
+    if (!val) return;
+    const list = getContacts();
+    const idx = list.findIndex((x) => x.id === activeContactId);
+    if (idx === -1) return;
+    list[idx].tags = list[idx].tags || [];
+    if (list[idx].tags.indexOf(val) === -1) list[idx].tags.push(val);
+    setContacts(list);
+    e.target.value = '';
+    renderTags(list[idx]);
+  });
+  $('ctpSnoozeBtn').addEventListener('click', () => {
+    const days = Number(prompt('Snooze this contact for how many days?', '7'));
+    if (!days || days <= 0) return;
+    updateActiveContact({ snoozedUntil: new Date(Date.now() + days * 86400000).toISOString() });
+    openDetail(activeContactId);
+  });
+
+  // ---------- Log-a-chat sheet ----------
+  $('ctpLogBtn').addEventListener('click', () => { $('ctLogNote').value = ''; $('ctLogSheetBg').style.display = ''; });
+  $('ctLogCancelBtn').addEventListener('click', () => { $('ctLogSheetBg').style.display = 'none'; });
+  $('ctLogSheetBg').addEventListener('click', (e) => { if (e.target === $('ctLogSheetBg')) $('ctLogSheetBg').style.display = 'none'; });
+  document.querySelectorAll('.ct-channel-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const list = getContacts();
+      const idx = list.findIndex((x) => x.id === activeContactId);
+      if (idx === -1) return;
+      list[idx].history = list[idx].history || [];
+      list[idx].history.push({ date: new Date().toISOString(), channel: btn.dataset.channel, note: $('ctLogNote').value.trim() });
+      // A fresh log is a live "I'm back in touch" signal -- clear any snooze
+      // rather than leave a contact both "just logged" and "snoozed".
+      list[idx].snoozedUntil = null;
+      setContacts(list);
+      $('ctLogSheetBg').style.display = 'none';
+      openDetail(activeContactId);
+    });
+  });
+
+  // ---------- Add-contact sheet ----------
+  $('ctAddOpenBtn').addEventListener('click', () => {
+    $('ctNameInput').value = '';
+    fillTierSelect($('ctTierInput'));
+    $('ctAddSheetBg').style.display = '';
+    $('ctNameInput').focus();
+  });
+  $('ctAddCancelBtn').addEventListener('click', () => { $('ctAddSheetBg').style.display = 'none'; });
+  $('ctAddSheetBg').addEventListener('click', (e) => { if (e.target === $('ctAddSheetBg')) $('ctAddSheetBg').style.display = 'none'; });
+  $('ctAddSaveBtn').addEventListener('click', () => {
+    const name = $('ctNameInput').value.trim();
+    if (!name) return;
+    const list = getContacts();
+    list.push({
+      id: 'ct' + Date.now() + Math.random().toString(36).slice(2, 7),
+      name, type: $('ctTypeInput').value, tier: $('ctTierInput').value,
+      history: [], tags: [], birthday: null, notes: '', snoozedUntil: null,
+      createdAt: new Date().toISOString(), __v2: true,
+    });
+    setContacts(list);
+    $('ctAddSheetBg').style.display = 'none';
+    renderList();
+  });
+
+  $('ctSearchInput').addEventListener('input', (e) => { searchQuery = e.target.value; renderList(); });
+
+  window.addEventListener('storage', () => { if (activeContactId) openDetail(activeContactId); else renderList(); });
+
+  renderList();
+})();
+</script>
+</body>
+</html>

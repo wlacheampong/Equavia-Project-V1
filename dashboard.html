@@ -1567,6 +1567,15 @@ body::after {
       </div>
       <div class="dsum-body" id="dsumFinanceBody">Loading…</div>
     </a>
+
+    <a class="dsum-card" href="interactions.html" data-card="interactions">
+      <div class="dsum-head">
+        <span class="dsum-icon">👥</span>
+        <span class="dsum-title">Interactions</span>
+        <span class="dsum-arrow">→</span>
+      </div>
+      <div class="dsum-body" id="dsumInteractionsBody">Loading…</div>
+    </a>
   </div>
 
   <div class="wkr-card" id="weeklyReportCard" style="display:none;">
@@ -2232,23 +2241,37 @@ body::after {
     });
   }
 
+  // Phase 5.1: Relationships is Interactions' own card now, not folded into
+  // Tasks' text -- tier-aware (history log + tier cadence, not the old
+  // single lastContactedAt/cadenceDays fields interactions.html replaced).
+  const REL_TIER_CADENCE = { inner: 7, close: 21, acquaintance: 60, networking: 90, network: 90 };
+  function renderInteractionsSummary() {
+    const el = document.getElementById('dsumInteractionsBody');
+    if (!el) return;
+    const contacts = storeGet('contacts_v1') || [];
+    if (!contacts.length) { el.textContent = 'No contacts yet — add one in Interactions.'; return; }
+    const overdueCount = contacts.filter((c) => {
+      if (c.snoozedUntil && new Date(c.snoozedUntil).getTime() > Date.now()) return false;
+      const history = Array.isArray(c.history) ? c.history : (c.lastContactedAt ? [{ date: c.lastContactedAt }] : []);
+      if (!history.length) return true;
+      const last = history.reduce((latest, h) => (!latest || h.date > latest) ? h.date : latest, null);
+      const days = Math.floor((Date.now() - new Date(last).getTime()) / 86400000);
+      return days >= (REL_TIER_CADENCE[c.tier] || 21);
+    }).length;
+    el.textContent = contacts.length + ' contact' + (contacts.length === 1 ? '' : 's') +
+      (overdueCount > 0 ? ' · ' + overdueCount + ' overdue' : ' · up to date');
+  }
+
   function renderDashboardSummaries() {
+    renderInteractionsSummary();
     const tasksEl = document.getElementById('dsumTasksBody');
     if (tasksEl) {
       const todayGoals = getGoals(todayKey());
       const doneCount = todayGoals.filter(g => g.done).length;
       const streak = loadStreak();
-      const contactsRaw = storeGet('contacts_v1');
-      const contacts = Array.isArray(contactsRaw) ? contactsRaw : [];
-      const overdueCount = contacts.filter(c => {
-        if (!c.lastContactedAt) return false;
-        const days = Math.floor((Date.now() - new Date(c.lastContactedAt).getTime()) / 86400000);
-        return days > (c.cadenceDays || 7);
-      }).length;
-      tasksEl.textContent = (todayGoals.length === 0
+      tasksEl.textContent = todayGoals.length === 0
         ? 'No tasks yet — plan your day in Planner.'
-        : doneCount + ' / ' + todayGoals.length + ' done today' + (streak.count > 0 ? ' · ⚡ ' + streak.count + ' day streak' : ''))
-        + (overdueCount > 0 ? ' · ' + overdueCount + ' ' + (overdueCount === 1 ? 'person' : 'people') + ' overdue' : '');
+        : doneCount + ' / ' + todayGoals.length + ' done today' + (streak.count > 0 ? ' · ⚡ ' + streak.count + ' day streak' : '');
     }
 
     const goalsEl = document.getElementById('dsumGoalsBody');
