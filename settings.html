@@ -228,6 +228,15 @@ input:focus, select:focus { border-color: rgba(255,255,255,0.3); }
       </div>
     </div>
   </div>
+
+  <div class="section">
+    <div class="section-title">Assistant Activity</div>
+    <div class="card">
+      <p class="help-text">Everything Ask Claude has created or changed on its own, most recent first — the full audit trail Phase 4.1 requires. Undo links only appear in the chat itself and only work for the rest of that browser session.</p>
+      <div id="assistantActivityList"></div>
+      <div class="row-sub" id="assistantActivityEmpty" style="display:none;">No assistant activity yet.</div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -402,6 +411,34 @@ input:focus, select:focus { border-color: rgba(255,255,255,0.3); }
       });
     });
   }
+
+  // ---------- Assistant Activity (Phase 4.1 audit trail, read-only here --
+  // undo lives only in the chat itself, in-memory for that session, per the
+  // answered "immediate undo link only" ASK FIRST question) ----------
+  const ASSISTANT_ACTIVITY_KEY = 'eq.assistant.activity_log_v1';
+  function renderAssistantActivity() {
+    const list = storeGet(ASSISTANT_ACTIVITY_KEY) || [];
+    const wrap = $('assistantActivityList');
+    wrap.innerHTML = '';
+    $('assistantActivityEmpty').style.display = list.length ? 'none' : '';
+    list.forEach((entry) => {
+      const row = document.createElement('div');
+      row.className = 'row';
+      const left = document.createElement('div');
+      const label = document.createElement('div');
+      label.className = 'row-label';
+      label.style.fontSize = '13px';
+      label.textContent = entry.summary;
+      left.appendChild(label);
+      const sub = document.createElement('div');
+      sub.className = 'row-sub';
+      sub.textContent = entry.tool + ' · ' + new Date(entry.at).toLocaleString() + (entry.undone ? ' · undone' : '');
+      left.appendChild(sub);
+      row.appendChild(left);
+      wrap.appendChild(row);
+    });
+  }
+  renderAssistantActivity();
 
   renderBackupLine();
 })();

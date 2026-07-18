@@ -2004,7 +2004,11 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
       snapshotCompletionForDay(dateStr, old);
       old.forEach(g => {
         if (!g.done && g.text && !texts.has(g.text)) {
-          today.push({ text: g.text, done: false });
+          // Preserve id (Phase 4.1) so a task Ask Claude created/referenced
+          // stays addressable by the same id after it rolls forward a day --
+          // tasks predating that field simply have none, same as goals'
+          // createdAt backfill in 1.6.
+          today.push(g.id ? { id: g.id, text: g.text, done: false } : { text: g.text, done: false });
           texts.add(g.text);
         }
       });
@@ -2273,7 +2277,7 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
     const tomorrow = getGoals(tomorrowKey());
     const seen = new Set(tomorrow.map(g => g.text));
     remaining.forEach(g => {
-      if (!seen.has(g.text)) { tomorrow.push({ text: g.text, done: false }); seen.add(g.text); }
+      if (!seen.has(g.text)) { tomorrow.push(g.id ? { id: g.id, text: g.text, done: false } : { text: g.text, done: false }); seen.add(g.text); }
     });
     setGoals(tomorrowKey(), tomorrow);
     setGoals(todayKey(), today.filter(g => g.done));

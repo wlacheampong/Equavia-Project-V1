@@ -198,6 +198,131 @@ Build in this order; each is standalone.
 
 ---
 
+# PHASE 4 — ASK CLAUDE → FULL AI ASSISTANT
+
+Requires Phase 2 (Ask Claude page + serverless function) complete. Work section by section, ask the `ASK FIRST` questions before building each.
+
+Global rules for this phase:
+- The assistant can READ everything and WRITE only through defined tools. No tool = no action.
+- The assistant can never contact the outside world (no email sending, no messages, no posting). Read-only Gmail stays read-only.
+- Every write the assistant makes is tagged `source: "assistant"` in its localStorage record, and listed in an "Assistant activity" log viewable in Settings — full audit trail of what it did and when.
+- All costs run against my own Anthropic API key. Show token estimates where practical.
+
+## 4.1 Tool Use — write access to the app
+
+Define the app's actions as Anthropic tools in the serverless `/api/chat` call. Claude requests a tool; the CLIENT executes it against localStorage and returns the result; the loop continues until Claude produces a final text reply.
+
+Tool set (v1):
+- `add_task(title, day: "today"|"tomorrow")`
+- `complete_task(task_id)` / `push_task_to_tomorrow(task_id)`
+- `log_weight(kg, date?)`
+- `log_sleep(hours, date?)`
+- `log_contact(contact_name, date?)`
+- `add_calendar_event(title, date, time, duration_min)` — local + Google if connected
+- `add_shopping_item(name, grams?, qty?)`
+- `add_book(title, author?, status)`
+- `check_stack_item(item_name)` — mark a supplement taken
+- `log_habit(habit_name, done: true|false, date?)`
+- `add_goal_note(goal_id, note)`
+- `remember(fact)` / `forget(fact_id)` — see 4.3
+- `get_data(domain, range)` — explicit read tool so context injection can shrink: instead of front-loading everything, Claude pulls what it needs
+
+Rules:
+- Logging/reading tools execute silently. Destructive or irreversible ones (delete, archive, overwrite an existing entry) require an in-chat confirm chip before executing.
+- Tool results render as small inline action cards in the chat ("✓ Logged 82.4 kg") with an undo link where feasible (undo = delete the created record).
+- Unknown references ("push the dentist thing") — Claude uses `get_data` to search tasks, asks if ambiguous.
+
+ASK FIRST:
+- Confirm the v1 tool list — anything to add/remove?
+- Should `add_calendar_event` be allowed to write to Google Calendar directly, or local-only with a "sync" confirm?
+- Undo window — keep it simple (immediate undo link only) or a full revert log in Settings?
+
+## 4.2 Universal command bar / natural-language quick log
+
+- The Quick Capture "+" (Phase 3.4) gains a "smart" mode: free text goes to the assistant with tools enabled, parsed into the right records. "slept rough, 6 hours, skipped morning stack, weight 82.9" → sleep entry + stack state + weight log in one pass, with a compact result card listing what was logged.
+- Structured mode (destination chips) remains as the zero-cost path; smart mode is opt-in per capture because it costs a token round-trip.
+- ASK FIRST: which model for smart-capture parsing — Haiku is likely sufficient and keeps per-capture cost trivial. Confirm.
+
+## 4.3 Persistent memory
+
+- `eq.assistant.memory` store, max ~30 entries, each `{id, fact, created}`.
+- Claude can call `remember()` when I state a durable preference or fact, and `forget()` when I correct one. All memory entries injected into the system prompt of every assistant call.
+- Settings page: memory viewer with manual add/edit/delete.
+- Seed on first run by asking me 3–5 onboarding questions (current goal phase, training split, sleep target, tone preference for advice).
+- ASK FIRST: confirm the cap, and whether the assistant should ask permission before saving a memory or save silently and show a "remembered" chip.
+
+## 4.4 Morning Brief
+
+- Dashboard card, generated on first open after the 6 AM reset (cached for the day; manual regenerate button).
+- Serverless assembles: last night's sleep (Whoop or log), recovery % if live, today's tasks + calendar, overdue contacts, unread-count from Gmail hub, subscription renewals ≤ 7 days, habit states, weight 7-day trend.
+- Claude writes ≤ 6 lines: state of play + ONE recommended focus for the day. No generic filler, no motivational padding.
+- Evening variant ("Close the day" button after 8 PM): reviews completion vs plan, asks for tomorrow's top task if unset, writes the day summary to Obsidian daily note via existing sync.
+- ASK FIRST: auto-generate on open vs button-only (auto = 1 API call/day baseline cost). Include evening variant in v1?
+
+## 4.5 WEEKLY AUDIT — the core review feature
+
+Runs at week close (default Sunday evening; manual "Run audit now" always available). Replaces/absorbs the static weekly report widget from Phase 3.3 — the Gyroscope-style stat card becomes the header of this audit.
+
+**Data in:** the full week across every domain (sleep, recovery, training sessions + volume, weight trend, task completion %, habit grid, goals progressed, contacts logged vs overdue, finance cash-flow pace, stack adherence) PLUS the previous week's audit entry, so every audit is comparative — trajectory, not snapshot.
+
+**Output structure (fixed sections, rendered as cards):**
+1. **The week in numbers** — compact stat header (the Phase 3.3 metrics).
+2. **What went well** — 3–5 specific, evidence-cited wins ("Stack adherence 96%, up from 84%"). No participation trophies: if the week was poor, this section is allowed to be short.
+3. **What went badly** — equally specific, equally evidence-cited. Direct language, no cushioning. Includes broken commitments from last week's audit ("Last week you accepted 'walk after Meal 2 daily' — logged 2/7").
+4. **What to do better** — the 2–3 highest-leverage fixes for next week, each tied to a metric that would prove it worked.
+5. **Suggested additions** — 1–3 NEW routine/habit/tracking suggestions I can adopt or ignore. Each renders with **[Implement] [Ignore]** buttons:
+   - **Implement** → the assistant uses its tools to create the actual habit/task/stack item/rule immediately, tagged as originating from audit week N.
+   - **Ignore** → recorded, and the assistant does not re-suggest the same idea for at least 4 weeks (store ignored suggestions with a cooldown date).
+6. **Verdict** — one line, one grade or score for the week (ASK: letter grade, /10, or a one-word verdict?).
+
+**Behavior rules:**
+- Every claim must cite a number from the data. If data is missing for a domain, say "no data" — never infer or pad.
+- Implemented suggestions are automatically checked in the NEXT audit's section 3/2 — the loop closes itself.
+- Audits persist (`eq.audits.*`), browsable as a history list; each also writes to Obsidian as `Audits/2026-W29.md` via existing sync.
+- Tone: direct, specific, zero flattery. The audit's value is honesty.
+
+ASK FIRST:
+- Week close day/time (Sunday 8 PM?).
+- Auto-run at close vs manual-only (auto = 1 larger API call/week — this one is worth Sonnet-class; confirm model).
+- Verdict format (grade / score /10 / one-word)?
+- Any domain to EXCLUDE from audit scope (e.g. finance private from this view)?
+- Hard cap on suggestion count per week (default 3)?
+
+## 4.6 Standing rules engine
+
+- Settings section: user-defined rules `{trigger, condition, action}` checked locally on app open — plain JS evaluation, NO API call unless a rule fires and its action is "assistant message."
+- Starter rule templates: recovery < 33% → suggest training swap · tracked contact emailed → surface on dashboard · weight 7-day avg moved > X kg in 7 days → flag · habit health score dropped below 60 → flag · subscription renewing in 48h → flag.
+- When a rule fires with an assistant action, Claude writes the one-line message with the triggering numbers included.
+- The weekly audit (4.5) may propose new rules in its suggestions section; Implement creates them here.
+- ASK FIRST: which 3–4 rules to ship enabled by default.
+
+## 4.7 Voice input
+
+- Web Speech API mic button on the assistant chat input and the smart quick-capture sheet. Free, on-device recognition, no key.
+- Transcript is shown before sending (tap to edit), then flows through the normal tool loop.
+- Graceful fallback: hide the mic if the browser doesn't support SpeechRecognition.
+
+## 4.8 Conversational weekly review (optional layer on 4.5)
+
+- After the audit renders: "Review this week with me?" → 3 short questions max (what felt hardest, what to protect next week, anything the data missed). Answers appended to the Obsidian audit note and stored as context for next week's audit.
+- Strictly optional and skippable — the audit must stand alone without it.
+- ASK FIRST: include in v1 or defer.
+
+---
+
+## Phase 4 acceptance checklist
+- [ ] Assistant can log/create via every v1 tool; destructive actions gated behind confirm
+- [ ] Every assistant write is tagged and visible in the Settings activity log, with undo where feasible
+- [ ] Assistant cannot send, post, or contact anything outside the app
+- [ ] Memory persists, is capped, and is fully user-editable in Settings
+- [ ] Morning brief ≤ 6 lines, generated once daily, from real data only
+- [ ] Weekly audit: cites numbers for every claim, compares against previous week, tracks implemented/ignored suggestions with cooldown, writes to Obsidian
+- [ ] Implement buttons create real records immediately; Ignore suppresses re-suggestion ≥ 4 weeks
+- [ ] Rules engine evaluates locally; API calls only on fire
+- [ ] Voice input works on supporting browsers, hides elsewhere
+
+---
+
 # BUILD LOG (progress notes — updated as work proceeds, not part of the original prompt)
 
 Kept here so a fresh session can pick up exactly where a previous one left off without re-deriving decisions. Format: section, date, decision/outcome.
@@ -350,6 +475,20 @@ This closes out Phase 1 (1.1–1.8) — see the section-by-section entries above
   - Verified the slot math against deliberately time-relative constructed scenarios (wide-open waking hours so "now" is always the effective floor, avoiding dependence on whatever the real wall-clock hour happened to be during the test run): no busy events → a slot starting almost immediately; bedtime forced to ~6 minutes away with a 30-minute task → correctly reports no slot rather than suggesting an impossible one; restored open hours with a 15-minute task → correct 15-minute-wide suggestion. Confirmed the duration field resets to the 30-minute default on every fresh open (not remembered from a prior session, which is the intended behavior, not a bug my own test briefly mis-assumed). Confirmed the full accept flow with a mocked token + Calendar API: correct summary, correct start/end, correct duration, modal closes, and (after the fix) the confirmation message actually stays on screen. Zero console errors. Screenshot confirmed the modal matches the existing Calendar-event modal's visual language exactly. Mobile geometry check confirmed no page-level overflow (a same-class-name selector ambiguity in the test itself, not the app, briefly obscured two of the six checked elements — resolved by relying on the definitive `body.scrollWidth`-vs-viewport check instead, which is unambiguous).
 
 This closes out Phase 3 (3.1–3.6) and the master build prompt's phased feature work. Remaining before considering everything done: a pass through the "Acceptance Checklist" section of this document.
+
+## Phase 4
+
+- **Phase 4 appended 2026-07-18**, same one-section/ASK-FIRST-before-building process as 0-3. Some of 4.1's architecture (the Anthropic tool-use loop in api/chat.js, and a working calendar-event tool) already existed from ad-hoc same-session work done *before* this phase was formally appended — treated as a head start, not rebuilt.
+- **4.1 questions** — answered before building: use the v1 tool list as specified (all 13, including get_data and remember/forget — remember/forget deferred to 4.3 itself, since building them now would mean deciding 4.3's own open questions early); add_calendar_event keeps the confirm-first card and now writes to both `local_cal_events_v1` and Google (previously Google-only); undo is an immediate in-chat link only, no persisted revert log.
+- **4.1 Tool Use** — DONE (2026-07-18). 12 tools + `get_data` implemented in `ask.html` via a `TOOL_REGISTRY` (schema + `confirmMode` + `execute` per tool) and a generalized `runTurn()` loop: silent tools execute immediately and the loop re-POSTs the tool_result for another round; confirm-gated tools render a proposal card and pause, resumed later by `resolvePendingAction` on click. `api/chat.js` extended to pass `tools` through, accept array-shaped tool_use/tool_result message content (previously string-only), and return `{reply, toolUse, rawContent}` instead of just `reply`.
+  - **Every data shape was verified against the real code before writing a tool against it, not assumed** — caught in the process: weight lives in gym.html's own `po_coach_weights` (simple array, *not* behind the `state`/`normalize()` pipeline that had been a worry from the Weekly Report section), shopping items need `lastsValue`/`lastsUnit`/`estDays` fields the tool doesn't collect (defaulted sensibly rather than omitted, which would have produced a malformed item the real Shopping List UI half-renders), and stack items resolve through `stack:items` (a possibly-customized live copy) not the static `STACK_DEFAULTS` template array.
+  - **`confirmMode` is not a fixed per-tool flag** — it's `'never'` / `'always'` / or a function of the tool's own input, because the spec's rule ("destructive or overwrite... requires confirm, logging executes silently") only makes some tools *conditionally* confirm-gated: `log_weight`/`log_sleep`/`log_habit` are silent for a brand-new day's entry but render a confirm card the moment that call would overwrite an existing one for the same date — checked live against the real store at call time, not guessed from the tool name.
+  - **Tasks had no `id` field at all before this** (`{text, done}` only, de-duplicated by text everywhere in planner.html) — added `id` for tasks the assistant creates, plus a small fix to planner.html's `rollover()` and the "push to tomorrow" button so an id survives both the daily fold-forward and a manual push, not just a fresh add. Tasks predating this field are still addressable, via a synthesized `text:<exact text>` reference `get_data` hands out instead of a fabricated id — same non-fabrication precedent as goals' `createdAt` backfill in 1.6.
+  - **Goals had no notes concept either** — added `notes: []` (array of `{text, at}`, additive/backward-compatible, same pattern as the task id above) directly on the goal object rather than a separate keyed store, matching how contacts already keep notes inline.
+  - **Every write goes through `logAssistantActivity()`**, appending to `eq.assistant.activity_log_v1` (capped 200) and returning an id used two ways: an in-chat "Undo" link (in-memory closure per entry, session-only, per the answered undo-scope question) and a new read-only "Assistant Activity" section in settings.html listing the full log. Silent-tool results render as a small inline card ("✓ Logged 82.4 kg") with that Undo link; failed/not-found results (e.g. `log_contact` for an unmatched name) render the same card shape with a ⚠️ and no Undo link, and the failure reason is fed back to Claude as the tool_result so it can naturally explain/ask rather than the app inventing UI copy for every possible failure.
+  - **A hard `MAX_TOOL_ROUNDS = 6` cap** on the silent-tool loop, client-side — not in the spec, added because a loop with no cap and a model that keeps reaching for tools has no natural stopping point other than running up API spend against the user's own key.
+  - Verified end-to-end with a scripted, stateful mock of `/api/chat` (and the Google Calendar create endpoint) driving six real scenarios through the actual page: a silent add_task followed by its Undo (task removed, activity entry marked undone, no button left to double-click); log_weight silent on a fresh day *then* correctly switching to a confirm card on a same-day re-log, with the stored value verified unchanged until the actual confirm click; add_calendar_event's confirm writing to both `local_cal_events_v1` and a mocked Google Calendar create in one action; log_contact against a nonexistent name failing gracefully with the right tool_result text back to Claude; and the round cap stopping a deliberately infinite tool-call sequence at exactly the limit with a visible error rather than hanging or silently truncating. Zero console errors across all six.
+  - **Re-verified from scratch in a follow-up session-continuity check** (asked explicitly since the build had spanned a context/usage boundary) — re-read every touched file end to end for structural completeness (balanced braces, proper closing tags, all 13 registry entries matched to a real `exec_*` function) before re-running a fresh, wider test hitting all 12 tools individually. That pass caught one real gap: `add_task`/`add_shopping_item`/`add_book`'s tool_result summaries never included the id they'd just generated, so a same-conversation "add X, then do Y to it" couldn't chain without an extra `get_data` round-trip (the tool's own description anticipated this as a fallback, so nothing was actually broken — just less direct than it should be). Fixed by including `(id: ...)` in those three summaries; re-tested with a corrected harness that reads the id back out of the mocked tool_result the way Claude actually would, rather than assuming a reference upfront. (Also caught two bugs in the *test* harness itself along the way, not the app — an operator-precedence mistake that silently swallowed one assertion's label, and an unrealistic hardcoded task reference — both fixed before trusting the result.)
 
 ## Acceptance Checklist pass
 

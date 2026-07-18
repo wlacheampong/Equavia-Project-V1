@@ -68,6 +68,12 @@ body {
 .ask-proposal-confirm { background: var(--accent); color: #1a0f0a; }
 .ask-proposal-decline { background: rgba(255,255,255,0.08); color: var(--text-secondary); }
 .ask-proposal-status { font-size: 11.5px; color: var(--text-tertiary); margin-top: 4px; }
+.ask-action { flex-direction: row; align-items: center; flex-wrap: wrap; gap: 8px; padding: 8px 13px; }
+.ask-action-line { font-size: 12.5px; }
+.ask-action-undo { border: none; background: rgba(255,255,255,0.08); color: var(--text-secondary); font-family: inherit; font-size: 10.5px; font-weight: 600; padding: 3px 9px; border-radius: 999px; cursor: pointer; }
+.ask-action-undo:disabled { opacity: 0.5; cursor: default; }
+.ask-action-undone { font-size: 10.5px; color: var(--text-quaternary); font-style: italic; }
+.ask-action .ask-msg-time { width: 100%; margin-top: 0; }
 .ask-msg-time { font-size: 9.5px; color: var(--text-quaternary); margin-top: 4px; font-family: var(--font-mono); }
 .ask-msg-user .ask-msg-time { color: rgba(26,15,10,0.55); }
 .ask-typing { align-self: flex-start; display: flex; gap: 4px; padding: 12px 14px; background: var(--bg-card); border-radius: 14px; border-bottom-left-radius: 4px; }
@@ -265,28 +271,121 @@ body {
     if (laterCount > 0) s += laterCount + ' more event' + (laterCount === 1 ? '' : 's') + ' later this week.\n';
     return s;
   }
-  // Offered to Claude only when the Calendar domain is on and a connection
-  // exists (see sendMessage) -- calling this never creates anything by
-  // itself, it just surfaces a proposal card the user has to actively
-  // confirm. tool_choice is left at its "auto" default so Claude only
-  // reaches for it when a message actually asks to schedule something.
-  const CALENDAR_EVENT_TOOL = {
-    name: 'propose_calendar_event',
-    description: 'Draft a calendar event for the user to review in a confirm/decline card. This does NOT create the event by itself. Only call this when the user is clearly asking to schedule or add something to their calendar. Resolve relative dates ("tomorrow", "Tuesday") against the current date given in context.',
+  // ============================================================
+  // PHASE 4.1 — Tool use. Claude requests a tool; the tool's execute()
+  // runs it against localStorage (or, for calendar, also a live API) and
+  // returns a result; sendMessage's loop POSTs the result back to
+  // /api/chat and continues until Claude replies with plain text and no
+  // further tool_use. Every write goes through logAssistantActivity() so
+  // Settings has a full audit trail, and every tool is either silent
+  // (confirmMode 'never'), always confirm-gated (confirmMode 'always'),
+  // or conditionally gated (confirmMode as a function of the tool's own
+  // input) for tools where only *overwriting* an existing entry needs a
+  // confirm -- a brand-new log entry doesn't.
+  // ============================================================
+  function genId(prefix) { return prefix + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+
+  const ASSISTANT_ACTIVITY_KEY = 'eq.assistant.activity_log_v1';
+  const MAX_ACTIVITY_ENTRIES = 200;
+  // Undo only needs to survive the current page session (matches the
+  // "immediate undo link only" scope) -- in-memory, not persisted, so it
+  // never has to serialize a closure through localStorage.
+  const pendingUndos = {};
+  function logAssistantActivity(tool, summary, undo) {
+    const list = storeGet(ASSISTANT_ACTIVITY_KEY) || [];
+    const id = genId('a');
+    list.unshift({ id, tool, summary, at: new Date().toISOString(), undone: false });
+    if (list.length > MAX_ACTIVITY_ENTRIES) list.length = MAX_ACTIVITY_ENTRIES;
+    storeSet(ASSISTANT_ACTIVITY_KEY, list);
+    if (undo) pendingUndos[id] = undo;
+    return id;
+  }
+  async function undoAssistantActivity(activityId) {
+    const undo = pendingUndos[activityId];
+    if (!undo) return false;
+    await undo();
+    delete pendingUndos[activityId];
+    const list = storeGet(ASSISTANT_ACTIVITY_KEY) || [];
+    const entry = list.find((a) => a.id === activityId);
+    if (entry) { entry.undone = true; storeSet(ASSISTANT_ACTIVITY_KEY, list); }
+    return true;
+  }
+
+  // ---------- Shared day-key helpers (mirror planner.html's own 6am
+  // boundary exactly -- a task/entry logged at 2am belongs to the still-
+  // open previous day, not a fresh empty one) ----------
+  function fmtDateKey(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  function activeDateKeyLocal() {
+    const now = new Date();
+    return fmtDateKey(now.getHours() < 6 ? new Date(now.getTime() - 86400000) : now);
+  }
+  function tomorrowDateKeyLocal() {
+    const now = new Date();
+    const active = now.getHours() < 6 ? new Date(now.getTime() - 86400000) : now;
+    return fmtDateKey(new Date(active.getTime() + 86400000));
+  }
+
+  // ---------- Tasks (goals:<dateKey>) ----------
+  function getTasksList(dateKey) { return storeGet('goals:' + dateKey) || []; }
+  function setTasksList(dateKey, list) { storeSet('goals:' + dateKey, list); }
+  // Accepts a real task id, or the synthesized 'text:<exact text>' reference
+  // get_data hands out for pre-4.1 tasks that predate the id field (same
+  // backfill spirit as goals' createdAt in 1.6 -- old data isn't fabricated
+  // an id, it's addressed by what it already has).
+  function findTaskByRef(ref) {
+    for (const dk of [activeDateKeyLocal(), tomorrowDateKeyLocal()]) {
+      const list = getTasksList(dk);
+      const idx = list.findIndex((t) => (t.id && t.id === ref) || (!t.id && 'text:' + t.text === ref));
+      if (idx !== -1) return { dateKey: dk, list, idx, task: list[idx] };
+    }
+    return null;
+  }
+
+  // ---------- Weight (po_coach_weights, gym.html's own key/shape) ----------
+  const WEIGHT_KEY = 'po_coach_weights';
+  function refreshFitnessSummaryWeightFields(arr) {
+    // Partial, honest update -- only recomputes the weight-derived fields
+    // this tool actually has enough information to get right, and merges
+    // them into whatever eq.fitness.summary already holds. sessionsThisWeek/
+    // volumeThisWeek/lastSessionDay come from gym.html's own workout-log
+    // state, which isn't available outside that page -- left untouched
+    // rather than guessed at or blanked out.
+    const sorted = arr.slice().sort((a, b) => a.dateKey.localeCompare(b.dateKey));
+    const current = sorted.length ? sorted[sorted.length - 1] : null;
+    const cutoff = fmtDateKey(new Date(Date.now() - 7 * 86400000));
+    const recent = sorted.filter((e) => e.dateKey >= cutoff);
+    const avg7 = recent.length ? recent.reduce((s, e) => s + e.weight, 0) / recent.length : null;
+    const startKey = fmtDateKey(new Date(Date.now() - 14 * 86400000));
+    const prior = sorted.filter((e) => e.dateKey >= startKey && e.dateKey < cutoff);
+    const avg7Prior = prior.length ? prior.reduce((s, e) => s + e.weight, 0) / prior.length : null;
+    const existing = storeGet('eq.fitness.summary') || {};
+    storeSet('eq.fitness.summary', Object.assign({}, existing, {
+      currentWeight: current ? current.weight : null,
+      weight7dAvg: avg7 != null ? Number(avg7.toFixed(1)) : null,
+      weight7dAvgChange: (avg7 != null && avg7Prior != null) ? Number((avg7 - avg7Prior).toFixed(1)) : null,
+      at: new Date().toISOString(),
+    }));
+  }
+
+  // ---------- Calendar (local_cal_events_v1 + Google, per the answered
+  // ASK FIRST question: keep the confirm-first card, write both places) ----------
+  const ADD_CALENDAR_EVENT_TOOL = {
+    name: 'add_calendar_event',
+    description: 'Draft a calendar event for the user to review in a confirm/decline card. This does NOT create the event by itself -- it only renders the card. Only call this when the user is clearly asking to schedule or add something to their calendar. Resolve relative dates ("tomorrow", "Tuesday") against the current date given in context.',
     input_schema: {
       type: 'object',
       properties: {
         title: { type: 'string', description: 'Short event title.' },
         date: { type: 'string', description: 'ISO date the event is on, YYYY-MM-DD.' },
         time: { type: 'string', description: '24-hour HH:MM local start time. Omit entirely for an all-day event.' },
-        durationMinutes: { type: 'number', description: 'Length of the event in minutes. Defaults to 30 if omitted.' },
+        duration_min: { type: 'number', description: 'Length of the event in minutes. Defaults to 30 if omitted.' },
         notes: { type: 'string', description: 'Optional short description/notes for the event.' },
       },
       required: ['title', 'date'],
     },
   };
   function buildGcalEventResource(p) {
-    const durMin = Number(p.durationMinutes) > 0 ? Number(p.durationMinutes) : 30;
+    const durMin = Number(p.duration_min) > 0 ? Number(p.duration_min) : 30;
     const resource = { summary: p.title || 'Untitled event' };
     if (p.notes) resource.description = p.notes;
     if (p.time) {
@@ -311,6 +410,402 @@ body {
     if (res.status === 401) { localStorage.removeItem(GCAL_TOKENS_KEY); throw new Error('Session expired — reconnect Google Calendar in Planner.'); }
     if (!res.ok) throw new Error('Google Calendar create failed (' + res.status + ').');
     return res.json();
+  }
+  function addLocalCalEvent(p) {
+    const list = storeGet('local_cal_events_v1') || [];
+    const entry = { id: genId('ce'), title: p.title, dateKey: p.date, time: p.time || null, duration: Number(p.duration_min) > 0 ? Number(p.duration_min) : 30, source: 'assistant' };
+    list.push(entry);
+    storeSet('local_cal_events_v1', list);
+    return entry;
+  }
+  // Executed only from resolvePendingAction (add_calendar_event always
+  // confirms, per the answered ASK FIRST question), never auto-run silently.
+  async function exec_add_calendar_event(input) {
+    const localEntry = addLocalCalEvent(input);
+    let googleNote = '';
+    if (storeGet(GCAL_TOKENS_KEY)) {
+      try {
+        const created = await createGcalEvent(buildGcalEventResource(input));
+        googleNote = ' and Google Calendar' + (created && created.htmlLink ? ' (' + created.htmlLink + ')' : '');
+      } catch (e) {
+        googleNote = ' (Google Calendar sync failed: ' + (e.message || 'unknown error') + ' -- saved locally only)';
+      }
+    }
+    const activityId = logAssistantActivity('add_calendar_event', 'Added calendar event: "' + input.title + '" (' + input.date + (input.time ? ' ' + input.time : '') + ')', async () => {
+      const list = storeGet('local_cal_events_v1') || [];
+      const i = list.findIndex((e) => e.id === localEntry.id);
+      if (i !== -1) { list.splice(i, 1); storeSet('local_cal_events_v1', list); }
+    });
+    return { ok: true, summary: 'Added "' + input.title + '" to your calendar' + googleNote + '.', activityId };
+  }
+
+  // ---------- Remaining v1 tools ----------
+  const ADD_TASK_TOOL = {
+    name: 'add_task', description: 'Add a new task to today or tomorrow\'s list.',
+    input_schema: { type: 'object', properties: {
+      title: { type: 'string', description: 'The task text.' },
+      day: { type: 'string', enum: ['today', 'tomorrow'], description: 'Which day\'s list to add it to.' },
+    }, required: ['title', 'day'] },
+  };
+  async function exec_add_task(input) {
+    const dateKey = input.day === 'tomorrow' ? tomorrowDateKeyLocal() : activeDateKeyLocal();
+    const list = getTasksList(dateKey);
+    const id = genId('t');
+    list.push({ id, text: input.title, done: false, source: 'assistant' });
+    setTasksList(dateKey, list);
+    const activityId = logAssistantActivity('add_task', 'Added task: "' + input.title + '" (' + (input.day || 'today') + ')', async () => {
+      const l = getTasksList(dateKey);
+      const i = l.findIndex((t) => t.id === id);
+      if (i !== -1) { l.splice(i, 1); setTasksList(dateKey, l); }
+    });
+    return { ok: true, summary: 'Added task "' + input.title + '" for ' + (input.day || 'today') + ' (id: ' + id + ').', activityId };
+  }
+
+  const COMPLETE_TASK_TOOL = {
+    name: 'complete_task', description: 'Mark a task as done. Look the task up with get_data first if you don\'t already have its id from this conversation.',
+    input_schema: { type: 'object', properties: { task_id: { type: 'string', description: 'The task\'s id, from get_data or a prior add_task result.' } }, required: ['task_id'] },
+  };
+  async function exec_complete_task(input) {
+    const found = findTaskByRef(input.task_id);
+    if (!found) return { ok: false, summary: 'No task found matching "' + input.task_id + '". Use get_data to look up the right task first.' };
+    if (found.task.done) return { ok: true, summary: '"' + found.task.text + '" was already marked complete.' };
+    found.task.done = true;
+    setTasksList(found.dateKey, found.list);
+    const activityId = logAssistantActivity('complete_task', 'Completed task: "' + found.task.text + '"', async () => {
+      const f = findTaskByRef(input.task_id);
+      if (f) { f.task.done = false; setTasksList(f.dateKey, f.list); }
+    });
+    return { ok: true, summary: 'Marked "' + found.task.text + '" complete.', activityId };
+  }
+
+  const PUSH_TASK_TOOL = {
+    name: 'push_task_to_tomorrow', description: 'Move an unfinished task from today to tomorrow.',
+    input_schema: { type: 'object', properties: { task_id: { type: 'string', description: 'The task\'s id, from get_data or a prior add_task result.' } }, required: ['task_id'] },
+  };
+  async function exec_push_task_to_tomorrow(input) {
+    const found = findTaskByRef(input.task_id);
+    if (!found) return { ok: false, summary: 'No task found matching "' + input.task_id + '".' };
+    const task = found.task;
+    found.list.splice(found.idx, 1);
+    setTasksList(found.dateKey, found.list);
+    const tomorrowDk = tomorrowDateKeyLocal();
+    const tomorrowList = getTasksList(tomorrowDk);
+    tomorrowList.push(task);
+    setTasksList(tomorrowDk, tomorrowList);
+    const fromDateKey = found.dateKey;
+    const activityId = logAssistantActivity('push_task_to_tomorrow', 'Pushed "' + task.text + '" to tomorrow', async () => {
+      const tl = getTasksList(tomorrowDk);
+      const i = tl.findIndex((t) => t === task || (t.id && t.id === task.id));
+      if (i !== -1) tl.splice(i, 1);
+      setTasksList(tomorrowDk, tl);
+      const orig = getTasksList(fromDateKey);
+      orig.push(task);
+      setTasksList(fromDateKey, orig);
+    });
+    return { ok: true, summary: 'Pushed "' + task.text + '" to tomorrow.', activityId };
+  }
+
+  const LOG_WEIGHT_TOOL = {
+    name: 'log_weight', description: 'Log a body-weight reading.',
+    input_schema: { type: 'object', properties: {
+      kg: { type: 'number', description: 'Weight in kilograms.' },
+      date: { type: 'string', description: 'ISO date, YYYY-MM-DD. Defaults to today if omitted.' },
+    }, required: ['kg'] },
+  };
+  function weightEntryFor(dateKey) { return (storeGet(WEIGHT_KEY) || []).find((e) => e.dateKey === dateKey) || null; }
+  async function exec_log_weight(input) {
+    const dateKey = input.date || fmtDateKey(new Date());
+    const arr = storeGet(WEIGHT_KEY) || [];
+    const existing = arr.find((e) => e.dateKey === dateKey);
+    const prevWeight = existing ? existing.weight : null;
+    if (existing) existing.weight = input.kg;
+    else { arr.push({ dateKey, weight: input.kg }); arr.sort((a, b) => a.dateKey.localeCompare(b.dateKey)); }
+    storeSet(WEIGHT_KEY, arr);
+    refreshFitnessSummaryWeightFields(arr);
+    const activityId = logAssistantActivity('log_weight', 'Logged weight: ' + input.kg + 'kg (' + dateKey + ')', async () => {
+      const a2 = storeGet(WEIGHT_KEY) || [];
+      if (prevWeight != null) { const e = a2.find((x) => x.dateKey === dateKey); if (e) e.weight = prevWeight; }
+      else { const i = a2.findIndex((x) => x.dateKey === dateKey); if (i !== -1) a2.splice(i, 1); }
+      storeSet(WEIGHT_KEY, a2);
+      refreshFitnessSummaryWeightFields(a2);
+    });
+    return { ok: true, summary: 'Logged ' + input.kg + 'kg for ' + dateKey + '.', activityId };
+  }
+
+  const LOG_SLEEP_TOOL = {
+    name: 'log_sleep', description: 'Log a manual sleep-hours entry (use when the user tells you their sleep rather than it coming from WHOOP).',
+    input_schema: { type: 'object', properties: {
+      hours: { type: 'number', description: 'Hours slept.' },
+      date: { type: 'string', description: 'ISO date, YYYY-MM-DD. Defaults to today if omitted.' },
+    }, required: ['hours'] },
+  };
+  function sleepEntryFor(dateKey) { return (storeGet('sleep_log_v1') || []).find((e) => e.dateKey === dateKey) || null; }
+  async function exec_log_sleep(input) {
+    const dateKey = input.date || activeDateKeyLocal();
+    const arr = storeGet('sleep_log_v1') || [];
+    const existing = arr.find((e) => e.dateKey === dateKey);
+    const prev = existing ? Object.assign({}, existing) : null;
+    if (existing) { existing.hours = input.hours; existing.source = 'manual'; }
+    else arr.push({ dateKey, hours: input.hours, source: 'manual' });
+    storeSet('sleep_log_v1', arr);
+    const activityId = logAssistantActivity('log_sleep', 'Logged sleep: ' + input.hours + 'h (' + dateKey + ')', async () => {
+      const a2 = storeGet('sleep_log_v1') || [];
+      if (prev) { const e = a2.find((x) => x.dateKey === dateKey); if (e) Object.assign(e, prev); }
+      else { const i = a2.findIndex((x) => x.dateKey === dateKey); if (i !== -1) a2.splice(i, 1); }
+      storeSet('sleep_log_v1', a2);
+    });
+    return { ok: true, summary: 'Logged ' + input.hours + 'h sleep for ' + dateKey + '.', activityId };
+  }
+
+  const LOG_CONTACT_TOOL = {
+    name: 'log_contact', description: 'Record that you were in touch with a tracked contact today (or a given date).',
+    input_schema: { type: 'object', properties: {
+      contact_name: { type: 'string', description: 'The contact\'s name, matched case-insensitively.' },
+      date: { type: 'string', description: 'ISO date, YYYY-MM-DD. Defaults to today if omitted.' },
+    }, required: ['contact_name'] },
+  };
+  async function exec_log_contact(input) {
+    const list = storeGet('contacts_v1') || [];
+    const needle = (input.contact_name || '').trim().toLowerCase();
+    const contact = list.find((c) => (c.name || '').trim().toLowerCase() === needle);
+    if (!contact) return { ok: false, summary: 'No contact named "' + input.contact_name + '" found.' };
+    const prev = contact.lastContactedAt;
+    contact.lastContactedAt = input.date ? new Date(input.date + 'T12:00:00').toISOString() : new Date().toISOString();
+    storeSet('contacts_v1', list);
+    const activityId = logAssistantActivity('log_contact', 'Logged contact: ' + contact.name, async () => {
+      const l2 = storeGet('contacts_v1') || [];
+      const c2 = l2.find((c) => c.id === contact.id);
+      if (c2) { c2.lastContactedAt = prev; storeSet('contacts_v1', l2); }
+    });
+    return { ok: true, summary: 'Logged contact with ' + contact.name + '.', activityId };
+  }
+
+  const ADD_SHOPPING_ITEM_TOOL = {
+    name: 'add_shopping_item', description: 'Add an item to the shopping list.',
+    input_schema: { type: 'object', properties: {
+      name: { type: 'string', description: 'Item name.' },
+      grams: { type: 'number', description: 'Optional weight in grams.' },
+      qty: { type: 'number', description: 'Optional quantity, defaults to 1.' },
+    }, required: ['name'] },
+  };
+  async function exec_add_shopping_item(input) {
+    const list = storeGet('shopping_list_v1') || [];
+    const id = genId('sh');
+    list.push({ id, name: input.name, grams: input.grams || 0, qty: input.qty || 1, lastsValue: 0, lastsUnit: 'days', estDays: null, source: 'assistant' });
+    storeSet('shopping_list_v1', list);
+    const activityId = logAssistantActivity('add_shopping_item', 'Added to shopping list: ' + input.name, async () => {
+      const l2 = storeGet('shopping_list_v1') || [];
+      const i = l2.findIndex((x) => x.id === id);
+      if (i !== -1) { l2.splice(i, 1); storeSet('shopping_list_v1', l2); }
+    });
+    return { ok: true, summary: 'Added "' + input.name + '" to your shopping list (id: ' + id + ').', activityId };
+  }
+
+  const ADD_BOOK_TOOL = {
+    name: 'add_book', description: 'Add a book to the tracker.',
+    input_schema: { type: 'object', properties: {
+      title: { type: 'string', description: 'Book title.' },
+      author: { type: 'string', description: 'Optional author.' },
+      status: { type: 'string', enum: ['want', 'reading', 'read'], description: 'Shelf to place it on.' },
+    }, required: ['title', 'status'] },
+  };
+  async function exec_add_book(input) {
+    const list = storeGet('books_v1') || [];
+    const id = genId('bk');
+    list.push({ id, title: input.title, author: input.author || '', status: input.status, rating: 0, finishedAt: input.status === 'read' ? new Date().toISOString() : null, notes: '', source: 'assistant' });
+    storeSet('books_v1', list);
+    const activityId = logAssistantActivity('add_book', 'Added book: "' + input.title + '" (' + input.status + ')', async () => {
+      const l2 = storeGet('books_v1') || [];
+      const i = l2.findIndex((x) => x.id === id);
+      if (i !== -1) { l2.splice(i, 1); storeSet('books_v1', l2); }
+    });
+    return { ok: true, summary: 'Added "' + input.title + '" to your books (' + input.status + ', id: ' + id + ').', activityId };
+  }
+
+  const CHECK_STACK_ITEM_TOOL = {
+    name: 'check_stack_item', description: 'Mark a supplement/stack item as taken today.',
+    input_schema: { type: 'object', properties: { item_name: { type: 'string', description: 'The stack item\'s name, matched case-insensitively (substring match allowed).' } }, required: ['item_name'] },
+  };
+  function getStackItemsList() { return storeGet('stack:items') || []; }
+  async function exec_check_stack_item(input) {
+    const items = getStackItemsList();
+    const needle = (input.item_name || '').trim().toLowerCase();
+    let item = items.find((i) => (i.name || '').trim().toLowerCase() === needle);
+    if (!item) item = items.find((i) => (i.name || '').trim().toLowerCase().indexOf(needle) !== -1);
+    if (!item) return { ok: false, summary: 'No stack item matching "' + input.item_name + '" found.' };
+    const dateKey = activeDateKeyLocal();
+    const takenKey = 'stack:taken:' + dateKey;
+    const taken = storeGet(takenKey) || {};
+    if (taken[item.id]) return { ok: true, summary: '"' + item.name + '" was already marked taken today.' };
+    taken[item.id] = Date.now();
+    storeSet(takenKey, taken);
+    const activityId = logAssistantActivity('check_stack_item', 'Marked taken: ' + item.name, async () => {
+      const t2 = storeGet(takenKey) || {};
+      delete t2[item.id];
+      storeSet(takenKey, t2);
+    });
+    return { ok: true, summary: 'Marked "' + item.name + '" taken.', activityId };
+  }
+
+  const LOG_HABIT_TOOL = {
+    name: 'log_habit', description: 'Mark a habit done or not-done for a day.',
+    input_schema: { type: 'object', properties: {
+      habit_name: { type: 'string', description: 'The habit\'s name, matched case-insensitively.' },
+      done: { type: 'boolean', description: 'Whether it was completed.' },
+      date: { type: 'string', description: 'ISO date, YYYY-MM-DD. Defaults to today if omitted.' },
+    }, required: ['habit_name', 'done'] },
+  };
+  async function exec_log_habit(input) {
+    const list = storeGet('habits_v1') || [];
+    const needle = (input.habit_name || '').trim().toLowerCase();
+    const habit = list.find((h) => (h.name || '').trim().toLowerCase() === needle);
+    if (!habit) return { ok: false, summary: 'No habit named "' + input.habit_name + '" found.' };
+    const dateKey = input.date || activeDateKeyLocal();
+    habit.history = habit.history || {};
+    const prev = habit.history[dateKey];
+    if (input.done) habit.history[dateKey] = true; else delete habit.history[dateKey];
+    storeSet('habits_v1', list);
+    const activityId = logAssistantActivity('log_habit', 'Logged habit "' + habit.name + '": ' + (input.done ? 'done' : 'not done') + ' (' + dateKey + ')', async () => {
+      const l2 = storeGet('habits_v1') || [];
+      const h2 = l2.find((h) => h.id === habit.id);
+      if (h2) { h2.history = h2.history || {}; if (prev === undefined) delete h2.history[dateKey]; else h2.history[dateKey] = prev; storeSet('habits_v1', l2); }
+    });
+    return { ok: true, summary: 'Logged "' + habit.name + '" as ' + (input.done ? 'done' : 'not done') + ' for ' + dateKey + '.', activityId };
+  }
+
+  const ADD_GOAL_NOTE_TOOL = {
+    name: 'add_goal_note', description: 'Attach a short note to a longterm goal.',
+    input_schema: { type: 'object', properties: {
+      goal_id: { type: 'string', description: 'The goal\'s id or exact title.' },
+      note: { type: 'string', description: 'The note text.' },
+    }, required: ['goal_id', 'note'] },
+  };
+  async function exec_add_goal_note(input) {
+    const list = storeGet('longterm_goals_v1') || [];
+    const needle = (input.goal_id || '').trim().toLowerCase();
+    const goal = list.find((g) => g.id === input.goal_id) || list.find((g) => (g.title || '').trim().toLowerCase() === needle);
+    if (!goal) return { ok: false, summary: 'No goal matching "' + input.goal_id + '" found.' };
+    goal.notes = goal.notes || [];
+    goal.notes.push({ text: input.note, at: new Date().toISOString() });
+    const noteIdx = goal.notes.length - 1;
+    storeSet('longterm_goals_v1', list);
+    const activityId = logAssistantActivity('add_goal_note', 'Added note to goal "' + goal.title + '"', async () => {
+      const l2 = storeGet('longterm_goals_v1') || [];
+      const g2 = l2.find((g) => g.id === goal.id);
+      if (g2 && Array.isArray(g2.notes)) { g2.notes.splice(noteIdx, 1); storeSet('longterm_goals_v1', l2); }
+    });
+    return { ok: true, summary: 'Added a note to "' + goal.title + '".', activityId };
+  }
+
+  // ---------- get_data: explicit on-demand read, so front-loaded context
+  // doesn't have to carry everything. Most domains reuse the same builder
+  // already used for the always-on context chips (same text, just callable
+  // on demand for a domain whose chip is off); tasks/weight/sleep get real
+  // range-aware history since that's where "range" actually matters and the
+  // chip builders are current-snapshot only. ----------
+  const GET_DATA_TOOL = {
+    name: 'get_data',
+    description: 'Fetch current app data for a domain not already in context, or a specific task/goal to get its id before calling a tool that needs one. Domains: tasks, calendar, health, fitness, finance, habits, relationships, notes, books, shopping, stack, goals.',
+    input_schema: { type: 'object', properties: {
+      domain: { type: 'string', enum: ['tasks', 'calendar', 'health', 'fitness', 'finance', 'habits', 'relationships', 'notes', 'books', 'shopping', 'stack', 'goals'] },
+      range: { type: 'string', enum: ['today', '7d', '30d', 'all'], description: 'How much history to include, where the domain supports it (tasks/health/fitness). Ignored otherwise.' },
+    }, required: ['domain'] },
+  };
+  function rangeDays(range) { return range === '7d' ? 7 : range === '30d' ? 30 : range === 'all' ? 3650 : 1; }
+  function getDataTasks(range) {
+    const days = rangeDays(range);
+    const out = [];
+    for (let i = 0; i < days; i++) {
+      const dk = i === 0 ? activeDateKeyLocal() : fmtDateKey(new Date(Date.now() - i * 86400000));
+      const list = getTasksList(dk);
+      if (list.length) out.push(dk + ':\n' + list.map((t) => '  - [' + (t.done ? 'x' : ' ') + '] ' + t.text + ' (id: ' + (t.id || 'text:' + t.text) + ')').join('\n'));
+    }
+    const tomorrow = getTasksList(tomorrowDateKeyLocal());
+    if (tomorrow.length) out.push(tomorrowDateKeyLocal() + ' (tomorrow):\n' + tomorrow.map((t) => '  - [' + (t.done ? 'x' : ' ') + '] ' + t.text + ' (id: ' + (t.id || 'text:' + t.text) + ')').join('\n'));
+    return out.length ? out.join('\n') : 'No tasks found in this range.';
+  }
+  function getDataWeightHistory(range) {
+    const days = rangeDays(range);
+    const cutoff = fmtDateKey(new Date(Date.now() - days * 86400000));
+    const arr = (storeGet(WEIGHT_KEY) || []).filter((e) => e.dateKey >= cutoff);
+    return arr.length ? arr.map((e) => e.dateKey + ': ' + e.weight + 'kg').join('\n') : 'No weight entries in this range.';
+  }
+  function getDataSleepHistory(range) {
+    const days = rangeDays(range);
+    const cutoff = fmtDateKey(new Date(Date.now() - days * 86400000));
+    const arr = (storeGet('sleep_log_v1') || []).filter((e) => e.dateKey >= cutoff);
+    return arr.length ? arr.map((e) => e.dateKey + ': ' + e.hours + 'h (' + e.source + ')').join('\n') : 'No sleep entries in this range.';
+  }
+  function getDataBooks() {
+    const list = storeGet('books_v1') || [];
+    if (!list.length) return 'No books tracked yet.';
+    return ['want', 'reading', 'read'].map((st) => {
+      const items = list.filter((b) => b.status === st);
+      return items.length ? st + ': ' + items.map((b) => b.title + (b.author ? ' by ' + b.author : '') + ' (id: ' + b.id + ')').join(', ') : null;
+    }).filter(Boolean).join('\n') || 'No books tracked yet.';
+  }
+  function getDataShopping() {
+    const list = storeGet('shopping_list_v1') || [];
+    return list.length ? list.map((i) => '- ' + i.name + (i.qty > 1 ? ' x' + i.qty : '') + (i.grams ? ' (' + i.grams + 'g)' : '') + ' (id: ' + i.id + ')').join('\n') : 'Shopping list is empty.';
+  }
+  function getDataStack() {
+    const items = getStackItemsList();
+    if (!items.length) return 'No stack items configured.';
+    const taken = storeGet('stack:taken:' + activeDateKeyLocal()) || {};
+    return items.map((i) => '- ' + i.name + ' (' + i.window + '): ' + (taken[i.id] ? 'taken' : 'not yet taken')).join('\n');
+  }
+  function getDataGoals() {
+    const list = (storeGet('longterm_goals_v1') || []).filter((g) => !g.archived);
+    if (!list.length) return 'No active goals.';
+    return list.map((g) => '- ' + g.title + ' (' + (g.value || 0) + '%, id: ' + g.id + ')' + (g.notes && g.notes.length ? ' -- ' + g.notes.length + ' note(s)' : '')).join('\n');
+  }
+  async function exec_get_data(input) {
+    const range = input.range;
+    let text;
+    switch (input.domain) {
+      case 'tasks': text = getDataTasks(range); break;
+      case 'calendar': text = await buildCalendarContext(); break;
+      case 'health': text = range && range !== 'today' ? getDataSleepHistory(range) + '\n\n' + buildHealthContext() : buildHealthContext(); break;
+      case 'fitness': text = range && range !== 'today' ? getDataWeightHistory(range) + '\n\n' + buildFitnessContext() : buildFitnessContext(); break;
+      case 'finance': text = buildFinanceContext(); break;
+      case 'habits': text = buildHabitsContext(); break;
+      case 'relationships': text = buildRelationshipsContext(); break;
+      case 'notes': text = await buildNotesContext(''); break;
+      case 'books': text = getDataBooks(); break;
+      case 'shopping': text = getDataShopping(); break;
+      case 'stack': text = getDataStack(); break;
+      case 'goals': text = getDataGoals(); break;
+      default: text = 'Unknown domain.';
+    }
+    return { ok: true, summary: text };
+  }
+
+  // ---------- Registry ----------
+  // confirmMode: 'never' | 'always' | fn(input) => boolean (true = confirm).
+  // Silent tools call execute() immediately from the send loop; confirm-
+  // gated ones pause and render a proposal card instead (see sendMessage /
+  // resolvePendingAction).
+  const TOOL_REGISTRY = {
+    add_task: { schema: ADD_TASK_TOOL, confirmMode: 'never', execute: exec_add_task },
+    complete_task: { schema: COMPLETE_TASK_TOOL, confirmMode: 'never', execute: exec_complete_task },
+    push_task_to_tomorrow: { schema: PUSH_TASK_TOOL, confirmMode: 'never', execute: exec_push_task_to_tomorrow },
+    log_weight: { schema: LOG_WEIGHT_TOOL, confirmMode: (input) => !!weightEntryFor(input.date || fmtDateKey(new Date())), execute: exec_log_weight },
+    log_sleep: { schema: LOG_SLEEP_TOOL, confirmMode: (input) => !!sleepEntryFor(input.date || activeDateKeyLocal()), execute: exec_log_sleep },
+    log_contact: { schema: LOG_CONTACT_TOOL, confirmMode: 'never', execute: exec_log_contact },
+    add_calendar_event: { schema: ADD_CALENDAR_EVENT_TOOL, confirmMode: 'always', execute: exec_add_calendar_event },
+    add_shopping_item: { schema: ADD_SHOPPING_ITEM_TOOL, confirmMode: 'never', execute: exec_add_shopping_item },
+    add_book: { schema: ADD_BOOK_TOOL, confirmMode: 'never', execute: exec_add_book },
+    check_stack_item: { schema: CHECK_STACK_ITEM_TOOL, confirmMode: 'never', execute: exec_check_stack_item },
+    log_habit: { schema: LOG_HABIT_TOOL, confirmMode: (input) => { const h = (storeGet('habits_v1') || []).find((x) => (x.name || '').trim().toLowerCase() === (input.habit_name || '').trim().toLowerCase()); const dk = input.date || activeDateKeyLocal(); return !!(h && h.history && h.history[dk] !== undefined); }, execute: exec_log_habit },
+    add_goal_note: { schema: ADD_GOAL_NOTE_TOOL, confirmMode: 'never', execute: exec_add_goal_note },
+    get_data: { schema: GET_DATA_TOOL, confirmMode: 'never', execute: exec_get_data },
+  };
+  function toolNeedsConfirm(name, input) {
+    const t = TOOL_REGISTRY[name];
+    if (!t) return false;
+    if (t.confirmMode === 'always') return true;
+    if (typeof t.confirmMode === 'function') { try { return !!t.confirmMode(input); } catch (e) { return false; } }
+    return false;
   }
 
   function buildHealthContext() {
@@ -492,13 +987,15 @@ body {
     return s;
   }
 
-  // Tool-use round trips (calendar event proposals) only ever need to
-  // survive the current page session -- keyed by proposalId, holds exactly
-  // what's needed to replay the exchange back to Anthropic once the user
-  // picks Confirm/Decline. Deliberately not persisted: a reload losing a
-  // *pending* proposal's buttons (see renderEventProposalEl) is a fine
-  // trade for not having to serialize/validate raw tool_use content blocks
-  // through localStorage indefinitely.
+  // Tool-use round trips only ever need to survive the current page session
+  // -- keyed by proposalId, holds exactly what's needed to replay the
+  // exchange back to Anthropic once the user picks Confirm/Decline, for
+  // whichever confirm-gated tool is pending (add_calendar_event always;
+  // log_weight/log_sleep/log_habit only when their call would overwrite an
+  // existing entry -- see TOOL_REGISTRY's confirmMode). Deliberately not
+  // persisted: a reload losing a *pending* proposal's buttons (see
+  // renderProposalEl) is a fine trade for not having to serialize/validate
+  // raw tool_use content blocks through localStorage indefinitely.
   const pendingProposals = {};
   function fmtProposalWhen(p) {
     if (!p.date) return '';
@@ -507,21 +1004,32 @@ body {
     const dateStr = d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
     return p.time ? (dateStr + ' at ' + d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })) : (dateStr + ' (all day)');
   }
-  function renderEventProposalEl(m) {
+  function describeProposal(m) {
+    const input = m.input || {};
+    if (m.tool === 'add_calendar_event') return { title: '📅 ' + (input.title || 'Untitled event'), sub: fmtProposalWhen(input), notes: input.notes || '', confirmLabel: 'Add to calendar' };
+    if (m.tool === 'log_weight') return { title: '⚖️ Log ' + input.kg + 'kg', sub: (input.date || 'today') + ' — replaces the existing entry for that day', notes: '', confirmLabel: 'Confirm' };
+    if (m.tool === 'log_sleep') return { title: '😴 Log ' + input.hours + 'h sleep', sub: (input.date || 'today') + ' — replaces the existing entry for that day', notes: '', confirmLabel: 'Confirm' };
+    if (m.tool === 'log_habit') return { title: (input.done ? '✅' : '⬜') + ' Mark "' + input.habit_name + '" ' + (input.done ? 'done' : 'not done'), sub: (input.date || 'today') + ' — replaces the existing entry for that day', notes: '', confirmLabel: 'Confirm' };
+    return { title: m.tool, sub: '', notes: '', confirmLabel: 'Confirm' };
+  }
+  function renderProposalEl(m) {
     const el = document.createElement('div');
     el.className = 'ask-msg ask-msg-assistant ask-proposal';
+    const desc = describeProposal(m);
     const head = document.createElement('div');
     head.className = 'ask-proposal-title';
-    head.textContent = '📅 ' + (m.title || 'Untitled event');
+    head.textContent = desc.title;
     el.appendChild(head);
-    const when = document.createElement('div');
-    when.className = 'ask-proposal-when';
-    when.textContent = fmtProposalWhen(m);
-    el.appendChild(when);
-    if (m.notes) {
+    if (desc.sub) {
+      const when = document.createElement('div');
+      when.className = 'ask-proposal-when';
+      when.textContent = desc.sub;
+      el.appendChild(when);
+    }
+    if (desc.notes) {
       const notes = document.createElement('div');
       notes.className = 'ask-proposal-notes';
-      notes.textContent = m.notes;
+      notes.textContent = desc.notes;
       el.appendChild(notes);
     }
     if (m.status === 'pending') {
@@ -529,11 +1037,11 @@ body {
         const row = document.createElement('div');
         row.className = 'ask-proposal-actions';
         const confirmBtn = document.createElement('button');
-        confirmBtn.type = 'button'; confirmBtn.className = 'ask-proposal-btn ask-proposal-confirm'; confirmBtn.textContent = 'Add to calendar';
-        confirmBtn.addEventListener('click', () => resolveProposal(m.proposalId, true));
+        confirmBtn.type = 'button'; confirmBtn.className = 'ask-proposal-btn ask-proposal-confirm'; confirmBtn.textContent = desc.confirmLabel;
+        confirmBtn.addEventListener('click', () => resolvePendingAction(m.proposalId, true));
         const declineBtn = document.createElement('button');
         declineBtn.type = 'button'; declineBtn.className = 'ask-proposal-btn ask-proposal-decline'; declineBtn.textContent = 'Decline';
-        declineBtn.addEventListener('click', () => resolveProposal(m.proposalId, false));
+        declineBtn.addEventListener('click', () => resolvePendingAction(m.proposalId, false));
         row.appendChild(confirmBtn); row.appendChild(declineBtn);
         el.appendChild(row);
       } else {
@@ -550,10 +1058,48 @@ body {
     } else {
       const status = document.createElement('div');
       status.className = 'ask-proposal-status';
-      status.textContent = m.status === 'confirmed' ? '✅ Added to your calendar.'
+      status.textContent = m.status === 'confirmed' ? '✅ ' + (m.resultSummary || 'Done.')
         : m.status === 'declined' ? 'Declined.'
-        : '❌ ' + (m.statusDetail || 'Failed to create.');
+        : '❌ ' + (m.resultSummary || 'Failed.');
       el.appendChild(status);
+    }
+    const timeEl = document.createElement('div');
+    timeEl.className = 'ask-msg-time';
+    timeEl.textContent = fmtTime(m.at);
+    el.appendChild(timeEl);
+    return el;
+  }
+
+  // Silent tools (the common case -- logging/reading, no confirm) render as
+  // a small inline card with an Undo link, matching the spec's "✓ Logged
+  // 82.4 kg" example -- distinct from renderProposalEl's confirm/decline
+  // cards, which only ever exist for the gated tools.
+  function renderActionEl(m) {
+    const el = document.createElement('div');
+    el.className = 'ask-msg ask-msg-assistant ask-action';
+    const line = document.createElement('div');
+    line.className = 'ask-action-line';
+    line.textContent = (m.actionOk === false ? '⚠️ ' : '✓ ') + m.summary;
+    el.appendChild(line);
+    if (m.undone) {
+      const undone = document.createElement('span');
+      undone.className = 'ask-action-undone';
+      undone.textContent = 'Undone';
+      el.appendChild(undone);
+    } else if (m.activityId && m.actionOk !== false) {
+      const undoBtn = document.createElement('button');
+      undoBtn.type = 'button'; undoBtn.className = 'ask-action-undo'; undoBtn.textContent = 'Undo';
+      undoBtn.addEventListener('click', async () => {
+        undoBtn.disabled = true;
+        const ok = await undoAssistantActivity(m.activityId);
+        if (ok) {
+          const list = getMessages();
+          const msg = list.find((x) => x.activityId === m.activityId);
+          if (msg) { msg.undone = true; setMessages(list); }
+          renderMessages();
+        } else { undoBtn.disabled = false; }
+      });
+      el.appendChild(undoBtn);
     }
     const timeEl = document.createElement('div');
     timeEl.className = 'ask-msg-time';
@@ -569,7 +1115,8 @@ body {
     const wrap = $('askMessages');
     wrap.innerHTML = '';
     list.forEach(m => {
-      if (m.role === 'event-proposal') { wrap.appendChild(renderEventProposalEl(m)); return; }
+      if (m.role === 'proposal') { wrap.appendChild(renderProposalEl(m)); return; }
+      if (m.role === 'action') { wrap.appendChild(renderActionEl(m)); return; }
       const el = document.createElement('div');
       el.className = 'ask-msg ' + (m.role === 'user' ? 'ask-msg-user' : m.role === 'error' ? 'ask-msg-error' : 'ask-msg-assistant');
       const textEl = document.createElement('div');
@@ -598,6 +1145,8 @@ body {
     }
   }
 
+  const MAX_TOOL_ROUNDS = 6; // guards a runaway tool loop from burning through rate limit/spend
+
   async function sendMessage(text) {
     const messages = getMessages();
     messages.push({ role: 'user', content: text, at: new Date().toISOString() });
@@ -607,35 +1156,12 @@ body {
     const context = await assembleContext(text);
     renderNotesSearchStatus();
     const apiMessages = messages.filter(m => m.role === 'user' || m.role === 'assistant').map(m => ({ role: m.role, content: m.content }));
-
-    // Only offered when the domain is on AND a connection already exists --
-    // no point letting Claude draft an event it has nowhere to send.
-    const domains = getDomains();
-    const tools = (domains.calendar && storeGet(GCAL_TOKENS_KEY)) ? [CALENDAR_EVENT_TOOL] : undefined;
+    const tools = Object.keys(TOOL_REGISTRY).map((name) => TOOL_REGISTRY[name].schema);
 
     $('askSendBtn').disabled = true;
     setTyping(true);
     try {
-      const res = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: apiMessages, systemContext: context, tools }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || ('Request failed (' + res.status + ')'));
-
-      if (data.toolUse && data.toolUse.name === 'propose_calendar_event') {
-        if (data.reply && data.reply.trim()) {
-          const list = getMessages();
-          list.push({ role: 'assistant', content: data.reply, at: new Date().toISOString() });
-          setMessages(list);
-        }
-        addEventProposal(data.toolUse, data.rawContent, apiMessages, context);
-      } else {
-        const list = getMessages();
-        list.push({ role: 'assistant', content: data.reply || '(empty response)', at: new Date().toISOString() });
-        setMessages(list);
-      }
+      await runTurn(apiMessages, context, tools, 0);
     } catch (e) {
       const list = getMessages();
       list.push({ role: 'error', content: 'Could not reach Claude — ' + (e.message || 'unknown error') + '.', at: new Date().toISOString() });
@@ -647,9 +1173,59 @@ body {
     }
   }
 
-  function addEventProposal(toolUse, rawContent, apiMessagesSnapshot, systemContextSnapshot) {
-    const input = toolUse.input || {};
-    const proposalId = 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  // Loops as long as Claude keeps calling silent tools -- executing each one
+  // immediately and feeding the result back for another round -- and pauses
+  // (returns without finishing) the instant a confirm-gated tool comes up,
+  // since that has to wait on a real click, which can't happen inside this
+  // call stack. resolvePendingAction resumes the loop from that point later.
+  async function runTurn(apiMessages, systemContext, tools, depth) {
+    if (depth >= MAX_TOOL_ROUNDS) {
+      const list = getMessages();
+      list.push({ role: 'error', content: 'Stopped after ' + MAX_TOOL_ROUNDS + ' tool calls in a row — ask again if it didn\'t finish.', at: new Date().toISOString() });
+      setMessages(list);
+      return;
+    }
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: apiMessages, systemContext, tools }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || ('Request failed (' + res.status + ')'));
+
+    if (data.toolUse && TOOL_REGISTRY[data.toolUse.name]) {
+      const toolName = data.toolUse.name;
+      const input = data.toolUse.input || {};
+      if (data.reply && data.reply.trim()) {
+        const list = getMessages();
+        list.push({ role: 'assistant', content: data.reply, at: new Date().toISOString() });
+        setMessages(list);
+        renderMessages();
+      }
+      if (toolNeedsConfirm(toolName, input)) {
+        addPendingAction(data.toolUse, data.rawContent, apiMessages, systemContext);
+        return;
+      }
+      let result;
+      try { result = await TOOL_REGISTRY[toolName].execute(input); }
+      catch (e) { result = { ok: false, summary: 'Failed: ' + (e.message || 'unknown error') }; }
+      const list2 = getMessages();
+      list2.push({ role: 'action', tool: toolName, summary: result.summary, actionOk: result.ok !== false, activityId: result.activityId || null, undone: false, at: new Date().toISOString() });
+      setMessages(list2);
+      renderMessages();
+      const nextMessages = apiMessages.concat([
+        { role: 'assistant', content: data.rawContent },
+        { role: 'user', content: [{ type: 'tool_result', tool_use_id: data.toolUse.id, content: result.summary }] },
+      ]);
+      return runTurn(nextMessages, systemContext, tools, depth + 1);
+    }
+    const list = getMessages();
+    list.push({ role: 'assistant', content: data.reply || '(empty response)', at: new Date().toISOString() });
+    setMessages(list);
+  }
+
+  function addPendingAction(toolUse, rawContent, apiMessagesSnapshot, systemContextSnapshot) {
+    const proposalId = genId('p');
     pendingProposals[proposalId] = {
       toolUseId: toolUse.id,
       rawAssistantContent: rawContent,
@@ -657,20 +1233,17 @@ body {
       systemContext: systemContextSnapshot,
     };
     const list = getMessages();
-    list.push({
-      role: 'event-proposal', proposalId,
-      title: input.title || 'Untitled event', date: input.date || '', time: input.time || '',
-      durationMinutes: input.durationMinutes || null, notes: input.notes || '',
-      status: 'pending', at: new Date().toISOString(),
-    });
+    list.push({ role: 'proposal', proposalId, tool: toolUse.name, input: toolUse.input || {}, status: 'pending', at: new Date().toISOString() });
     setMessages(list);
   }
 
   // Anthropic requires every tool_use to be answered with a matching
   // tool_result before the conversation can continue -- so this always
   // sends one (even on Decline) to keep future messages in this
-  // conversation valid, not just on the Confirm path.
-  async function resolveProposal(proposalId, confirmed) {
+  // conversation valid, not just on the Confirm path. Resumes through
+  // runTurn (not a one-off fetch) since the round after a confirm could in
+  // principle chain into another tool call, not just a closing ack.
+  async function resolvePendingAction(proposalId, confirmed) {
     const pending = pendingProposals[proposalId];
     if (!pending) return;
     const list = getMessages();
@@ -684,38 +1257,31 @@ body {
     let resultText;
     if (confirmed) {
       try {
-        const created = await createGcalEvent(buildGcalEventResource(msg));
-        msg.status = 'confirmed';
-        resultText = 'Event created successfully' + (created && created.htmlLink ? ' (' + created.htmlLink + ')' : '') + '.';
+        const tool = TOOL_REGISTRY[msg.tool];
+        const result = await tool.execute(msg.input);
+        msg.status = result.ok === false ? 'failed' : 'confirmed';
+        msg.resultSummary = result.summary;
+        resultText = result.summary;
       } catch (e) {
         msg.status = 'failed';
-        msg.statusDetail = e.message || 'unknown error';
-        resultText = 'Failed to create the event: ' + msg.statusDetail;
+        msg.resultSummary = e.message || 'unknown error';
+        resultText = 'Failed: ' + msg.resultSummary;
       }
     } else {
       msg.status = 'declined';
-      resultText = 'User declined to create this event.';
+      resultText = 'User declined this action.';
     }
     setMessages(list);
     renderMessages();
 
     setTyping(true);
     try {
-      const apiMessages = pending.messagesSnapshot.concat([
+      const nextMessages = pending.messagesSnapshot.concat([
         { role: 'assistant', content: pending.rawAssistantContent },
         { role: 'user', content: [{ type: 'tool_result', tool_use_id: pending.toolUseId, content: resultText }] },
       ]);
-      const res = await fetch('/api/chat', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: apiMessages, systemContext: pending.systemContext }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (res.ok && data.reply && data.reply.trim()) {
-        const list2 = getMessages();
-        list2.push({ role: 'assistant', content: data.reply, at: new Date().toISOString() });
-        setMessages(list2);
-      }
-    } catch (e) { /* the calendar action itself already resolved above; a failed ack isn't worth an error bubble */ }
+      await runTurn(nextMessages, pending.systemContext, Object.keys(TOOL_REGISTRY).map((name) => TOOL_REGISTRY[name].schema), 0);
+    } catch (e) { /* the underlying action already resolved above; a failed ack isn't worth an error bubble */ }
     finally { setTyping(false); renderMessages(); }
   }
 
