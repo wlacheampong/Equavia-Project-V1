@@ -6,8 +6,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0a0a0b">
 <link rel="icon" type="image/webp" href="images/Index Landing Page.webp">
-<link rel="apple-touch-icon" href="images/Index Landing Page.webp">
-<title>Progressive Overload Coach</title>
+<link rel="apple-touch-icon" href="images/apple-touch-icon.png">
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Equavia">
+<title>Progressive Overload Coach — Equavia</title>
 <script src="topbar.js" defer></script>
 
 <!-- =============================================================
@@ -92,22 +95,6 @@ const CONFIG = {
     { name: "Leg press",       gym: "comm", day: "legs", repMin: 8, repMax: 12, step: 5,   startWeight: 100 }
   ]
 };
-</script>
-<script>
-(function () {
-  // This page has its own top navigation (the category tab row, matching
-  // dashboard.html), so the shared bottom tab bar from topbar.js is
-  // redundant here. DOMContentLoaded always fires after every deferred
-  // script has run, so waiting for it guarantees the element exists
-  // before we remove it. (Note: `defer` has no effect on inline scripts,
-  // so we can't rely on script order alone — this listener is what
-  // actually delays us.)
-  document.addEventListener('DOMContentLoaded', function () {
-    var bottombar = document.getElementById('bottombar');
-    if (bottombar) bottombar.remove();
-    document.body.classList.remove('has-bottombar');
-  });
-})();
 </script>
 
 <style>
@@ -1305,78 +1292,12 @@ img, video, canvas, svg { max-width: 100%; }
 
 .hidden { display: none !important; }
 
-/* ===== Category tabs (matches dashboard.html's top nav) ===== */
-.cat-tabs {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 32px;
-  margin: 0 0 22px;
-}
-.cat-tab {
-  display: flex; flex-direction: column; align-items: center;
-  gap: 6px;
-  padding: 2px;
-  border: 0;
-  background: transparent;
-  color: var(--text-3);
-  font-family: inherit;
-  text-decoration: none;
-  cursor: pointer;
-  transition: color 0.2s;
-}
-.cat-tab:hover { color: var(--text-2); }
-.cat-tab.is-active { color: var(--text-1); }
-.cat-tab-icon { width: 22px; height: 22px; }
-.cat-tab-icon svg { width: 100%; height: 100%; display: block; }
-.cat-tab-label {
-  font-size: 11px; font-weight: 600;
-  line-height: 1.25;
-  text-align: center;
-  white-space: nowrap;
-}
-@media (max-width: 480px) {
-  .cat-tabs { gap: 18px; }
-  .cat-tab-label { font-size: 10px; }
-}
-
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
 <div class="po-shell">
-  <div class="cat-tabs" role="tablist" aria-label="Site sections">
-    <a class="cat-tab" href="dashboard.html">
-      <span class="cat-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11 12 4l9 7"/><path d="M5 10v9a1 1 0 0 0 1 1h3v-6h6v6h3a1 1 0 0 0 1-1v-9"/></svg></span>
-      <span class="cat-tab-label">Main</span>
-    </a>
-    <a class="cat-tab" href="health.html">
-      <span class="cat-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M12 8v8M8 12h8"/></svg></span>
-      <span class="cat-tab-label">Health</span>
-    </a>
-    <a class="cat-tab is-active" href="gym.html" aria-current="page">
-      <span class="cat-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 9v6M17.5 9v6M3 10.5v3M21 10.5v3M6.5 12h11"/></svg></span>
-      <span class="cat-tab-label">Fitness</span>
-    </a>
-    <a class="cat-tab" href="peak.html">
-      <span class="cat-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20 9 8l4 6 2-3 6 9Z"/></svg></span>
-      <span class="cat-tab-label">Peak</span>
-    </a>
-    <a class="cat-tab" href="finance.html">
-      <span class="cat-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h13a1 1 0 0 1 1 1v3"/><path d="M3 7v10a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1H6a2 2 0 0 1-2-2"/><circle cx="17" cy="13" r="1.4"/></svg></span>
-      <span class="cat-tab-label">Finance</span>
-    </a>
-    <a class="cat-tab" href="planner.html">
-      <span class="cat-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1"/><path d="M9 12l2 2 4-4"/></svg></span>
-      <span class="cat-tab-label">Planner</span>
-    </a>
-    <a class="cat-tab" href="ability.html">
-      <span class="cat-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2c1 4-4 5-4 9a4 4 0 0 0 8 0c0-2-1-3-1-3s2 1 2 5a6 6 0 0 1-12 0c0-6 5-6 7-11Z"/></svg></span>
-      <span class="cat-tab-label">Ability</span>
-    </a>
-  </div>
-
   <button class="po-day-pill" type="button" id="dayPill" title="Tap to switch the day filter to today's split">
     <span class="po-day-date" id="dayPillDate">—</span>
     <span class="po-day-sep">·</span>
@@ -1830,9 +1751,14 @@ img, video, canvas, svg { max-width: 100%; }
     } catch (e) {}
     return normalize({});
   }
+  // Global default from Settings, used only when this page has no saved
+  // choice of its own yet -- never overrides an existing per-page pick.
+  function sharedWeightUnit() {
+    try { return JSON.parse(localStorage.getItem('eq.units.weight')); } catch (e) { return null; }
+  }
   function normalize(s) {
     s = s || {};
-    s.units = s.units || CONFIG.units || 'kg';
+    s.units = s.units || sharedWeightUnit() || CONFIG.units || 'kg';
     s.gyms  = (Array.isArray(s.gyms)  && s.gyms.length)  ? s.gyms  : CONFIG.gyms.slice();
     s.days  = (Array.isArray(s.days)  && s.days.length)  ? s.days  : CONFIG.days.slice();
     s.exercises = Array.isArray(s.exercises) ? s.exercises : buildDefaultExercises();
@@ -2405,6 +2331,7 @@ img, video, canvas, svg { max-width: 100%; }
     saveState(); renderAll();
     // Strength changed → composition estimate may shift
     if (typeof wtRender === 'function') wtRender();
+    if (typeof publishFitnessSummary === 'function') publishFitnessSummary();
     // Tiny pulse on the button so the user feels the save
     const btn = $('logBtn');
     btn.style.transition = 'transform 0.15s';
@@ -2782,6 +2709,80 @@ img, video, canvas, svg { max-width: 100%; }
     else { wtEntries.push({ dateKey: key, weight }); wtEntries.sort((a,b) => a.dateKey.localeCompare(b.dateKey)); }
     wtSave(wtEntries);
     wtRender();
+    publishFitnessSummary();
+  }
+
+  // Published for the dashboard's compact Fitness summary card -- read-only
+  // there, this (plus the logBtn handler below) is what keeps it current.
+  // Monday 6am boundary, matching the app's existing daily 6am rollover
+  // convention (a "day" -- and now a "week" -- runs 6am to 6am, not
+  // midnight to midnight). Shifting the reference time back 6h before
+  // finding the week-start turns the true 6am boundary into a plain
+  // midnight boundary the rest of the math can work with normally.
+  function weekStartMonday6am(refDate) {
+    const shifted = new Date(refDate.getTime() - 6 * 3600000);
+    const daysSinceMonday = (shifted.getDay() + 6) % 7; // Mon=0 ... Sun=6
+    const mondayShifted = new Date(shifted.getFullYear(), shifted.getMonth(), shifted.getDate() - daysSinceMonday);
+    return new Date(mondayShifted.getTime() + 6 * 3600000);
+  }
+
+  function publishFitnessSummary() {
+    try {
+      const current = wtEntries.length ? wtEntries[wtEntries.length - 1] : null;
+      let avg7 = null;
+      if (wtEntries.length) {
+        const cutoffKey = wtDateKey(new Date(Date.now() - 7 * 86400000));
+        const recent = wtEntries.filter(e => e.dateKey >= cutoffKey);
+        if (recent.length) avg7 = recent.reduce((s, e) => s + e.weight, 0) / recent.length;
+      }
+      // Prior-week 7d avg, for the Weekly Report's "weight trend" delta --
+      // same window shifted back 7 days, not just "the change since last log".
+      let avg7Prior = null;
+      {
+        const startKey = wtDateKey(new Date(Date.now() - 14 * 86400000));
+        const endKey = wtDateKey(new Date(Date.now() - 7 * 86400000));
+        const prior = wtEntries.filter(e => e.dateKey >= startKey && e.dateKey < endKey);
+        if (prior.length) avg7Prior = prior.reduce((s, e) => s + e.weight, 0) / prior.length;
+      }
+      let lastSessionAt = null, lastSessionDay = null;
+      Object.keys(state.logs || {}).forEach((exId) => {
+        (state.logs[exId] || []).forEach((l) => {
+          if (!lastSessionAt || l.date > lastSessionAt) {
+            lastSessionAt = l.date;
+            const ex = state.exercises.find((e) => e.id === exId);
+            lastSessionDay = ex ? ex.day : null;
+          }
+        });
+      });
+
+      // Weekly aggregates, feeds the Weekly Report widget (3.3) -- computed
+      // here (not read raw from dashboard.html) since state.logs has already
+      // been through normalize() by this point in the page's lifecycle.
+      const weekStart = weekStartMonday6am(new Date());
+      const sessionDates = new Set();
+      let volumeThisWeek = 0;
+      Object.keys(state.logs || {}).forEach((exId) => {
+        (state.logs[exId] || []).forEach((l) => {
+          const logDate = new Date(l.date);
+          if (logDate >= weekStart) {
+            sessionDates.add(logDate.toDateString());
+            volumeThisWeek += (l.weight || 0) * (l.reps || 0);
+          }
+        });
+      });
+
+      localStorage.setItem('eq.fitness.summary', JSON.stringify({
+        currentWeight: current ? current.weight : null,
+        weight7dAvg: avg7 != null ? Number(avg7.toFixed(1)) : null,
+        weight7dAvgChange: (avg7 != null && avg7Prior != null) ? Number((avg7 - avg7Prior).toFixed(1)) : null,
+        units: state.units,
+        lastSessionAt: lastSessionAt,
+        lastSessionDay: lastSessionDay,
+        sessionsThisWeek: sessionDates.size,
+        volumeThisWeek: Math.round(volumeThisWeek),
+        at: new Date().toISOString()
+      }));
+    } catch (e) {}
   }
 
   function wtRender() {
@@ -3483,6 +3484,7 @@ img, video, canvas, svg { max-width: 100%; }
   renderAll();
   wtRender();
   photosRender();
+  publishFitnessSummary();
 
   // ============================================================
   // CLOUD SYNC via Supabase  (OPTIONAL — leave blank for local-only)
@@ -3566,6 +3568,7 @@ img, video, canvas, svg { max-width: 100%; }
     try { renderAll(); } catch {}
     try { wtRender(); } catch {}
     try { photosRender(); } catch {}
+    try { publishFitnessSummary(); } catch {}
   }
 
   function pcApplyRemoteState(remote) {

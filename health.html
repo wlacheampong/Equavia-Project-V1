@@ -7,27 +7,14 @@
 <meta name="theme-color" content="#050506">
 <meta name="color-scheme" content="dark">
 <link rel="icon" type="image/webp" href="images/Index Landing Page.webp">
-<link rel="apple-touch-icon" href="images/Index Landing Page.webp">
-<title>Daily Stack — Customizable Template</title>
+<link rel="apple-touch-icon" href="images/apple-touch-icon.png">
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Equavia">
+<title>Daily Stack — Equavia</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="sync.js" defer></script>
 <script src="topbar.js" defer></script>
-<script>
-(function () {
-  // This page has its own top navigation (the category tab row, matching
-  // dashboard.html), so the shared bottom tab bar from topbar.js is
-  // redundant here. DOMContentLoaded always fires after every deferred
-  // script has run, so waiting for it guarantees the element exists
-  // before we remove it. (Note: `defer` has no effect on inline scripts,
-  // so we can't rely on script order alone — this listener is what
-  // actually delays us.)
-  document.addEventListener('DOMContentLoaded', function () {
-    var bottombar = document.getElementById('bottombar');
-    if (bottombar) bottombar.remove();
-    document.body.classList.remove('has-bottombar');
-  });
-})();
-</script>
 <style>
 :root {
   --bg: #050506;
@@ -485,77 +472,11 @@ main {
 ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.08); border-radius: 999px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.15); }
 
-/* ===== Category tabs (matches dashboard.html's top nav) ===== */
-.cat-tabs {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 32px;
-  margin: 0 0 28px;
-}
-.cat-tab {
-  display: flex; flex-direction: column; align-items: center;
-  gap: 6px;
-  padding: 2px;
-  border: 0;
-  background: transparent;
-  color: var(--text-tertiary);
-  font-family: inherit;
-  text-decoration: none;
-  cursor: pointer;
-  transition: color 0.2s;
-}
-.cat-tab:hover { color: var(--text-secondary); }
-.cat-tab.is-active { color: var(--text-primary); }
-.cat-tab-icon { width: 22px; height: 22px; }
-.cat-tab-icon svg { width: 100%; height: 100%; display: block; }
-.cat-tab-label {
-  font-size: 11px; font-weight: 600;
-  line-height: 1.25;
-  text-align: center;
-  white-space: nowrap;
-}
-@media (max-width: 480px) {
-  .cat-tabs { gap: 18px; }
-  .cat-tab-label { font-size: 10px; }
-}
 </style>
 </head>
 <body>
 
 <main>
-
-  <!-- ===== Category tabs (matches dashboard.html) ===== -->
-  <div class="cat-tabs" role="tablist" aria-label="Site sections">
-    <a class="cat-tab" href="dashboard.html">
-      <span class="cat-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11 12 4l9 7"/><path d="M5 10v9a1 1 0 0 0 1 1h3v-6h6v6h3a1 1 0 0 0 1-1v-9"/></svg></span>
-      <span class="cat-tab-label">Main</span>
-    </a>
-    <a class="cat-tab is-active" href="health.html" aria-current="page">
-      <span class="cat-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M12 8v8M8 12h8"/></svg></span>
-      <span class="cat-tab-label">Health</span>
-    </a>
-    <a class="cat-tab" href="gym.html">
-      <span class="cat-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 9v6M17.5 9v6M3 10.5v3M21 10.5v3M6.5 12h11"/></svg></span>
-      <span class="cat-tab-label">Fitness</span>
-    </a>
-    <a class="cat-tab" href="peak.html">
-      <span class="cat-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20 9 8l4 6 2-3 6 9Z"/></svg></span>
-      <span class="cat-tab-label">Peak</span>
-    </a>
-    <a class="cat-tab" href="finance.html">
-      <span class="cat-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h13a1 1 0 0 1 1 1v3"/><path d="M3 7v10a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1H6a2 2 0 0 1-2-2"/><circle cx="17" cy="13" r="1.4"/></svg></span>
-      <span class="cat-tab-label">Finance</span>
-    </a>
-    <a class="cat-tab" href="planner.html">
-      <span class="cat-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1"/><path d="M9 12l2 2 4-4"/></svg></span>
-      <span class="cat-tab-label">Planner</span>
-    </a>
-    <a class="cat-tab" href="ability.html">
-      <span class="cat-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2c1 4-4 5-4 9a4 4 0 0 0 8 0c0-2-1-3-1-3s2 1 2 5a6 6 0 0 1-12 0c0-6 5-6 7-11Z"/></svg></span>
-      <span class="cat-tab-label">Ability</span>
-    </a>
-  </div>
 
   <!-- ===== WHOOP card (full) ===== -->
   <style>
@@ -701,6 +622,94 @@ main {
     .wh-disconnect-link { display:block; margin:16px auto 0; padding:6px 14px; background:transparent; border:none; color:var(--text-tertiary); font-family:inherit; font-size:11px; text-align:center; cursor:pointer; letter-spacing:0.04em; }
     .wh-disconnect-link:hover { color:var(--text-secondary); text-decoration:underline; }
     .wh-err { background:rgba(255,107,107,0.08); border:1px solid rgba(255,107,107,0.28); color:#FF8A8A; padding:10px 12px; border-radius:10px; font-size:11.5px; font-family:var(--font-mono); margin-bottom:14px; }
+
+    /* ===== Sleep Log ===== */
+    .sl-card { background:var(--bg-card); border:1px solid rgba(255,255,255,0.06); border-radius:18px; padding:18px; margin-bottom:22px; }
+    .sl-head { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px; gap:10px; flex-wrap:wrap; }
+    .sl-headline { display:flex; align-items:baseline; gap:5px; flex-wrap:wrap; }
+    .sl-num { font-size:32px; font-weight:700; color:var(--text-primary); font-family:var(--font-mono); line-height:1; }
+    .sl-unit { font-size:15px; color:var(--text-tertiary); }
+    .sl-sub { width:100%; font-size:11px; color:var(--text-tertiary); font-family:var(--font-mono); margin-top:2px; }
+    .sl-target { font-size:11px; color:var(--text-tertiary); display:flex; align-items:center; gap:5px; white-space:nowrap; }
+    .sl-target-input {
+      width:42px; background:rgba(0,0,0,0.28); border:1px solid rgba(255,255,255,0.10);
+      border-radius:6px; color:var(--text-secondary); font-family:var(--font-mono);
+      font-size:11px; padding:4px 5px; text-align:center;
+    }
+    .sl-empty { font-size:12.5px; color:var(--text-tertiary); text-align:center; padding:18px 8px; }
+    .sl-chart-wrap { position:relative; margin:16px 0 8px; }
+    .sl-chart-wrap.hidden, .sl-legend.hidden { display:none; }
+    .sl-range-toggle { position:absolute; right:0; top:-30px; display:flex; gap:4px; }
+    .sl-range-btn {
+      background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08);
+      color:var(--text-tertiary); font-family:var(--font-mono); font-size:10px;
+      font-weight:700; letter-spacing:0.04em; padding:4px 9px; border-radius:6px; cursor:pointer;
+    }
+    .sl-range-btn.is-active { background:var(--accent); border-color:var(--accent); color:#fff; }
+    .sl-chart-yaxis {
+      position:absolute; left:0; top:0; bottom:0; width:36px;
+      display:flex; flex-direction:column; justify-content:space-between; padding:4px 0;
+    }
+    .sl-chart-yaxis span { font-size:10px; color:var(--text-tertiary); font-family:var(--font-mono); }
+    .sl-chart { height:130px; display:block; margin-left:36px; width:calc(100% - 36px); }
+    .sl-grid { stroke:rgba(255,255,255,0.05); stroke-width:1; }
+    .sl-target-line { stroke:var(--warning); stroke-width:1.5; stroke-dasharray:3 3; opacity:0.7; }
+    .sl-area { fill:url(#slFill); }
+    .sl-line { fill:none; stroke:var(--accent); stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+    .sl-avg-line { fill:none; stroke:rgba(29,158,117,0.5); stroke-width:1.5; stroke-dasharray:4 3; opacity:0.7; }
+    .sl-dot-auto { fill:var(--accent); stroke:var(--bg-card); stroke-width:1.5; }
+    .sl-dot-manual { fill:var(--bg-card); stroke:var(--accent); stroke-width:2; }
+    .sl-meta { text-align:center; font-size:11px; color:var(--text-tertiary); margin-top:8px; }
+    .sl-legend { display:flex; justify-content:center; gap:14px; margin-top:10px; flex-wrap:wrap; }
+    .sl-legend-item { display:inline-flex; align-items:center; gap:6px; font-size:10px; letter-spacing:0.06em; font-weight:600; color:var(--text-tertiary); }
+    .sl-legend-dot { width:10px; height:10px; border-radius:50%; }
+    .sl-legend-dot-auto { background:var(--accent); }
+    .sl-legend-dot-manual { background:var(--bg-card); border:2px solid var(--accent); }
+    .sl-legend-dot-avgline { width:14px; height:2px; border-radius:1px; background:transparent; border-top:2px dashed rgba(29,158,117,0.5); }
+    .sl-legend-dot-target { width:14px; height:2px; border-radius:1px; background:transparent; border-top:1.5px dashed var(--warning); }
+    .sl-add-row {
+      display:flex; gap:6px; flex-wrap:wrap; align-items:stretch; margin-top:14px;
+      padding:4px; background:rgba(0,0,0,0.30); border-radius:12px;
+    }
+    .sl-add-row input {
+      background:transparent; border:none; outline:none; color:var(--text-primary);
+      padding:9px 10px; font-family:inherit; font-size:13px;
+    }
+    .sl-add-date { flex:1.2; min-width:130px; }
+    .sl-add-hours { flex:1; min-width:80px; }
+    .sl-add-btn {
+      padding:0 16px; background:rgba(255,255,255,0.06); border:none; color:var(--text-secondary);
+      font-family:inherit; font-size:12px; font-weight:600; border-radius:9px; cursor:pointer;
+    }
+    .sl-add-btn:hover { background:var(--accent); color:#fff; }
+
+    /* ===== Correlation (3.5) ===== */
+    .corr-card { background:var(--bg-card); border:1px solid rgba(255,255,255,0.06); border-radius:18px; padding:18px; margin-bottom:22px; }
+    .corr-presets { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px; }
+    .corr-preset-btn {
+      padding:5px 12px; border-radius:999px; border:1px solid rgba(255,255,255,0.1);
+      background:rgba(255,255,255,0.03); color:var(--text-tertiary);
+      font-family:inherit; font-size:11px; font-weight:600; cursor:pointer;
+    }
+    .corr-preset-btn.is-active { background:rgba(29,158,117,0.14); border-color:rgba(29,158,117,0.4); color:var(--accent); }
+    .corr-pickers { display:flex; align-items:center; gap:8px; margin-bottom:14px; }
+    .corr-select {
+      flex:1; min-width:0; background:rgba(0,0,0,0.28); border:1px solid rgba(255,255,255,0.10);
+      border-radius:8px; color:var(--text-primary); font-family:inherit; font-size:12.5px; padding:8px 8px;
+    }
+    .corr-x { color:var(--text-tertiary); font-size:13px; flex-shrink:0; }
+    .corr-empty { font-size:12.5px; color:var(--text-tertiary); text-align:center; padding:18px 8px; }
+    .corr-body.hidden { display:none; }
+    .corr-scatter { width:100%; height:180px; display:block; }
+    .corr-grid { stroke:rgba(255,255,255,0.06); stroke-width:1; }
+    .corr-dot { fill:var(--accent); opacity:0.7; }
+    .corr-r-row { display:flex; align-items:baseline; gap:8px; margin-top:12px; }
+    .corr-r-label { font-size:10.5px; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-tertiary); }
+    .corr-r-value { font-family:var(--font-mono); font-size:20px; font-weight:700; color:var(--text-primary); }
+    .corr-r-strength { font-size:11px; color:var(--text-secondary); }
+    .corr-sentence { font-size:13px; color:var(--text-secondary); line-height:1.5; margin-top:8px; }
+    .corr-disclaimer { font-size:10.5px; color:var(--text-quaternary); font-style:italic; margin-top:10px; }
+    .corr-meta { font-size:10.5px; color:var(--text-tertiary); font-family:var(--font-mono); margin-top:6px; }
   </style>
   <div class="whoop-section">
     <div class="section-title">Whoop</div>
@@ -1490,6 +1499,39 @@ main {
           zone($('whZoneSleep'), sleepZone(sleepPerf));
         }
 
+        // Published for the dashboard's compact Health summary card --
+        // read-only there, this is the only place that writes it.
+        try {
+          localStorage.setItem('eq.health.summary', JSON.stringify({
+            recovery: recScore,
+            sleepHours: sleepDuration ? Number((sleepDuration / 3.6e6).toFixed(1)) : null,
+            at: new Date().toISOString()
+          }));
+        } catch (e) {}
+
+        // Daily recovery history, same append-only pattern as the Sleep
+        // Log's own persistence -- eq.health.summary only ever holds the
+        // latest reading, but the Weekly Report (3.3) needs a week's worth
+        // of days to average. One entry per calendar day, last one wins if
+        // the page is reloaded more than once in the same day.
+        if (recScore != null) {
+          try {
+            const recLog = JSON.parse(localStorage.getItem('recovery_log_v1') || '[]');
+            const list = Array.isArray(recLog) ? recLog : [];
+            const todayKey = todayDateKey();
+            const idx = list.findIndex(r => r.dateKey === todayKey);
+            const entry = { dateKey: todayKey, recovery: recScore };
+            if (idx === -1) list.push(entry); else list[idx] = entry;
+            list.sort((a, b) => a.dateKey.localeCompare(b.dateKey));
+            localStorage.setItem('recovery_log_v1', JSON.stringify(list));
+          } catch (e) {}
+        }
+
+        // Sleep Log auto-fill (its own separate section/script below) --
+        // hands over every night WHOOP returned, not just last night's,
+        // so a lapsed page visit still backfills the gap on next load.
+        if (typeof window.slAutoFillFromWhoop === 'function') window.slAutoFillFromWhoop(sleepArr);
+
         let strain = null, kcal = null;
         const cycleArr = (cycle && cycle.records) || [];
         const c0 = cycleArr[0];
@@ -1580,6 +1622,428 @@ main {
   })();
   </script>
 
+  <div class="section-title">Sleep Log</div>
+
+  <div class="sl-card">
+    <div class="sl-head">
+      <div class="sl-headline">
+        <span class="sl-num" id="slNum">—</span><span class="sl-unit">h</span>
+        <div class="sl-sub" id="slSub">last logged</div>
+      </div>
+      <label class="sl-target">Target <input type="number" class="sl-target-input" id="slTargetInput" min="1" max="14" step="0.5">h</label>
+    </div>
+
+    <div class="sl-empty" id="slEmpty">No sleep logged yet — connect WHOOP above or add a night below.</div>
+
+    <div class="sl-chart-wrap hidden" id="slChartWrap">
+      <div class="sl-range-toggle">
+        <button type="button" class="sl-range-btn is-active" id="slRange30">30D</button>
+        <button type="button" class="sl-range-btn" id="slRange90">90D</button>
+      </div>
+      <div class="sl-chart-yaxis">
+        <span id="slYAxisMax">—</span>
+        <span id="slYAxisMin">—</span>
+      </div>
+      <svg class="sl-chart" viewBox="0 0 320 130" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="slFill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#1D9E75" stop-opacity="0.25"/>
+            <stop offset="100%" stop-color="#1D9E75" stop-opacity="0"/>
+          </linearGradient>
+          <filter id="slGlow"><feGaussianBlur stdDeviation="1.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        </defs>
+        <line class="sl-grid" x1="0" y1="20" x2="320" y2="20"></line>
+        <line class="sl-grid" x1="0" y1="65" x2="320" y2="65"></line>
+        <line class="sl-grid" x1="0" y1="110" x2="320" y2="110"></line>
+        <line class="sl-target-line" id="slTargetLine" x1="0" y1="65" x2="320" y2="65"></line>
+        <g id="slChartContent"></g>
+      </svg>
+      <div class="sl-meta" id="slMeta">0 nights</div>
+    </div>
+
+    <div class="sl-legend hidden" id="slLegend">
+      <span class="sl-legend-item"><span class="sl-legend-dot sl-legend-dot-auto"></span>WHOOP</span>
+      <span class="sl-legend-item"><span class="sl-legend-dot sl-legend-dot-manual"></span>Manual</span>
+      <span class="sl-legend-item"><span class="sl-legend-dot sl-legend-dot-avgline"></span>7-night avg</span>
+      <span class="sl-legend-item"><span class="sl-legend-dot sl-legend-dot-target"></span>Target</span>
+    </div>
+
+    <div class="sl-add-row">
+      <input type="date" class="sl-add-date" id="slAddDate">
+      <input type="number" class="sl-add-hours" id="slAddHours" placeholder="Hours" min="0" max="14" step="0.1">
+      <button type="button" class="sl-add-btn" id="slAddBtn">Save</button>
+    </div>
+  </div>
+  <script>
+  (function () {
+    const $ = (id) => document.getElementById(id);
+    const SLEEP_LOG_KEY = 'sleep_log_v1';
+    const SLEEP_TARGET_KEY = 'sleep_target_hours_v1';
+    const DEFAULT_TARGET = 7;
+
+    function dateKeyOf(d) {
+      return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    }
+    function parseKey(key) {
+      const p = key.split('-').map(Number);
+      return new Date(p[0], p[1] - 1, p[2]);
+    }
+    function slLoad() {
+      try { const v = JSON.parse(localStorage.getItem(SLEEP_LOG_KEY)); return Array.isArray(v) ? v : []; }
+      catch (e) { return []; }
+    }
+    function slSave(entries) { localStorage.setItem(SLEEP_LOG_KEY, JSON.stringify(entries)); }
+    // Manual entries always win (an explicit override); an auto entry only
+    // ever overwrites a previous auto entry, never a manual one.
+    function slUpsert(entries, dateKey, hours, source) {
+      const idx = entries.findIndex(e => e.dateKey === dateKey);
+      if (idx === -1) entries.push({ dateKey, hours, source });
+      else if (source === 'manual' || entries[idx].source !== 'manual') entries[idx] = { dateKey, hours, source };
+      return entries;
+    }
+    function getTarget() {
+      const v = Number(localStorage.getItem(SLEEP_TARGET_KEY));
+      return v > 0 ? v : DEFAULT_TARGET;
+    }
+    function setTarget(v) { localStorage.setItem(SLEEP_TARGET_KEY, String(v)); }
+
+    // Called from the WHOOP card's own fetch success path above (separate
+    // IIFE, same page) once its sleep records are in. Kept decoupled via a
+    // window-level hook rather than merging the two scripts together.
+    window.slAutoFillFromWhoop = function (sleepRecords) {
+      if (!Array.isArray(sleepRecords) || !sleepRecords.length) return;
+      const entries = slLoad();
+      sleepRecords.forEach((rec) => {
+        if (!rec || !rec.score || !rec.score.stage_summary || !rec.end) return;
+        const ss = rec.score.stage_summary;
+        const ms = (ss.total_in_bed_time_milli || 0) - (ss.total_awake_time_milli || 0);
+        if (ms <= 0) return;
+        slUpsert(entries, dateKeyOf(new Date(rec.end)), Number((ms / 3.6e6).toFixed(1)), 'auto');
+      });
+      entries.sort((a, b) => a.dateKey.localeCompare(b.dateKey));
+      slSave(entries);
+      slRender();
+    };
+
+    function slSmoothPath(points) {
+      if (!points.length) return '';
+      if (points.length === 1) return 'M ' + points[0].x + ' ' + points[0].y;
+      let d = 'M ' + points[0].x.toFixed(2) + ' ' + points[0].y.toFixed(2);
+      for (let i = 1; i < points.length; i++) {
+        const prev = points[i - 1], curr = points[i];
+        const cx = (prev.x + curr.x) / 2;
+        d += ' Q ' + cx.toFixed(2) + ' ' + prev.y.toFixed(2) + ', ' + cx.toFixed(2) + ' ' + ((prev.y + curr.y) / 2).toFixed(2);
+        d += ' T ' + curr.x.toFixed(2) + ' ' + curr.y.toFixed(2);
+      }
+      return d;
+    }
+
+    let range = 30;
+
+    function slRender() {
+      const entries = slLoad().slice().sort((a, b) => a.dateKey.localeCompare(b.dateKey));
+      const emptyEl = $('slEmpty'), wrapEl = $('slChartWrap'), legendEl = $('slLegend');
+      if (!entries.length) {
+        emptyEl.style.display = '';
+        wrapEl.classList.add('hidden');
+        legendEl.classList.add('hidden');
+        $('slNum').textContent = '—';
+        $('slSub').textContent = 'last logged';
+        return;
+      }
+      emptyEl.style.display = 'none';
+      wrapEl.classList.remove('hidden');
+      legendEl.classList.remove('hidden');
+
+      const last = entries[entries.length - 1];
+      $('slNum').textContent = last.hours.toFixed(1);
+      $('slSub').textContent = (last.source === 'manual' ? 'manual · ' : 'WHOOP · ') +
+        parseKey(last.dateKey).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+
+      const recent = entries.slice(-range);
+      const target = getTarget();
+      const hoursVals = recent.map(e => e.hours).concat([target]);
+      const min = Math.min.apply(null, hoursVals), max = Math.max.apply(null, hoursVals);
+      const pad = Math.max((max - min) * 0.15, 0.4);
+      const yMin = min - pad, yMax = max + pad;
+      const xLeft = 8, xRight = 312, yTop = 20, yBot = 110;
+      const xRangeW = xRight - xLeft, yRangeH = yBot - yTop;
+      const xFor = (i) => recent.length === 1 ? xRight : xLeft + (i / (recent.length - 1)) * xRangeW;
+      const yFor = (h) => yBot - ((h - yMin) / (yMax - yMin)) * yRangeH;
+      const points = recent.map((e, i) => ({ x: xFor(i), y: yFor(e.hours) }));
+      const linePath = slSmoothPath(points);
+      const areaPath = linePath + ' L ' + points[points.length - 1].x.toFixed(2) + ' ' + yBot + ' L ' + points[0].x.toFixed(2) + ' ' + yBot + ' Z';
+
+      const avgPoints = recent.map((_, i) => {
+        const start = Math.max(0, i - 6);
+        const win = recent.slice(start, i + 1);
+        const avg = win.reduce((s, p) => s + p.hours, 0) / win.length;
+        return { x: xFor(i), y: yFor(avg) };
+      });
+      const avgPath = slSmoothPath(avgPoints);
+
+      let html = '<path class="sl-avg-line" d="' + avgPath + '"></path>'
+               + '<path class="sl-area" d="' + areaPath + '"></path>'
+               + '<path class="sl-line" filter="url(#slGlow)" d="' + linePath + '"></path>';
+      points.forEach((p, i) => {
+        const cls = recent[i].source === 'manual' ? 'sl-dot-manual' : 'sl-dot-auto';
+        html += '<circle class="' + cls + '" cx="' + p.x.toFixed(2) + '" cy="' + p.y.toFixed(2) + '" r="3"/>';
+      });
+      $('slChartContent').innerHTML = html;
+      $('slYAxisMax').textContent = yMax.toFixed(1) + 'h';
+      $('slYAxisMin').textContent = yMin.toFixed(1) + 'h';
+      $('slMeta').textContent = entries.length + ' ' + (entries.length === 1 ? 'night' : 'nights') + ' logged · last ' + recent.length + ' shown';
+
+      const targetY = yFor(target).toFixed(2);
+      $('slTargetLine').setAttribute('y1', targetY);
+      $('slTargetLine').setAttribute('y2', targetY);
+    }
+
+    $('slTargetInput').value = getTarget();
+    $('slTargetInput').addEventListener('change', () => {
+      const v = Number($('slTargetInput').value);
+      if (v > 0) { setTarget(v); slRender(); }
+    });
+    $('slAddDate').value = dateKeyOf(new Date());
+    $('slAddBtn').addEventListener('click', () => {
+      const dateVal = $('slAddDate').value;
+      const hoursVal = Number($('slAddHours').value);
+      if (!dateVal || !(hoursVal > 0)) return;
+      const entries = slLoad();
+      slUpsert(entries, dateVal, Number(hoursVal.toFixed(1)), 'manual');
+      entries.sort((a, b) => a.dateKey.localeCompare(b.dateKey));
+      slSave(entries);
+      $('slAddHours').value = '';
+      slRender();
+    });
+    $('slRange30').addEventListener('click', () => {
+      range = 30; $('slRange30').classList.add('is-active'); $('slRange90').classList.remove('is-active'); slRender();
+    });
+    $('slRange90').addEventListener('click', () => {
+      range = 90; $('slRange90').classList.add('is-active'); $('slRange30').classList.remove('is-active'); slRender();
+    });
+
+    slRender();
+    window.addEventListener('storage', slRender);
+  })();
+  </script>
+
+  <div class="section-title">Correlation</div>
+
+  <div class="corr-card">
+    <div class="corr-presets" id="corrPresets"></div>
+    <div class="corr-pickers">
+      <select class="corr-select" id="corrMetricA"></select>
+      <span class="corr-x">×</span>
+      <select class="corr-select" id="corrMetricB"></select>
+    </div>
+
+    <div class="corr-empty" id="corrEmpty">Not enough overlapping data yet — need at least 14 days where both metrics were logged.</div>
+
+    <div class="corr-body hidden" id="corrBody">
+      <svg class="corr-scatter" id="corrScatter" viewBox="0 0 320 220" preserveAspectRatio="none">
+        <line class="corr-grid" x1="0" y1="20" x2="320" y2="20"></line>
+        <line class="corr-grid" x1="0" y1="110" x2="320" y2="110"></line>
+        <line class="corr-grid" x1="0" y1="200" x2="320" y2="200"></line>
+        <g id="corrDots"></g>
+      </svg>
+      <div class="corr-r-row">
+        <span class="corr-r-label">Pearson r</span>
+        <span class="corr-r-value" id="corrRValue">—</span>
+        <span class="corr-r-strength" id="corrRStrength"></span>
+      </div>
+      <div class="corr-sentence" id="corrSentence"></div>
+      <div class="corr-disclaimer">Correlation, not causation — this shows two things moving together, not that one causes the other.</div>
+      <div class="corr-meta" id="corrMeta"></div>
+    </div>
+  </div>
+  <script>
+  (function () {
+    const $ = (id) => document.getElementById(id);
+    const CORR_WINDOW_DAYS = 90;
+    const CORR_MIN_PAIRS = 14;
+
+    function corrDateKeyOf(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+    function corrGet(k) { try { const v = JSON.parse(localStorage.getItem(k)); return Array.isArray(v) ? v : []; } catch (e) { return []; } }
+
+    function corrSleepSeries() {
+      const map = {};
+      corrGet('sleep_log_v1').forEach(e => { if (e.hours != null) map[e.dateKey] = e.hours; });
+      return map;
+    }
+    function corrRecoverySeries() {
+      const map = {};
+      corrGet('recovery_log_v1').forEach(e => { if (e.recovery != null) map[e.dateKey] = e.recovery; });
+      return map;
+    }
+    function corrTaskCompletionSeries() {
+      const map = {};
+      corrGet('todo_completion_snapshots_v1').forEach(s => { if (s.scheduled > 0) map[s.dateKey] = (s.completed / s.scheduled) * 100; });
+      return map;
+    }
+    // Per-day "% of habits done that day" -- a directly-computable proxy
+    // from habits_v1's raw history, not the same number as 3.2's smoothed
+    // Habit Health Score ring (that's a live rolling value with no daily
+    // history of its own to correlate against); labeled differently in the
+    // UI on purpose so the two aren't mistaken for the same metric.
+    function corrHabitSeries() {
+      const habits = corrGet('habits_v1');
+      const map = {};
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      for (let i = 1; i <= CORR_WINDOW_DAYS; i++) { // starts at 1: excludes today, same "don't judge an unfinished day" rule as 3.1/3.2
+        const d = new Date(today.getTime() - i * 86400000);
+        const key = corrDateKeyOf(d);
+        let done = 0, tracked = 0;
+        habits.forEach(h => {
+          if (h.createdAt) { const c = new Date(h.createdAt); c.setHours(0, 0, 0, 0); if (d < c) return; }
+          tracked++;
+          if ((h.history || {})[key]) done++;
+        });
+        if (tracked > 0) map[key] = (done / tracked) * 100;
+      }
+      return map;
+    }
+    function corrWeightTrendSeries() {
+      let entries = corrGet('po_coach_weights').slice().sort((a, b) => a.dateKey.localeCompare(b.dateKey));
+      const map = {};
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      for (let i = 0; i <= CORR_WINDOW_DAYS; i++) {
+        const d = new Date(today.getTime() - i * 86400000);
+        const key = corrDateKeyOf(d);
+        const cutoff = corrDateKeyOf(new Date(d.getTime() - 6 * 86400000));
+        const windowVals = entries.filter(e => e.dateKey >= cutoff && e.dateKey <= key).map(e => e.weight);
+        if (windowVals.length) map[key] = windowVals.reduce((a, b) => a + b, 0) / windowVals.length;
+      }
+      return map;
+    }
+    function corrWeightUnit() {
+      try { return (JSON.parse(localStorage.getItem('eq.fitness.summary')) || {}).units || 'kg'; } catch (e) { return 'kg'; }
+    }
+
+    const CORR_METRICS = {
+      sleep: { label: 'Sleep hours', unit: 'h', series: corrSleepSeries },
+      recovery: { label: 'Recovery %', unit: '%', series: corrRecoverySeries },
+      taskCompletion: { label: 'Task completion %', unit: '%', series: corrTaskCompletionSeries },
+      habitScore: { label: 'Habit success %', unit: '%', series: corrHabitSeries },
+      weightTrend: { label: 'Weight 7d trend', unit: corrWeightUnit(), series: corrWeightTrendSeries },
+    };
+    const CORR_PRESETS = [
+      { label: 'Recovery × Task', a: 'recovery', b: 'taskCompletion' },
+      { label: 'Weight × Task', a: 'weightTrend', b: 'taskCompletion' },
+      { label: 'Sleep × Recovery', a: 'sleep', b: 'recovery' },
+    ];
+
+    function pearsonR(pairs) {
+      const n = pairs.length;
+      if (n < 2) return null;
+      const meanX = pairs.reduce((s, p) => s + p.x, 0) / n;
+      const meanY = pairs.reduce((s, p) => s + p.y, 0) / n;
+      let num = 0, denX = 0, denY = 0;
+      pairs.forEach(p => {
+        const dx = p.x - meanX, dy = p.y - meanY;
+        num += dx * dy; denX += dx * dx; denY += dy * dy;
+      });
+      if (denX === 0 || denY === 0) return null;
+      return num / Math.sqrt(denX * denY);
+    }
+    function rStrengthLabel(r) {
+      const a = Math.abs(r);
+      if (a >= 0.7) return 'strong';
+      if (a >= 0.4) return 'moderate';
+      if (a >= 0.2) return 'weak';
+      return 'very weak / none';
+    }
+    function median(nums) {
+      const s = nums.slice().sort((a, b) => a - b);
+      const mid = Math.floor(s.length / 2);
+      return s.length % 2 === 0 ? (s[mid - 1] + s[mid]) / 2 : s[mid];
+    }
+    function plainEnglishSentence(pairs, labelA, labelB, unitB) {
+      const med = median(pairs.map(p => p.x));
+      const below = pairs.filter(p => p.x < med);
+      const aboveEq = pairs.filter(p => p.x >= med);
+      if (!below.length || !aboveEq.length) return null;
+      const avgBelow = below.reduce((s, p) => s + p.y, 0) / below.length;
+      const avgAboveEq = aboveEq.reduce((s, p) => s + p.y, 0) / aboveEq.length;
+      const diff = avgAboveEq - avgBelow;
+      // The sentence describes the BELOW group relative to the above one,
+      // so the direction word has to compare that way round too -- diff
+      // itself (above minus below) is the wrong sign for that comparison.
+      const direction = avgBelow >= avgAboveEq ? 'higher' : 'lower';
+      const magnitude = avgBelow !== 0 ? Math.round(Math.abs(diff / avgBelow * 100)) + '%' : Math.abs(diff).toFixed(1) + unitB;
+      return 'On days with ' + labelA.toLowerCase() + ' below ' + (Math.round(med * 10) / 10) +
+        ', ' + labelB.toLowerCase() + ' averages ' + magnitude + ' ' + direction + ' than days at or above that.';
+    }
+
+    function initMetricPickers() {
+      const optionsHtml = Object.keys(CORR_METRICS).map(k => '<option value="' + k + '">' + CORR_METRICS[k].label + '</option>').join('');
+      $('corrMetricA').innerHTML = optionsHtml;
+      $('corrMetricB').innerHTML = optionsHtml;
+    }
+    function renderPresets(activeIdx) {
+      $('corrPresets').innerHTML = CORR_PRESETS.map((p, i) =>
+        '<button type="button" class="corr-preset-btn' + (i === activeIdx ? ' is-active' : '') + '" data-idx="' + i + '">' + p.label + '</button>'
+      ).join('');
+      $('corrPresets').querySelectorAll('.corr-preset-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const preset = CORR_PRESETS[Number(btn.dataset.idx)];
+          $('corrMetricA').value = preset.a;
+          $('corrMetricB').value = preset.b;
+          renderPresets(Number(btn.dataset.idx));
+          renderCorrelation();
+        });
+      });
+    }
+
+    function renderCorrelation() {
+      const keyA = $('corrMetricA').value, keyB = $('corrMetricB').value;
+      const metricA = CORR_METRICS[keyA], metricB = CORR_METRICS[keyB];
+      const seriesA = metricA.series(), seriesB = metricB.series();
+      const pairs = Object.keys(seriesA)
+        .filter(k => seriesB[k] != null)
+        .map(k => ({ x: seriesA[k], y: seriesB[k] }));
+
+      const emptyEl = $('corrEmpty'), bodyEl = $('corrBody');
+      if (pairs.length < CORR_MIN_PAIRS) {
+        emptyEl.textContent = 'Not enough overlapping data yet (' + pairs.length + ' of ' + CORR_MIN_PAIRS + ' days needed where both "' + metricA.label + '" and "' + metricB.label + '" were logged).';
+        emptyEl.style.display = '';
+        bodyEl.classList.add('hidden');
+        return;
+      }
+      emptyEl.style.display = 'none';
+      bodyEl.classList.remove('hidden');
+
+      const xs = pairs.map(p => p.x), ys = pairs.map(p => p.y);
+      const xMin = Math.min.apply(null, xs), xMax = Math.max.apply(null, xs);
+      const yMin = Math.min.apply(null, ys), yMax = Math.max.apply(null, ys);
+      const xPad = Math.max((xMax - xMin) * 0.1, 0.5), yPad = Math.max((yMax - yMin) * 0.1, 0.5);
+      const left = 12, right = 308, top = 14, bot = 206;
+      const xFor = (v) => left + ((v - (xMin - xPad)) / ((xMax + xPad) - (xMin - xPad))) * (right - left);
+      const yFor = (v) => bot - ((v - (yMin - yPad)) / ((yMax + yPad) - (yMin - yPad))) * (bot - top);
+
+      $('corrDots').innerHTML = pairs.map(p =>
+        '<circle class="corr-dot" cx="' + xFor(p.x).toFixed(2) + '" cy="' + yFor(p.y).toFixed(2) + '" r="3"/>'
+      ).join('');
+
+      const r = pearsonR(pairs);
+      $('corrRValue').textContent = r == null ? '—' : (r >= 0 ? '+' : '') + r.toFixed(2);
+      $('corrRStrength').textContent = r == null ? '' : rStrengthLabel(r);
+      const sentence = plainEnglishSentence(pairs, metricA.label, metricB.label, metricB.unit);
+      $('corrSentence').textContent = sentence || (metricA.label + ' vs ' + metricB.label + ' — not enough spread in the data yet for a plain-English read.');
+      $('corrMeta').textContent = pairs.length + ' paired days · last ' + CORR_WINDOW_DAYS + ' days';
+    }
+
+    initMetricPickers();
+    $('corrMetricA').value = CORR_PRESETS[0].a;
+    $('corrMetricB').value = CORR_PRESETS[0].b;
+    renderPresets(0);
+    renderCorrelation();
+    $('corrMetricA').addEventListener('change', () => { renderPresets(-1); renderCorrelation(); });
+    $('corrMetricB').addEventListener('change', () => { renderPresets(-1); renderCorrelation(); });
+    window.addEventListener('storage', renderCorrelation);
+  })();
+  </script>
+
   <div class="section-title">Daily Stack</div>
 
   <div class="stack-card">
@@ -1627,7 +2091,6 @@ main {
     <iframe src="po-water.html" class="water-iframe" loading="lazy" title="Water Tracker"></iframe>
   </section>
 
-  <div class="attribution">// editable template · all data stays in your browser</div>
 </main>
 
 <script>

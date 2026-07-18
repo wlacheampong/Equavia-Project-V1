@@ -5,22 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#0a0a0b">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>Ability</title>
+<link rel="icon" type="image/webp" href="images/Index Landing Page.webp">
+<link rel="apple-touch-icon" href="images/apple-touch-icon.png">
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Equavia">
+<title>Ability — Equavia</title>
 <script src="topbar.js" defer></script>
-<script>
-(function () {
-  // This page has its own top navigation (the category tab row, matching
-  // dashboard.html), so the shared bottom tab bar from topbar.js is
-  // redundant here. DOMContentLoaded always fires after every deferred
-  // script has run, so waiting for it guarantees the element exists
-  // before we remove it.
-  document.addEventListener('DOMContentLoaded', function () {
-    var bottombar = document.getElementById('bottombar');
-    if (bottombar) bottombar.remove();
-    document.body.classList.remove('has-bottombar');
-  });
-})();
-</script>
 <style>
 :root {
   --bg: #0A0A0B;
@@ -89,41 +80,6 @@ body::after {
   max-width: 880px;
   margin: 0 auto;
   padding: 24px 16px 60px;
-}
-
-/* ===== Category tabs (matches dashboard.html's top nav) ===== */
-.cat-tabs {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 32px;
-  margin: 4px 0 22px;
-}
-.cat-tab {
-  display: flex; flex-direction: column; align-items: center;
-  gap: 6px;
-  padding: 2px;
-  border: 0;
-  background: transparent;
-  color: var(--text-tertiary);
-  font-family: inherit;
-  text-decoration: none;
-  cursor: pointer;
-  transition: color 0.2s;
-}
-.cat-tab:hover { color: var(--text-secondary); }
-.cat-tab.is-active { color: var(--text-primary); }
-.cat-tab-icon { width: 22px; height: 22px; }
-.cat-tab-icon svg { width: 100%; height: 100%; display: block; }
-.cat-tab-label {
-  font-size: 11px; font-weight: 600;
-  line-height: 1.25;
-  text-align: center;
-  white-space: nowrap;
-}
-@media (max-width: 480px) {
-  .cat-tabs { gap: 18px; }
-  .cat-tab-label { font-size: 10px; }
 }
 
 /* Hide scrollbars everywhere */
@@ -283,6 +239,46 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
 .hab-day.is-done { background: var(--accent); border-color: var(--accent); }
 .hab-day.is-today { box-shadow: 0 0 0 2px rgba(255,255,255,0.35); }
 
+.hab-year-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; cursor: pointer; background: none; border: none; padding: 0; }
+.hab-year-grid { display: grid; grid-template-rows: repeat(7, 1fr); grid-auto-flow: column; gap: 1.5px; height: 28px; }
+.hab-year-cell { width: 3px; height: 3px; border-radius: 1px; }
+.hab-year-cell.is-done { background: var(--success); }
+.hab-year-cell.is-missed { background: rgba(255,107,107,0.55); }
+.hab-year-cell.is-grey { background: rgba(255,255,255,0.06); }
+.hab-year-pct { font-family: var(--font-mono); font-size: 10.5px; color: var(--text-tertiary); white-space: nowrap; }
+.hab-year-row:hover .hab-year-pct { color: var(--text-secondary); }
+
+.hab-year-modal-bg {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+  display: none; align-items: center; justify-content: center; z-index: 200; padding: 20px;
+}
+.hab-year-modal-bg.show { display: flex; }
+.hab-year-modal {
+  background: var(--bg); border-radius: 16px; padding: 20px; max-width: 640px; width: 100%;
+  max-height: 80vh; overflow-y: auto; border: 1px solid rgba(255,255,255,0.06);
+}
+.hab-year-modal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+.hab-year-modal-title { font-size: 15px; font-weight: 700; color: var(--text-primary); }
+.hab-year-modal-close { background: transparent; border: none; color: var(--text-tertiary); font-size: 22px; line-height: 1; cursor: pointer; padding: 4px; }
+.hab-year-modal-close:hover { color: var(--text-primary); }
+.hab-year-modal-pct { font-size: 12px; color: var(--text-tertiary); margin-bottom: 14px; }
+.hab-year-modal-grid-wrap { overflow-x: auto; padding-bottom: 8px; }
+.hab-year-modal-grid { display: grid; grid-template-rows: repeat(7, 1fr); grid-auto-flow: column; gap: 3px; width: max-content; }
+.hab-year-modal-cell { width: 11px; height: 11px; border-radius: 2px; }
+.hab-year-modal-cell.is-done { background: var(--success); }
+.hab-year-modal-cell.is-missed { background: rgba(255,107,107,0.55); }
+.hab-year-modal-cell.is-grey { background: rgba(255,255,255,0.06); }
+.hab-year-modal-cell.is-today { box-shadow: 0 0 0 1.5px rgba(255,255,255,0.6); }
+.hab-year-legend { display: flex; gap: 14px; margin-top: 12px; font-size: 10px; color: var(--text-tertiary); }
+.hab-year-legend-item { display: flex; align-items: center; gap: 5px; }
+.hab-year-legend-dot { width: 9px; height: 9px; border-radius: 2px; }
+
+.hab-score-ring { position: relative; width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.hab-score-ring svg { position: absolute; inset: 0; transform: rotate(-90deg); }
+.hab-score-track { fill: none; stroke: rgba(255,255,255,0.08); stroke-width: 2.5; }
+.hab-score-fill { fill: none; stroke-width: 2.5; stroke-linecap: round; transition: stroke-dashoffset 0.3s; }
+.hab-score-num { position: relative; font-family: var(--font-mono); font-size: 9px; font-weight: 700; color: var(--text-secondary); }
+
 /* ============================================================
    SKILL TRACKER
    ============================================================ */
@@ -384,6 +380,81 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
   font-size: 11px; color: var(--text-tertiary); font-style: italic; padding: 4px 2px;
 }
 
+/* ============================================================
+   BOOK TRACKER
+   ============================================================ */
+.book-year-stat {
+  font-family: var(--font-mono); font-size: 11px; color: var(--text-tertiary);
+  margin-bottom: 12px;
+}
+.book-year-stat b { color: var(--text-primary); font-weight: 700; }
+.book-add-row {
+  display: flex; gap: 6px; flex-wrap: wrap; align-items: stretch;
+  padding: 4px;
+  background: rgba(0, 0, 0, 0.30);
+  border-radius: 12px;
+  margin-bottom: 16px;
+}
+.book-add-row .hab-input { flex: 1.4; min-width: 120px; }
+.book-add-row .book-author-input { flex: 1; min-width: 100px; }
+.book-shelf { margin-bottom: 16px; }
+.book-shelf:last-child { margin-bottom: 0; }
+.book-shelf-title {
+  font-family: var(--font-mono); font-size: 10px; font-weight: 700;
+  letter-spacing: 0.10em; text-transform: uppercase;
+  color: var(--text-tertiary);
+  margin-bottom: 8px;
+}
+.book-row {
+  padding: 12px 14px;
+  background: rgba(255,255,255,0.025);
+  border-radius: 12px;
+  margin-bottom: 8px;
+}
+.book-row:hover { background: rgba(255,255,255,0.04); }
+.book-row-top { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 8px; }
+.book-titles { flex: 1; min-width: 0; }
+.book-title { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+.book-author { font-size: 12px; color: var(--text-tertiary); margin-top: 1px; }
+.book-status-select {
+  background: rgba(255,255,255,0.06);
+  border: none; color: var(--text-secondary);
+  border-radius: 7px; padding: 5px 8px;
+  font-family: inherit; font-size: 11px; font-weight: 700;
+  cursor: pointer; flex-shrink: 0;
+}
+.book-del {
+  background: transparent; border: 1px solid rgba(255,255,255,0.08);
+  color: var(--text-tertiary);
+  cursor: pointer; font-size: 13px;
+  padding: 4px 8px; border-radius: 6px;
+  font-family: inherit; line-height: 1; flex-shrink: 0;
+}
+.book-del:hover { color: var(--danger); }
+.book-meta-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
+.book-stars { display: inline-flex; gap: 2px; }
+.book-star {
+  background: transparent; border: none; cursor: pointer;
+  font-size: 15px; color: var(--text-quaternary);
+  padding: 0; line-height: 1;
+}
+.book-star.is-filled { color: var(--warning); }
+.book-finished-date {
+  font-family: var(--font-mono); font-size: 11px; color: var(--text-tertiary);
+}
+.book-notes-input {
+  width: 100%; display: block;
+  background: rgba(0,0,0,0.25);
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-family: inherit; font-size: 12px;
+  padding: 7px 9px;
+  resize: none;
+}
+.book-notes-input::placeholder { color: var(--text-quaternary); }
+.book-notes-input:focus { outline: none; border-color: rgba(255,255,255,0.14); color: var(--text-primary); }
+
 @media (max-width: 480px) {
   .hab-day { width: 13px; height: 13px; }
 }
@@ -391,38 +462,6 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
 </head>
 <body>
 <div class="shell">
-
-<!-- ===== Category tabs (matches dashboard.html) ===== -->
-<div class="cat-tabs" role="tablist" aria-label="Site sections">
-  <a class="cat-tab" href="dashboard.html">
-    <span class="cat-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11 12 4l9 7"/><path d="M5 10v9a1 1 0 0 0 1 1h3v-6h6v6h3a1 1 0 0 0 1-1v-9"/></svg></span>
-    <span class="cat-tab-label">Main</span>
-  </a>
-  <a class="cat-tab" href="health.html">
-    <span class="cat-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M12 8v8M8 12h8"/></svg></span>
-    <span class="cat-tab-label">Health</span>
-  </a>
-  <a class="cat-tab" href="gym.html">
-    <span class="cat-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 9v6M17.5 9v6M3 10.5v3M21 10.5v3M6.5 12h11"/></svg></span>
-    <span class="cat-tab-label">Fitness</span>
-  </a>
-  <a class="cat-tab" href="peak.html">
-    <span class="cat-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20 9 8l4 6 2-3 6 9Z"/></svg></span>
-    <span class="cat-tab-label">Peak</span>
-  </a>
-  <a class="cat-tab" href="finance.html">
-    <span class="cat-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h13a1 1 0 0 1 1 1v3"/><path d="M3 7v10a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1H6a2 2 0 0 1-2-2"/><circle cx="17" cy="13" r="1.4"/></svg></span>
-    <span class="cat-tab-label">Finance</span>
-  </a>
-  <a class="cat-tab" href="planner.html">
-    <span class="cat-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1"/><path d="M9 12l2 2 4-4"/></svg></span>
-    <span class="cat-tab-label">Planner</span>
-  </a>
-  <a class="cat-tab is-active" href="ability.html" aria-current="page">
-    <span class="cat-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2c1 4-4 5-4 9a4 4 0 0 0 8 0c0-2-1-3-1-3s2 1 2 5a6 6 0 0 1-12 0c0-6 5-6 7-11Z"/></svg></span>
-    <span class="cat-tab-label">Ability</span>
-  </a>
-</div>
 
 <!-- ===== HABIT TRACKER ===== -->
 <div class="section" data-section="habits" id="habit-tracker">
@@ -454,6 +493,41 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
   </div>
 </div>
 
+<!-- ===== BOOK TRACKER ===== -->
+<div class="section" data-section="books" id="book-tracker">
+  <div class="section-title">
+    <span class="section-title-text">BOOK TRACKER</span>
+  </div>
+  <div class="card">
+    <div class="book-year-stat" id="bookYearStat"></div>
+    <div class="book-add-row">
+      <input type="text" class="hab-input" id="bookTitleInput" placeholder="Book title…">
+      <input type="text" class="hab-input book-author-input" id="bookAuthorInput" placeholder="Author…">
+      <button type="button" class="hab-add-btn" id="bookAddBtn">+ Add</button>
+    </div>
+    <div id="bookShelves"></div>
+    <div class="empty-state" id="bookEmptyState" style="display:none;">No books yet — add one above.</div>
+  </div>
+</div>
+
+</div>
+
+<div class="hab-year-modal-bg" id="habYearModalBg">
+  <div class="hab-year-modal">
+    <div class="hab-year-modal-head">
+      <span class="hab-year-modal-title" id="habYearModalTitle">Habit</span>
+      <button type="button" class="hab-year-modal-close" id="habYearModalClose" aria-label="Close">&times;</button>
+    </div>
+    <div class="hab-year-modal-pct" id="habYearModalPct"></div>
+    <div class="hab-year-modal-grid-wrap">
+      <div class="hab-year-modal-grid" id="habYearModalGrid"></div>
+    </div>
+    <div class="hab-year-legend">
+      <span class="hab-year-legend-item"><span class="hab-year-legend-dot" style="background:var(--success)"></span>Done</span>
+      <span class="hab-year-legend-item"><span class="hab-year-legend-dot" style="background:rgba(255,107,107,0.55)"></span>Missed</span>
+      <span class="hab-year-legend-item"><span class="hab-year-legend-dot" style="background:rgba(255,255,255,0.06)"></span>Not tracked yet</span>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -492,6 +566,152 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
     return streak;
   }
 
+  // ============================================================
+  // YEAR GRID (rolling 365 days, not calendar-year-to-date -- stays
+  // full/useful all year round instead of resetting to nearly-empty
+  // every January). Three states: done (green/accent), missed (red,
+  // only for past days on/after the habit existed), not-tracked-yet
+  // (grey, for days before the habit was created or in the future).
+  // Habits from before this feature has no createdAt -- inferred from
+  // the earliest history entry instead of retroactively marking a
+  // brand-new habit's pre-creation days as "missed".
+  // ============================================================
+  function habitStartBoundary(habit) {
+    if (habit.createdAt) {
+      const t = new Date(habit.createdAt);
+      t.setHours(0, 0, 0, 0);
+      return t;
+    }
+    const keys = Object.keys(habit.history || {}).sort();
+    if (keys.length) {
+      const p = keys[0].split('-').map(Number);
+      return new Date(p[0], p[1] - 1, p[2]);
+    }
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return today;
+  }
+
+  function habitYearCells(habit) {
+    const history = habit.history || {};
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const start = habitStartBoundary(habit);
+    const cells = [];
+    let doneCount = 0, trackedDays = 0;
+    for (let i = 364; i >= 0; i--) {
+      const d = addDays(today, -i);
+      const key = dateKey(d);
+      const isToday = i === 0;
+      let state;
+      if (d < start) {
+        state = 'grey';
+      } else if (history[key]) {
+        state = 'done'; doneCount++; trackedDays++;
+      } else if (isToday) {
+        state = 'grey'; // today isn't over yet -- don't mark it missed
+      } else {
+        state = 'missed'; trackedDays++;
+      }
+      cells.push({ dateKey: key, state, isToday });
+    }
+    return { cells, pct: trackedDays > 0 ? Math.round((doneCount / trackedDays) * 100) : null };
+  }
+
+  // ============================================================
+  // HABIT HEALTH SCORE (exponential smoothing, alongside the streak,
+  // not replacing it -- per spec). score = previous*k + done*(1-k).
+  // k=0.95 gives roughly a 2-week half-life under sustained misses:
+  // a single bad day only nudges the score, matching "decays gradually
+  // instead of zeroing it." This app's habits have no per-habit
+  // frequency setting (unlike Loop's scheduled-habit model), so one
+  // fixed k is used for all habits rather than inventing a frequency
+  // field nothing else in the app has.
+  // ============================================================
+  const HABIT_SCORE_K = 0.95;
+
+  function computeHabitScore(habit) {
+    const history = habit.history || {};
+    const start = habitStartBoundary(habit);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    let score = 50; // neutral seed -- k's exponential decay makes the seed's influence fade within a few weeks regardless
+    let cursor = new Date(start);
+    while (cursor < today) {
+      const done = !!history[dateKey(cursor)];
+      score = score * HABIT_SCORE_K + (done ? 100 : 0) * (1 - HABIT_SCORE_K);
+      cursor = addDays(cursor, 1);
+    }
+    // Today only counts once it's actually been marked done -- an
+    // unmarked "today" isn't a miss yet, same rule as the year grid.
+    if (history[dateKey(today)]) {
+      score = score * HABIT_SCORE_K + 100 * (1 - HABIT_SCORE_K);
+    }
+    return Math.round(score);
+  }
+
+  function buildHabitScoreRing(score) {
+    const wrap = document.createElement('div');
+    wrap.className = 'hab-score-ring';
+    wrap.title = 'Habit health score: ' + score + '/100';
+    const color = score >= 70 ? 'var(--success)' : score >= 40 ? 'var(--warning)' : 'var(--danger)';
+    const r = 12, c = 2 * Math.PI * r;
+    const offset = c * (1 - score / 100);
+    wrap.innerHTML =
+      '<svg viewBox="0 0 28 28" width="28" height="28">' +
+        '<circle class="hab-score-track" cx="14" cy="14" r="' + r + '"/>' +
+        '<circle class="hab-score-fill" cx="14" cy="14" r="' + r + '" stroke="' + color + '" stroke-dasharray="' + c.toFixed(2) + '" stroke-dashoffset="' + offset.toFixed(2) + '"/>' +
+      '</svg>' +
+      '<span class="hab-score-num">' + score + '</span>';
+    return wrap;
+  }
+
+  function buildHabitYearRow(habit) {
+    const { cells, pct } = habitYearCells(habit);
+    const row = document.createElement('button');
+    row.type = 'button';
+    row.className = 'hab-year-row';
+    row.setAttribute('aria-label', 'View ' + habit.name + '’s full year');
+    const grid = document.createElement('div');
+    grid.className = 'hab-year-grid';
+    cells.forEach(c => {
+      const cell = document.createElement('span');
+      cell.className = 'hab-year-cell is-' + c.state;
+      grid.appendChild(cell);
+    });
+    row.appendChild(grid);
+    const pctEl = document.createElement('span');
+    pctEl.className = 'hab-year-pct';
+    pctEl.textContent = pct == null ? 'no data yet' : pct + '% this year';
+    row.appendChild(pctEl);
+    row.addEventListener('click', () => openHabitYearModal(habit));
+    return row;
+  }
+
+  function openHabitYearModal(habit) {
+    const { cells, pct } = habitYearCells(habit);
+    document.getElementById('habYearModalTitle').textContent = habit.name;
+    document.getElementById('habYearModalPct').textContent = (pct == null ? 'No tracked days yet' : pct + '% success over the last year');
+    const grid = document.getElementById('habYearModalGrid');
+    grid.innerHTML = '';
+    cells.forEach(c => {
+      const cell = document.createElement('span');
+      cell.className = 'hab-year-modal-cell is-' + c.state + (c.isToday ? ' is-today' : '');
+      cell.title = c.dateKey + (c.isToday ? ' (today)' : '');
+      grid.appendChild(cell);
+    });
+    document.getElementById('habYearModalBg').classList.add('show');
+  }
+  function closeHabitYearModal() {
+    document.getElementById('habYearModalBg').classList.remove('show');
+  }
+  function initHabitYearModal() {
+    document.getElementById('habYearModalClose').addEventListener('click', closeHabitYearModal);
+    document.getElementById('habYearModalBg').addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) closeHabitYearModal();
+    });
+  }
+
   function buildHabitRow(habit) {
     const row = document.createElement('div');
     row.className = 'hab-row';
@@ -506,6 +726,7 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
       '<span class="hab-streak' + (streak > 0 ? ' is-active' : '') + '">🔥 ' + streak + '</span>' +
       '<button type="button" class="hab-del" aria-label="Delete habit">×</button>';
     top.querySelector('.hab-name').textContent = habit.name;
+    top.insertBefore(buildHabitScoreRing(computeHabitScore(habit)), top.querySelector('.hab-del'));
     top.querySelector('.hab-del').addEventListener('click', () => {
       setHabits(getHabits().filter(h => h.id !== habit.id));
       renderHabits();
@@ -537,6 +758,7 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
       grid.appendChild(btn);
     }
     row.appendChild(grid);
+    row.appendChild(buildHabitYearRow(habit));
     return row;
   }
 
@@ -556,7 +778,7 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
       const name = input.value.trim();
       if (!name) return;
       const list = getHabits();
-      list.push({ id: 'hb' + Date.now() + Math.random().toString(36).slice(2, 7), name, history: {} });
+      list.push({ id: 'hb' + Date.now() + Math.random().toString(36).slice(2, 7), name, history: {}, createdAt: new Date().toISOString() });
       setHabits(list);
       input.value = '';
       renderHabits();
@@ -726,14 +948,166 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
     });
   }
 
+  // ============================================================
+  // BOOK TRACKER
+  // ============================================================
+  const BOOKS_KEY = 'books_v1';
+  const BOOK_SHELVES = [
+    { status: 'want',    label: 'Want to Read' },
+    { status: 'reading', label: 'Reading' },
+    { status: 'read',    label: 'Read' }
+  ];
+
+  function getBooks() { const v = storeGet(BOOKS_KEY); return Array.isArray(v) ? v : []; }
+  function setBooks(list) { storeSet(BOOKS_KEY, list); }
+
+  function renderBookYearStat() {
+    const el = document.getElementById('bookYearStat');
+    if (!el) return;
+    const year = new Date().getFullYear();
+    const count = getBooks().filter(b => b.status === 'read' && b.finishedAt && new Date(b.finishedAt).getFullYear() === year).length;
+    el.innerHTML = '<b>' + count + '</b> book' + (count === 1 ? '' : 's') + ' finished in ' + year;
+  }
+
+  function buildBookRow(book) {
+    const row = document.createElement('div');
+    row.className = 'book-row';
+    row.dataset.id = book.id;
+
+    const top = document.createElement('div');
+    top.className = 'book-row-top';
+    top.innerHTML =
+      '<div class="book-titles">' +
+        '<div class="book-title"></div>' +
+        '<div class="book-author"></div>' +
+      '</div>' +
+      '<select class="book-status-select">' +
+        BOOK_SHELVES.map(s => '<option value="' + s.status + '">' + s.label + '</option>').join('') +
+      '</select>' +
+      '<button type="button" class="book-del" aria-label="Delete book">×</button>';
+    top.querySelector('.book-title').textContent = book.title;
+    top.querySelector('.book-author').textContent = book.author || '';
+    const statusSel = top.querySelector('.book-status-select');
+    statusSel.value = book.status;
+    statusSel.addEventListener('change', () => {
+      const list = getBooks();
+      const idx = list.findIndex(b => b.id === book.id);
+      if (idx === -1) return;
+      const next = Object.assign({}, list[idx], { status: statusSel.value });
+      if (statusSel.value === 'read' && !next.finishedAt) next.finishedAt = new Date().toISOString();
+      if (statusSel.value !== 'read') next.finishedAt = null;
+      list[idx] = next;
+      setBooks(list);
+      renderBooks();
+    });
+    top.querySelector('.book-del').addEventListener('click', () => {
+      setBooks(getBooks().filter(b => b.id !== book.id));
+      renderBooks();
+    });
+    row.appendChild(top);
+
+    if (book.status === 'read') {
+      const meta = document.createElement('div');
+      meta.className = 'book-meta-row';
+      const stars = document.createElement('div');
+      stars.className = 'book-stars';
+      for (let i = 1; i <= 5; i++) {
+        const starBtn = document.createElement('button');
+        starBtn.type = 'button';
+        starBtn.className = 'book-star' + ((book.rating || 0) >= i ? ' is-filled' : '');
+        starBtn.textContent = '★';
+        starBtn.setAttribute('aria-label', 'Rate ' + i + ' star' + (i === 1 ? '' : 's'));
+        starBtn.addEventListener('click', () => {
+          const list = getBooks();
+          const idx = list.findIndex(b => b.id === book.id);
+          if (idx === -1) return;
+          const newRating = list[idx].rating === i ? 0 : i;
+          list[idx] = Object.assign({}, list[idx], { rating: newRating });
+          setBooks(list);
+          renderBooks();
+        });
+        stars.appendChild(starBtn);
+      }
+      meta.appendChild(stars);
+      if (book.finishedAt) {
+        const dateEl = document.createElement('span');
+        dateEl.className = 'book-finished-date';
+        dateEl.textContent = 'Finished ' + new Date(book.finishedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+        meta.appendChild(dateEl);
+      }
+      row.appendChild(meta);
+    }
+
+    const notes = document.createElement('textarea');
+    notes.className = 'book-notes-input';
+    notes.rows = 1;
+    notes.placeholder = 'Notes…';
+    notes.value = book.notes || '';
+    notes.addEventListener('change', () => {
+      const list = getBooks();
+      const idx = list.findIndex(b => b.id === book.id);
+      if (idx === -1) return;
+      list[idx] = Object.assign({}, list[idx], { notes: notes.value.trim() });
+      setBooks(list);
+    });
+    row.appendChild(notes);
+
+    return row;
+  }
+
+  function renderBooks() {
+    const wrap = document.getElementById('bookShelves');
+    const emptyState = document.getElementById('bookEmptyState');
+    if (!wrap) return;
+    const list = getBooks();
+    wrap.innerHTML = '';
+    emptyState.style.display = list.length ? 'none' : '';
+    BOOK_SHELVES.forEach(shelf => {
+      const items = list.filter(b => b.status === shelf.status);
+      if (!items.length) return;
+      const section = document.createElement('div');
+      section.className = 'book-shelf';
+      const title = document.createElement('div');
+      title.className = 'book-shelf-title';
+      title.textContent = shelf.label + ' (' + items.length + ')';
+      section.appendChild(title);
+      items.forEach(b => section.appendChild(buildBookRow(b)));
+      wrap.appendChild(section);
+    });
+    renderBookYearStat();
+  }
+
+  function initBookAddForm() {
+    document.getElementById('bookAddBtn').addEventListener('click', () => {
+      const titleInput = document.getElementById('bookTitleInput');
+      const authorInput = document.getElementById('bookAuthorInput');
+      const title = titleInput.value.trim();
+      if (!title) return;
+      const list = getBooks();
+      list.push({
+        id: 'bk' + Date.now() + Math.random().toString(36).slice(2, 7),
+        title, author: authorInput.value.trim(),
+        status: 'want', rating: 0, notes: '', finishedAt: null,
+        addedAt: new Date().toISOString()
+      });
+      setBooks(list);
+      titleInput.value = '';
+      authorInput.value = '';
+      renderBooks();
+    });
+  }
+
   // ---------- Boot ----------
   renderHabits();
   initHabitAddForm();
+  initHabitYearModal();
   renderSkills();
   initSkillAddForm();
+  renderBooks();
+  initBookAddForm();
 
   // Re-render if storage changes from another tab.
-  window.addEventListener('storage', () => { renderHabits(); renderSkills(); });
+  window.addEventListener('storage', () => { renderHabits(); renderSkills(); renderBooks(); });
 })();
 </script>
 

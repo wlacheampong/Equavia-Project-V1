@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<script src="landing-guard.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#050506">
+<link rel="icon" type="image/webp" href="images/Index Landing Page.webp">
+<link rel="apple-touch-icon" href="images/apple-touch-icon.png">
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Equavia">
+<title>Settings — Equavia</title>
+<script src="topbar.js" defer></script>
+<script src="obsidian-sync.js"></script>
+<style>
+:root {
+  --bg: #050506;
+  --bg-card: rgba(255, 255, 255, 0.04);
+  --bg-input: rgba(0, 0, 0, 0.28);
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.14);
+  --text-primary: #FAFAFA;
+  --text-secondary: #B8B6B0;
+  --text-tertiary: #76746E;
+  --text-quaternary: #4D4B47;
+  --accent: #E07658;
+  --success: #6BE3A4;
+  --danger: #FF6B6B;
+  --font: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+* { box-sizing: border-box; }
+html, body {
+  margin: 0; padding: 0;
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+}
+body { padding: max(20px, env(safe-area-inset-top)) 20px 40px; }
+.page { max-width: 640px; margin: 0 auto; }
+h1 {
+  font-size: 26px; font-weight: 700; letter-spacing: -0.02em;
+  margin: 4px 0 24px;
+}
+.section { margin-bottom: 30px; }
+.section-title {
+  font-size: 10.5px; font-weight: 700;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--text-tertiary);
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 12px;
+}
+.section-title::before { content: ''; width: 18px; height: 1px; background: var(--text-tertiary); opacity: 0.6; }
+.section-title::after  { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, rgba(255,255,255,0.08), transparent); }
+.card {
+  background: var(--bg-card);
+  border-radius: 16px;
+  padding: 18px 20px;
+  margin-bottom: 10px;
+}
+.row {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.row:last-child { border-bottom: 0; }
+.row-label { font-size: 14px; font-weight: 600; }
+.row-sub { font-size: 11.5px; color: var(--text-tertiary); margin-top: 2px; }
+.btn {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-primary);
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  padding: 9px 16px;
+  font-size: 13px; font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+.btn:hover { background: rgba(255, 255, 255, 0.10); }
+.btn-primary {
+  background: linear-gradient(180deg, #FFFFFF 0%, #E8E5DD 100%);
+  color: #0A0A0B;
+  border: 0;
+}
+.btn-primary:hover { filter: brightness(1.05); }
+.btn-danger-outline { border-color: rgba(239, 68, 68, 0.4); color: #FF9B9B; }
+input[type="text"], input[type="number"], input[type="password"], input[type="time"], select {
+  background: var(--bg-input);
+  color: var(--text-primary);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  width: 100%;
+}
+input:focus, select:focus { border-color: rgba(255,255,255,0.3); }
+.field { margin-bottom: 12px; }
+.field label {
+  display: block; font-size: 11px; font-weight: 600;
+  color: var(--text-tertiary); margin-bottom: 5px;
+  text-transform: uppercase; letter-spacing: 0.04em;
+}
+.field-row { display: flex; gap: 10px; }
+.field-row .field { flex: 1; }
+.help-text { font-size: 11.5px; color: var(--text-tertiary); line-height: 1.5; margin: -4px 0 14px; }
+.seg { display: inline-flex; background: var(--bg-input); border-radius: 8px; padding: 3px; gap: 2px; }
+.seg button {
+  background: transparent; border: 0; color: var(--text-tertiary);
+  font-family: inherit; font-size: 12.5px; font-weight: 600;
+  padding: 6px 14px; border-radius: 6px; cursor: pointer;
+}
+.seg button.active { background: rgba(255,255,255,0.10); color: var(--text-primary); }
+.status-line { font-size: 12px; color: var(--text-tertiary); margin-top: 8px; min-height: 16px; }
+.status-line.ok { color: var(--success); }
+.status-line.err { color: var(--danger); }
+.checkbox-row { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+.checkbox-row input { width: auto; }
+.checkbox-row label { font-size: 13px; font-weight: 600; margin: 0; text-transform: none; letter-spacing: 0; }
+.actions-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
+</style>
+</head>
+<body>
+
+<div class="page">
+  <h1>Settings</h1>
+
+  <div class="section">
+    <div class="section-title">Backup</div>
+    <div class="card">
+      <div class="row">
+        <div>
+          <div class="row-label">Export all data</div>
+          <div class="row-sub" id="lastBackupLine">Never backed up</div>
+        </div>
+        <button class="btn btn-primary" id="exportBtn">Export</button>
+      </div>
+      <div class="row">
+        <div>
+          <div class="row-label">Import from backup</div>
+          <div class="row-sub">Replaces all current data — cannot be undone</div>
+        </div>
+        <button class="btn btn-danger-outline" id="importBtn">Import…</button>
+        <input type="file" id="importFile" accept="application/json,.json" style="display:none">
+      </div>
+      <div class="status-line" id="backupStatus"></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Preferences</div>
+    <div class="card">
+      <div class="row">
+        <div>
+          <div class="row-label">Currency</div>
+          <div class="row-sub">Used across Finance</div>
+        </div>
+        <select id="prefCurrency" style="width:auto;">
+          <option value="GBP">GBP</option>
+          <option value="USD">USD</option>
+          <option value="EUR">EUR</option>
+          <option value="CHF">CHF</option>
+        </select>
+      </div>
+      <div class="row">
+        <div>
+          <div class="row-label">Weight units</div>
+          <div class="row-sub">Default for Fitness &amp; Water pages on first setup</div>
+        </div>
+        <div class="seg" id="prefUnitsSeg">
+          <button type="button" data-u="kg">kg</button>
+          <button type="button" data-u="lb">lb</button>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="row-label" style="margin-bottom:2px;">Wake / bedtime</div>
+      <div class="row-sub" style="margin-bottom:12px;">Also editable from the Day Ring on Main</div>
+      <div class="field-row">
+        <div class="field">
+          <label for="prefWake">Wake-up time</label>
+          <input type="time" id="prefWake">
+        </div>
+        <div class="field">
+          <label for="prefBed">Bedtime target</label>
+          <input type="time" id="prefBed">
+        </div>
+      </div>
+      <div class="actions-row">
+        <button class="btn" id="prefTimesSave">Save times</button>
+        <span class="status-line" id="prefTimesStatus" style="margin:0;"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Obsidian Sync</div>
+    <div class="card">
+      <p class="help-text">Requires the free "Local REST API" community plugin, installed in Obsidian and running while Obsidian is open on this device — sync only works from the machine/network where Obsidian is reachable. Shared by Notes and Planner's Projects.</p>
+      <div class="checkbox-row">
+        <input type="checkbox" id="obsEnabled">
+        <label for="obsEnabled">Enable sync</label>
+      </div>
+      <div class="field-row">
+        <div class="field"><label for="obsHost">Host</label><input type="text" id="obsHost" placeholder="127.0.0.1"></div>
+        <div class="field"><label for="obsPort">Port</label><input type="number" id="obsPort" placeholder="27123"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label for="obsProtocol">Protocol</label>
+          <select id="obsProtocol"><option value="http">http</option><option value="https">https</option></select>
+        </div>
+        <div class="field"><label for="obsApiKey">API key</label><input type="password" id="obsApiKey" placeholder="Paste from the plugin's settings tab"></div>
+      </div>
+      <div class="field"><label for="obsFolder">Notes folder</label><input type="text" id="obsFolder" placeholder="AppNotes"></div>
+      <div class="field-row">
+        <div class="field"><label for="obsVaultName">Vault name</label><input type="text" id="obsVaultName" placeholder="e.g. My Vault"></div>
+        <div class="field"><label for="obsProjectsFolder">Projects folder</label><input type="text" id="obsProjectsFolder" placeholder="AppProjects"></div>
+      </div>
+      <div class="actions-row">
+        <button class="btn" id="obsTest">Test connection</button>
+        <button class="btn btn-primary" id="obsSave">Save</button>
+        <span class="status-line" id="obsStatus" style="margin:0;"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  function storeGet(key) { try { return JSON.parse(localStorage.getItem(key)); } catch (e) { return null; } }
+  function storeSet(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) {} }
+
+  const LAST_BACKUP_KEY = 'eq.lastBackupAt';
+  const UNITS_KEY = 'eq.units.weight';
+  const CURRENCY_KEY = 'nw_currency';
+  const DAY_RING_TIMES_KEY = 'day_ring_times_v1';
+
+  // ---------- Backup: export ----------
+  function fmtBackupAge(iso) {
+    if (!iso) return 'Never backed up';
+    const then = new Date(iso).getTime();
+    if (isNaN(then)) return 'Never backed up';
+    const days = Math.floor((Date.now() - then) / 86400000);
+    if (days <= 0) return 'Backed up today';
+    if (days === 1) return 'Backed up 1 day ago';
+    return 'Backed up ' + days + ' days ago';
+  }
+  function renderBackupLine() {
+    $('lastBackupLine').textContent = fmtBackupAge(storeGet(LAST_BACKUP_KEY));
+  }
+  function showStatus(el, msg, kind) {
+    el.textContent = msg;
+    el.classList.remove('ok', 'err');
+    if (kind) el.classList.add(kind);
+  }
+
+  $('exportBtn').addEventListener('click', () => {
+    const data = {};
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k == null) continue;
+      data[k] = localStorage.getItem(k);
+    }
+    const exportedAt = new Date().toISOString();
+    const payload = { app: 'equavia', exportedAt, data };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'equavia-backup-' + exportedAt.slice(0, 10) + '.json';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    storeSet(LAST_BACKUP_KEY, exportedAt);
+    renderBackupLine();
+    showStatus($('backupStatus'), 'Exported ' + Object.keys(data).length + ' keys.', 'ok');
+  });
+
+  // ---------- Backup: import ----------
+  $('importBtn').addEventListener('click', () => $('importFile').click());
+  $('importFile').addEventListener('change', (e) => {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      let parsed;
+      try { parsed = JSON.parse(String(reader.result)); }
+      catch (err) { showStatus($('backupStatus'), 'That file is not valid JSON.', 'err'); return; }
+      if (!parsed || typeof parsed.data !== 'object' || parsed.data === null) {
+        showStatus($('backupStatus'), 'That doesn\'t look like an Equavia backup file.', 'err');
+        return;
+      }
+      const keyCount = Object.keys(parsed.data).length;
+      const when = parsed.exportedAt ? new Date(parsed.exportedAt).toLocaleString() : 'an unknown date';
+      const ok = confirm(
+        'Import backup from ' + when + '?\n\n' +
+        'This replaces ALL ' + keyCount + ' stored keys on this device with the backup\'s data and cannot be undone.'
+      );
+      if (!ok) return;
+      try {
+        localStorage.clear();
+        Object.keys(parsed.data).forEach((k) => localStorage.setItem(k, parsed.data[k]));
+        storeSet(LAST_BACKUP_KEY, new Date().toISOString());
+      } catch (err) {
+        showStatus($('backupStatus'), 'Import failed: ' + (err.message || err), 'err');
+        return;
+      }
+      showStatus($('backupStatus'), 'Imported ' + keyCount + ' keys. Reloading…', 'ok');
+      setTimeout(() => window.location.reload(), 900);
+    };
+    reader.readAsText(file);
+  });
+
+  // ---------- Preferences: currency ----------
+  const currencySel = $('prefCurrency');
+  currencySel.value = storeGet(CURRENCY_KEY) || 'GBP';
+  currencySel.addEventListener('change', () => storeSet(CURRENCY_KEY, currencySel.value));
+
+  // ---------- Preferences: weight units ----------
+  function renderUnitsSeg() {
+    const cur = storeGet(UNITS_KEY) || 'kg';
+    document.querySelectorAll('#prefUnitsSeg button').forEach((b) => {
+      b.classList.toggle('active', b.dataset.u === cur);
+    });
+  }
+  document.querySelectorAll('#prefUnitsSeg button').forEach((b) => {
+    b.addEventListener('click', () => { storeSet(UNITS_KEY, b.dataset.u); renderUnitsSeg(); });
+  });
+  renderUnitsSeg();
+
+  // ---------- Preferences: wake / bedtime ----------
+  function hourToTimeStr(hourDecimal) {
+    const wrapped = ((hourDecimal % 24) + 24) % 24;
+    const h = Math.floor(wrapped);
+    const m = Math.round((wrapped - h) * 60);
+    return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+  }
+  function timeStrToHour(str) {
+    const [h, m] = str.split(':').map(Number);
+    return h + (m || 0) / 60;
+  }
+  (function loadTimes() {
+    const saved = storeGet(DAY_RING_TIMES_KEY);
+    const wakeHour = saved && typeof saved.wakeHour === 'number' ? saved.wakeHour : 8;
+    const bedHour  = saved && typeof saved.bedHour  === 'number' ? saved.bedHour  : 0;
+    $('prefWake').value = hourToTimeStr(wakeHour);
+    $('prefBed').value = hourToTimeStr(bedHour);
+  })();
+  $('prefTimesSave').addEventListener('click', () => {
+    const wakeStr = $('prefWake').value;
+    const bedStr = $('prefBed').value;
+    if (!wakeStr || !bedStr) return;
+    storeSet(DAY_RING_TIMES_KEY, { wakeHour: timeStrToHour(wakeStr), bedHour: timeStrToHour(bedStr) });
+    showStatus($('prefTimesStatus'), 'Saved.', 'ok');
+  });
+
+  // ---------- Obsidian sync ----------
+  function loadObsidianForm() {
+    if (!window.ObsidianSync) return;
+    const cfg = ObsidianSync.getConfig();
+    $('obsEnabled').checked = !!cfg.enabled;
+    $('obsHost').value = cfg.host;
+    $('obsPort').value = cfg.port;
+    $('obsProtocol').value = cfg.protocol;
+    $('obsApiKey').value = cfg.apiKey;
+    $('obsFolder').value = cfg.folder;
+    $('obsVaultName').value = cfg.vaultName || '';
+    $('obsProjectsFolder').value = cfg.projectsFolder || 'AppProjects';
+  }
+  function readObsidianForm() {
+    return {
+      enabled: $('obsEnabled').checked,
+      host: $('obsHost').value.trim() || '127.0.0.1',
+      port: Number($('obsPort').value) || 27123,
+      protocol: $('obsProtocol').value,
+      apiKey: $('obsApiKey').value.trim(),
+      folder: $('obsFolder').value.trim() || 'AppNotes',
+      vaultName: $('obsVaultName').value.trim(),
+      projectsFolder: $('obsProjectsFolder').value.trim() || 'AppProjects',
+    };
+  }
+  if (window.ObsidianSync) {
+    loadObsidianForm();
+    $('obsSave').addEventListener('click', () => {
+      ObsidianSync.setConfig(readObsidianForm());
+      showStatus($('obsStatus'), 'Saved.', 'ok');
+    });
+    $('obsTest').addEventListener('click', () => {
+      ObsidianSync.setConfig(readObsidianForm());
+      showStatus($('obsStatus'), 'Testing…', null);
+      ObsidianSync.testConnection().then((ok) => {
+        showStatus($('obsStatus'), ok ? '✅ Connected' : '❌ Not reachable', ok ? 'ok' : 'err');
+      });
+    });
+  }
+
+  renderBackupLine();
+})();
+</script>
+</body>
+</html>

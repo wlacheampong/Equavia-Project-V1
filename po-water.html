@@ -19,8 +19,11 @@ Contact: rowan.wisere@gmail.com
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0a0a0b">
 <link rel="icon" type="image/webp" href="images/Index Landing Page.webp">
-<link rel="apple-touch-icon" href="images/Index Landing Page.webp">
-<title>Water Coach</title>
+<link rel="apple-touch-icon" href="images/apple-touch-icon.png">
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Equavia">
+<title>Water Coach — Equavia</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="sync.js" defer></script>
 <script src="topbar.js" defer></script>
@@ -696,12 +699,17 @@ html, body {
     } catch (e) {}
     return normalize({});
   }
+  // Global default from Settings, used only when this page has no saved
+  // choice of its own yet -- never overrides an existing per-page pick.
+  function sharedWeightUnit() {
+    try { return JSON.parse(localStorage.getItem('eq.units.weight')); } catch (e) { return null; }
+  }
   function normalize(s) {
     s = s || {};
     s.unit = s.unit || CONFIG.unit || 'bottle';
     s.bottleMl = s.bottleMl || CONFIG.bottleMl || 500;
     s.glassMl  = s.glassMl  || CONFIG.glassMl  || 250;
-    s.weightUnit = s.weightUnit || 'kg';
+    s.weightUnit = s.weightUnit || sharedWeightUnit() || 'kg';
     s.profile = Object.assign({}, CONFIG.profile, s.profile || {});
     s.caffeineMgPerDay = (s.caffeineMgPerDay != null) ? s.caffeineMgPerDay : (CONFIG.caffeineMgPerDay || 200);
     s.substances = Array.isArray(s.substances) ? s.substances : (CONFIG.defaultSubstances || []);

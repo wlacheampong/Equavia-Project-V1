@@ -8,25 +8,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta name="theme-color" content="#050506">
 <link rel="icon" type="image/webp" href="images/Index Landing Page.webp">
-<link rel="apple-touch-icon" href="images/Index Landing Page.webp">
-<title>Your peak today — a Vitality plug</title>
+<link rel="apple-touch-icon" href="images/apple-touch-icon.png">
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Equavia">
+<title>Your peak today — Equavia</title>
 <script src="topbar.js" defer></script>
-<script>
-(function () {
-  // This page has its own top navigation (the category tab row, matching
-  // dashboard.html), so the shared bottom tab bar from topbar.js is
-  // redundant here. DOMContentLoaded always fires after every deferred
-  // script has run, so waiting for it guarantees the element exists
-  // before we remove it. (Note: `defer` has no effect on inline scripts,
-  // so we can't rely on script order alone — this listener is what
-  // actually delays us.)
-  document.addEventListener('DOMContentLoaded', function () {
-    var bottombar = document.getElementById('bottombar');
-    if (bottombar) bottombar.remove();
-    document.body.classList.remove('has-bottombar');
-  });
-})();
-</script>
 <!--
   YOUR PEAK TODAY · a Vitality PLUG  (·01 Your day + ·02 Your schedule)
   Rebuilt on the real Peak page, then lifted a level for the Lab:
@@ -253,14 +240,6 @@
     *{animation:none !important;opacity:1 !important;stroke-dashoffset:0 !important}
   }
 
-  .cat-tabs{display:flex;justify-content:center;flex-wrap:wrap;gap:32px;margin:0 0 22px;position:relative;z-index:1}
-  .cat-tab{display:flex;flex-direction:column;align-items:center;gap:6px;padding:2px;border:0;background:transparent;color:var(--muted);font-family:inherit;text-decoration:none;cursor:pointer;transition:color .2s}
-  .cat-tab:hover{color:var(--muted-strong)}
-  .cat-tab.is-active{color:var(--fg)}
-  .cat-tab-icon{width:22px;height:22px}
-  .cat-tab-icon svg{width:100%;height:100%;display:block}
-  .cat-tab-label{font-size:11px;font-weight:600;line-height:1.25;text-align:center;white-space:nowrap}
-  @media (max-width:480px){ .cat-tabs{gap:18px} .cat-tab-label{font-size:10px} }
 </style>
 </head>
 <body>
@@ -271,36 +250,6 @@
 </svg>
 
 <div class="wrapContent">
-  <div class="cat-tabs" role="tablist" aria-label="Site sections">
-    <a class="cat-tab" href="dashboard.html">
-      <span class="cat-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11 12 4l9 7"/><path d="M5 10v9a1 1 0 0 0 1 1h3v-6h6v6h3a1 1 0 0 0 1-1v-9"/></svg></span>
-      <span class="cat-tab-label">Main</span>
-    </a>
-    <a class="cat-tab" href="health.html">
-      <span class="cat-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M12 8v8M8 12h8"/></svg></span>
-      <span class="cat-tab-label">Health</span>
-    </a>
-    <a class="cat-tab" href="gym.html">
-      <span class="cat-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 9v6M17.5 9v6M3 10.5v3M21 10.5v3M6.5 12h11"/></svg></span>
-      <span class="cat-tab-label">Fitness</span>
-    </a>
-    <a class="cat-tab is-active" href="peak.html" aria-current="page">
-      <span class="cat-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20 9 8l4 6 2-3 6 9Z"/></svg></span>
-      <span class="cat-tab-label">Peak</span>
-    </a>
-    <a class="cat-tab" href="finance.html">
-      <span class="cat-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h13a1 1 0 0 1 1 1v3"/><path d="M3 7v10a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1H6a2 2 0 0 1-2-2"/><circle cx="17" cy="13" r="1.4"/></svg></span>
-      <span class="cat-tab-label">Finance</span>
-    </a>
-    <a class="cat-tab" href="planner.html">
-      <span class="cat-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1"/><path d="M9 12l2 2 4-4"/></svg></span>
-      <span class="cat-tab-label">Planner</span>
-    </a>
-    <a class="cat-tab" href="ability.html">
-      <span class="cat-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2c1 4-4 5-4 9a4 4 0 0 0 8 0c0-2-1-3-1-3s2 1 2 5a6 6 0 0 1-12 0c0-6 5-6 7-11Z"/></svg></span>
-      <span class="cat-tab-label">Ability</span>
-    </a>
-  </div>
 
   <!-- hero -->
   <div class="hero">
@@ -326,7 +275,6 @@
         </span>
         <span class="stackActions">
           <button type="button" class="miniBtn" id="addBtn">+ Add</button>
-          <a class="miniBtn" href="https://www.patreon.com/RowanTBK/membership" target="_blank" rel="noopener">Setup ↗</a>
         </span>
       </div>
       <div class="addRow" id="addRow" hidden></div>
@@ -367,7 +315,7 @@
           </div>
           <button type="button" id="wireClose" style="background:transparent;border:1px solid var(--border);border-radius:999px;color:var(--muted);padding:6px 14px;font-family:var(--font-mono);font-size:10px;letter-spacing:0.12em;cursor:pointer">CLOSE</button>
         </div>
-        <svg viewBox="0 0 900 250" style="width:100%;display:block;margin-top:18px">
+        <svg viewBox="0 0 900 180" style="width:100%;display:block;margin-top:18px">
           <text class="wt" x="10" y="22">YOUR SAVED DATA</text>
           <rect x="10" y="34"  width="230" height="30" rx="8" fill="none" stroke="#243c32"/><text class="wt wk" x="24" y="53">wearable · recovery + sleep</text>
           <rect x="10" y="72"  width="230" height="30" rx="8" fill="none" stroke="#243c32"/><text class="wt wk" x="24" y="91">fuel · caffeine logs</text>
@@ -385,12 +333,7 @@
           <path class="wl" d="M730 98  H 840"/>
           <path class="wl" d="M730 140 C 800 140, 815 100, 840 100"/>
           <rect x="840" y="80" width="44" height="36" rx="10" fill="none" stroke="#6EE7B7"/><text class="wt wk" x="852" y="103">y</text>
-          <text class="wt" x="10" y="215">CAFFEINE RUNS REAL PHARMACOKINETICS · ONSET &#8594; PEAK &#8594; HALF-LIFE DECAY, SHAPED BY YOUR BODYWEIGHT</text>
-          <text class="wt" x="10" y="238">THE OUTPUT &#8212; YOUR PEAK WINDOWS &#8212; FEEDS YOUR GOAL (y). SAME STORE YOUR TILES ALREADY WRITE.</text>
         </svg>
-        <div style="margin-top:14px;font-family:var(--font-mono);font-size:10px;letter-spacing:0.12em;color:var(--muted)">
-          MEMBERS: TELL THE MENTOR &#8212; <i style="color:var(--fg);font-family:var(--font-serif);font-size:14px;letter-spacing:0">&ldquo;wire the peak graph into my data&rdquo;</i>
-        </div>
       </div>
     </div>
 

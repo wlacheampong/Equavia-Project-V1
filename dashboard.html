@@ -6,27 +6,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#050506">
 <link rel="icon" type="image/webp" href="images/Index Landing Page.webp">
-<link rel="apple-touch-icon" href="images/Index Landing Page.webp">
-<title>William's Dashboard</title>
+<link rel="apple-touch-icon" href="images/apple-touch-icon.png">
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Equavia">
+<title>Equavia</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="sync.js" defer></script>
 <script src="topbar.js" defer></script>
-<script>
-(function () {
-  // This page has its own top navigation (the category tab row), so the
-  // shared bottom tab bar from topbar.js is redundant here. topbar.js is
-  // deferred and injects the bottom bar synchronously as soon as it runs;
-  // DOMContentLoaded always fires after every deferred script has run, so
-  // waiting for it guarantees the element exists before we remove it.
-  // (Note: `defer` has no effect on inline scripts, so we can't rely on
-  // script order alone here — this listener is what actually delays us.)
-  document.addEventListener('DOMContentLoaded', function () {
-    var bottombar = document.getElementById('bottombar');
-    if (bottombar) bottombar.remove();
-    document.body.classList.remove('has-bottombar');
-  });
-})();
-</script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
 :root {
   --text-primary: #FAFAFA;
@@ -97,6 +85,21 @@ body::after {
   color: transparent;
 }
 @media (max-width: 480px) { .dash-title { font-size: 22px; } }
+
+.backup-nudge {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  border-radius: 12px;
+  background: rgba(242, 192, 99, 0.10);
+  border: 1px solid rgba(242, 192, 99, 0.22);
+  color: #FFE2A8;
+  text-decoration: none;
+  font-size: 12.5px; font-weight: 600;
+}
+.backup-nudge-icon { font-size: 13px; flex-shrink: 0; }
+.backup-nudge #backupNudgeText, .backup-nudge span:not(.backup-nudge-icon):not(.backup-nudge-cta) { flex: 1; }
+.backup-nudge-cta { flex-shrink: 0; opacity: 0.85; white-space: nowrap; }
 
 /* ===== Component 2: Goal Ticker ===== */
 .ticker-row {
@@ -689,55 +692,105 @@ body::after {
   .gm-progress-num { font-size: 36px; }
 }
 
-/* ===== Component 5: Category Tabs ===== */
-.cat-tabs {
+/* ===== Component 6: Dashboard summary cards ===== */
+.page-wide { max-width: 1280px; }
+.dash-summary-stack {
   display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 32px;
-  margin: 22px 0 20px;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 640px;
+  margin: 0 auto;
 }
-.cat-tab {
-  display: flex; flex-direction: column; align-items: center;
-  gap: 6px;
-  padding: 2px;
-  border: 0;
-  background: transparent;
-  color: var(--text-tertiary);
-  font-family: inherit;
+.dsum-card {
+  display: block;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 16px;
+  padding: 16px 18px;
   text-decoration: none;
-  cursor: pointer;
-  transition: color 0.2s;
+  color: inherit;
+  transition: background 0.15s;
 }
-.cat-tab:hover { color: var(--text-secondary); }
-.cat-tab.is-active { color: var(--text-primary); }
-.cat-tab-icon { width: 22px; height: 22px; }
-.cat-tab-icon svg { width: 100%; height: 100%; display: block; }
-.cat-tab-label {
-  font-size: 11px; font-weight: 600;
-  line-height: 1.25;
-  text-align: center;
-  white-space: nowrap;
+.dsum-card:hover { background: rgba(255, 255, 255, 0.06); }
+.dsum-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
 }
-@media (max-width: 480px) {
-  .cat-tabs { gap: 18px; }
-  .cat-tab-label { font-size: 10px; }
+.dsum-icon { font-size: 16px; line-height: 1; }
+.dsum-title {
+  flex: 1;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+.dsum-arrow { color: var(--text-tertiary); font-size: 13px; opacity: 0.6; }
+.dsum-body {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.4;
 }
 
-/* ===== Component 6: Dashboard grid ===== */
-.page-wide { max-width: 1280px; }
-.dash-grid {
-  display: grid;
-  grid-template-columns: 230px minmax(0, 1fr) 280px;
-  align-items: start;
-  gap: 20px;
+/* ===== To-Do Completion Rate Chart ===== */
+.dsum-chart-card { background: rgba(255,255,255,0.04); border-radius: 16px; padding: 16px 18px; }
+.todo-chart-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.todo-chart-range-toggle { display: flex; gap: 4px; }
+.todo-chart-range-btn {
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+  color: var(--text-tertiary); font-family: var(--font-mono); font-size: 10px;
+  font-weight: 700; letter-spacing: 0.04em; padding: 4px 9px; border-radius: 6px; cursor: pointer;
 }
-@media (max-width: 900px) {
-  .dash-grid { grid-template-columns: 1fr; }
-  .dash-col-center { order: 1; }
-  .dash-col-left   { order: 2; }
-  .dash-col-right  { order: 3; }
+.todo-chart-range-btn.is-active { background: var(--success); border-color: var(--success); color: #0a0a0b; }
+.todo-chart-empty { font-size: 12px; color: var(--text-tertiary); text-align: center; padding: 14px 4px; }
+.todo-chart-wrap { position: relative; margin: 4px 0 4px; }
+.todo-chart-wrap.hidden, .todo-chart-legend.hidden { display: none; }
+.todo-chart-yaxis {
+  position: absolute; left: 0; top: 0; bottom: 0; width: 32px;
+  display: flex; flex-direction: column; justify-content: space-between; padding: 4px 0;
 }
+.todo-chart-yaxis span { font-size: 9.5px; color: var(--text-tertiary); font-family: var(--font-mono); }
+.todo-chart { height: 120px; display: block; margin-left: 32px; width: calc(100% - 32px); }
+.todo-grid { stroke: rgba(255,255,255,0.05); stroke-width: 1; }
+.todo-area { fill: url(#todoFill); }
+.todo-line { fill: none; stroke: var(--success); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; opacity: 0.55; }
+.todo-avg-line { fill: none; stroke: var(--success); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.todo-dot { fill: var(--success); opacity: 0.55; }
+.todo-chart-meta { text-align: center; font-size: 10.5px; color: var(--text-tertiary); margin-top: 6px; }
+.todo-chart-legend { display: flex; justify-content: center; gap: 16px; margin-top: 8px; }
+.todo-legend-item { display: inline-flex; align-items: center; gap: 6px; font-size: 9.5px; letter-spacing: 0.06em; color: var(--text-tertiary); }
+.todo-legend-dot { width: 12px; height: 2px; border-radius: 1px; background: var(--success); opacity: 0.55; }
+.todo-legend-dot-avg { opacity: 1; height: 2.5px; }
+
+/* ===== Weekly Report (3.3) ===== */
+.wkr-card { background: rgba(255,255,255,0.04); border-radius: 16px; padding: 18px; max-width: 640px; margin: 0 auto 18px; }
+.wkr-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.wkr-head-center { text-align: center; display: flex; flex-direction: column; gap: 3px; }
+.wkr-range { font-family: var(--font-mono); font-size: 11px; color: var(--text-secondary); font-weight: 600; }
+.wkr-nav-btn {
+  width: 28px; height: 28px; border-radius: 50%; background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08); color: var(--text-secondary); cursor: pointer;
+  display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0;
+}
+.wkr-nav-btn:hover { background: rgba(255,255,255,0.08); color: var(--text-primary); }
+.wkr-nav-btn:disabled { opacity: 0.3; cursor: default; }
+.wkr-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 14px; }
+.wkr-section { background: rgba(255,255,255,0.025); border-radius: 12px; padding: 12px 14px; }
+.wkr-section-title { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 8px; }
+.wkr-metric { font-size: 12.5px; color: var(--text-primary); line-height: 1.6; }
+.wkr-metric-empty { font-size: 11.5px; color: var(--text-quaternary); font-style: italic; }
+.wkr-footer { display: flex; align-items: center; gap: 10px; margin-top: 16px; }
+.wkr-obsidian-btn {
+  padding: 8px 14px; border-radius: 9px; border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.04); color: var(--text-secondary);
+  font-family: inherit; font-size: 11.5px; font-weight: 600; cursor: pointer;
+}
+.wkr-obsidian-btn:hover { background: rgba(255,255,255,0.08); color: var(--text-primary); }
+.wkr-obsidian-status { font-size: 11px; color: var(--text-tertiary); }
+.wkr-obsidian-status.is-error { color: var(--danger); }
+.wkr-empty { max-width: 640px; margin: 0 auto 18px; text-align: center; font-size: 12px; color: var(--text-tertiary); padding: 16px; }
 
 /* ===== Component 7: Goals (sidebar) ===== */
 .dgt-add-form { margin-bottom: 14px; display: flex; flex-direction: column; gap: 6px; }
@@ -1272,12 +1325,72 @@ body::after {
   .cal-month-event { display: none; }
   .cal-month-more { display: block; }
 }
+
+/* ===== Gmail Notification Hub ===== */
+.gmail-card { background: rgba(255,255,255,0.04); border-radius: 16px; padding: 16px 18px; max-width: 640px; margin: 0 auto 18px; }
+.gmail-disc-text { font-size: 12.5px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 12px; }
+.gmail-connect-btn, .gmail-refresh-btn {
+  border: none; cursor: pointer; font-family: inherit;
+}
+.gmail-connect-btn {
+  padding: 9px 18px; border-radius: 10px; font-size: 12.5px; font-weight: 700;
+  background: linear-gradient(180deg, #ffffff 0%, #e8e5dd 100%); color: #0a0a0b;
+}
+.gmail-head { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.gmail-unread-badge {
+  min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px;
+  background: var(--danger); color: #fff; font-size: 11px; font-weight: 700;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.gmail-unread-badge.zero { background: rgba(255,255,255,0.08); color: var(--text-tertiary); }
+.gmail-head-label { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-tertiary); font-weight: 700; flex: 1; }
+.gmail-refresh-btn {
+  width: 30px; height: 30px; border-radius: 50%; background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06); color: var(--text-secondary);
+  display: flex; align-items: center; justify-content: center; transition: transform 0.4s;
+}
+.gmail-refresh-btn.is-loading { animation: gmailSpin 0.8s linear infinite; }
+@keyframes gmailSpin { to { transform: rotate(360deg); } }
+.gmail-list { display: flex; flex-direction: column; gap: 2px; }
+.gmail-msg { padding: 10px 4px; border-top: 1px solid rgba(255,255,255,0.05); cursor: pointer; }
+.gmail-msg:first-child { border-top: none; }
+.gmail-msg-row { display: flex; align-items: baseline; gap: 8px; }
+.gmail-msg-sender { font-size: 13px; font-weight: 700; color: var(--text-primary); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gmail-msg-time { font-size: 10.5px; color: var(--text-tertiary); font-family: var(--font-mono); white-space: nowrap; }
+.gmail-msg-subject { font-size: 12.5px; color: var(--text-secondary); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gmail-msg-snippet { font-size: 11.5px; color: var(--text-tertiary); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gmail-msg-tag {
+  display: inline-block; margin-top: 5px; font-size: 9.5px; font-weight: 700; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--success); background: rgba(107,227,164,0.10);
+  border: 1px solid rgba(107,227,164,0.25); border-radius: 999px; padding: 2px 8px;
+}
+.gmail-msg-body { margin-top: 10px; padding-top: 10px; border-top: 1px dashed rgba(255,255,255,0.08); }
+.gmail-msg-body-text { font-size: 12.5px; color: var(--text-secondary); line-height: 1.5; white-space: pre-wrap; max-height: 220px; overflow-y: auto; }
+.gmail-msg-body-loading { font-size: 11.5px; color: var(--text-tertiary); font-style: italic; }
+.gmail-msg-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.gmail-msg-actions a, .gmail-msg-actions button {
+  font-family: inherit; font-size: 11px; font-weight: 600; padding: 6px 12px; border-radius: 8px;
+  text-decoration: none; cursor: pointer; border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.04); color: var(--text-secondary);
+}
+.gmail-msg-actions a:hover, .gmail-msg-actions button:hover { color: var(--text-primary); border-color: rgba(255,255,255,0.2); }
+.gmail-msg-actions button.is-done { color: var(--success); border-color: rgba(107,227,164,0.3); }
+.gmail-empty { font-size: 12px; color: var(--text-tertiary); text-align: center; padding: 12px 4px; }
+.gmail-disconnect-link { display: block; margin: 12px auto 0; padding: 4px; background: transparent; border: none; color: var(--text-tertiary); font-family: inherit; font-size: 10.5px; text-align: center; cursor: pointer; }
+.gmail-disconnect-link:hover { color: var(--text-secondary); text-decoration: underline; }
+.gmail-err { background: rgba(255,107,107,0.08); border: 1px solid rgba(255,107,107,0.28); color: #FF8A8A; padding: 8px 10px; border-radius: 8px; font-size: 11px; margin-bottom: 10px; }
 </style>
 </head>
 <body>
 <div class="page">
 
-  <h1 class="dash-title">William's Dashboard</h1>
+  <h1 class="dash-title">Equavia</h1>
+
+  <a class="backup-nudge" id="backupNudge" href="settings.html" style="display:none;">
+    <span class="backup-nudge-icon">⚠️</span>
+    <span id="backupNudgeText"></span>
+    <span class="backup-nudge-cta">Back up now →</span>
+  </a>
 
   <div class="ticker-row">
     <div class="goal-ticker" id="goalTicker" aria-live="polite" aria-atomic="true">
@@ -1344,244 +1457,138 @@ body::after {
 
 <div class="page page-wide">
 
-  <div class="cat-tabs" id="catTabs" role="tablist" aria-label="Site sections">
-    <a class="cat-tab is-active" href="dashboard.html" aria-current="page">
-      <span class="cat-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11 12 4l9 7"/><path d="M5 10v9a1 1 0 0 0 1 1h3v-6h6v6h3a1 1 0 0 0 1-1v-9"/></svg></span>
-      <span class="cat-tab-label">Main</span>
-    </a>
-    <a class="cat-tab" href="health.html">
-      <span class="cat-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M12 8v8M8 12h8"/></svg></span>
-      <span class="cat-tab-label">Health</span>
-    </a>
-    <a class="cat-tab" href="gym.html">
-      <span class="cat-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 9v6M17.5 9v6M3 10.5v3M21 10.5v3M6.5 12h11"/></svg></span>
-      <span class="cat-tab-label">Fitness</span>
-    </a>
-    <a class="cat-tab" href="peak.html">
-      <span class="cat-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20 9 8l4 6 2-3 6 9Z"/></svg></span>
-      <span class="cat-tab-label">Peak</span>
-    </a>
-    <a class="cat-tab" href="finance.html">
-      <span class="cat-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h13a1 1 0 0 1 1 1v3"/><path d="M3 7v10a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1H6a2 2 0 0 1-2-2"/><circle cx="17" cy="13" r="1.4"/></svg></span>
-      <span class="cat-tab-label">Finance</span>
-    </a>
-    <a class="cat-tab" href="planner.html">
-      <span class="cat-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1"/><path d="M9 12l2 2 4-4"/></svg></span>
-      <span class="cat-tab-label">Planner</span>
-    </a>
-    <a class="cat-tab" href="ability.html">
-      <span class="cat-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2c1 4-4 5-4 9a4 4 0 0 0 8 0c0-2-1-3-1-3s2 1 2 5a6 6 0 0 1-12 0c0-6 5-6 7-11Z"/></svg></span>
-      <span class="cat-tab-label">Ability</span>
-    </a>
-  </div>
-
-  <div class="dash-grid">
-
-    <!-- LEFT: Goals -->
-    <aside class="dash-col dash-col-left">
-      <div class="gm-card">
-        <div class="proj-title" style="margin-bottom:14px;">Goals</div>
-        <div class="dgt-add-form" id="dgtAddForm">
-          <input type="text" id="dgtGoalTitle" placeholder="Goal name…">
-          <select id="dgtGoalRank">
-            <option value="Year">Year</option>
-            <option value="Quarter">Quarter</option>
-            <option value="Month">Month</option>
-            <option value="Week">Week</option>
-            <option value="Day">Day</option>
-          </select>
-          <input type="date" id="dgtGoalDeadline">
-          <button type="button" id="dgtGoalAddBtn">+ Add Goal</button>
-        </div>
-        <div class="dgt-goals" id="dgtGoals"></div>
-      </div>
-    </aside>
-
-    <!-- CENTER: To Do List + Projects -->
-    <div class="dash-col dash-col-center">
-
-  <div class="section">
-    <div class="section-title">To Do List</div>
-
-    <!-- TODAY -->
-    <div class="gm-card" id="gmCardToday">
-      <div class="gm-header">
-        <div class="gm-header-left">
-          <div class="gm-eyebrow" id="todayLabel">Today —</div>
-          <div class="gm-progress-row">
-            <span class="gm-progress-num"   id="gmProgressNum">0</span>
-            <span class="gm-progress-total" id="gmProgressTotal">/ 0</span>
-            <span class="gm-progress-label" id="gmProgressLabel">no goals yet</span>
-          </div>
-        </div>
-        <div class="gm-streak" id="gmStreak">
-          <span class="gm-streak-icon">⚡</span>
-          <span class="gm-streak-num" id="gmStreakNum">0</span>
-          <span>day streak</span>
-        </div>
-      </div>
-      <div class="gm-bar" id="gmBar"></div>
-      <ul id="goalList" class="goal-list gm-list"></ul>
-      <div id="emptyState" class="empty-state">No goals for today yet — add one below.</div>
-      <button type="button" id="gmPushBtn" class="gm-push-btn" style="display:none;">Push remaining to tomorrow</button>
-      <div class="goal-input-wrap gm-input-wrap">
-        <input id="goalInput" class="gm-input" type="text" placeholder="Add a goal for today…" autocomplete="off">
-        <button type="button" id="goalAddBtn"    class="gm-add">+ Add</button>
-        <button type="button" id="goalPolishBtn" class="gm-polish">✨ Polish</button>
-        <div class="gm-status" id="polishStatus"></div>
-      </div>
+  <div class="section-title" style="max-width:640px;margin:0 auto 10px;">Inbox</div>
+  <div class="gmail-card" id="gmailCard">
+    <div id="gmailErr" class="gmail-err" style="display:none"></div>
+    <div id="gmailDisc">
+      <div class="gmail-disc-text">Connect Gmail to see unread mail here, without opening the Gmail app — read-only, nothing is ever sent or modified from this app.</div>
+      <button id="gmailConnectBtn" class="gmail-connect-btn" type="button">Connect Gmail</button>
     </div>
-
-    <!-- PLAN TOMORROW -->
-    <div class="gm-card gm-card-tomorrow" id="gmCardTomorrow">
-      <div class="gm-header">
-        <div class="gm-header-left">
-          <div class="gm-eyebrow" id="tomorrowLabel">Plan tomorrow —</div>
-          <div class="gm-tomorrow-sub">Write tonight, locked until 6 AM.</div>
-        </div>
-        <div class="gm-tomorrow-count" id="gmTomorrowCount">0 planned</div>
+    <div id="gmailConn" style="display:none">
+      <div class="gmail-head">
+        <span class="gmail-unread-badge zero" id="gmailUnreadBadge">0</span>
+        <span class="gmail-head-label">unread</span>
+        <button id="gmailRefreshBtn" class="gmail-refresh-btn" type="button" aria-label="Refresh"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M20.49 15A9 9 0 1 1 5.64 5.64L23 10"/></svg></button>
       </div>
-      <ul id="tomorrowList" class="goal-list gm-list"></ul>
-      <div id="tomorrowEmpty" class="empty-state">Nothing planned for tomorrow yet</div>
-      <div class="goal-input-wrap gm-input-wrap">
-        <input id="tomorrowInput" class="gm-input" type="text" placeholder="Add a goal for tomorrow…" autocomplete="off">
-        <button type="button" id="tomorrowAddBtn"    class="gm-add">+ Add</button>
-        <button type="button" id="tomorrowPolishBtn" class="gm-polish">✨ Polish</button>
-        <div class="gm-status" id="tomorrowStatus"></div>
-      </div>
+      <div id="gmailList" class="gmail-list"></div>
+      <div id="gmailEmpty" class="gmail-empty" style="display:none">No unread mail.</div>
+      <button id="gmailDisconnectBtn" class="gmail-disconnect-link" type="button">Disconnect</button>
     </div>
   </div>
 
-  <div class="section">
-    <div class="section-title">Projects</div>
-    <div class="gm-card">
-      <div class="proj-header">
-        <div class="proj-title">📁 Projects</div>
-        <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
-          <div class="proj-view-toggle">
-            <button type="button" class="proj-view-btn is-active" data-view="status">By Status</button>
-            <button type="button" class="proj-view-btn" data-view="all">All Projects</button>
-            <button type="button" class="proj-view-btn" data-view="gantt">Gantt</button>
-          </div>
-          <div class="proj-tools">
-            <button type="button" class="proj-tool-btn" id="projFilterBtn" disabled title="Filter — coming soon">⏷</button>
-            <button type="button" class="proj-tool-btn" id="projSortBtn" disabled title="Sort — coming soon">⇅</button>
-            <button type="button" class="proj-tool-btn" id="projSearchBtn" title="Search projects">🔍</button>
-            <input type="text" class="proj-search" id="projSearchInput" placeholder="Search…">
-          </div>
+  <div class="dash-summary-stack" id="dashSummaryStack">
+    <a class="dsum-card" href="planner.html#tasks" data-card="tasks">
+      <div class="dsum-head">
+        <span class="dsum-icon">✅</span>
+        <span class="dsum-title">Tasks</span>
+        <span class="dsum-arrow">→</span>
+      </div>
+      <div class="dsum-body" id="dsumTasksBody">Loading…</div>
+    </a>
+
+    <div class="dsum-chart-card" id="todoChartCard">
+      <div class="todo-chart-head">
+        <span class="dsum-title">Completion rate</span>
+        <div class="todo-chart-range-toggle">
+          <button type="button" class="todo-chart-range-btn" id="todoRange4">4W</button>
+          <button type="button" class="todo-chart-range-btn is-active" id="todoRange12">12W</button>
+          <button type="button" class="todo-chart-range-btn" id="todoRange52">52W</button>
         </div>
       </div>
-
-      <div class="proj-columns" id="projColumns"></div>
-      <div class="proj-gantt-stub" id="projGanttStub" style="display:none;">Gantt view is coming soon.</div>
-
-      <button type="button" class="proj-add-toggle" id="projAddToggle">+ New Project</button>
-      <div class="proj-add-form" id="projAddForm">
-        <input type="text" id="projTitleInput" placeholder="Project title…">
-        <select id="projStatusInput">
-          <option value="not-started">Not started</option>
-          <option value="in-progress">In progress</option>
-          <option value="done">Done</option>
-        </select>
-        <select id="projPriorityInput">
-          <option value="low">Low</option>
-          <option value="medium">Medium</option>
-          <option value="high">High</option>
-        </select>
-        <button type="button" id="projAddBtn">Add</button>
-      </div>
-    </div>
-  </div>
-
-    </div>
-
-    <!-- RIGHT: Checklists + Quick Note -->
-    <aside class="dash-col dash-col-right">
-      <div id="chkList"></div>
-
-      <a class="gm-card shopping-checklist-link" href="planner.html#shopping-list">
-        <span class="shopping-checklist-icon">🛒</span>
-        <span class="shopping-checklist-label">Shopping Checklist</span>
-      </a>
-
-      <div class="qnote-wrap">
-        <a class="qnote-btn" href="notes.html">📝 Quick Note</a>
-      </div>
-    </aside>
-
-  </div>
-
-  <div class="section">
-    <div class="section-title">Calendar</div>
-    <div class="gm-card">
-      <div class="cal-toolbar">
-        <div class="cal-toolbar-left">
-          <span class="cal-label" id="calLabel">—</span>
-          <div class="cal-view-toggle">
-            <button type="button" class="cal-view-btn" data-cal-view="day">Day</button>
-            <button type="button" class="cal-view-btn is-active" data-cal-view="week">Week</button>
-            <button type="button" class="cal-view-btn" data-cal-view="month">Month</button>
-          </div>
+      <div class="todo-chart-empty" id="todoChartEmpty">Not enough history yet — check back after a few days.</div>
+      <div class="todo-chart-wrap hidden" id="todoChartWrap">
+        <div class="todo-chart-yaxis">
+          <span>100%</span>
+          <span>50%</span>
+          <span>0%</span>
         </div>
-        <div class="cal-toolbar-right">
-          <div class="cal-nav">
-            <button type="button" class="cal-nav-btn" id="calPrevBtn" aria-label="Previous">‹</button>
-            <button type="button" class="cal-nav-today" id="calTodayBtn">Today</button>
-            <button type="button" class="cal-nav-btn" id="calNextBtn" aria-label="Next">›</button>
-          </div>
-          <button type="button" class="cal-connect-btn" id="calConnectBtn">Connect Google Calendar</button>
-        </div>
+        <svg class="todo-chart" viewBox="0 0 320 130" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="todoFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#6BE3A4" stop-opacity="0.25"/>
+              <stop offset="100%" stop-color="#6BE3A4" stop-opacity="0"/>
+            </linearGradient>
+            <filter id="todoGlow"><feGaussianBlur stdDeviation="1.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          </defs>
+          <line class="todo-grid" x1="0" y1="20" x2="320" y2="20"></line>
+          <line class="todo-grid" x1="0" y1="65" x2="320" y2="65"></line>
+          <line class="todo-grid" x1="0" y1="110" x2="320" y2="110"></line>
+          <g id="todoChartContent"></g>
+        </svg>
+        <div class="todo-chart-meta" id="todoChartMeta">0 days</div>
       </div>
-      <div class="cal-status" id="calStatus"></div>
-      <div class="cal-day-grid" id="calDayGrid" style="display:none;">
-        <div class="cal-day-allday" id="calDayAllDay"></div>
-        <div class="cal-day-timeline" id="calDayTimeline"></div>
+      <div class="todo-chart-legend hidden" id="todoChartLegend">
+        <span class="todo-legend-item"><span class="todo-legend-dot"></span>Daily</span>
+        <span class="todo-legend-item"><span class="todo-legend-dot todo-legend-dot-avg"></span>7-day avg</span>
       </div>
-      <div class="cal-week-grid" id="calWeekGrid"></div>
-      <div class="cal-month-grid" id="calMonthGrid" style="display:none;"></div>
     </div>
+
+    <a class="dsum-card" href="planner.html#calendar" data-card="calendar">
+      <div class="dsum-head">
+        <span class="dsum-icon">🗓️</span>
+        <span class="dsum-title">Calendar</span>
+        <span class="dsum-arrow">→</span>
+      </div>
+      <div class="dsum-body" id="dsumCalendarBody">Loading…</div>
+    </a>
+
+    <a class="dsum-card" href="planner.html#goals" data-card="goals">
+      <div class="dsum-head">
+        <span class="dsum-icon">🎯</span>
+        <span class="dsum-title">Goals</span>
+        <span class="dsum-arrow">→</span>
+      </div>
+      <div class="dsum-body" id="dsumGoalsBody">Loading…</div>
+    </a>
+
+    <a class="dsum-card" href="health.html" data-card="health">
+      <div class="dsum-head">
+        <span class="dsum-icon">💊</span>
+        <span class="dsum-title">Health</span>
+        <span class="dsum-arrow">→</span>
+      </div>
+      <div class="dsum-body" id="dsumHealthBody">Loading…</div>
+    </a>
+
+    <a class="dsum-card" href="gym.html" data-card="fitness">
+      <div class="dsum-head">
+        <span class="dsum-icon">💪</span>
+        <span class="dsum-title">Fitness</span>
+        <span class="dsum-arrow">→</span>
+      </div>
+      <div class="dsum-body" id="dsumFitnessBody">Loading…</div>
+    </a>
+
+    <a class="dsum-card" href="finance.html" data-card="finance">
+      <div class="dsum-head">
+        <span class="dsum-icon">💰</span>
+        <span class="dsum-title">Finance</span>
+        <span class="dsum-arrow">→</span>
+      </div>
+      <div class="dsum-body" id="dsumFinanceBody">Loading…</div>
+    </a>
   </div>
 
-</div>
-
-<div class="dr-modal-bg" id="calEventModalBg">
-  <div class="dr-modal" id="calEventModal">
-    <h3 id="calEventModalTitle">Add event</h3>
-    <div class="cal-event-modal-source" id="calEventModalSource" style="display:none;"></div>
-    <div class="dr-field">
-      <label for="calEventTitleInput">Title</label>
-      <input type="text" id="calEventTitleInput" placeholder="Event name…">
+  <div class="wkr-card" id="weeklyReportCard" style="display:none;">
+    <div class="wkr-head">
+      <button type="button" class="wkr-nav-btn" id="wkrPrevBtn" aria-label="Previous week">‹</button>
+      <div class="wkr-head-center">
+        <span class="section-title" style="margin:0;">Weekly Report</span>
+        <span class="wkr-range" id="wkrRange">—</span>
+      </div>
+      <button type="button" class="wkr-nav-btn" id="wkrNextBtn" aria-label="Next week">›</button>
     </div>
-    <div class="dr-field">
-      <label for="calEventDateInput">Date</label>
-      <input type="date" id="calEventDateInput">
+    <div class="wkr-grid" id="wkrGrid"></div>
+    <div class="wkr-footer">
+      <button type="button" class="wkr-obsidian-btn" id="wkrObsidianBtn">Write to Obsidian</button>
+      <span class="wkr-obsidian-status" id="wkrObsidianStatus"></span>
     </div>
-    <div class="dr-field">
-      <label for="calEventTimeInput">Time</label>
-      <input type="time" id="calEventTimeInput">
-    </div>
-    <div class="dr-field">
-      <label for="calEventDurationInput">Duration (minutes)</label>
-      <input type="number" id="calEventDurationInput" min="5" step="5">
-    </div>
-    <div class="dr-field">
-      <label for="calEventNotesInput">Notes</label>
-      <textarea id="calEventNotesInput" rows="3" placeholder="Optional details…"></textarea>
-    </div>
-    <div class="dr-modal-actions">
-      <button type="button" class="dr-btn-cancel" id="calEventCancelBtn">Cancel</button>
-      <button type="button" class="dr-btn-save" id="calEventSaveBtn">Save</button>
-    </div>
-    <span class="dr-reset-link" id="calEventDeleteLink" style="display:none;">Delete event</span>
   </div>
-</div>
+  <div class="wkr-empty" id="weeklyReportEmpty" style="display:none;">No completed week yet — your first Weekly Report appears after this week closes (Monday 6 AM).</div>
 
 <script>
 (function () {
   'use strict';
-
-  // Paste your Anthropic key here to enable ✨ Polish. Empty = falls back to plain add.
-  const ANTHROPIC_API_KEY = '';
 
   let WAKE_HOUR  = 8;
   let SLEEP_HOUR = 24;
@@ -1900,331 +1907,7 @@ body::after {
     remainingEl.textContent = formatRemaining(minsLeft) + ' awake time left';
   }
 
-  // ---------- Row building ----------
-  function makeInlineEdit(textEl, goals, idx, key, reload) {
-    textEl.addEventListener('click', () => {
-      if (textEl.getAttribute('contenteditable') === 'true') return;
-      const original = textEl.textContent;
-      textEl.setAttribute('contenteditable', 'true');
-      textEl.focus();
-      const range = document.createRange();
-      range.selectNodeContents(textEl);
-      range.collapse(false);
-      const sel = window.getSelection();
-      sel.removeAllRanges(); sel.addRange(range);
-
-      function commit() {
-        const next = textEl.textContent.trim();
-        textEl.removeAttribute('contenteditable');
-        if (next && next !== original) {
-          const list = getGoals(key);
-          if (list[idx]) { list[idx].text = next; setGoals(key, list); }
-          reload();
-        } else {
-          textEl.textContent = original;
-        }
-      }
-      function cancel() {
-        textEl.removeAttribute('contenteditable');
-        textEl.textContent = original;
-      }
-      textEl.addEventListener('blur', commit, { once: true });
-      textEl.addEventListener('keydown', function onKey(e) {
-        if (e.key === 'Enter') { e.preventDefault(); textEl.removeEventListener('keydown', onKey); textEl.blur(); }
-        else if (e.key === 'Escape') { e.preventDefault(); textEl.removeEventListener('keydown', onKey); cancel(); }
-      });
-    });
-  }
-
-  function wireDragReorder(row, listEl, key, reload) {
-    row.setAttribute('draggable', 'true');
-    row.addEventListener('dragstart', (e) => {
-      e.dataTransfer.effectAllowed = 'move';
-      e.dataTransfer.setData('text/plain', row.dataset.idx);
-    });
-    row.addEventListener('dragover', (e) => {
-      e.preventDefault();
-      row.classList.add('is-drag-over');
-    });
-    row.addEventListener('dragleave', () => row.classList.remove('is-drag-over'));
-    row.addEventListener('drop', (e) => {
-      e.preventDefault();
-      row.classList.remove('is-drag-over');
-      const from = parseInt(e.dataTransfer.getData('text/plain'), 10);
-      const to   = parseInt(row.dataset.idx, 10);
-      if (isNaN(from) || isNaN(to) || from === to) return;
-      const list = getGoals(key);
-      const [moved] = list.splice(from, 1);
-      list.splice(to, 0, moved);
-      setGoals(key, list);
-      reload();
-    });
-  }
-
-  function buildGoalRow(goal, idx, key, readOnly, reload) {
-    const li = document.createElement('li');
-    li.className = 'gm-row';
-    li.dataset.idx = String(idx);
-    if (goal.done) li.classList.add('gm-row-done');
-    if (goal.queued) li.classList.add('gm-row-queued');
-
-    const handle = document.createElement('span');
-    handle.className = 'gm-handle';
-    handle.textContent = '⋮⋮';
-    li.appendChild(handle);
-
-    const cb = document.createElement('input');
-    cb.type = 'checkbox';
-    cb.className = 'gm-check';
-    cb.checked = !!goal.done;
-    if (readOnly) { cb.disabled = true; cb.title = 'Activates at 6 AM tomorrow'; }
-    cb.addEventListener('change', () => {
-      const list = getGoals(key);
-      if (!list[idx]) return;
-      list[idx].done = cb.checked;
-      if (cb.checked) list[idx].doneAt = Date.now();
-      else delete list[idx].doneAt;
-      setGoals(key, list);
-      reload();
-    });
-    li.appendChild(cb);
-
-    const text = document.createElement('span');
-    text.className = 'gm-text';
-    text.textContent = goal.text;
-    li.appendChild(text);
-    makeInlineEdit(text, null, idx, key, reload);
-
-    const queueBtn = document.createElement('button');
-    queueBtn.type = 'button';
-    queueBtn.className = 'gm-queue-btn' + (goal.queued ? ' gm-queue-active' : '');
-    queueBtn.textContent = '⚡';
-    queueBtn.title = 'Queue for productivity window';
-    if (readOnly) queueBtn.disabled = true;
-    queueBtn.addEventListener('click', () => {
-      const list = getGoals(key);
-      if (!list[idx]) return;
-      list[idx].queued = !list[idx].queued;
-      setGoals(key, list);
-      li.classList.add('is-queue-flashing');
-      setTimeout(reload, 480);
-    });
-    li.appendChild(queueBtn);
-
-    const del = document.createElement('button');
-    del.type = 'button';
-    del.className = 'goal-delete';
-    del.setAttribute('aria-label', 'Delete goal');
-    del.textContent = '×';
-    del.addEventListener('click', () => {
-      const list = getGoals(key);
-      list.splice(idx, 1);
-      setGoals(key, list);
-      reload();
-    });
-    li.appendChild(del);
-
-    wireDragReorder(li, null, key, reload);
-    return li;
-  }
-
-  // ---------- Renderers ----------
-  function renderTodayHeader() {
-    const goals = getGoals(todayKey());
-    const total = goals.length;
-    const done  = goals.filter(g => g.done).length;
-    document.getElementById('gmProgressNum').textContent   = done;
-    document.getElementById('gmProgressTotal').textContent = '/ ' + total;
-    const label = document.getElementById('gmProgressLabel');
-    if (total === 0)        label.textContent = 'no goals yet';
-    else if (done === total) label.textContent = 'all done — solid day';
-    else                     label.textContent = 'complete';
-
-    document.getElementById('todayLabel').textContent =
-      'Today — ' + formatDate(getActiveDateString());
-
-    const bar = document.getElementById('gmBar');
-    bar.innerHTML = '';
-    goals.forEach(g => {
-      const seg = document.createElement('div');
-      seg.className = 'gm-bar-seg' + (g.done ? ' gm-bar-seg-done' : '');
-      bar.appendChild(seg);
-    });
-
-    const card = document.getElementById('gmCardToday');
-    card.classList.toggle('gm-all-done', total > 0 && done === total);
-
-    const pushBtn = document.getElementById('gmPushBtn');
-    pushBtn.style.display = (total > 0 && done < total) ? 'block' : 'none';
-  }
-
-  function renderStreak() {
-    const s = loadStreak();
-    document.getElementById('gmStreakNum').textContent = s.count;
-    document.getElementById('gmStreak').classList.toggle('gm-streak-active', s.count > 0);
-  }
-
-  function renderTomorrowCount() {
-    const list = getGoals(tomorrowKey());
-    document.getElementById('gmTomorrowCount').textContent = list.length + ' planned';
-    document.getElementById('tomorrowLabel').textContent =
-      'Plan tomorrow — ' + formatDate(getTomorrowDateString());
-  }
-
-  function renderListInto(goals, listEl, emptyEl, key, readOnly) {
-    listEl.innerHTML = '';
-    emptyEl.style.display = goals.length === 0 ? 'block' : 'none';
-    const reload = () => (key === todayKey() ? loadToday() : loadTomorrow());
-
-    const visible = goals.length > 5 ? goals.slice(0, 5) : goals;
-    visible.forEach((g, i) => listEl.appendChild(buildGoalRow(g, i, key, readOnly, reload)));
-
-    if (goals.length > 5) {
-      let expanded = false;
-      const toggle = document.createElement('button');
-      toggle.type = 'button';
-      toggle.className = 'gm-show-toggle';
-      const updateLabel = () => {
-        toggle.textContent = expanded ? 'Show less ▴' : ('Show ' + (goals.length - 5) + ' more ▾');
-      };
-      updateLabel();
-      toggle.addEventListener('click', () => {
-        expanded = !expanded;
-        if (expanded) {
-          goals.slice(5).forEach((g, i) => {
-            const row = buildGoalRow(g, i + 5, key, readOnly, reload);
-            listEl.insertBefore(row, toggle);
-          });
-        } else {
-          Array.from(listEl.querySelectorAll('.gm-row')).slice(5).forEach(r => r.remove());
-        }
-        updateLabel();
-      });
-      listEl.appendChild(toggle);
-    }
-
-    if (key === todayKey()) renderTodayHeader();
-    else                    renderTomorrowCount();
-  }
-
-  function loadToday() {
-    const goals = getGoals(todayKey());
-    renderListInto(goals, document.getElementById('goalList'), document.getElementById('emptyState'), todayKey(), false);
-  }
-  function loadTomorrow() {
-    const goals = getGoals(tomorrowKey());
-    renderListInto(goals, document.getElementById('tomorrowList'), document.getElementById('tomorrowEmpty'), tomorrowKey(), true);
-  }
-
-  // ---------- Push remaining ----------
-  document.getElementById('gmPushBtn').addEventListener('click', () => {
-    const today    = getGoals(todayKey());
-    const remaining = today.filter(g => !g.done);
-    if (remaining.length === 0) return;
-    if (!confirm('Move ' + remaining.length + ' unchecked goal' + (remaining.length === 1 ? '' : 's') + ' to tomorrow?')) return;
-    const tomorrow = getGoals(tomorrowKey());
-    const seen = new Set(tomorrow.map(g => g.text));
-    remaining.forEach(g => {
-      if (!seen.has(g.text)) { tomorrow.push({ text: g.text, done: false }); seen.add(g.text); }
-    });
-    setGoals(tomorrowKey(), tomorrow);
-    setGoals(todayKey(), today.filter(g => g.done));
-    loadToday(); loadTomorrow();
-  });
-
-  // ---------- Add + Polish handlers ----------
-  function showStatus(el, message, isError) {
-    el.textContent = message;
-    el.classList.toggle('gm-status-error', !!isError);
-    clearTimeout(el._t);
-    el._t = setTimeout(() => { el.textContent = ''; el.classList.remove('gm-status-error'); }, 3500);
-  }
-
-  async function polishOne(text) {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-5',
-        max_tokens: 1000,
-        messages: [{
-          role: 'user',
-          content:
-            'Rewrite this single goal so it is concrete, action-oriented, and under 60 characters. ' +
-            'Return ONLY a JSON array with exactly one string, no preamble, no code fences.\n\nGoal: ' + text
-        }]
-      })
-    });
-    const data = await res.json();
-    const content = (data && data.content && data.content[0] && data.content[0].text) || '';
-    const arr = JSON.parse(content);
-    if (!Array.isArray(arr) || arr.length < 1 || typeof arr[0] !== 'string') throw new Error('bad response');
-    return arr[0].trim();
-  }
-
-  function makeAddHandlers(input, addBtn, polishBtn, key, statusEl, reload) {
-    function plainAdd(text) {
-      const list = getGoals(key);
-      list.push({ text, done: false });
-      setGoals(key, list);
-      input.value = '';
-      reload();
-    }
-    addBtn.addEventListener('click', () => {
-      const text = input.value.trim();
-      if (!text) return;
-      plainAdd(text);
-    });
-    input.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') { e.preventDefault(); addBtn.click(); }
-    });
-    polishBtn.addEventListener('click', async () => {
-      const text = input.value.trim();
-      if (!text) return;
-      if (!ANTHROPIC_API_KEY) {
-        plainAdd(text);
-        showStatus(statusEl, 'Polish needs an Anthropic API key — added as-typed.', false);
-        return;
-      }
-      polishBtn.disabled = true;
-      try {
-        const polished = await polishOne(text);
-        plainAdd(polished);
-      } catch (e) {
-        plainAdd(text);
-        showStatus(statusEl, 'Polish failed — added as-typed.', true);
-      } finally {
-        polishBtn.disabled = false;
-      }
-    });
-  }
-
-  makeAddHandlers(
-    document.getElementById('goalInput'),
-    document.getElementById('goalAddBtn'),
-    document.getElementById('goalPolishBtn'),
-    todayKey(),
-    document.getElementById('polishStatus'),
-    loadToday
-  );
-  makeAddHandlers(
-    document.getElementById('tomorrowInput'),
-    document.getElementById('tomorrowAddBtn'),
-    document.getElementById('tomorrowPolishBtn'),
-    tomorrowKey(),
-    document.getElementById('tomorrowStatus'),
-    loadTomorrow
-  );
-
-  // ---------- Goals (sidebar) ----------
-  const GOAL_RANKS = ['Year', 'Quarter', 'Month', 'Week', 'Day'];
-  let goalEditingId = null;
-
+  // ---------- Longterm goals (data only -- Planner owns the editable UI) ----------
   function getLongtermGoals() { const g = storeGet('longterm_goals_v1'); return Array.isArray(g) ? g : []; }
   function setLongtermGoals(list) { storeSet('longterm_goals_v1', list); }
 
@@ -2240,495 +1923,9 @@ body::after {
     const totalSeconds = Math.floor(ms / 1000);
     const days = Math.floor(totalSeconds / 86400);
     const hours = Math.floor((totalSeconds % 86400) / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
-    return days + 'd ' + hours + 'h ' + minutes + 'm ' + seconds + 's';
+    return days > 0 ? (days + 'd ' + hours + 'h') : (hours + 'h ' + Math.floor((totalSeconds % 3600) / 60) + 'm');
   }
 
-  function buildGoalEditCard(g) {
-    const item = document.createElement('div');
-    item.className = 'dgt-goal';
-    item.dataset.id = g.id;
-    item.innerHTML =
-      '<div class="dgt-add-form">' +
-        '<input type="text" class="dgt-edit-title">' +
-        '<select class="dgt-edit-rank">' +
-          GOAL_RANKS.map(r => '<option value="' + r + '">' + r + '</option>').join('') +
-        '</select>' +
-        '<input type="date" class="dgt-edit-deadline">' +
-        '<button type="button" class="dgt-edit-save">Save</button>' +
-        '<button type="button" class="dgt-edit-cancel">Cancel</button>' +
-      '</div>';
-    item.querySelector('.dgt-edit-title').value = g.title;
-    item.querySelector('.dgt-edit-rank').value = g.rank;
-    item.querySelector('.dgt-edit-deadline').value = g.deadline || '';
-
-    item.querySelector('.dgt-edit-save').addEventListener('click', () => {
-      const title = item.querySelector('.dgt-edit-title').value.trim();
-      if (!title) return;
-      const rank = item.querySelector('.dgt-edit-rank').value;
-      const deadline = item.querySelector('.dgt-edit-deadline').value;
-      const cur = getLongtermGoals();
-      const idx = cur.findIndex(x => x.id === g.id);
-      if (idx !== -1) {
-        cur[idx] = Object.assign({}, cur[idx], { title, rank, deadline });
-        setLongtermGoals(cur);
-      }
-      goalEditingId = null;
-      renderLongtermGoals();
-    });
-    item.querySelector('.dgt-edit-cancel').addEventListener('click', () => {
-      goalEditingId = null;
-      renderLongtermGoals();
-    });
-    return item;
-  }
-
-  function buildGoalCard(g) {
-    if (goalEditingId === g.id) return buildGoalEditCard(g);
-
-    const item = document.createElement('div');
-    item.className = 'dgt-goal';
-    item.dataset.id = g.id;
-
-    const deadlineMs = goalDeadlineMs(g);
-    const remaining = deadlineMs === null ? null : deadlineMs - Date.now();
-    const isOverdue = remaining !== null && remaining <= 0;
-    item.dataset.deadlineMs = deadlineMs === null ? '' : String(deadlineMs);
-
-    item.innerHTML =
-      '<div class="dgt-goal-actions">' +
-        '<button type="button" class="dgt-goal-edit" aria-label="Edit goal">✎</button>' +
-        '<button type="button" class="dgt-goal-del" aria-label="Delete goal">×</button>' +
-      '</div>' +
-      '<div class="dgt-goal-row">' +
-        '<span class="dgt-goal-title"></span>' +
-        '<span class="dgt-goal-rank-badge"></span>' +
-      '</div>' +
-      '<div class="dgt-goal-countdown' + (isOverdue ? ' is-overdue' : '') + '">' + formatCountdown(remaining) + '</div>' +
-      '<div class="dgt-goal-slider-row">' +
-        '<span class="dgt-goal-value">' + (g.value || 0) + '%</span>' +
-      '</div>' +
-      '<input type="range" class="dgt-goal-slider" min="0" max="100" value="' + (g.value || 0) + '">';
-
-    item.querySelector('.dgt-goal-title').textContent = g.title;
-    item.querySelector('.dgt-goal-rank-badge').textContent = g.rank;
-
-    item.querySelector('.dgt-goal-edit').addEventListener('click', () => {
-      goalEditingId = g.id;
-      renderLongtermGoals();
-    });
-    item.querySelector('.dgt-goal-del').addEventListener('click', () => {
-      setLongtermGoals(getLongtermGoals().filter(x => x.id !== g.id));
-      renderLongtermGoals();
-    });
-
-    const slider = item.querySelector('.dgt-goal-slider');
-    const valueLabel = item.querySelector('.dgt-goal-value');
-    slider.addEventListener('input', () => {
-      valueLabel.textContent = slider.value + '%';
-    });
-    slider.addEventListener('change', () => {
-      const cur = getLongtermGoals();
-      const idx = cur.findIndex(x => x.id === g.id);
-      if (idx !== -1) {
-        cur[idx] = Object.assign({}, cur[idx], { value: Number(slider.value) });
-        setLongtermGoals(cur);
-      }
-    });
-
-    return item;
-  }
-
-  function renderLongtermGoals() {
-    const wrap = document.getElementById('dgtGoals');
-    if (!wrap) return;
-    const list = getLongtermGoals();
-    wrap.innerHTML = '';
-
-    if (list.length === 0) {
-      const empty = document.createElement('div');
-      empty.className = 'dgt-empty';
-      empty.textContent = 'No goals yet — add one above.';
-      wrap.appendChild(empty);
-      return;
-    }
-
-    GOAL_RANKS.forEach(rank => {
-      const goalsInRank = list.filter(g => g.rank === rank);
-      if (goalsInRank.length === 0) return;
-      const group = document.createElement('div');
-      group.className = 'dgt-rank-group';
-      const header = document.createElement('div');
-      header.className = 'dgt-rank-header';
-      header.textContent = rank;
-      group.appendChild(header);
-      goalsInRank.forEach(g => group.appendChild(buildGoalCard(g)));
-      wrap.appendChild(group);
-    });
-  }
-
-  function tickGoalCountdowns() {
-    if (goalEditingId !== null) return;
-    document.querySelectorAll('#dgtGoals .dgt-goal[data-deadline-ms]').forEach(el => {
-      const raw = el.dataset.deadlineMs;
-      const countdownEl = el.querySelector('.dgt-goal-countdown');
-      if (!countdownEl) return;
-      if (!raw) { countdownEl.textContent = '—'; return; }
-      const remaining = Number(raw) - Date.now();
-      countdownEl.textContent = formatCountdown(remaining);
-      countdownEl.classList.toggle('is-overdue', remaining <= 0);
-    });
-  }
-  setInterval(tickGoalCountdowns, 1000);
-
-  function initGoalAddForm() {
-    const btn = document.getElementById('dgtGoalAddBtn');
-    if (!btn) return;
-    btn.addEventListener('click', () => {
-      const titleEl = document.getElementById('dgtGoalTitle');
-      const rankEl = document.getElementById('dgtGoalRank');
-      const deadlineEl = document.getElementById('dgtGoalDeadline');
-      const title = titleEl.value.trim();
-      if (!title) return;
-      const cur = getLongtermGoals();
-      cur.push({
-        id: 'g' + Date.now() + Math.random().toString(36).slice(2, 7),
-        title,
-        rank: rankEl.value,
-        deadline: deadlineEl.value,
-        value: 0
-      });
-      setLongtermGoals(cur);
-      titleEl.value = '';
-      deadlineEl.value = '';
-      renderLongtermGoals();
-    });
-  }
-
-  // ---------- Projects kanban ----------
-  const PROJECT_SEED = [
-    { id: 'p1', title: 'AI-Powered Chatbot', status: 'not-started', priority: 'low', value: 0 },
-    { id: 'p2', title: 'Password Manager with Encryption', status: 'in-progress', priority: 'high', value: 50 },
-    { id: 'p3', title: 'AI Video Generator from a Script', status: 'done', priority: 'medium', value: 100 }
-  ];
-  function getProjects() {
-    let list = storeGet('projects_v1');
-    if (!Array.isArray(list)) { list = PROJECT_SEED.slice(); storeSet('projects_v1', list); }
-    return list;
-  }
-  function setProjectsList(list) { storeSet('projects_v1', list); }
-
-  const PROJ_COLUMNS = [
-    { status: 'not-started', label: 'Not started' },
-    { status: 'in-progress', label: 'In progress' },
-    { status: 'done', label: 'Done' }
-  ];
-  let projView = 'status';
-  let projSearchTerm = '';
-
-  function buildProjCard(p) {
-    const card = document.createElement('div');
-    card.className = 'proj-card';
-    card.dataset.status = p.status;
-    card.innerHTML =
-      '<button type="button" class="proj-card-del" aria-label="Delete project">×</button>' +
-      '<div class="proj-card-row">' +
-        '<span class="proj-card-title"></span>' +
-        '<span class="proj-card-value">' + p.value + '%</span>' +
-      '</div>' +
-      '<div class="dgt-bar"><div class="dgt-bar-fill" style="width:' + p.value + '%"></div></div>' +
-      '<span class="proj-card-tag" data-priority="' + p.priority + '">' + p.priority + '</span>';
-    card.querySelector('.proj-card-title').textContent = p.title;
-    card.querySelector('.proj-card-del').addEventListener('click', () => {
-      setProjectsList(getProjects().filter(x => x.id !== p.id));
-      renderProjects();
-    });
-    return card;
-  }
-
-  function renderProjects() {
-    const columnsEl = document.getElementById('projColumns');
-    const ganttEl = document.getElementById('projGanttStub');
-    if (!columnsEl || !ganttEl) return;
-    columnsEl.style.display = projView === 'gantt' ? 'none' : 'grid';
-    ganttEl.style.display = projView === 'gantt' ? 'block' : 'none';
-    if (projView === 'gantt') return;
-
-    columnsEl.classList.toggle('is-flat', projView === 'all');
-    columnsEl.innerHTML = '';
-
-    let all = getProjects();
-    if (projSearchTerm) {
-      const term = projSearchTerm.toLowerCase();
-      all = all.filter(p => p.title.toLowerCase().indexOf(term) !== -1);
-    }
-
-    if (projView === 'all') {
-      const col = document.createElement('div');
-      col.className = 'proj-col';
-      if (all.length === 0) {
-        const e = document.createElement('div');
-        e.className = 'proj-col-empty';
-        e.textContent = 'No projects found.';
-        col.appendChild(e);
-      } else {
-        all.forEach(p => col.appendChild(buildProjCard(p)));
-      }
-      columnsEl.appendChild(col);
-      return;
-    }
-
-    PROJ_COLUMNS.forEach(colDef => {
-      const col = document.createElement('div');
-      col.className = 'proj-col';
-      col.dataset.status = colDef.status;
-      const items = all.filter(p => p.status === colDef.status);
-      const labelRow = document.createElement('div');
-      labelRow.className = 'proj-col-label';
-      labelRow.innerHTML = '<span class="proj-col-dot"></span>';
-      labelRow.appendChild(document.createTextNode(colDef.label + ' · ' + items.length));
-      col.appendChild(labelRow);
-      if (items.length === 0) {
-        const e = document.createElement('div');
-        e.className = 'proj-col-empty';
-        e.textContent = 'Nothing here yet.';
-        col.appendChild(e);
-      } else {
-        items.forEach(p => col.appendChild(buildProjCard(p)));
-      }
-      columnsEl.appendChild(col);
-    });
-  }
-
-  function initProjects() {
-    const columnsEl = document.getElementById('projColumns');
-    if (!columnsEl) return;
-
-    document.querySelectorAll('.proj-view-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        projView = btn.dataset.view;
-        document.querySelectorAll('.proj-view-btn').forEach(b => b.classList.toggle('is-active', b === btn));
-        renderProjects();
-      });
-    });
-
-    const searchBtn = document.getElementById('projSearchBtn');
-    const searchInput = document.getElementById('projSearchInput');
-    searchBtn.addEventListener('click', () => {
-      const willOpen = !searchInput.classList.contains('is-open');
-      searchInput.classList.toggle('is-open', willOpen);
-      searchBtn.classList.toggle('is-active', willOpen);
-      if (willOpen) { searchInput.focus(); }
-      else { searchInput.value = ''; projSearchTerm = ''; renderProjects(); }
-    });
-    searchInput.addEventListener('input', () => {
-      projSearchTerm = searchInput.value.trim();
-      renderProjects();
-    });
-
-    const addToggle = document.getElementById('projAddToggle');
-    const addForm = document.getElementById('projAddForm');
-    addToggle.addEventListener('click', () => {
-      const open = addForm.style.display === 'flex';
-      addForm.style.display = open ? 'none' : 'flex';
-    });
-    document.getElementById('projAddBtn').addEventListener('click', () => {
-      const titleEl = document.getElementById('projTitleInput');
-      const title = titleEl.value.trim();
-      if (!title) return;
-      const status = document.getElementById('projStatusInput').value;
-      const priority = document.getElementById('projPriorityInput').value;
-      const list = getProjects();
-      list.push({ id: 'p' + Date.now(), title, status, priority, value: status === 'done' ? 100 : 0 });
-      setProjectsList(list);
-      titleEl.value = '';
-      addForm.style.display = 'none';
-      renderProjects();
-    });
-
-    renderProjects();
-  }
-
-  // ---------- Checklists (sidebar) ----------
-  const CHECKLISTS = [
-    { id: 'morning', icon: '🌅', name: 'Morning Checklist' },
-    { id: 'midday',  icon: '☀️', name: 'Mid-Day Checklist' },
-    { id: 'evening', icon: '🌙', name: 'Evening Checklist' }
-  ];
-  let chkEditMode = {};
-  let chkExpandedItem = {};
-
-  function getChecklistItems(id) {
-    const items = storeGet('checklist:items:' + id);
-    return Array.isArray(items) ? items : [];
-  }
-  function setChecklistItems(id, items) { storeSet('checklist:items:' + id, items); }
-  function getChecklistDone(id) {
-    const done = storeGet('checklist:done:' + id + ':' + getActiveDateString());
-    return (done && typeof done === 'object') ? done : {};
-  }
-  function setChecklistDone(id, done) { storeSet('checklist:done:' + id + ':' + getActiveDateString(), done); }
-
-  function buildChecklistCard(c) {
-    const items = getChecklistItems(c.id);
-    const done = getChecklistDone(c.id);
-    const editing = !!chkEditMode[c.id];
-
-    const card = document.createElement('div');
-    card.className = 'gm-card chk-card';
-
-    const head = document.createElement('div');
-    head.className = 'chk-head';
-    const iconSpan = document.createElement('span');
-    iconSpan.className = 'chk-icon';
-    iconSpan.textContent = c.icon;
-    const nameSpan = document.createElement('span');
-    nameSpan.className = 'chk-name';
-    nameSpan.textContent = c.name;
-    const editBtn = document.createElement('button');
-    editBtn.type = 'button';
-    editBtn.className = 'chk-edit-toggle' + (editing ? ' active' : '');
-    editBtn.title = editing ? 'Done editing' : 'Edit checklist';
-    editBtn.textContent = editing ? '✓' : '✏️';
-    editBtn.addEventListener('click', () => {
-      chkEditMode[c.id] = !chkEditMode[c.id];
-      renderChecklists();
-    });
-    head.appendChild(iconSpan);
-    head.appendChild(nameSpan);
-    head.appendChild(editBtn);
-    card.appendChild(head);
-
-    const list = document.createElement('div');
-    list.className = 'chk-items';
-
-    if (!items.length) {
-      const empty = document.createElement('div');
-      empty.className = 'chk-empty';
-      empty.textContent = editing ? 'Add a task below.' : 'No tasks yet — tap ✏️ to add one.';
-      list.appendChild(empty);
-    }
-
-    items.forEach(item => {
-      const row = document.createElement('div');
-      row.className = 'chk-item' + (done[item.id] ? ' chk-item-done' : '');
-
-      if (editing) {
-        const editRow = document.createElement('div');
-        editRow.className = 'chk-item-editrow';
-
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.className = 'chk-item-input';
-        input.value = item.text;
-        input.addEventListener('change', () => {
-          const list2 = getChecklistItems(c.id);
-          const it = list2.find(x => x.id === item.id);
-          if (it) { it.text = input.value.trim() || it.text; setChecklistItems(c.id, list2); }
-        });
-        input.addEventListener('keydown', (e) => { if (e.key === 'Enter') input.blur(); });
-
-        const delBtn = document.createElement('button');
-        delBtn.type = 'button';
-        delBtn.className = 'chk-item-del';
-        delBtn.title = 'Remove task';
-        delBtn.textContent = '🗑️';
-        delBtn.addEventListener('click', () => {
-          setChecklistItems(c.id, getChecklistItems(c.id).filter(x => x.id !== item.id));
-          const d = getChecklistDone(c.id);
-          delete d[item.id];
-          setChecklistDone(c.id, d);
-          renderChecklists();
-        });
-
-        editRow.appendChild(input);
-        editRow.appendChild(delBtn);
-        row.appendChild(editRow);
-      } else {
-        const mainRow = document.createElement('div');
-        mainRow.className = 'chk-item-row';
-
-        const checkbox = document.createElement('button');
-        checkbox.type = 'button';
-        checkbox.className = 'chk-checkbox' + (done[item.id] ? ' checked' : '');
-        checkbox.setAttribute('aria-label', 'Toggle task complete');
-        checkbox.addEventListener('click', () => {
-          const d = getChecklistDone(c.id);
-          if (d[item.id]) delete d[item.id]; else d[item.id] = true;
-          setChecklistDone(c.id, d);
-          renderChecklists();
-        });
-
-        const text = document.createElement('span');
-        text.className = 'chk-item-text';
-        text.textContent = item.text;
-        text.addEventListener('click', () => {
-          chkExpandedItem[c.id] = (chkExpandedItem[c.id] === item.id) ? null : item.id;
-          renderChecklists();
-        });
-
-        mainRow.appendChild(checkbox);
-        mainRow.appendChild(text);
-        row.appendChild(mainRow);
-
-        if (chkExpandedItem[c.id] === item.id) {
-          const notesWrap = document.createElement('div');
-          notesWrap.className = 'chk-item-notes';
-          const textarea = document.createElement('textarea');
-          textarea.className = 'chk-notes-input';
-          textarea.placeholder = 'Add notes…';
-          textarea.value = item.notes || '';
-          textarea.addEventListener('change', () => {
-            const list2 = getChecklistItems(c.id);
-            const it = list2.find(x => x.id === item.id);
-            if (it) { it.notes = textarea.value; setChecklistItems(c.id, list2); }
-          });
-          notesWrap.appendChild(textarea);
-          row.appendChild(notesWrap);
-        }
-      }
-
-      list.appendChild(row);
-    });
-
-    card.appendChild(list);
-
-    if (editing) {
-      const addRow = document.createElement('div');
-      addRow.className = 'chk-add-row';
-      const addInput = document.createElement('input');
-      addInput.type = 'text';
-      addInput.className = 'chk-add-input';
-      addInput.placeholder = 'New task…';
-      const addBtn = document.createElement('button');
-      addBtn.type = 'button';
-      addBtn.className = 'chk-add-btn';
-      addBtn.textContent = 'Add';
-      const doAdd = () => {
-        const val = addInput.value.trim();
-        if (!val) return;
-        const list2 = getChecklistItems(c.id);
-        list2.push({ id: 'ci' + Date.now() + Math.random().toString(36).slice(2, 6), text: val, notes: '' });
-        setChecklistItems(c.id, list2);
-        renderChecklists();
-      };
-      addBtn.addEventListener('click', doAdd);
-      addInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') doAdd(); });
-      addRow.appendChild(addInput);
-      addRow.appendChild(addBtn);
-      card.appendChild(addRow);
-    }
-
-    return card;
-  }
-
-  function renderChecklists() {
-    const wrap = document.getElementById('chkList');
-    if (!wrap) return;
-    wrap.innerHTML = '';
-    CHECKLISTS.forEach(c => wrap.appendChild(buildChecklistCard(c)));
-  }
 
   // ---------- Google Calendar ----------
   // Paste your Google OAuth Client ID here once you've created one in Google
@@ -2738,7 +1935,10 @@ body::after {
   // GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI) read by
   // api/google-calendar-callback.js and api/google-calendar-refresh.js.
   const GOOGLE_CAL_CLIENT_ID = '83878675540-40tpq4hkpd05jarl8m8nj9i8vhm5rnel.apps.googleusercontent.com';
-  const GOOGLE_CAL_SCOPE = 'https://www.googleapis.com/auth/calendar.readonly';
+  // Kept in sync with planner.html's copy (the page that actually owns the
+  // connect flow now -- see 1.5 in BUILD_EQUAVIA.md). calendar.events
+  // covers both read and write; this dashboard-side copy only ever reads.
+  const GOOGLE_CAL_SCOPE = 'https://www.googleapis.com/auth/calendar.events';
   const GCAL_TOKENS_KEY = 'gcal_tokens_v1';
 
   function getGcalTokens() { return storeGet(GCAL_TOKENS_KEY); }
@@ -2774,19 +1974,6 @@ body::after {
       prompt: 'consent'
     });
     return 'https://accounts.google.com/o/oauth2/v2/auth?' + params.toString();
-  }
-
-  function connectGoogleCalendar() {
-    if (!GOOGLE_CAL_CLIENT_ID) {
-      showCalStatus('Paste your Google OAuth Client ID into the GOOGLE_CAL_CLIENT_ID constant in dashboard.html to connect.', true);
-      return;
-    }
-    window.location.href = gcalAuthUrl();
-  }
-
-  function disconnectGoogleCalendar() {
-    clearGcalTokens();
-    loadCalendar();
   }
 
   async function ensureValidGcalToken() {
@@ -2855,421 +2042,11 @@ body::after {
   function getLocalCalEvents() { const v = storeGet(LOCAL_CAL_EVENTS_KEY); return Array.isArray(v) ? v : []; }
   function setLocalCalEvents(list) { storeSet(LOCAL_CAL_EVENTS_KEY, list); }
 
-  // ---------- Calendar state ----------
-  let calView = 'week';
-  let calAnchor = calMidnight(new Date());
-
-  function showCalStatus(msg, isError) {
-    const el = document.getElementById('calStatus');
-    if (!el) return;
-    el.textContent = msg || '';
-    el.classList.toggle('cal-status-error', !!isError);
-  }
-
-  function updateCalConnectBtn() {
-    const btn = document.getElementById('calConnectBtn');
-    if (!btn) return;
-    const tokens = getGcalTokens();
-    const connected = !!(tokens && tokens.access_token);
-    btn.textContent = connected ? 'Disconnect' : 'Connect Google Calendar';
-    btn.classList.toggle('is-connected', connected);
-  }
-
-  function renderCalLabel() {
-    const el = document.getElementById('calLabel');
-    if (!el) return;
-    if (calView === 'month') {
-      el.textContent = CAL_MONTHS[calAnchor.getMonth()] + ' ' + calAnchor.getFullYear();
-      return;
-    }
-    if (calView === 'day') {
-      el.textContent = CAL_DOW[calAnchor.getDay()] + ', ' + CAL_MONTHS[calAnchor.getMonth()].slice(0, 3) + ' ' + calAnchor.getDate() + ', ' + calAnchor.getFullYear();
-      return;
-    }
-    const start = calStartOfWeek(calAnchor);
-    const end = calAddDays(start, 6);
-    const sameMonth = start.getMonth() === end.getMonth();
-    const startLabel = CAL_MONTHS[start.getMonth()].slice(0, 3) + ' ' + start.getDate();
-    const endLabel = (sameMonth ? '' : CAL_MONTHS[end.getMonth()].slice(0, 3) + ' ') + end.getDate();
-    el.textContent = startLabel + ' – ' + endLabel + ', ' + end.getFullYear();
-  }
-
-  function buildCalEventEl(ev) {
-    const row = document.createElement('div');
-    row.className = 'cal-event';
-    const time = document.createElement('span');
-    time.className = 'cal-event-time';
-    time.textContent = calEventIsAllDay(ev) ? 'All day' : formatClock(calEventDate(ev, 'start'));
-    const title = document.createElement('span');
-    title.className = 'cal-event-title';
-    title.textContent = ev.summary || '(untitled)';
-    row.appendChild(time);
-    row.appendChild(title);
-    return row;
-  }
-
-  // ---------- Day view + local event modal ----------
-  let calEventModalMode = null; // 'create' | 'edit' | 'view'
-  let calEventModalEditingId = null;
-
-  function openCalEventModal(mode, opts) {
-    calEventModalMode = mode;
-    calEventModalEditingId = (opts && opts.id) || null;
-    const titleEl = document.getElementById('calEventModalTitle');
-    const sourceEl = document.getElementById('calEventModalSource');
-    const nameInput = document.getElementById('calEventTitleInput');
-    const dateInput = document.getElementById('calEventDateInput');
-    const timeInput = document.getElementById('calEventTimeInput');
-    const durationInput = document.getElementById('calEventDurationInput');
-    const notesInput = document.getElementById('calEventNotesInput');
-    const saveBtn = document.getElementById('calEventSaveBtn');
-    const cancelBtn = document.getElementById('calEventCancelBtn');
-    const deleteLink = document.getElementById('calEventDeleteLink');
-
-    const readOnly = mode === 'view';
-    [nameInput, dateInput, timeInput, durationInput, notesInput].forEach(el => { el.disabled = readOnly; });
-    saveBtn.style.display = readOnly ? 'none' : '';
-    deleteLink.style.display = (mode === 'edit') ? '' : 'none';
-    cancelBtn.textContent = readOnly ? 'Close' : 'Cancel';
-    sourceEl.style.display = readOnly ? '' : 'none';
-    if (readOnly) sourceEl.textContent = 'From Google Calendar — view only.';
-
-    titleEl.textContent = mode === 'view' ? (opts.title || '(untitled)') : (mode === 'edit' ? 'Edit event' : 'Add event');
-    nameInput.value = (opts && opts.title) || '';
-    dateInput.value = (opts && opts.dateKey) || calDateKey(calAnchor);
-    timeInput.value = (opts && opts.time) || '09:00';
-    durationInput.value = (opts && opts.duration) || (mode === 'view' ? '' : 60);
-    notesInput.value = (opts && opts.notes) || '';
-
-    document.getElementById('calEventModalBg').classList.add('show');
-  }
-
-  function closeCalEventModal() {
-    document.getElementById('calEventModalBg').classList.remove('show');
-    calEventModalMode = null;
-    calEventModalEditingId = null;
-  }
-
-  function initCalEventModal() {
-    document.getElementById('calEventCancelBtn').addEventListener('click', closeCalEventModal);
-    document.getElementById('calEventModalBg').addEventListener('click', (e) => {
-      if (e.target === e.currentTarget) closeCalEventModal();
-    });
-    document.getElementById('calEventSaveBtn').addEventListener('click', () => {
-      const title = document.getElementById('calEventTitleInput').value.trim();
-      const dateKey = document.getElementById('calEventDateInput').value;
-      const time = document.getElementById('calEventTimeInput').value;
-      const duration = Number(document.getElementById('calEventDurationInput').value) || 60;
-      const notes = document.getElementById('calEventNotesInput').value.trim();
-      if (!title || !dateKey || !time) return;
-      const list = getLocalCalEvents();
-      if (calEventModalMode === 'edit' && calEventModalEditingId) {
-        const idx = list.findIndex(x => x.id === calEventModalEditingId);
-        if (idx !== -1) list[idx] = Object.assign({}, list[idx], { title, dateKey, time, duration, notes });
-      } else {
-        list.push({ id: 'ce' + Date.now() + Math.random().toString(36).slice(2, 7), title, dateKey, time, duration, notes });
-      }
-      setLocalCalEvents(list);
-      closeCalEventModal();
-      loadCalendar();
-    });
-    document.getElementById('calEventDeleteLink').addEventListener('click', () => {
-      if (!calEventModalEditingId) return;
-      setLocalCalEvents(getLocalCalEvents().filter(x => x.id !== calEventModalEditingId));
-      closeCalEventModal();
-      loadCalendar();
-    });
-  }
-
-  function buildDayEventChip(item) {
-    const chip = document.createElement('div');
-    chip.className = 'cal-day-event-block' + (item.isLocal ? ' is-local' : '');
-    const time = document.createElement('span');
-    time.className = 'cal-day-event-time';
-    time.textContent = item.allDay ? 'All day' : formatClock(item.start);
-    const title = document.createElement('span');
-    title.className = 'cal-day-event-title';
-    title.textContent = item.title;
-    chip.appendChild(time);
-    chip.appendChild(title);
-    chip.addEventListener('click', (e) => {
-      e.stopPropagation();
-      if (item.isLocal) {
-        openCalEventModal('edit', {
-          id: item.raw.id, title: item.raw.title, dateKey: item.raw.dateKey,
-          time: item.raw.time, duration: item.raw.duration, notes: item.raw.notes
-        });
-      } else {
-        const end = calEventDate(item.raw, 'end');
-        const durationMins = (!item.allDay && end) ? Math.round((end - item.start) / 60000) : '';
-        openCalEventModal('view', {
-          title: item.title,
-          dateKey: calDateKey(item.start),
-          time: item.allDay ? '' : hourToTimeStr(item.start.getHours() + item.start.getMinutes() / 60),
-          duration: durationMins,
-          notes: item.raw.description || ''
-        });
-      }
-    });
-    return chip;
-  }
-
-  function renderDayGrid(events) {
-    const allDayWrap = document.getElementById('calDayAllDay');
-    const timeline = document.getElementById('calDayTimeline');
-    if (!allDayWrap || !timeline) return;
-    allDayWrap.innerHTML = '';
-    timeline.innerHTML = '';
-
-    const dateKey = calDateKey(calAnchor);
-    const items = [];
-    (events || []).forEach(ev => {
-      const start = calEventDate(ev, 'start');
-      if (!start) return;
-      items.push({ title: ev.summary || '(untitled)', start, allDay: calEventIsAllDay(ev), isLocal: false, raw: ev });
-    });
-    getLocalCalEvents().filter(e => e.dateKey === dateKey).forEach(e => {
-      const parts = (e.time || '00:00').split(':').map(Number);
-      const start = new Date(calAnchor.getFullYear(), calAnchor.getMonth(), calAnchor.getDate(), parts[0], parts[1] || 0);
-      items.push({ title: e.title, start, allDay: false, isLocal: true, raw: e });
-    });
-
-    const allDayItems = items.filter(i => i.allDay);
-    const timedItems = items.filter(i => !i.allDay).sort((a, b) => a.start - b.start);
-
-    allDayItems.forEach(item => allDayWrap.appendChild(buildDayEventChip(item)));
-
-    const now = new Date();
-    const isToday = calIsSameDay(calAnchor, now);
-    for (let hour = 0; hour < 24; hour++) {
-      const row = document.createElement('div');
-      row.className = 'cal-day-row' + (isToday && now.getHours() === hour ? ' is-current-hour' : '');
-      const timeLabel = document.createElement('div');
-      timeLabel.className = 'cal-day-row-time';
-      timeLabel.textContent = formatHourLabel(hour);
-      const slot = document.createElement('div');
-      slot.className = 'cal-day-row-slot';
-      slot.addEventListener('click', () => {
-        openCalEventModal('create', { dateKey, time: pad2(hour) + ':00' });
-      });
-      timedItems.filter(i => i.start.getHours() === hour).forEach(item => slot.appendChild(buildDayEventChip(item)));
-      row.appendChild(timeLabel);
-      row.appendChild(slot);
-      timeline.appendChild(row);
-    }
-  }
-
-  function renderWeekGrid(events) {
-    const grid = document.getElementById('calWeekGrid');
-    if (!grid) return;
-    grid.innerHTML = '';
-    const weekStart = calStartOfWeek(calAnchor);
-    const today = calMidnight(new Date());
-    const byDay = [[], [], [], [], [], [], []];
-    (events || []).forEach(ev => {
-      const start = calEventDate(ev, 'start');
-      if (!start) return;
-      for (let i = 0; i < 7; i++) {
-        if (calIsSameDay(start, calAddDays(weekStart, i))) { byDay[i].push(ev); break; }
-      }
-    });
-    for (let i = 0; i < 7; i++) {
-      const dayDate = calAddDays(weekStart, i);
-      const col = document.createElement('div');
-      col.className = 'cal-day-col' + (calIsSameDay(dayDate, today) ? ' is-today' : '');
-      const head = document.createElement('div');
-      head.className = 'cal-day-head';
-      const dname = document.createElement('div');
-      dname.className = 'cal-day-name';
-      dname.textContent = CAL_DOW[i];
-      const dnum = document.createElement('div');
-      dnum.className = 'cal-day-num';
-      dnum.textContent = String(dayDate.getDate());
-      head.appendChild(dname);
-      head.appendChild(dnum);
-      col.appendChild(head);
-      const evWrap = document.createElement('div');
-      evWrap.className = 'cal-day-events';
-      const dayEvents = byDay[i].sort((a, b) => calEventDate(a, 'start') - calEventDate(b, 'start'));
-      if (!dayEvents.length) {
-        const empty = document.createElement('div');
-        empty.className = 'cal-day-empty';
-        empty.textContent = '—';
-        evWrap.appendChild(empty);
-      } else {
-        dayEvents.forEach(ev => evWrap.appendChild(buildCalEventEl(ev)));
-      }
-      col.appendChild(evWrap);
-      grid.appendChild(col);
-    }
-  }
-
-  const CAL_MONTH_MAX_VISIBLE = 3;
-
-  function renderMonthGrid(events) {
-    const grid = document.getElementById('calMonthGrid');
-    if (!grid) return;
-    grid.innerHTML = '';
-    CAL_DOW.forEach(name => {
-      const dow = document.createElement('div');
-      dow.className = 'cal-month-dow';
-      dow.textContent = name;
-      grid.appendChild(dow);
-    });
-    const monthStart = new Date(calAnchor.getFullYear(), calAnchor.getMonth(), 1);
-    const gridStart = calAddDays(monthStart, -monthStart.getDay());
-    const today = calMidnight(new Date());
-    const eventsByDay = new Map();
-    (events || []).forEach(ev => {
-      const d = calEventDate(ev, 'start');
-      if (!d) return;
-      const key = d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate();
-      if (!eventsByDay.has(key)) eventsByDay.set(key, []);
-      eventsByDay.get(key).push(ev);
-    });
-    for (let i = 0; i < 42; i++) {
-      const cellDate = calAddDays(gridStart, i);
-      const cell = document.createElement('div');
-      const outside = cellDate.getMonth() !== calAnchor.getMonth();
-      cell.className = 'cal-month-cell' + (outside ? ' is-outside' : '') + (calIsSameDay(cellDate, today) ? ' is-today' : '');
-      const num = document.createElement('div');
-      num.className = 'cal-month-num';
-      num.textContent = String(cellDate.getDate());
-      cell.appendChild(num);
-
-      const key = cellDate.getFullYear() + '-' + cellDate.getMonth() + '-' + cellDate.getDate();
-      const dayEvents = (eventsByDay.get(key) || []).sort((a, b) => calEventDate(a, 'start') - calEventDate(b, 'start'));
-      if (dayEvents.length) {
-        const evWrap = document.createElement('div');
-        evWrap.className = 'cal-month-events';
-        dayEvents.slice(0, CAL_MONTH_MAX_VISIBLE).forEach(ev => {
-          const pill = document.createElement('div');
-          pill.className = 'cal-month-event';
-          const timePrefix = calEventIsAllDay(ev) ? '' : formatClock(calEventDate(ev, 'start')) + ' ';
-          pill.textContent = timePrefix + (ev.summary || '(untitled)');
-          evWrap.appendChild(pill);
-        });
-        if (dayEvents.length > CAL_MONTH_MAX_VISIBLE) {
-          const more = document.createElement('div');
-          more.className = 'cal-month-more';
-          more.textContent = '+' + (dayEvents.length - CAL_MONTH_MAX_VISIBLE) + ' more';
-          evWrap.appendChild(more);
-        }
-        cell.appendChild(evWrap);
-      }
-
-      cell.addEventListener('click', () => {
-        calAnchor = calMidnight(cellDate);
-        calView = 'week';
-        document.querySelectorAll('.cal-view-btn').forEach(b => b.classList.toggle('is-active', b.dataset.calView === 'week'));
-        setCalGridVisibility();
-        loadCalendar();
-      });
-      grid.appendChild(cell);
-    }
-  }
-
-  function renderCalGrid(events) {
-    if (calView === 'day') renderDayGrid(events);
-    else if (calView === 'month') renderMonthGrid(events);
-    else renderWeekGrid(events);
-  }
-
-  async function loadCalendar() {
-    renderCalLabel();
-    updateCalConnectBtn();
-    const tokens = getGcalTokens();
-    if (!tokens || !tokens.access_token) {
-      showCalStatus('Connect your Google Calendar to show real events here.', false);
-      renderCalGrid([]);
-      return;
-    }
-    showCalStatus('Loading events…', false);
-    let rangeStart, rangeEnd;
-    if (calView === 'month') {
-      const monthStart = new Date(calAnchor.getFullYear(), calAnchor.getMonth(), 1);
-      rangeStart = calAddDays(monthStart, -monthStart.getDay());
-      rangeEnd = calAddDays(rangeStart, 42);
-    } else if (calView === 'day') {
-      rangeStart = calMidnight(calAnchor);
-      rangeEnd = calAddDays(rangeStart, 1);
-    } else {
-      rangeStart = calStartOfWeek(calAnchor);
-      rangeEnd = calAddDays(rangeStart, 7);
-    }
-    try {
-      const events = await fetchGcalEvents(rangeStart.toISOString(), rangeEnd.toISOString());
-      if (events === null) {
-        showCalStatus('Connect your Google Calendar to show real events here.', false);
-        renderCalGrid([]);
-        return;
-      }
-      showCalStatus('', false);
-      renderCalGrid(events);
-    } catch (e) {
-      showCalStatus(e.message || 'Could not load Google Calendar events.', true);
-      updateCalConnectBtn();
-      renderCalGrid([]);
-    }
-  }
-
-  function calStepDate(dir) {
-    if (calView === 'month') return calAddMonths(calAnchor, dir);
-    if (calView === 'day') return calAddDays(calAnchor, dir);
-    return calAddDays(calAnchor, dir * 7);
-  }
-
-  function setCalGridVisibility() {
-    document.getElementById('calDayGrid').style.display = calView === 'day' ? '' : 'none';
-    document.getElementById('calWeekGrid').style.display = calView === 'week' ? '' : 'none';
-    document.getElementById('calMonthGrid').style.display = calView === 'month' ? '' : 'none';
-  }
-
+  // Full calendar rendering (day/week/month grids, the add/edit event modal)
+  // now lives on planner.html only. This page just needs the OAuth handback
+  // captured -- Google's redirect_uri for the flow points here.
   function initCalendar() {
     processGcalHashTokens();
-    initCalEventModal();
-    document.querySelectorAll('.cal-view-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        calView = btn.dataset.calView;
-        document.querySelectorAll('.cal-view-btn').forEach(b => b.classList.toggle('is-active', b === btn));
-        setCalGridVisibility();
-        loadCalendar();
-      });
-    });
-    document.getElementById('calPrevBtn').addEventListener('click', () => {
-      calAnchor = calStepDate(-1);
-      loadCalendar();
-    });
-    document.getElementById('calNextBtn').addEventListener('click', () => {
-      calAnchor = calStepDate(1);
-      loadCalendar();
-    });
-    document.getElementById('calTodayBtn').addEventListener('click', () => {
-      calAnchor = calMidnight(new Date());
-      loadCalendar();
-    });
-    document.getElementById('calConnectBtn').addEventListener('click', () => {
-      const tokens = getGcalTokens();
-      if (tokens && tokens.access_token) disconnectGoogleCalendar();
-      else connectGoogleCalendar();
-    });
-
-    // Swipe left/right on the Day timeline to navigate to the next/previous day.
-    let calTouchStartX = null;
-    const dayGrid = document.getElementById('calDayGrid');
-    dayGrid.addEventListener('touchstart', (e) => {
-      calTouchStartX = e.touches[0].clientX;
-    }, { passive: true });
-    dayGrid.addEventListener('touchend', (e) => {
-      if (calTouchStartX === null) return;
-      const dx = e.changedTouches[0].clientX - calTouchStartX;
-      calTouchStartX = null;
-      if (Math.abs(dx) < 50) return;
-      calAnchor = calAddDays(calAnchor, dx < 0 ? 1 : -1);
-      loadCalendar();
-    }, { passive: true });
-
-    loadCalendar();
   }
 
   // ---------- Day-ring edit modal ----------
@@ -3304,26 +2081,274 @@ body::after {
     updateDayRing();
   });
 
+  // ---------- Backup nudge ----------
+  (function renderBackupNudge() {
+    const iso = storeGet('eq.lastBackupAt');
+    const days = iso ? Math.floor((Date.now() - new Date(iso).getTime()) / 86400000) : null;
+    if (days !== null && days <= 14) return;
+    const nudge = document.getElementById('backupNudge');
+    const text = document.getElementById('backupNudgeText');
+    if (!nudge || !text) return;
+    text.textContent = days === null ? 'You have never backed up your data.' : 'Last backed up ' + days + ' days ago.';
+    nudge.style.display = 'flex';
+  })();
+
+  // ---------- Dashboard summary cards ----------
+  // Planner owns the full editable Tasks/Goals/Calendar UI; these just read
+  // the same storage read-only. Health and Fitness read a small summary
+  // each of those pages publishes on its own changes (see health.html's
+  // WHOOP fetch and gym.html's publishFitnessSummary()) rather than
+  // reaching into their internal state. Finance reads its net-worth/budget
+  // keys directly since those are already simple, stable arrays.
+  // ============================================================
+  // TO-DO COMPLETION RATE CHART
+  // Reads todo_completion_snapshots_v1 directly (simple stable array,
+  // same direct-read pattern as Finance/contacts above) -- written by
+  // planner.html's rollover() the moment each day's goals:YYYY-MM-DD key
+  // is about to be permanently deleted, since that's the only point a
+  // past day's scheduled/completed counts are ever available at all.
+  // ============================================================
+  function todoDateKeyOf(d) {
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  function todoDateKeyAddDays(dateKey, n) {
+    const p = dateKey.split('-').map(Number);
+    const dt = new Date(p[0], p[1] - 1, p[2] + n);
+    return todoDateKeyOf(dt);
+  }
+  function todoSmoothPath(points) {
+    if (!points.length) return '';
+    if (points.length === 1) return 'M ' + points[0].x + ' ' + points[0].y;
+    let d = 'M ' + points[0].x.toFixed(2) + ' ' + points[0].y.toFixed(2);
+    for (let i = 1; i < points.length; i++) {
+      const prev = points[i - 1], curr = points[i];
+      const cx = (prev.x + curr.x) / 2;
+      d += ' Q ' + cx.toFixed(2) + ' ' + prev.y.toFixed(2) + ', ' + cx.toFixed(2) + ' ' + ((prev.y + curr.y) / 2).toFixed(2);
+      d += ' T ' + curr.x.toFixed(2) + ' ' + curr.y.toFixed(2);
+    }
+    return d;
+  }
+
+  let todoRangeWeeks = 12;
+
+  function renderTodoChart() {
+    const wrapEl = document.getElementById('todoChartWrap');
+    const emptyEl = document.getElementById('todoChartEmpty');
+    const legendEl = document.getElementById('todoChartLegend');
+    if (!wrapEl) return;
+
+    const snapsRaw = storeGet('todo_completion_snapshots_v1');
+    const snaps = Array.isArray(snapsRaw) ? snapsRaw : [];
+    const byDate = {};
+    snaps.forEach(s => { byDate[s.dateKey] = s; });
+
+    const windowDays = todoRangeWeeks * 7;
+    const today = new Date();
+
+    // One slot per calendar day in the window, oldest -> newest. A day
+    // with no snapshot yet, or with zero scheduled tasks, is a gap (null)
+    // -- skipped rather than plotted as 0% or 100%, so it renders as a
+    // literal break in the line instead of a misleading value.
+    const slots = [];
+    for (let i = windowDays - 1; i >= 0; i--) {
+      const dt = new Date(today); dt.setDate(dt.getDate() - i);
+      const dk = todoDateKeyOf(dt);
+      const snap = byDate[dk];
+      slots.push(snap && snap.scheduled > 0 ? { dateKey: dk, percent: (snap.completed / snap.scheduled) * 100 } : null);
+    }
+
+    const validCount = slots.filter(Boolean).length;
+    if (validCount < 2) {
+      emptyEl.style.display = '';
+      wrapEl.classList.add('hidden');
+      legendEl.classList.add('hidden');
+      return;
+    }
+    emptyEl.style.display = 'none';
+    wrapEl.classList.remove('hidden');
+    legendEl.classList.remove('hidden');
+
+    const xLeft = 4, xRight = 316, yTop = 20, yBot = 110;
+    const xRangeW = xRight - xLeft, yRangeH = yBot - yTop;
+    const xFor = (i) => slots.length === 1 ? xRight : xLeft + (i / (slots.length - 1)) * xRangeW;
+    const yFor = (pct) => yBot - (Math.max(0, Math.min(100, pct)) / 100) * yRangeH;
+
+    // Contiguous runs (by array position) of valid points, for path breaks.
+    const runs = [];
+    let currentRun = [];
+    slots.forEach((slot, i) => {
+      if (slot) currentRun.push({ x: xFor(i), y: yFor(slot.percent) });
+      else if (currentRun.length) { runs.push(currentRun); currentRun = []; }
+    });
+    if (currentRun.length) runs.push(currentRun);
+
+    let html = '';
+    const longestRun = runs.reduce((a, b) => (b.length > a.length ? b : a), []);
+    if (longestRun.length >= 2) {
+      const linePath = todoSmoothPath(longestRun);
+      const areaPath = linePath + ' L ' + longestRun[longestRun.length - 1].x.toFixed(2) + ' ' + yBot + ' L ' + longestRun[0].x.toFixed(2) + ' ' + yBot + ' Z';
+      html += '<path class="todo-area" d="' + areaPath + '"></path>';
+    }
+    runs.forEach(run => { if (run.length >= 2) html += '<path class="todo-line" d="' + todoSmoothPath(run) + '"></path>'; });
+    slots.forEach((slot, i) => {
+      if (!slot) return;
+      const p = { x: xFor(i), y: yFor(slot.percent) };
+      html += '<circle class="todo-dot" cx="' + p.x.toFixed(2) + '" cy="' + p.y.toFixed(2) + '" r="1.8"/>';
+    });
+
+    // 7-day rolling average, calendar-based (trailing 7 calendar days from
+    // each valid point, averaging whatever valid points fall in that span)
+    // -- daily % is noisy; this is the actual signal per spec. Broken at
+    // the same gaps as the raw line.
+    let avgRun = [];
+    slots.forEach((slot, i) => {
+      if (!slot) {
+        if (avgRun.length >= 2) html += '<path class="todo-avg-line" d="' + todoSmoothPath(avgRun) + '"></path>';
+        avgRun = [];
+        return;
+      }
+      const cutoff = todoDateKeyAddDays(slot.dateKey, -6);
+      const windowVals = slots.filter(s => s && s.dateKey >= cutoff && s.dateKey <= slot.dateKey).map(s => s.percent);
+      const avg = windowVals.reduce((a, b) => a + b, 0) / windowVals.length;
+      avgRun.push({ x: xFor(i), y: yFor(avg) });
+    });
+    if (avgRun.length >= 2) html += '<path class="todo-avg-line" d="' + todoSmoothPath(avgRun) + '"></path>';
+
+    document.getElementById('todoChartContent').innerHTML = html;
+    document.getElementById('todoChartMeta').textContent = validCount + ' day' + (validCount === 1 ? '' : 's') + ' with tasks · last ' + todoRangeWeeks + ' week' + (todoRangeWeeks === 1 ? '' : 's');
+  }
+
+  function initTodoChartRangeToggle() {
+    const map = { 4: 'todoRange4', 12: 'todoRange12', 52: 'todoRange52' };
+    Object.keys(map).forEach(weeks => {
+      const btn = document.getElementById(map[weeks]);
+      if (!btn) return;
+      btn.addEventListener('click', () => {
+        todoRangeWeeks = Number(weeks);
+        Object.values(map).forEach(id => document.getElementById(id).classList.remove('is-active'));
+        btn.classList.add('is-active');
+        renderTodoChart();
+      });
+    });
+  }
+
+  function renderDashboardSummaries() {
+    const tasksEl = document.getElementById('dsumTasksBody');
+    if (tasksEl) {
+      const todayGoals = getGoals(todayKey());
+      const doneCount = todayGoals.filter(g => g.done).length;
+      const streak = loadStreak();
+      const contactsRaw = storeGet('contacts_v1');
+      const contacts = Array.isArray(contactsRaw) ? contactsRaw : [];
+      const overdueCount = contacts.filter(c => {
+        if (!c.lastContactedAt) return false;
+        const days = Math.floor((Date.now() - new Date(c.lastContactedAt).getTime()) / 86400000);
+        return days > (c.cadenceDays || 7);
+      }).length;
+      tasksEl.textContent = (todayGoals.length === 0
+        ? 'No tasks yet — plan your day in Planner.'
+        : doneCount + ' / ' + todayGoals.length + ' done today' + (streak.count > 0 ? ' · ⚡ ' + streak.count + ' day streak' : ''))
+        + (overdueCount > 0 ? ' · ' + overdueCount + ' ' + (overdueCount === 1 ? 'person' : 'people') + ' overdue' : '');
+    }
+
+    const goalsEl = document.getElementById('dsumGoalsBody');
+    if (goalsEl) {
+      const goals = getLongtermGoals().filter(g => !g.archived);
+      if (goals.length === 0) {
+        goalsEl.textContent = 'No goals yet — set one in Planner.';
+      } else {
+        const withDeadline = goals.filter(g => g.deadline).sort((a, b) => goalDeadlineMs(a) - goalDeadlineMs(b));
+        const top = (withDeadline.length ? withDeadline : goals).slice(0, 2);
+        goalsEl.textContent = top.map(g => {
+          const ms = goalDeadlineMs(g);
+          return g.title + (ms != null ? ' (' + formatCountdown(ms - Date.now()) + ')' : '');
+        }).join(' · ');
+      }
+    }
+
+    const calEl = document.getElementById('dsumCalendarBody');
+    if (calEl) {
+      const todayKeyStr = calDateKey(new Date());
+      const localCount = getLocalCalEvents().filter(e => e.dateKey === todayKeyStr).length;
+      const finish = (gcalCount) => {
+        const total = localCount + gcalCount;
+        calEl.textContent = total === 0 ? 'Nothing on the calendar today.' : total + ' event' + (total === 1 ? '' : 's') + ' today';
+      };
+      const tokens = getGcalTokens();
+      if (tokens && tokens.access_token) {
+        const start = calMidnight(new Date());
+        fetchGcalEvents(start.toISOString(), calAddDays(start, 1).toISOString())
+          .then(events => finish(Array.isArray(events) ? events.length : 0))
+          .catch(() => finish(0));
+      } else {
+        finish(0);
+      }
+    }
+
+    const healthEl = document.getElementById('dsumHealthBody');
+    if (healthEl) {
+      const summary = storeGet('eq.health.summary');
+      if (!summary || summary.recovery == null) {
+        healthEl.textContent = 'Connect WHOOP on Health to see recovery here.';
+      } else {
+        const parts = [summary.recovery + '% recovery'];
+        if (summary.sleepHours != null) parts.push(summary.sleepHours + 'h sleep');
+        healthEl.textContent = parts.join(' · ');
+      }
+    }
+
+    const fitEl = document.getElementById('dsumFitnessBody');
+    if (fitEl) {
+      const summary = storeGet('eq.fitness.summary');
+      if (!summary || summary.currentWeight == null) {
+        fitEl.textContent = 'Log your first session on Fitness to start tracking.';
+      } else {
+        const units = summary.units || 'kg';
+        const parts = [summary.currentWeight + units];
+        if (summary.weight7dAvg != null) parts.push(summary.weight7dAvg + units + ' 7d avg');
+        if (summary.lastSessionAt) {
+          const days = Math.floor((Date.now() - new Date(summary.lastSessionAt).getTime()) / 86400000);
+          parts.push(days <= 0 ? 'session today' : days + 'd since last session');
+        }
+        fitEl.textContent = parts.join(' · ');
+      }
+    }
+
+    const finEl = document.getElementById('dsumFinanceBody');
+    if (finEl) {
+      let netWorth = 0, hasAny = false;
+      ['bank', 'stocks', 'crypto', 'other'].forEach((c) => {
+        const list = storeGet('nw:' + c);
+        if (Array.isArray(list) && list.length) hasAny = true;
+        (list || []).forEach((it) => { netWorth += Number(it.amount) || 0; });
+      });
+      if (!hasAny) {
+        finEl.textContent = 'Add an account on Finance to see your net worth here.';
+      } else {
+        const income = (storeGet('budget:income') || []).reduce((s, x) => s + (Number(x.amount) || 0), 0);
+        const expenses = (storeGet('budget:expenses') || []).reduce((s, x) => s + (Number(x.amount) || 0), 0);
+        const net = income - expenses;
+        finEl.textContent = 'GBP ' + Math.round(netWorth).toLocaleString('en-US') + ' net worth' +
+          ((income || expenses) ? ' · ' + (net >= 0 ? '+' : '') + 'GBP ' + Math.round(net).toLocaleString('en-US') + '/mo' : '');
+      }
+    }
+
+    renderTodoChart();
+  }
+
   // ---------- Boot ----------
   rollover();
   processStreak();
-  loadToday();
-  loadTomorrow();
-  renderStreak();
   updateDayRing();
   setInterval(updateDayRing, 60 * 1000);
   startTicker();
 
-  renderLongtermGoals();
-  initGoalAddForm();
-  initProjects();
-  renderChecklists();
   initCalendar();
+  initTodoChartRangeToggle();
+  renderDashboardSummaries();
 
   // Re-render when storage changes from another tab (or our bridged parent).
-  window.addEventListener('storage', () => {
-    loadToday(); loadTomorrow(); renderStreak();
-  });
+  window.addEventListener('storage', renderDashboardSummaries);
 })();
 </script>
 <script>
@@ -3339,6 +2364,526 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 });
+</script>
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  // Same Google Cloud project/OAuth client as Calendar's server-side flow
+  // (see GOOGLE_CAL_CLIENT_ID above) -- reused deliberately rather than
+  // provisioning a second client, since Google Identity Services supports
+  // requesting a different, smaller scope (gmail.readonly) from the same
+  // client ID. Requires the Gmail API to be enabled for that project in
+  // Google Cloud Console; if it isn't, connecting will fail with a clear
+  // error rather than silently misbehaving.
+  const GMAIL_CLIENT_ID = '83878675540-40tpq4hkpd05jarl8m8nj9i8vhm5rnel.apps.googleusercontent.com';
+  const GMAIL_SCOPE = 'https://www.googleapis.com/auth/gmail.readonly';
+  const GMAIL_EVER_GRANTED_KEY = 'eq.gmail.everGranted';
+  const MAX_MESSAGES = 10;
+
+  // Deliberately never persisted to localStorage -- kept in memory only
+  // for this page's lifetime, per the "no server storage, session-only"
+  // requirement. A reload always re-derives it via silent re-auth below.
+  let accessToken = null;
+  let tokenClient = null;
+  let retrying401 = false;
+
+  function showErr(msg) {
+    const el = $('gmailErr');
+    el.textContent = msg || '';
+    el.style.display = msg ? '' : 'none';
+  }
+  function setConnectedUI(connected) {
+    $('gmailDisc').style.display = connected ? 'none' : '';
+    $('gmailConn').style.display = connected ? '' : 'none';
+  }
+  function ensureTokenClient() {
+    if (tokenClient || !window.google || !google.accounts || !google.accounts.oauth2) return tokenClient;
+    tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: GMAIL_CLIENT_ID,
+      scope: GMAIL_SCOPE,
+      callback: (resp) => {
+        if (!resp || resp.error) {
+          showErr(resp && resp.error === 'access_denied' ? 'Gmail access was not granted.' : 'Gmail connect failed.');
+          return;
+        }
+        accessToken = resp.access_token;
+        localStorage.setItem(GMAIL_EVER_GRANTED_KEY, '1');
+        showErr('');
+        setConnectedUI(true);
+        fetchMessages();
+      },
+    });
+    return tokenClient;
+  }
+
+  function parseFrom(headerValue) {
+    if (!headerValue) return { name: 'Unknown', email: '' };
+    const m = headerValue.match(/^\s*"?([^"<]*)"?\s*(?:<([^>]+)>)?\s*$/);
+    if (!m) return { name: headerValue, email: '' };
+    const name = (m[1] || '').trim();
+    const email = (m[2] || '').trim();
+    return { name: name || email || 'Unknown', email };
+  }
+  function headerVal(headers, name) {
+    const h = (headers || []).find(x => x.name === name);
+    return h ? h.value : '';
+  }
+  function fmtTime(dateStr) {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return '';
+    const sameDay = d.toDateString() === new Date().toDateString();
+    return sameDay
+      ? d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
+      : d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  }
+  // Cross-link with the Relationship Tracker (planner.html) -- matched by
+  // exact display-name text, since contacts don't carry an email field.
+  function matchContact(name) {
+    if (!name) return null;
+    let contacts;
+    try { contacts = JSON.parse(localStorage.getItem('contacts_v1')); } catch (e) { contacts = null; }
+    if (!Array.isArray(contacts)) return null;
+    const needle = name.trim().toLowerCase();
+    return contacts.find(c => c.name && c.name.trim().toLowerCase() === needle) || null;
+  }
+  function logContact(contactId, btn) {
+    let contacts;
+    try { contacts = JSON.parse(localStorage.getItem('contacts_v1')); } catch (e) { contacts = null; }
+    if (!Array.isArray(contacts)) return;
+    const idx = contacts.findIndex(c => c.id === contactId);
+    if (idx === -1) return;
+    contacts[idx] = Object.assign({}, contacts[idx], { lastContactedAt: new Date().toISOString() });
+    localStorage.setItem('contacts_v1', JSON.stringify(contacts));
+    btn.textContent = 'Logged ✓';
+    btn.classList.add('is-done');
+    btn.disabled = true;
+  }
+
+  async function gmailFetch(url) {
+    const r = await fetch(url, { headers: { Authorization: 'Bearer ' + accessToken } });
+    if (!r.ok) { const err = new Error('Gmail ' + r.status); err.status = r.status; throw err; }
+    return r.json();
+  }
+
+  async function fetchMessages() {
+    if (!accessToken) return;
+    const refreshBtn = $('gmailRefreshBtn');
+    refreshBtn.classList.add('is-loading');
+    showErr('');
+    try {
+      const list = await gmailFetch('https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=' + MAX_MESSAGES + '&q=' + encodeURIComponent('is:unread in:inbox'));
+      const ids = (list.messages || []).map(m => m.id);
+      const details = await Promise.all(ids.map(id =>
+        gmailFetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/' + id + '?format=metadata&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=Date')
+      ));
+      retrying401 = false;
+      renderMessages(details, list.resultSizeEstimate != null ? list.resultSizeEstimate : details.length);
+    } catch (e) {
+      if (e.status === 401 && !retrying401 && ensureTokenClient()) {
+        retrying401 = true;
+        tokenClient.requestAccessToken({ prompt: '' });
+        return;
+      }
+      retrying401 = false;
+      if (e.status === 401) { showErr('Gmail session expired — reconnect below.'); accessToken = null; setConnectedUI(false); }
+      else showErr('Could not load Gmail — ' + e.message);
+    } finally {
+      refreshBtn.classList.remove('is-loading');
+    }
+  }
+
+  function renderMessages(details, unreadCount) {
+    const badge = $('gmailUnreadBadge');
+    badge.textContent = String(unreadCount);
+    badge.classList.toggle('zero', unreadCount === 0);
+
+    const listEl = $('gmailList');
+    listEl.innerHTML = '';
+    $('gmailEmpty').style.display = details.length ? 'none' : '';
+
+    details.forEach((msg) => {
+      const headers = msg.payload ? msg.payload.headers : [];
+      const from = parseFrom(headerVal(headers, 'From'));
+      const subject = headerVal(headers, 'Subject') || '(no subject)';
+      const contact = matchContact(from.name);
+
+      const row = document.createElement('div');
+      row.className = 'gmail-msg';
+      row.dataset.id = msg.id;
+
+      const top = document.createElement('div');
+      top.className = 'gmail-msg-row';
+      const senderEl = document.createElement('span');
+      senderEl.className = 'gmail-msg-sender';
+      senderEl.textContent = from.name;
+      const timeEl = document.createElement('span');
+      timeEl.className = 'gmail-msg-time';
+      timeEl.textContent = fmtTime(headerVal(headers, 'Date'));
+      top.appendChild(senderEl); top.appendChild(timeEl);
+      row.appendChild(top);
+
+      const subjEl = document.createElement('div');
+      subjEl.className = 'gmail-msg-subject';
+      subjEl.textContent = subject;
+      row.appendChild(subjEl);
+
+      const snipEl = document.createElement('div');
+      snipEl.className = 'gmail-msg-snippet';
+      snipEl.textContent = msg.snippet || '';
+      row.appendChild(snipEl);
+
+      if (contact) {
+        const tag = document.createElement('span');
+        tag.className = 'gmail-msg-tag';
+        tag.textContent = 'tracked contact';
+        row.appendChild(tag);
+      }
+
+      const bodyWrap = document.createElement('div');
+      bodyWrap.className = 'gmail-msg-body';
+      bodyWrap.style.display = 'none';
+      row.appendChild(bodyWrap);
+
+      row.addEventListener('click', (ev) => {
+        if (ev.target.closest('button') || ev.target.closest('a')) return;
+        const isOpen = bodyWrap.style.display !== 'none';
+        bodyWrap.style.display = isOpen ? 'none' : '';
+        if (!isOpen && !bodyWrap.dataset.loaded) loadBody(msg.id, bodyWrap, contact);
+      });
+
+      listEl.appendChild(row);
+    });
+  }
+
+  function decodeBase64Url(data) {
+    if (!data) return '';
+    const b64 = data.replace(/-/g, '+').replace(/_/g, '/');
+    try { return decodeURIComponent(escape(atob(b64))); } catch (e) { try { return atob(b64); } catch (e2) { return ''; } }
+  }
+  function findPart(payload, mimeType) {
+    if (!payload) return null;
+    if (payload.mimeType === mimeType && payload.body && payload.body.data) return payload.body.data;
+    if (payload.parts) { for (const p of payload.parts) { const found = findPart(p, mimeType); if (found) return found; } }
+    return null;
+  }
+
+  async function loadBody(id, bodyWrap, contact) {
+    bodyWrap.dataset.loaded = '1';
+    bodyWrap.innerHTML = '<div class="gmail-msg-body-loading">Loading…</div>';
+    try {
+      const full = await gmailFetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/' + id + '?format=full');
+      let text = decodeBase64Url(findPart(full.payload, 'text/plain'));
+      if (!text) {
+        const html = decodeBase64Url(findPart(full.payload, 'text/html'));
+        // Parsed via DOMParser (never attached to the live document, so
+        // nothing in the email HTML executes) purely to recover plain text.
+        if (html) text = new DOMParser().parseFromString(html, 'text/html').body.textContent || '';
+      }
+      text = (text || full.snippet || '').trim();
+
+      bodyWrap.innerHTML = '';
+      const textEl = document.createElement('div');
+      textEl.className = 'gmail-msg-body-text';
+      textEl.textContent = text || '(no readable body)';
+      bodyWrap.appendChild(textEl);
+
+      const actions = document.createElement('div');
+      actions.className = 'gmail-msg-actions';
+      const openLink = document.createElement('a');
+      openLink.href = 'https://mail.google.com/mail/u/0/#inbox/' + id;
+      openLink.target = '_blank';
+      openLink.rel = 'noopener';
+      openLink.textContent = 'Open in Gmail ↗';
+      actions.appendChild(openLink);
+      if (contact) {
+        const logBtn = document.createElement('button');
+        logBtn.type = 'button';
+        logBtn.textContent = 'Log contact';
+        logBtn.addEventListener('click', () => logContact(contact.id, logBtn));
+        actions.appendChild(logBtn);
+      }
+      bodyWrap.appendChild(actions);
+    } catch (e) {
+      bodyWrap.innerHTML = '<div class="gmail-msg-body-loading">Could not load full message.</div>';
+    }
+  }
+
+  $('gmailConnectBtn').addEventListener('click', () => {
+    const client = ensureTokenClient();
+    if (!client) { showErr('Google sign-in is still loading — try again in a moment.'); return; }
+    client.requestAccessToken({ prompt: 'consent' });
+  });
+  $('gmailRefreshBtn').addEventListener('click', () => { if (accessToken) fetchMessages(); });
+  $('gmailDisconnectBtn').addEventListener('click', () => {
+    if (accessToken && window.google && google.accounts && google.accounts.oauth2) {
+      google.accounts.oauth2.revoke(accessToken, () => {});
+    }
+    accessToken = null;
+    localStorage.removeItem(GMAIL_EVER_GRANTED_KEY);
+    setConnectedUI(false);
+  });
+
+  // Silent re-auth on load if we've been granted access before -- keeps
+  // the token itself unpersisted while avoiding a repeat consent screen.
+  // GIS's script tag loads async, so poll briefly until it's ready.
+  function trySilentAuth(attemptsLeft) {
+    if (localStorage.getItem(GMAIL_EVER_GRANTED_KEY) !== '1') return;
+    const client = ensureTokenClient();
+    if (!client) { if (attemptsLeft > 0) setTimeout(() => trySilentAuth(attemptsLeft - 1), 300); return; }
+    client.requestAccessToken({ prompt: '' });
+  }
+  trySilentAuth(20);
+})();
+</script>
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  function storeGet(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }
+  function storeSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+
+  function dateKeyOf(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  // Same Monday-6am boundary as gym.html's weekStartMonday6am -- kept as
+  // its own copy here rather than shared, matching this app's established
+  // per-file-duplication convention for small date-math helpers.
+  function weekStartMonday6am(refDate) {
+    const shifted = new Date(refDate.getTime() - 6 * 3600000);
+    const daysSinceMonday = (shifted.getDay() + 6) % 7;
+    const mondayShifted = new Date(shifted.getFullYear(), shifted.getMonth(), shifted.getDate() - daysSinceMonday);
+    return new Date(mondayShifted.getTime() + 6 * 3600000);
+  }
+  function weekKeyOf(weekStart) { return dateKeyOf(weekStart); }
+
+  function getWeeklyReports() { const v = storeGet('weekly_reports_v1'); return Array.isArray(v) ? v : []; }
+  function setWeeklyReports(list) { storeSet('weekly_reports_v1', list); }
+
+  function computeWeeklyReport(weekStart, weekEnd) {
+    const startKey = dateKeyOf(weekStart);
+    const endKey = dateKeyOf(new Date(weekEnd.getTime() - 1));
+
+    const sleepLog = storeGet('sleep_log_v1') || [];
+    const sleepInWeek = sleepLog.filter(e => e.dateKey >= startKey && e.dateKey <= endKey);
+    const avgSleep = sleepInWeek.length ? sleepInWeek.reduce((s, e) => s + e.hours, 0) / sleepInWeek.length : null;
+
+    const recLog = storeGet('recovery_log_v1') || [];
+    const recInWeek = recLog.filter(e => e.dateKey >= startKey && e.dateKey <= endKey);
+    const avgRecovery = recInWeek.length ? recInWeek.reduce((s, e) => s + e.recovery, 0) / recInWeek.length : null;
+
+    // Fitness reads gym.html's own published weekly aggregates rather than
+    // gym.html's raw internal state (which has been through normalize()
+    // there, not safely re-derivable from outside) -- only as fresh as
+    // gym.html's last visit, same limitation eq.fitness.summary already has.
+    const fitSummary = storeGet('eq.fitness.summary') || {};
+
+    const snaps = storeGet('todo_completion_snapshots_v1') || [];
+    const snapsInWeek = snaps.filter(s => s.dateKey >= startKey && s.dateKey <= endKey && s.scheduled > 0);
+    const avgTaskCompletion = snapsInWeek.length
+      ? snapsInWeek.reduce((s, e) => s + (e.completed / e.scheduled * 100), 0) / snapsInWeek.length
+      : null;
+    const goals = storeGet('longterm_goals_v1') || [];
+    const goalsArchivedThisWeek = goals.filter(g => g.archived && g.archivedAt && g.archivedAt >= weekStart.toISOString() && g.archivedAt < weekEnd.toISOString()).length;
+
+    const habits = storeGet('habits_v1') || [];
+    let habitDone = 0, habitTracked = 0;
+    const now = new Date();
+    habits.forEach(h => {
+      const history = h.history || {};
+      const created = h.createdAt ? new Date(h.createdAt) : null;
+      for (let d = new Date(weekStart); d < weekEnd; d.setDate(d.getDate() + 1)) {
+        if (created && d < created) continue;
+        if (d > now) continue;
+        habitTracked++;
+        if (history[dateKeyOf(d)]) habitDone++;
+      }
+    });
+    const habitSuccessPct = habitTracked > 0 ? (habitDone / habitTracked * 100) : null;
+
+    const income = (storeGet('budget:income') || []).reduce((s, x) => s + (Number(x.amount) || 0), 0);
+    const expenses = (storeGet('budget:expenses') || []).reduce((s, x) => s + (Number(x.amount) || 0), 0);
+    const hasFinanceData = (storeGet('budget:income') || []).length > 0 || (storeGet('budget:expenses') || []).length > 0;
+
+    return {
+      health: {
+        avgSleep: avgSleep != null ? Number(avgSleep.toFixed(1)) : null,
+        avgRecovery: avgRecovery != null ? Math.round(avgRecovery) : null,
+      },
+      fitness: {
+        sessionsThisWeek: typeof fitSummary.sessionsThisWeek === 'number' ? fitSummary.sessionsThisWeek : null,
+        volumeThisWeek: typeof fitSummary.volumeThisWeek === 'number' ? fitSummary.volumeThisWeek : null,
+        weight7dAvgChange: typeof fitSummary.weight7dAvgChange === 'number' ? fitSummary.weight7dAvgChange : null,
+        units: fitSummary.units || 'kg',
+      },
+      planner: {
+        avgTaskCompletion: avgTaskCompletion != null ? Math.round(avgTaskCompletion) : null,
+        goalsArchivedThisWeek,
+      },
+      ability: { habitSuccessPct: habitSuccessPct != null ? Math.round(habitSuccessPct) : null },
+      finance: { monthlyCashFlow: hasFinanceData ? Math.round(income - expenses) : null },
+    };
+  }
+
+  // A week where literally every metric is null/zero means no relevant
+  // page had any data yet during that week -- most likely a brand-new
+  // install whose very first "completed week" predates any real use.
+  // Skipping it (rather than saving a mostly-empty report) keeps a fresh
+  // install on the empty state until there's an actual week to report on.
+  function reportHasAnyData(m) {
+    return m.health.avgSleep != null || m.health.avgRecovery != null ||
+      m.fitness.sessionsThisWeek != null || m.fitness.volumeThisWeek != null || m.fitness.weight7dAvgChange != null ||
+      m.planner.avgTaskCompletion != null || m.planner.goalsArchivedThisWeek > 0 ||
+      m.ability.habitSuccessPct != null ||
+      m.finance.monthlyCashFlow != null;
+  }
+
+  // Generates any completed weeks missing from history, walking forward
+  // from the last recorded week (catches up if the app wasn't opened for
+  // a while) -- but on a first-ever run, only backfills the single most
+  // recently completed week rather than an arbitrary amount of empty
+  // pre-history.
+  function ensureWeeklyReports() {
+    const reports = getWeeklyReports();
+    const currentWeekStart = weekStartMonday6am(new Date());
+    let cursorStart;
+    if (reports.length) {
+      const lastStart = new Date(reports[reports.length - 1].weekKey + 'T06:00:00');
+      cursorStart = new Date(lastStart.getTime() + 7 * 86400000);
+    } else {
+      cursorStart = new Date(currentWeekStart.getTime() - 7 * 86400000);
+    }
+    let changed = false;
+    let guard = 0;
+    while (cursorStart < currentWeekStart && guard < 52) {
+      guard++;
+      const weekEnd = new Date(cursorStart.getTime() + 7 * 86400000);
+      const weekKey = weekKeyOf(cursorStart);
+      if (!reports.some(r => r.weekKey === weekKey)) {
+        const metrics = computeWeeklyReport(cursorStart, weekEnd);
+        if (reportHasAnyData(metrics)) {
+          reports.push({
+            weekKey,
+            weekStart: cursorStart.toISOString(),
+            weekEnd: weekEnd.toISOString(),
+            generatedAt: new Date().toISOString(),
+            metrics,
+          });
+          changed = true;
+        }
+      }
+      cursorStart = weekEnd;
+    }
+    if (changed) {
+      reports.sort((a, b) => a.weekKey.localeCompare(b.weekKey));
+      setWeeklyReports(reports.slice(-12));
+    }
+    return getWeeklyReports();
+  }
+
+  let wkrIndex = -1; // index into the reports array; -1 until set
+
+  function fmtRange(weekStartIso, weekEndIso) {
+    const s = new Date(weekStartIso), e = new Date(new Date(weekEndIso).getTime() - 86400000);
+    const opts = { month: 'short', day: 'numeric' };
+    return s.toLocaleDateString(undefined, opts) + ' – ' + e.toLocaleDateString(undefined, opts);
+  }
+  function metricLine(label, value) {
+    return value == null
+      ? '<div class="wkr-metric wkr-metric-empty">' + label + ': no data</div>'
+      : '<div class="wkr-metric">' + label + ': <strong>' + value + '</strong></div>';
+  }
+
+  function renderWeeklyReport() {
+    const reports = getWeeklyReports();
+    const card = $('weeklyReportCard'), empty = $('weeklyReportEmpty');
+    if (!reports.length) {
+      card.style.display = 'none';
+      empty.style.display = '';
+      return;
+    }
+    empty.style.display = 'none';
+    card.style.display = '';
+    if (wkrIndex === -1 || wkrIndex >= reports.length) wkrIndex = reports.length - 1;
+    const r = reports[wkrIndex];
+    const m = r.metrics;
+
+    $('wkrRange').textContent = fmtRange(r.weekStart, r.weekEnd);
+    $('wkrPrevBtn').disabled = wkrIndex <= 0;
+    $('wkrNextBtn').disabled = wkrIndex >= reports.length - 1;
+
+    const sections = [
+      { title: 'Health', html: metricLine('Avg sleep', m.health.avgSleep != null ? m.health.avgSleep + 'h' : null) + metricLine('Avg recovery', m.health.avgRecovery != null ? m.health.avgRecovery + '%' : null) },
+      { title: 'Fitness', html: metricLine('Sessions', m.fitness.sessionsThisWeek) + metricLine('Volume', m.fitness.volumeThisWeek != null ? m.fitness.volumeThisWeek.toLocaleString('en-US') : null) + metricLine('Weight trend', m.fitness.weight7dAvgChange != null ? (m.fitness.weight7dAvgChange >= 0 ? '+' : '') + m.fitness.weight7dAvgChange + m.fitness.units : null) },
+      { title: 'Planner', html: metricLine('Task completion', m.planner.avgTaskCompletion != null ? m.planner.avgTaskCompletion + '%' : null) + metricLine('Goals completed', m.planner.goalsArchivedThisWeek) },
+      { title: 'Ability', html: metricLine('Habit success', m.ability.habitSuccessPct != null ? m.ability.habitSuccessPct + '%' : null) },
+      { title: 'Finance', html: metricLine('Monthly cash flow', m.finance.monthlyCashFlow != null ? (m.finance.monthlyCashFlow >= 0 ? '+' : '') + 'GBP ' + m.finance.monthlyCashFlow.toLocaleString('en-US') : null) },
+    ];
+    $('wkrGrid').innerHTML = sections.map(s => '<div class="wkr-section"><div class="wkr-section-title">' + s.title + '</div>' + s.html + '</div>').join('');
+  }
+
+  function showObsidianStatus(msg, isError) {
+    const el = $('wkrObsidianStatus');
+    el.textContent = msg;
+    el.classList.toggle('is-error', !!isError);
+    clearTimeout(el._t);
+    el._t = setTimeout(() => { el.textContent = ''; }, 5000);
+  }
+
+  function weeklyReportMarkdown(r) {
+    const m = r.metrics;
+    const lines = [
+      '# Weekly Report — ' + fmtRange(r.weekStart, r.weekEnd),
+      '',
+      '## Health',
+      '- Avg sleep: ' + (m.health.avgSleep != null ? m.health.avgSleep + 'h' : 'no data'),
+      '- Avg recovery: ' + (m.health.avgRecovery != null ? m.health.avgRecovery + '%' : 'no data'),
+      '',
+      '## Fitness',
+      '- Sessions: ' + (m.fitness.sessionsThisWeek != null ? m.fitness.sessionsThisWeek : 'no data'),
+      '- Volume: ' + (m.fitness.volumeThisWeek != null ? m.fitness.volumeThisWeek.toLocaleString('en-US') : 'no data'),
+      '- Weight trend: ' + (m.fitness.weight7dAvgChange != null ? (m.fitness.weight7dAvgChange >= 0 ? '+' : '') + m.fitness.weight7dAvgChange + m.fitness.units : 'no data'),
+      '',
+      '## Planner',
+      '- Task completion: ' + (m.planner.avgTaskCompletion != null ? m.planner.avgTaskCompletion + '%' : 'no data'),
+      '- Goals completed: ' + m.planner.goalsArchivedThisWeek,
+      '',
+      '## Ability',
+      '- Habit success: ' + (m.ability.habitSuccessPct != null ? m.ability.habitSuccessPct + '%' : 'no data'),
+      '',
+      '## Finance',
+      '- Monthly cash flow: ' + (m.finance.monthlyCashFlow != null ? (m.finance.monthlyCashFlow >= 0 ? '+' : '') + 'GBP ' + m.finance.monthlyCashFlow.toLocaleString('en-US') : 'no data'),
+      '',
+    ];
+    return lines.join('\n');
+  }
+
+  function initWeeklyReport() {
+    ensureWeeklyReports();
+    renderWeeklyReport();
+
+    $('wkrPrevBtn').addEventListener('click', () => { if (wkrIndex > 0) { wkrIndex--; renderWeeklyReport(); } });
+    $('wkrNextBtn').addEventListener('click', () => {
+      const reports = getWeeklyReports();
+      if (wkrIndex < reports.length - 1) { wkrIndex++; renderWeeklyReport(); }
+    });
+    $('wkrObsidianBtn').addEventListener('click', async () => {
+      const reports = getWeeklyReports();
+      const r = reports[wkrIndex];
+      if (!r) return;
+      if (!window.ObsidianSync) { showObsidianStatus('Obsidian sync not available on this page.', true); return; }
+      const cfg = ObsidianSync.getConfig();
+      if (!cfg.enabled) { showObsidianStatus('Enable Obsidian sync in Settings first.', true); return; }
+      showObsidianStatus('Writing…', false);
+      try {
+        const res = await ObsidianSync.pushWeeklyReport(r.weekKey, weeklyReportMarkdown(r));
+        showObsidianStatus(res.ok ? 'Saved to Obsidian.' : 'Could not write to Obsidian.', !res.ok);
+      } catch (e) {
+        showObsidianStatus('Could not write to Obsidian.', true);
+      }
+    });
+
+    window.addEventListener('storage', () => { ensureWeeklyReports(); renderWeeklyReport(); });
+  }
+
+  initWeeklyReport();
+})();
 </script>
 </body>
 </html>

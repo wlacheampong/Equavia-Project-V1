@@ -174,6 +174,66 @@
     } catch (e) { return { ok: false, reason: 'network' }; }
   }
 
+  function sanitizeFilenameSegment(name) {
+    const cleaned = String(name == null ? '' : name)
+      .replace(/[<>:"/\\|?*\x00-\x1F]/g, '-')
+      .trim()
+      .replace(/\.+$/, '');
+    return (cleaned || 'Untitled').slice(0, 100);
+  }
+
+  // Moves an already-linked project page to a new folder, preserving
+  // whatever the user has actually written into it (a plain GET of the
+  // current path, not a re-generated stub) -- pushProjectPage's stub
+  // content is only ever right the first time a page is created. The
+  // Local REST API has no move/rename verb, so this is PUT-to-new-path
+  // then DELETE-old-path; the delete is best-effort (a dangling old
+  // file is recoverable, a lost move destination is not).
+  //
+  // destFolderSegments is an array of individual path segments (e.g.
+  // ['Archive', goalTitle]), each sanitized on its own -- NOT a
+  // pre-joined 'Archive/<goal title>' string. A goal title containing a
+  // literal "/" (e.g. "Q3: Ship it!/Launch") would otherwise get misread
+  // as an extra folder boundary instead of an illegal character to
+  // sanitize within that one segment.
+  async function moveProjectPageToFolder(project, destFolderSegments) {
+    const cfg = getConfig();
+    if (!cfg.enabled) return { ok: false, reason: 'disabled' };
+    if (!project.obsidian || !project.obsidian.path) return { ok: false, reason: 'not_linked' };
+    const oldPath = project.obsidian.path;
+    let content;
+    try {
+      const res = await apiFetch(vaultPath(cfg, oldPath));
+      if (!res.ok) return { ok: false, reason: 'http_' + res.status };
+      content = await res.text();
+    } catch (e) { return { ok: false, reason: 'network' }; }
+
+    const newPath = destFolderSegments.map(sanitizeFilenameSegment).join('/') + '/' + project.id + '.md';
+    try {
+      const putRes = await apiFetch(vaultPath(cfg, newPath), { method: 'PUT', body: content, headers: { 'Content-Type': 'text/markdown' } });
+      if (!putRes.ok) return { ok: false, reason: 'http_' + putRes.status };
+    } catch (e) { return { ok: false, reason: 'network' }; }
+
+    try { await apiFetch(vaultPath(cfg, oldPath), { method: 'DELETE' }); } catch (e) { /* best-effort; new copy already exists */ }
+    return { ok: true, path: newPath };
+  }
+
+  // One-shot write for the dashboard's Weekly Report (3.3) -- overwrites
+  // if the same week is written twice, same idempotent create-if-missing
+  // spirit as pushProjectPage, just always-overwrite since the whole
+  // point here is "the current numbers for this week", not user-owned
+  // freeform content that must be preserved like a project page is.
+  async function pushWeeklyReport(weekKey, markdown) {
+    const cfg = getConfig();
+    if (!cfg.enabled) return { ok: false, reason: 'disabled' };
+    const relPath = (cfg.folder || 'AppNotes') + '/Weekly Reports/' + weekKey + '.md';
+    try {
+      const res = await apiFetch(vaultPath(cfg, relPath), { method: 'PUT', body: markdown, headers: { 'Content-Type': 'text/markdown' } });
+      if (!res.ok) return { ok: false, reason: 'http_' + res.status };
+      return { ok: true, path: relPath };
+    } catch (e) { return { ok: false, reason: 'network' }; }
+  }
+
   async function pullAll(existingNotes) {
     const cfg = getConfig();
     if (!cfg.enabled) return { ok: false, reason: 'disabled', notes: existingNotes };
@@ -230,5 +290,5 @@
     return { ok: true, notes };
   }
 
-  window.ObsidianSync = { getConfig, setConfig, testConnection, pushNote, deleteNote, pullAll, pushProjectPage };
+  window.ObsidianSync = { getConfig, setConfig, testConnection, pushNote, deleteNote, pullAll, pushProjectPage, moveProjectPageToFolder, pushWeeklyReport };
 })();

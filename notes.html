@@ -11,8 +11,11 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <meta name="theme-color" content="#050506">
 <link rel="icon" type="image/webp" href="images/Index Landing Page.webp">
-<link rel="apple-touch-icon" href="images/Index Landing Page.webp">
-<title>Notes</title>
+<link rel="apple-touch-icon" href="images/apple-touch-icon.png">
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Equavia">
+<title>Notes — Equavia</title>
 <script src="topbar.js" defer></script>
 <style>
   /* Notes — Obsidian-backed notes app. Reskin of the former "Vee" sealed
@@ -139,33 +142,6 @@
   <input type="file" id="edImageFile" accept="image/*" style="display:none">
 </div>
 
-<div class="modal-bg" id="setModalBg">
-  <div class="modal">
-    <h3>Obsidian Sync</h3>
-    <p class="modal-help">Requires the free "Local REST API" community plugin, installed in Obsidian and running while Obsidian is open on this device — sync only works from the machine/network where Obsidian is reachable.</p>
-    <div class="set-section">
-      <label class="set-row"><span>Enable sync</span><input type="checkbox" id="setEnabled"></label>
-    </div>
-    <div class="set-section">
-      <h4>Connection</h4>
-      <div class="field"><label>Host</label><input type="text" id="setHost" placeholder="127.0.0.1"></div>
-      <div class="field"><label>Port</label><input type="number" id="setPort" placeholder="27123"></div>
-      <div class="field"><label>Protocol</label>
-        <select id="setProtocol"><option value="http">http</option><option value="https">https</option></select>
-      </div>
-      <div class="field"><label>API Key</label><input type="password" id="setApiKey" placeholder="Paste from the plugin's settings tab"></div>
-      <div class="field"><label>Vault folder</label><input type="text" id="setFolder" placeholder="AppNotes"></div>
-    </div>
-    <div class="set-actions">
-      <button class="btn" id="setTest">Test connection</button>
-      <span class="set-test-result" id="setTestResult"></span>
-    </div>
-    <div class="modal-actions">
-      <button class="btn" id="setClose">Cancel</button>
-      <button class="btn btn-primary" id="setSave">Save</button>
-    </div>
-  </div>
-</div>
 
 <script>
 const $=id=>document.getElementById(id);
@@ -267,7 +243,7 @@ function listInner(){
 function headerHtml(){
   return '<header class="header"><div class="orb" aria-hidden="true"></div>'
     +'<div class="headerText"><h1 class="title">Notes</h1><p class="subtitle">synced with Obsidian</p></div>'
-    +'<button class="gearBtn" id="settingsBtn" title="Obsidian sync settings" aria-label="Settings">⚙️</button></header>';
+    +'<a class="gearBtn" href="settings.html" title="Obsidian sync settings" aria-label="Settings">⚙️</a></header>';
 }
 function searchHtml(){
   return '<div class="searchWrap"><input class="searchInput" id="searchInput" placeholder="Search notes…" value="'+esc(searchQuery)+'"></div>';
@@ -484,33 +460,8 @@ async function syncNowAll(){
   }
 }
 
-// ---------- Settings modal ----------
-function openSettings(){
-  const cfg=ObsidianSync.getConfig();
-  $('setEnabled').checked=cfg.enabled;
-  $('setHost').value=cfg.host;
-  $('setPort').value=cfg.port;
-  $('setProtocol').value=cfg.protocol;
-  $('setApiKey').value=cfg.apiKey;
-  $('setFolder').value=cfg.folder;
-  $('setTestResult').textContent='';
-  $('setModalBg').classList.add('show');
-}
-function closeSettings(){$('setModalBg').classList.remove('show');}
-function readSettingsForm(){
-  return{
-    enabled:$('setEnabled').checked,
-    host:$('setHost').value.trim()||'127.0.0.1',
-    port:Number($('setPort').value)||27123,
-    protocol:$('setProtocol').value,
-    apiKey:$('setApiKey').value.trim(),
-    folder:$('setFolder').value.trim()||'AppNotes',
-  };
-}
-
 // ---------- Event wiring ----------
 document.addEventListener('click',e=>{
-  if(e.target.closest('#settingsBtn')){openSettings();return;}
   if(e.target.closest('#composerCancel')){collapseComposer();return;}
   if(e.target.closest('#composerSave')){saveComposer();return;}
   const pin=e.target.closest('[data-pin]');
@@ -521,15 +472,6 @@ document.addEventListener('click',e=>{
   if(e.target.closest('#edPin')){togglePinCurrent();return;}
   if(e.target.closest('#edImage')){triggerImagePick();return;}
   if(e.target.closest('#edDelete')){deleteCurrentNote();return;}
-  if(e.target.closest('#setClose')){closeSettings();return;}
-  if(e.target===$('setModalBg')){closeSettings();return;}
-  if(e.target.closest('#setSave')){ObsidianSync.setConfig(readSettingsForm());closeSettings();renderApp();return;}
-  if(e.target.closest('#setTest')){
-    ObsidianSync.setConfig(readSettingsForm());
-    $('setTestResult').textContent='Testing…';
-    ObsidianSync.testConnection().then(ok=>{$('setTestResult').textContent=ok?'✅ Connected':'❌ Not reachable';});
-    return;
-  }
 });
 document.addEventListener('input',e=>{
   if(e.target.id==='searchInput'){searchQuery=e.target.value;$('list').innerHTML=listInner();return;}
@@ -541,7 +483,6 @@ document.addEventListener('keydown',e=>{
   if(e.target.id==='composerInput'&&(e.metaKey||e.ctrlKey)&&e.key==='Enter'){e.preventDefault();saveComposer();}
   if(e.key==='Escape'){
     if($('editorOverlay').classList.contains('show')){closeEditor();return;}
-    if($('setModalBg').classList.contains('show')){closeSettings();return;}
   }
 });
 $('edImageFile').addEventListener('change',e=>{

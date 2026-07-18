@@ -5,8 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#050506">
 <link rel="icon" type="image/webp" href="images/Index Landing Page.webp">
-<link rel="apple-touch-icon" href="images/Index Landing Page.webp">
-<title>Privacy Policy — William's Dashboard</title>
+<link rel="apple-touch-icon" href="images/apple-touch-icon.png">
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Equavia">
+<title>Privacy Policy — Equavia</title>
 <style>
 :root {
   --text-primary: #FAFAFA;
@@ -100,7 +103,7 @@ a { color: var(--accent); }
   <div class="updated">Last updated: July 12, 2026</div>
 
   <p>
-    William's Dashboard ("this app") is a personal, single-user dashboard for
+    Equavia ("this app") is a personal, single-user dashboard for
     tracking daily goals, health, fitness, water intake, and finances. It is
     not a commercial product, has no user accounts, and is not intended for
     use by the general public — it exists to serve its one operator. This
@@ -117,6 +120,7 @@ a { color: var(--accent); }
     <li><strong>Fitness data</strong> — workout/progressive-overload entries you log.</li>
     <li><strong>Finance data</strong> — entries you add on the finance page.</li>
     <li><strong>WHOOP biometric data</strong> (only if you connect a WHOOP account) — recovery score, sleep stages/duration, strain, HRV, resting heart rate, skin temperature, blood oxygen, and respiratory rate, as provided by WHOOP's API.</li>
+    <li><strong>Google Calendar data</strong> (only if you connect a Google account) — event titles, times, dates, and calendar names for events you view or create through the app, as provided by Google's Calendar API.</li>
   </ul>
 
   <h2>Where it's stored</h2>
@@ -133,7 +137,8 @@ a { color: var(--accent); }
   <ul>
     <li><strong>Supabase</strong> — stores a mirror of the app data described above for cross-device sync. See <a href="https://supabase.com/privacy" target="_blank" rel="noopener">Supabase's privacy policy</a>.</li>
     <li><strong>WHOOP API</strong> — if you choose to connect a WHOOP account, the app requests an OAuth token from WHOOP and uses it (via a backend proxy the operator controls) to fetch the biometric data listed above. This app does not sell or share WHOOP data with any other party. See <a href="https://www.whoop.com/us/en/privacy-policy/" target="_blank" rel="noopener">WHOOP's privacy policy</a>.</li>
-    <li><strong>Anthropic (Claude API)</strong> — an optional "✨ Polish" feature, when enabled, sends the text of a goal you're typing to Anthropic's API to reword it. This is off by default and only activates if an API key is configured. See <a href="https://www.anthropic.com/legal/privacy" target="_blank" rel="noopener">Anthropic's privacy policy</a>.</li>
+    <li><strong>Google Calendar API</strong> — if you choose to connect a Google account, the app requests an OAuth token from Google and uses it (via a backend proxy the operator controls) to read your calendar events and create new ones on your behalf. This app does not sell or share Google account data with any other party. See <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google's privacy policy</a>.</li>
+    <li><strong>Anthropic (Claude API)</strong> — used in two places, both opt-in and both inactive unless an API key is configured server-side: (1) an optional "✨ Polish" feature that sends the text of a goal you're typing to Anthropic's API to reword it; (2) the "Ask Claude" page, which sends your typed message plus a compact text summary of whichever data domains (Goals/Tasks, Health, Fitness, Finance, Habits, Relationships) you've toggled on for that conversation — nothing is sent for a domain you haven't enabled, and the toggle is per-message, not sticky forever. Conversation history for the Ask Claude page is stored locally the same way as the rest of the app's data. See <a href="https://www.anthropic.com/legal/privacy" target="_blank" rel="noopener">Anthropic's privacy policy</a>.</li>
   </ul>
 
   <h2>Data sharing</h2>
