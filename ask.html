@@ -59,6 +59,15 @@ body {
 .ask-msg-user { align-self: flex-end; background: var(--accent); color: #1a0f0a; border-bottom-right-radius: 4px; }
 .ask-msg-assistant { align-self: flex-start; background: var(--bg-card); color: var(--text-primary); border-bottom-left-radius: 4px; }
 .ask-msg-error { align-self: flex-start; background: rgba(255,107,107,0.1); border: 1px solid rgba(255,107,107,0.3); color: #FF8A8A; }
+.ask-proposal { display: flex; flex-direction: column; gap: 4px; }
+.ask-proposal-title { font-weight: 700; font-size: 13.5px; }
+.ask-proposal-when { font-size: 12px; color: var(--text-secondary); }
+.ask-proposal-notes { font-size: 12px; color: var(--text-tertiary); }
+.ask-proposal-actions { display: flex; gap: 8px; margin-top: 6px; }
+.ask-proposal-btn { border: none; border-radius: 8px; padding: 6px 12px; font-family: inherit; font-size: 11.5px; font-weight: 600; cursor: pointer; }
+.ask-proposal-confirm { background: var(--accent); color: #1a0f0a; }
+.ask-proposal-decline { background: rgba(255,255,255,0.08); color: var(--text-secondary); }
+.ask-proposal-status { font-size: 11.5px; color: var(--text-tertiary); margin-top: 4px; }
 .ask-msg-time { font-size: 9.5px; color: var(--text-quaternary); margin-top: 4px; font-family: var(--font-mono); }
 .ask-msg-user .ask-msg-time { color: rgba(26,15,10,0.55); }
 .ask-typing { align-self: flex-start; display: flex; gap: 4px; padding: 12px 14px; background: var(--bg-card); border-radius: 14px; border-bottom-left-radius: 4px; }
@@ -152,6 +161,7 @@ body {
   const CHAT_OBSIDIAN_ID_KEY = 'ask_chat_obsidian_id_v1';
   const DOMAIN_DEFS = [
     { key: 'tasks', label: 'Goals/Tasks', on: true },
+    { key: 'calendar', label: 'Calendar', on: true },
     { key: 'health', label: 'Health', on: true },
     { key: 'fitness', label: 'Fitness', on: true },
     { key: 'finance', label: 'Finance', on: true },
@@ -197,20 +207,149 @@ body {
     if (longterm.length) s += 'Longterm goals: ' + longterm.slice(0, 8).map(g => g.title + ' (' + (g.value || 0) + '%)').join(', ') + '\n';
     return s;
   }
+  // Reads the same gcal_tokens_v1 token Planner's Calendar section already
+  // stores after "Connect Google Calendar" -- this page never initiates its
+  // own OAuth, it just rides the existing connection (or degrades to "not
+  // connected" if Planner's flow was never run).
+  const GCAL_TOKENS_KEY = 'gcal_tokens_v1';
+  async function ensureValidGcalToken() {
+    const tokens = storeGet(GCAL_TOKENS_KEY);
+    if (!tokens || !tokens.access_token) return null;
+    if (tokens.expires_at && Date.now() < tokens.expires_at - 60000) return tokens.access_token;
+    if (!tokens.refresh_token) { localStorage.removeItem(GCAL_TOKENS_KEY); return null; }
+    try {
+      const res = await fetch('/api/google-calendar-refresh', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refresh_token: tokens.refresh_token }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.access_token) { localStorage.removeItem(GCAL_TOKENS_KEY); return null; }
+      storeSet(GCAL_TOKENS_KEY, { access_token: json.access_token, refresh_token: tokens.refresh_token, expires_at: Date.now() + (json.expires_in || 3600) * 1000 });
+      return json.access_token;
+    } catch (e) { return null; }
+  }
+  async function fetchGcalEventsRange(timeMinISO, timeMaxISO) {
+    const token = await ensureValidGcalToken();
+    if (!token) return null;
+    const params = new URLSearchParams({ timeMin: timeMinISO, timeMax: timeMaxISO, singleEvents: 'true', orderBy: 'startTime', maxResults: '50' });
+    try {
+      const res = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events?' + params.toString(), {
+        headers: { Authorization: 'Bearer ' + token },
+      });
+      if (!res.ok) { if (res.status === 401) localStorage.removeItem(GCAL_TOKENS_KEY); return null; }
+      const json = await res.json();
+      return json.items || [];
+    } catch (e) { return null; }
+  }
+  function fmtEventLine(ev) {
+    const startRaw = ev.start && (ev.start.dateTime || ev.start.date);
+    const allDay = !!(ev.start && ev.start.date && !ev.start.dateTime);
+    const when = allDay ? 'all day' : (startRaw ? new Date(startRaw).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) : '?');
+    return '- ' + when + ': ' + (ev.summary || '(untitled)');
+  }
+  async function buildCalendarContext() {
+    if (!storeGet(GCAL_TOKENS_KEY)) return 'CALENDAR: Google Calendar not connected (connect it from the Planner page).\n';
+    const now = new Date();
+    const startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const endToday = new Date(startToday.getTime() + 86400000);
+    const endWeek = new Date(startToday.getTime() + 7 * 86400000);
+    const events = await fetchGcalEventsRange(startToday.toISOString(), endWeek.toISOString());
+    if (events == null) return 'CALENDAR: couldn\'t reach Google Calendar for this message.\n';
+    const todays = events.filter(ev => {
+      const s = ev.start && (ev.start.dateTime || ev.start.date);
+      return s && new Date(s) < endToday;
+    });
+    const laterCount = events.length - todays.length;
+    let s = 'CALENDAR:\n';
+    s += todays.length ? ('Today:\n' + todays.slice(0, 12).map(fmtEventLine).join('\n') + '\n') : 'Nothing scheduled today.\n';
+    if (laterCount > 0) s += laterCount + ' more event' + (laterCount === 1 ? '' : 's') + ' later this week.\n';
+    return s;
+  }
+  // Offered to Claude only when the Calendar domain is on and a connection
+  // exists (see sendMessage) -- calling this never creates anything by
+  // itself, it just surfaces a proposal card the user has to actively
+  // confirm. tool_choice is left at its "auto" default so Claude only
+  // reaches for it when a message actually asks to schedule something.
+  const CALENDAR_EVENT_TOOL = {
+    name: 'propose_calendar_event',
+    description: 'Draft a calendar event for the user to review in a confirm/decline card. This does NOT create the event by itself. Only call this when the user is clearly asking to schedule or add something to their calendar. Resolve relative dates ("tomorrow", "Tuesday") against the current date given in context.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        title: { type: 'string', description: 'Short event title.' },
+        date: { type: 'string', description: 'ISO date the event is on, YYYY-MM-DD.' },
+        time: { type: 'string', description: '24-hour HH:MM local start time. Omit entirely for an all-day event.' },
+        durationMinutes: { type: 'number', description: 'Length of the event in minutes. Defaults to 30 if omitted.' },
+        notes: { type: 'string', description: 'Optional short description/notes for the event.' },
+      },
+      required: ['title', 'date'],
+    },
+  };
+  function buildGcalEventResource(p) {
+    const durMin = Number(p.durationMinutes) > 0 ? Number(p.durationMinutes) : 30;
+    const resource = { summary: p.title || 'Untitled event' };
+    if (p.notes) resource.description = p.notes;
+    if (p.time) {
+      const start = new Date(p.date + 'T' + p.time + ':00');
+      const end = new Date(start.getTime() + durMin * 60000);
+      resource.start = { dateTime: start.toISOString() };
+      resource.end = { dateTime: end.toISOString() };
+    } else {
+      resource.start = { date: p.date };
+      resource.end = { date: p.date };
+    }
+    return resource;
+  }
+  async function createGcalEvent(eventResource) {
+    const token = await ensureValidGcalToken();
+    if (!token) throw new Error('Google Calendar not connected.');
+    const res = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+      body: JSON.stringify(eventResource),
+    });
+    if (res.status === 401) { localStorage.removeItem(GCAL_TOKENS_KEY); throw new Error('Session expired — reconnect Google Calendar in Planner.'); }
+    if (!res.ok) throw new Error('Google Calendar create failed (' + res.status + ').');
+    return res.json();
+  }
+
   function buildHealthContext() {
     const h = storeGet('eq.health.summary');
     if (!h) return 'HEALTH: no recent WHOOP data.\n';
     let s = 'HEALTH:\n';
     if (h.recovery != null) s += 'Recovery: ' + h.recovery + '%\n';
     if (h.sleepHours != null) s += 'Sleep last night: ' + h.sleepHours + 'h\n';
+    if (h.hrv != null) s += 'HRV: ' + h.hrv + 'ms\n';
+    if (h.rhr != null) s += 'Resting HR: ' + h.rhr + 'bpm\n';
+    if (h.strain != null) s += 'Strain today: ' + Number(h.strain).toFixed(1) + '\n';
+    if (h.yesterdayStrain != null) s += 'Strain yesterday: ' + Number(h.yesterdayStrain).toFixed(1) + '\n';
+    if (h.whoopDayKcal != null) s += 'Day energy (WHOOP): ' + h.whoopDayKcal + 'kcal\n';
+    if (h.skinTemp != null) s += 'Skin temp: ' + Number(h.skinTemp).toFixed(1) + '°C\n';
+    if (h.spo2 != null) s += 'SpO2: ' + Number(h.spo2).toFixed(1) + '%\n';
+    if (h.respRate != null) s += 'Respiratory rate: ' + h.respRate + 'br/min\n';
+    if (h.recovery7dAvg != null) s += '7-day avg recovery: ' + h.recovery7dAvg + '%' + (h.recoveryTrend ? ' (trending ' + h.recoveryTrend + ')' : '') + '\n';
+    if (h.hrv7dAvg != null) s += '7-day avg HRV: ' + h.hrv7dAvg + 'ms' + (h.hrvTrend ? ' (trending ' + h.hrvTrend + ')' : '') + '\n';
+    if (h.rhr7dAvg != null) s += '7-day avg resting HR: ' + h.rhr7dAvg + 'bpm' + (h.rhrTrend ? ' (trending ' + h.rhrTrend + ')' : '') + '\n';
+    if (h.hrvDeclining) s += 'Note: HRV has been declining several days in a row.\n';
+    // Steps/active energy have no WHOOP equivalent -- Apple Health bridge
+    // only. avgHr prefers WHOOP's own cycle reading when present (see
+    // health.html), falling back to Apple Health only on days WHOOP has none.
+    if (h.steps != null) s += 'Steps today: ' + h.steps.toLocaleString() + '\n';
+    if (h.avgHr != null) s += 'Avg HR today: ' + h.avgHr + 'bpm\n';
+    if (h.activeKcal != null) s += 'Active energy (Apple Health): ' + h.activeKcal + 'kcal\n';
     return s;
   }
   function buildFitnessContext() {
     const f = storeGet('eq.fitness.summary');
     if (!f) return 'FITNESS: no logged sessions yet.\n';
     let s = 'FITNESS:\n';
-    if (f.currentWeight != null) s += 'Weight: ' + f.currentWeight + (f.units || '') + (f.weight7dAvg != null ? ' (7d avg ' + f.weight7dAvg + ')' : '') + '\n';
+    if (f.currentWeight != null) {
+      s += 'Weight: ' + f.currentWeight + (f.units || '') + (f.weight7dAvg != null ? ' (7d avg ' + f.weight7dAvg + ')' : '') + '\n';
+      if (f.weight7dAvgChange != null) s += 'Weight trend: ' + (f.weight7dAvgChange > 0 ? '+' : '') + f.weight7dAvgChange + (f.units || '') + ' vs prior 7-day avg\n';
+    }
     if (f.lastSessionDay) s += 'Last session day: ' + f.lastSessionDay + '\n';
+    if (f.sessionsThisWeek != null) s += 'Sessions this week: ' + f.sessionsThisWeek + '\n';
+    if (f.volumeThisWeek != null) s += 'Training volume this week: ' + f.volumeThisWeek.toLocaleString() + '\n';
     return s;
   }
   function buildFinanceContext() {
@@ -276,13 +415,17 @@ body {
     return s;
   }
   const DOMAIN_BUILDERS = {
-    tasks: buildTasksContext, health: buildHealthContext, fitness: buildFitnessContext,
+    tasks: buildTasksContext, calendar: buildCalendarContext, health: buildHealthContext, fitness: buildFitnessContext,
     finance: buildFinanceContext, habits: buildHabitsContext, relationships: buildRelationshipsContext,
     notes: buildNotesContext,
   };
   async function assembleContext(query) {
     const domains = getDomains();
-    let out = '';
+    // Always included, not gated by a domain chip -- date-relative reasoning
+    // (Calendar's "today"/"this week", and especially resolving "tomorrow"/
+    // "Tuesday" when proposing a calendar event) is unreliable without it.
+    const now = new Date();
+    let out = 'Today\'s date is ' + todayKeyLocal() + ' (' + now.toLocaleDateString(undefined, { weekday: 'long' }) + ').\n\n';
     for (const key of Object.keys(DOMAIN_BUILDERS)) {
       if (domains[key]) out += (await DOMAIN_BUILDERS[key](query)) + '\n';
     }
@@ -349,6 +492,76 @@ body {
     return s;
   }
 
+  // Tool-use round trips (calendar event proposals) only ever need to
+  // survive the current page session -- keyed by proposalId, holds exactly
+  // what's needed to replay the exchange back to Anthropic once the user
+  // picks Confirm/Decline. Deliberately not persisted: a reload losing a
+  // *pending* proposal's buttons (see renderEventProposalEl) is a fine
+  // trade for not having to serialize/validate raw tool_use content blocks
+  // through localStorage indefinitely.
+  const pendingProposals = {};
+  function fmtProposalWhen(p) {
+    if (!p.date) return '';
+    const d = new Date(p.date + (p.time ? 'T' + p.time + ':00' : 'T00:00:00'));
+    if (isNaN(d.getTime())) return p.date;
+    const dateStr = d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+    return p.time ? (dateStr + ' at ' + d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })) : (dateStr + ' (all day)');
+  }
+  function renderEventProposalEl(m) {
+    const el = document.createElement('div');
+    el.className = 'ask-msg ask-msg-assistant ask-proposal';
+    const head = document.createElement('div');
+    head.className = 'ask-proposal-title';
+    head.textContent = '📅 ' + (m.title || 'Untitled event');
+    el.appendChild(head);
+    const when = document.createElement('div');
+    when.className = 'ask-proposal-when';
+    when.textContent = fmtProposalWhen(m);
+    el.appendChild(when);
+    if (m.notes) {
+      const notes = document.createElement('div');
+      notes.className = 'ask-proposal-notes';
+      notes.textContent = m.notes;
+      el.appendChild(notes);
+    }
+    if (m.status === 'pending') {
+      if (pendingProposals[m.proposalId]) {
+        const row = document.createElement('div');
+        row.className = 'ask-proposal-actions';
+        const confirmBtn = document.createElement('button');
+        confirmBtn.type = 'button'; confirmBtn.className = 'ask-proposal-btn ask-proposal-confirm'; confirmBtn.textContent = 'Add to calendar';
+        confirmBtn.addEventListener('click', () => resolveProposal(m.proposalId, true));
+        const declineBtn = document.createElement('button');
+        declineBtn.type = 'button'; declineBtn.className = 'ask-proposal-btn ask-proposal-decline'; declineBtn.textContent = 'Decline';
+        declineBtn.addEventListener('click', () => resolveProposal(m.proposalId, false));
+        row.appendChild(confirmBtn); row.appendChild(declineBtn);
+        el.appendChild(row);
+      } else {
+        const expired = document.createElement('div');
+        expired.className = 'ask-proposal-status';
+        expired.textContent = 'This proposal expired (page was reloaded) — ask again if you still want it.';
+        el.appendChild(expired);
+      }
+    } else if (m.status === 'resolving') {
+      const status = document.createElement('div');
+      status.className = 'ask-proposal-status';
+      status.textContent = 'Working on it…';
+      el.appendChild(status);
+    } else {
+      const status = document.createElement('div');
+      status.className = 'ask-proposal-status';
+      status.textContent = m.status === 'confirmed' ? '✅ Added to your calendar.'
+        : m.status === 'declined' ? 'Declined.'
+        : '❌ ' + (m.statusDetail || 'Failed to create.');
+      el.appendChild(status);
+    }
+    const timeEl = document.createElement('div');
+    timeEl.className = 'ask-msg-time';
+    timeEl.textContent = fmtTime(m.at);
+    el.appendChild(timeEl);
+    return el;
+  }
+
   function renderMessages() {
     const list = getMessages();
     $('askEmpty').style.display = list.length ? 'none' : '';
@@ -356,6 +569,7 @@ body {
     const wrap = $('askMessages');
     wrap.innerHTML = '';
     list.forEach(m => {
+      if (m.role === 'event-proposal') { wrap.appendChild(renderEventProposalEl(m)); return; }
       const el = document.createElement('div');
       el.className = 'ask-msg ' + (m.role === 'user' ? 'ask-msg-user' : m.role === 'error' ? 'ask-msg-error' : 'ask-msg-assistant');
       const textEl = document.createElement('div');
@@ -394,19 +608,34 @@ body {
     renderNotesSearchStatus();
     const apiMessages = messages.filter(m => m.role === 'user' || m.role === 'assistant').map(m => ({ role: m.role, content: m.content }));
 
+    // Only offered when the domain is on AND a connection already exists --
+    // no point letting Claude draft an event it has nowhere to send.
+    const domains = getDomains();
+    const tools = (domains.calendar && storeGet(GCAL_TOKENS_KEY)) ? [CALENDAR_EVENT_TOOL] : undefined;
+
     $('askSendBtn').disabled = true;
     setTyping(true);
     try {
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: apiMessages, systemContext: context }),
+        body: JSON.stringify({ messages: apiMessages, systemContext: context, tools }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || ('Request failed (' + res.status + ')'));
-      const list = getMessages();
-      list.push({ role: 'assistant', content: data.reply || '(empty response)', at: new Date().toISOString() });
-      setMessages(list);
+
+      if (data.toolUse && data.toolUse.name === 'propose_calendar_event') {
+        if (data.reply && data.reply.trim()) {
+          const list = getMessages();
+          list.push({ role: 'assistant', content: data.reply, at: new Date().toISOString() });
+          setMessages(list);
+        }
+        addEventProposal(data.toolUse, data.rawContent, apiMessages, context);
+      } else {
+        const list = getMessages();
+        list.push({ role: 'assistant', content: data.reply || '(empty response)', at: new Date().toISOString() });
+        setMessages(list);
+      }
     } catch (e) {
       const list = getMessages();
       list.push({ role: 'error', content: 'Could not reach Claude — ' + (e.message || 'unknown error') + '.', at: new Date().toISOString() });
@@ -416,6 +645,78 @@ body {
       $('askSendBtn').disabled = false;
       renderMessages();
     }
+  }
+
+  function addEventProposal(toolUse, rawContent, apiMessagesSnapshot, systemContextSnapshot) {
+    const input = toolUse.input || {};
+    const proposalId = 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    pendingProposals[proposalId] = {
+      toolUseId: toolUse.id,
+      rawAssistantContent: rawContent,
+      messagesSnapshot: apiMessagesSnapshot,
+      systemContext: systemContextSnapshot,
+    };
+    const list = getMessages();
+    list.push({
+      role: 'event-proposal', proposalId,
+      title: input.title || 'Untitled event', date: input.date || '', time: input.time || '',
+      durationMinutes: input.durationMinutes || null, notes: input.notes || '',
+      status: 'pending', at: new Date().toISOString(),
+    });
+    setMessages(list);
+  }
+
+  // Anthropic requires every tool_use to be answered with a matching
+  // tool_result before the conversation can continue -- so this always
+  // sends one (even on Decline) to keep future messages in this
+  // conversation valid, not just on the Confirm path.
+  async function resolveProposal(proposalId, confirmed) {
+    const pending = pendingProposals[proposalId];
+    if (!pending) return;
+    const list = getMessages();
+    const msg = list.find(m => m.proposalId === proposalId);
+    if (!msg) return;
+    delete pendingProposals[proposalId]; // one-shot: re-render immediately drops the buttons
+    msg.status = 'resolving';
+    setMessages(list);
+    renderMessages();
+
+    let resultText;
+    if (confirmed) {
+      try {
+        const created = await createGcalEvent(buildGcalEventResource(msg));
+        msg.status = 'confirmed';
+        resultText = 'Event created successfully' + (created && created.htmlLink ? ' (' + created.htmlLink + ')' : '') + '.';
+      } catch (e) {
+        msg.status = 'failed';
+        msg.statusDetail = e.message || 'unknown error';
+        resultText = 'Failed to create the event: ' + msg.statusDetail;
+      }
+    } else {
+      msg.status = 'declined';
+      resultText = 'User declined to create this event.';
+    }
+    setMessages(list);
+    renderMessages();
+
+    setTyping(true);
+    try {
+      const apiMessages = pending.messagesSnapshot.concat([
+        { role: 'assistant', content: pending.rawAssistantContent },
+        { role: 'user', content: [{ type: 'tool_result', tool_use_id: pending.toolUseId, content: resultText }] },
+      ]);
+      const res = await fetch('/api/chat', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: apiMessages, systemContext: pending.systemContext }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.reply && data.reply.trim()) {
+        const list2 = getMessages();
+        list2.push({ role: 'assistant', content: data.reply, at: new Date().toISOString() });
+        setMessages(list2);
+      }
+    } catch (e) { /* the calendar action itself already resolved above; a failed ack isn't worth an error bubble */ }
+    finally { setTyping(false); renderMessages(); }
   }
 
   async function saveToObsidian() {

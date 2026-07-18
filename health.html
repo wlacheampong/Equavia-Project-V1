@@ -1499,16 +1499,6 @@ main {
           zone($('whZoneSleep'), sleepZone(sleepPerf));
         }
 
-        // Published for the dashboard's compact Health summary card --
-        // read-only there, this is the only place that writes it.
-        try {
-          localStorage.setItem('eq.health.summary', JSON.stringify({
-            recovery: recScore,
-            sleepHours: sleepDuration ? Number((sleepDuration / 3.6e6).toFixed(1)) : null,
-            at: new Date().toISOString()
-          }));
-        } catch (e) {}
-
         // Daily recovery history, same append-only pattern as the Sleep
         // Log's own persistence -- eq.health.summary only ever holds the
         // latest reading, but the Weekly Report (3.3) needs a week's worth
@@ -1593,17 +1583,45 @@ main {
         const hrvAvg7 = avg(trendDays, 'hrv');
         const rhrAvg7 = avg(trendDays, 'rhr');
         const weekSleepPct = sleepArr.map(s => s && s.score && s.score.sleep_performance_percentage != null ? Math.round(s.score.sleep_performance_percentage) : null);
+        const recDir = trendDir(trendDays[0] && trendDays[0].recovery, recAvg7);
+        const hrvDir = trendDir(trendDays[0] && trendDays[0].hrv, hrvAvg7);
+        const rhrDir = trendDir(trendDays[0] && trendDays[0].rhr, rhrAvg7);
+        const hrvDeclining = isDeclining(trendDays, 'hrv', HRV_TREND_DECLINE_DAYS);
         renderReadiness({
           recScore, hrv, rhr, skin, resp: resp != null ? Number(resp) : null, sleepPerf, yestStrain,
           todayStrain: strain, avgHrToday, avgHrBaseline7, stepsToday, activeKcalToday: appleActiveKcalToday,
-          trendDays, recAvg7, hrvAvg7, rhrAvg7,
-          recDir: trendDir(trendDays[0] && trendDays[0].recovery, recAvg7),
-          hrvDir: trendDir(trendDays[0] && trendDays[0].hrv, hrvAvg7),
-          rhrDir: trendDir(trendDays[0] && trendDays[0].rhr, rhrAvg7),
-          hrvDeclining: isDeclining(trendDays, 'hrv', HRV_TREND_DECLINE_DAYS),
+          trendDays, recAvg7, hrvAvg7, rhrAvg7, recDir, hrvDir, rhrDir, hrvDeclining,
           weekSleepPct,
           debtInfo: sleepDebtInfo(s0),
         });
+
+        // Published for the dashboard's compact Health summary card and for
+        // Ask Claude -- read-only there, this is the only place that writes
+        // it. Placed at the end of loadData() so it can include the 7-day
+        // trend averages/directions computed just above, not just today's
+        // snapshot. avgHr prefers WHOOP's own cycle reading over Apple
+        // Health's, same priority the electrolyte formula upstream uses.
+        try {
+          localStorage.setItem('eq.health.summary', JSON.stringify({
+            recovery: recScore,
+            sleepHours: sleepDuration ? Number((sleepDuration / 3.6e6).toFixed(1)) : null,
+            hrv, rhr,
+            skinTemp: skin != null ? Number(skin) : null,
+            spo2: spo2 != null ? Number(spo2) : null,
+            respRate: resp != null ? Number(resp) : null,
+            strain, yesterdayStrain: yestStrain, whoopDayKcal: kcal,
+            // Steps/activeKcal have no WHOOP equivalent -- Apple Health only.
+            steps: appleStepsToday,
+            avgHr: avgHrToday,
+            activeKcal: appleActiveKcalToday,
+            recovery7dAvg: recAvg7 != null ? Math.round(recAvg7) : null,
+            hrv7dAvg: hrvAvg7 != null ? Math.round(hrvAvg7) : null,
+            rhr7dAvg: rhrAvg7 != null ? Math.round(rhrAvg7) : null,
+            recoveryTrend: recDir, hrvTrend: hrvDir, rhrTrend: rhrDir,
+            hrvDeclining,
+            at: new Date().toISOString()
+          }));
+        } catch (e) {}
 
         const now = new Date();
         $('whUpdated').textContent = 'Updated ' + now.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
