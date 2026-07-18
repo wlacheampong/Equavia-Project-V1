@@ -12,6 +12,7 @@
 <meta name="apple-mobile-web-app-title" content="Equavia">
 <title>Ask Claude — Equavia</title>
 <script src="topbar.js" defer></script>
+<script src="obsidian-sync.js"></script>
 <style>
 :root {
   --bg: #0A0A0B;
@@ -68,8 +69,13 @@ body {
   @keyframes askTyping { 0%, 60%, 100% { opacity: 0.3; transform: translateY(0); } 30% { opacity: 1; transform: translateY(-3px); } }
 }
 
-.ask-clear-link { display: block; margin: 0 0 14px; background: transparent; border: none; color: var(--text-quaternary); font-family: inherit; font-size: 10.5px; cursor: pointer; padding: 0; }
+.ask-actions-row { display: flex; align-items: center; flex-wrap: wrap; gap: 14px; margin: 0 0 14px; }
+.ask-clear-link { display: inline-block; margin: 0; background: transparent; border: none; color: var(--text-quaternary); font-family: inherit; font-size: 10.5px; cursor: pointer; padding: 0; }
 .ask-clear-link:hover { color: var(--text-tertiary); text-decoration: underline; }
+.ask-clear-link:disabled { opacity: 0.5; cursor: default; }
+.ask-obsidian-status { font-size: 10.5px; color: var(--text-quaternary); font-family: var(--font-mono); }
+.ask-obsidian-status.is-ok { color: var(--success); }
+.ask-obsidian-status.is-err { color: var(--danger); }
 
 .ask-input-bar {
   position: fixed; left: 0; right: 0; bottom: 0;
@@ -109,6 +115,7 @@ body {
 
   <div class="ask-domains" id="askDomains"></div>
   <div class="ask-context-size" id="askContextSize">~0 tokens of your data attached</div>
+  <div class="ask-context-size" id="askNotesSearchStatus" style="display:none;"></div>
 
   <div class="ask-server-warn" id="askServerWarn">This page needs an ANTHROPIC_API_KEY configured in this deployment's environment variables — messages won't send until that's set up.</div>
 
@@ -117,7 +124,11 @@ body {
     <div class="ask-empty-sub">Ask something like "how's my sleep trending?" or "what's overdue this week?"</div>
   </div>
 
-  <button type="button" class="ask-clear-link" id="askClearBtn" style="display:none;">Clear conversation</button>
+  <div class="ask-actions-row" id="askActionsRow" style="display:none;">
+    <button type="button" class="ask-clear-link" id="askClearBtn">Clear conversation</button>
+    <button type="button" class="ask-clear-link" id="askSaveObsidianBtn">Save to Obsidian</button>
+    <span class="ask-obsidian-status" id="askObsidianStatus"></span>
+  </div>
   <div class="ask-messages" id="askMessages"></div>
 </div>
 
@@ -138,6 +149,7 @@ body {
 
   const MESSAGES_KEY = 'ask_messages_v1';
   const DOMAINS_KEY = 'ask_domains_v1';
+  const CHAT_OBSIDIAN_ID_KEY = 'ask_chat_obsidian_id_v1';
   const DOMAIN_DEFS = [
     { key: 'tasks', label: 'Goals/Tasks', on: true },
     { key: 'health', label: 'Health', on: true },
@@ -145,6 +157,7 @@ body {
     { key: 'finance', label: 'Finance', on: true },
     { key: 'habits', label: 'Habits', on: true },
     { key: 'relationships', label: 'Relationships', on: false },
+    { key: 'notes', label: 'Notes (Obsidian)', on: false },
   ];
 
   function getMessages() { const v = storeGet(MESSAGES_KEY); return Array.isArray(v) ? v : []; }
@@ -234,14 +247,45 @@ body {
     if (overdue.length) s += ' Overdue: ' + overdue.map(c => c.name).join(', ') + '.';
     return s + '\n';
   }
+  // Unlike the other domains, this one is a live network call, so it only
+  // fires with a real query (the message about to be sent) -- not while
+  // just previewing context size after toggling a chip. Stashes the last
+  // outcome in notesSearchStatus as a side channel for the status line,
+  // since every DOMAIN_BUILDERS entry has to return plain context text.
+  let notesSearchStatus = null;
+  async function buildNotesContext(query) {
+    if (!window.ObsidianSync || !ObsidianSync.getConfig().enabled) {
+      notesSearchStatus = { state: 'off' };
+      return 'NOTES (Obsidian): not connected -- enable it in Settings to search your vault.\n';
+    }
+    if (!query || !query.trim()) {
+      notesSearchStatus = null;
+      return 'NOTES (Obsidian): connected -- will search your vault using each message you send.\n';
+    }
+    const res = await ObsidianSync.searchNotes(query);
+    if (!res.ok) {
+      notesSearchStatus = { state: 'error', reason: res.reason };
+      return 'NOTES (Obsidian): vault unreachable, skipped for this message.\n';
+    }
+    notesSearchStatus = { state: 'done', count: res.results.length };
+    if (!res.results.length) return 'NOTES (Obsidian): no matching notes found.\n';
+    let s = 'NOTES (Obsidian), possibly relevant:\n';
+    res.results.forEach((r) => {
+      s += '- ' + r.filename + (r.excerpts.length ? ': "' + r.excerpts.join(' … ') + '"' : '') + '\n';
+    });
+    return s;
+  }
   const DOMAIN_BUILDERS = {
     tasks: buildTasksContext, health: buildHealthContext, fitness: buildFitnessContext,
     finance: buildFinanceContext, habits: buildHabitsContext, relationships: buildRelationshipsContext,
+    notes: buildNotesContext,
   };
-  function assembleContext() {
+  async function assembleContext(query) {
     const domains = getDomains();
     let out = '';
-    Object.keys(DOMAIN_BUILDERS).forEach(key => { if (domains[key]) out += DOMAIN_BUILDERS[key]() + '\n'; });
+    for (const key of Object.keys(DOMAIN_BUILDERS)) {
+      if (domains[key]) out += (await DOMAIN_BUILDERS[key](query)) + '\n';
+    }
     return out.trim();
   }
   function estimateTokens(text) { return Math.ceil((text || '').length / 4); }
@@ -266,9 +310,21 @@ body {
       wrap.appendChild(chip);
     });
   }
-  function updateContextSize() {
-    const tokens = estimateTokens(assembleContext());
+  async function updateContextSize() {
+    const tokens = estimateTokens(await assembleContext(''));
     $('askContextSize').textContent = '~' + (tokens >= 1000 ? (tokens / 1000).toFixed(1) + 'k' : tokens) + ' tokens of your data attached';
+  }
+  function renderNotesSearchStatus() {
+    const el = $('askNotesSearchStatus');
+    if (!notesSearchStatus) { el.style.display = 'none'; return; }
+    el.style.display = '';
+    if (notesSearchStatus.state === 'off') el.textContent = 'Notes chip is on, but Obsidian isn\'t connected — enable it in Settings.';
+    else if (notesSearchStatus.state === 'error') el.textContent = 'Obsidian vault unreachable, skipped for this message.';
+    else if (notesSearchStatus.state === 'done') {
+      el.textContent = notesSearchStatus.count
+        ? ('Found ' + notesSearchStatus.count + ' matching note' + (notesSearchStatus.count === 1 ? '' : 's') + ' in Obsidian.')
+        : 'No matching notes in Obsidian.';
+    } else { el.style.display = 'none'; }
   }
 
   // ---------- Messages ----------
@@ -276,10 +332,27 @@ body {
     const d = new Date(iso);
     return isNaN(d.getTime()) ? '' : d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
   }
+
+  // One id per ongoing conversation so repeated saves overwrite the same
+  // Obsidian file instead of piling up snapshots; cleared alongside the
+  // conversation itself in the Clear handler below.
+  function getChatObsidianId() {
+    let id = storeGet(CHAT_OBSIDIAN_ID_KEY);
+    if (!id) { id = 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); storeSet(CHAT_OBSIDIAN_ID_KEY, id); }
+    return id;
+  }
+  function chatTranscriptMarkdown(list) {
+    const firstUser = list.find(m => m.role === 'user');
+    const title = (firstUser ? firstUser.content : 'Ask Claude chat').slice(0, 60).replace(/\s+/g, ' ').trim();
+    let s = '---\ntitle: "' + title.replace(/"/g, '\\"') + '"\nupdated: ' + new Date().toISOString() + '\n---\n\n# ' + title + '\n\n';
+    list.forEach(m => { s += '**' + (m.role === 'user' ? 'You' : 'Claude') + '** (' + fmtTime(m.at) + ')\n\n' + m.content + '\n\n'; });
+    return s;
+  }
+
   function renderMessages() {
     const list = getMessages();
     $('askEmpty').style.display = list.length ? 'none' : '';
-    $('askClearBtn').style.display = list.length ? '' : 'none';
+    $('askActionsRow').style.display = list.length ? '' : 'none';
     const wrap = $('askMessages');
     wrap.innerHTML = '';
     list.forEach(m => {
@@ -317,7 +390,8 @@ body {
     setMessages(messages);
     renderMessages();
 
-    const context = assembleContext();
+    const context = await assembleContext(text);
+    renderNotesSearchStatus();
     const apiMessages = messages.filter(m => m.role === 'user' || m.role === 'assistant').map(m => ({ role: m.role, content: m.content }));
 
     $('askSendBtn').disabled = true;
@@ -342,6 +416,29 @@ body {
       $('askSendBtn').disabled = false;
       renderMessages();
     }
+  }
+
+  async function saveToObsidian() {
+    const statusEl = $('askObsidianStatus');
+    if (!window.ObsidianSync || !ObsidianSync.getConfig().enabled) {
+      statusEl.className = 'ask-obsidian-status is-err';
+      statusEl.textContent = 'Obsidian isn\'t connected — enable it in Settings.';
+      return;
+    }
+    const list = getMessages().filter(m => m.role === 'user' || m.role === 'assistant');
+    if (!list.length) {
+      statusEl.className = 'ask-obsidian-status is-err';
+      statusEl.textContent = 'Nothing to save yet.';
+      return;
+    }
+    const saveBtn = $('askSaveObsidianBtn');
+    saveBtn.disabled = true;
+    statusEl.className = 'ask-obsidian-status';
+    statusEl.textContent = 'Saving…';
+    const res = await ObsidianSync.pushChatTranscript(getChatObsidianId(), chatTranscriptMarkdown(list));
+    statusEl.className = 'ask-obsidian-status ' + (res.ok ? 'is-ok' : 'is-err');
+    statusEl.textContent = res.ok ? 'Saved to Obsidian.' : ('Couldn\'t save (' + (res.reason || 'error') + ').');
+    saveBtn.disabled = false;
   }
 
   function init() {
@@ -370,8 +467,11 @@ body {
     $('askClearBtn').addEventListener('click', () => {
       if (!confirm('Clear this conversation? This can\'t be undone.')) return;
       setMessages([]);
+      localStorage.removeItem(CHAT_OBSIDIAN_ID_KEY);
+      $('askObsidianStatus').textContent = '';
       renderMessages();
     });
+    $('askSaveObsidianBtn').addEventListener('click', saveToObsidian);
 
     window.addEventListener('storage', () => { renderMessages(); updateContextSize(); });
   }

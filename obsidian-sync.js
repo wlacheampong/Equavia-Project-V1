@@ -57,6 +57,31 @@
     } catch (e) { return false; }
   }
 
+  // Live keyword search across the whole vault (not scoped to cfg.folder --
+  // AppNotes only holds the round-tripped Notes tile, the point of search is
+  // reaching the user's real, pre-existing notes). Uses the plugin's fuzzy
+  // "simple search", which takes the query as a URL param and returns each
+  // matching file with short context snippets already extracted, so there's
+  // no need to fetch full file bodies just to show relevant excerpts.
+  async function searchNotes(query, opts) {
+    const q = (query || '').trim();
+    const cfg = getConfig();
+    if (!cfg.enabled || !q) return { ok: false, reason: !cfg.enabled ? 'disabled' : 'empty_query', results: [] };
+    const contextLength = (opts && opts.contextLength) || 200;
+    const maxResults = (opts && opts.maxResults) || 4;
+    const qs = '?query=' + encodeURIComponent(q) + '&contextLength=' + contextLength;
+    try {
+      const res = await apiFetch('/search/simple/' + qs, { method: 'POST', timeoutMs: 4000 });
+      if (!res.ok) return { ok: false, reason: 'http_' + res.status, results: [] };
+      const json = await res.json();
+      const results = (Array.isArray(json) ? json : []).slice(0, maxResults).map((item) => ({
+        filename: item.filename,
+        excerpts: (item.matches || []).map((m) => m.context).filter(Boolean).slice(0, 2),
+      }));
+      return { ok: true, results };
+    } catch (e) { return { ok: false, reason: 'network', results: [] }; }
+  }
+
   function esc(s) { return String(s == null ? '' : s).replace(/"/g, '\\"'); }
   function stripFrontmatter(text) {
     const m = /^---\r?\n[\s\S]*?\r?\n---\r?\n?/.exec(text || '');
@@ -234,6 +259,21 @@
     } catch (e) { return { ok: false, reason: 'network' }; }
   }
 
+  // Ask Claude's "Save to Obsidian" -- same one-shot overwrite shape as
+  // pushWeeklyReport (caller builds the markdown, this just PUTs it), keyed
+  // by a chat id the caller owns so re-saving the same ongoing conversation
+  // updates one file instead of piling up snapshots.
+  async function pushChatTranscript(id, markdown) {
+    const cfg = getConfig();
+    if (!cfg.enabled) return { ok: false, reason: 'disabled' };
+    const relPath = (cfg.folder || 'AppNotes') + '/Chats/' + id + '.md';
+    try {
+      const res = await apiFetch(vaultPath(cfg, relPath), { method: 'PUT', body: markdown, headers: { 'Content-Type': 'text/markdown' } });
+      if (!res.ok) return { ok: false, reason: 'http_' + res.status };
+      return { ok: true, path: relPath };
+    } catch (e) { return { ok: false, reason: 'network' }; }
+  }
+
   async function pullAll(existingNotes) {
     const cfg = getConfig();
     if (!cfg.enabled) return { ok: false, reason: 'disabled', notes: existingNotes };
@@ -290,5 +330,5 @@
     return { ok: true, notes };
   }
 
-  window.ObsidianSync = { getConfig, setConfig, testConnection, pushNote, deleteNote, pullAll, pushProjectPage, moveProjectPageToFolder, pushWeeklyReport };
+  window.ObsidianSync = { getConfig, setConfig, testConnection, pushNote, deleteNote, pullAll, pushProjectPage, moveProjectPageToFolder, pushWeeklyReport, searchNotes, pushChatTranscript };
 })();
