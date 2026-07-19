@@ -15,6 +15,14 @@
     return;
   }
 
+  // 6.0 security gate: auth-gate.js runs first (it's the earlier <script>
+  // tag on every gated page) and sets this when it's already sending an
+  // unauthenticated visit to lock.html. Don't fire a second, later
+  // location change in the same task that could supersede that pending
+  // navigation and send the visit to index.html instead -- skipping the
+  // passcode gate entirely.
+  if (window.__eqAuthRedirecting) return;
+
   // Never hijack an OAuth redirect back into this page. WHOOP's own
   // authorize redirect can arrive as health.html?code=...&state=...,
   // and the api/whoop-callback proxy hands tokens back as

@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<script src="auth-gate.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#0a0a0b">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -14,6 +15,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="sync.js" defer></script>
 <script src="obsidian-sync.js"></script>
+<script src="assistant-tools.js"></script>
 <script src="topbar.js" defer></script>
 <style>
 :root {
@@ -463,6 +465,19 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
 .gm-row.gm-row-queued .gm-text { color: #FFE2A8; }
 .gm-row.is-drag-over { border-top: 2px solid #6BE3A4; }
 .gm-row.is-queue-flashing { animation: gm-queue-flash 0.48s ease-out; }
+/* ===== Task priority (6.6) -- P1 gets stronger visual weight, per spec ===== */
+.gm-row.gm-row-p1 { box-shadow: inset 3px 0 0 0 #FF8A8A; }
+.gm-row.gm-row-p1 .gm-text { font-weight: 700; }
+.gm-priority-badge {
+  border: 0; flex-shrink: 0; cursor: pointer;
+  font-family: var(--font-mono, inherit); font-size: 10px; font-weight: 700;
+  padding: 3px 7px; border-radius: 999px; letter-spacing: 0.02em;
+}
+.gm-priority-badge.gm-priority-p1 { background: rgba(255,138,138,0.18); color: #FF8A8A; }
+.gm-priority-badge.gm-priority-p2 { background: rgba(255,255,255,0.08); color: var(--text-tertiary); }
+.gm-priority-badge.gm-priority-p3 { background: rgba(255,255,255,0.04); color: var(--text-quaternary); }
+.gm-priority-badge:disabled { cursor: not-allowed; opacity: 0.5; }
+.ss-p1-hint { font-size: 12px; color: #F2C063; margin: -4px 0 10px; }
 @keyframes gm-queue-flash {
   0%   { background: rgba(255,255,255,0.035); transform: scale(1); }
   40%  { background: rgba(242,192,99,0.32); transform: scale(1.015); }
@@ -1578,6 +1593,7 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
       <label>Task</label>
       <div class="ss-task-text" id="ssTaskText"></div>
     </div>
+    <div class="ss-p1-hint" id="ssP1Hint" style="display:none;"></div>
     <div class="dr-field">
       <label for="ssDurationInput">Duration (minutes)</label>
       <input type="number" id="ssDurationInput" min="5" step="5" value="30">
@@ -1698,6 +1714,22 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
       <div>
         <div style="font-weight:700; font-size:14px;" id="relSummaryLine">Loading…</div>
         <div style="font-size:11.5px; color:var(--text-tertiary); margin-top:2px;">Moved to Interactions — tap to open</div>
+      </div>
+      <span style="color:var(--text-tertiary); font-size:18px;">&rsaquo;</span>
+    </div>
+  </a>
+</div>
+
+<!-- ===== LEARN HUB SUMMARY (6.3) -- compact link, full management lives on Ability ===== -->
+<div class="section" data-section="learn-summary" id="learn-summary">
+  <div class="section-title">
+    <span class="section-title-text">LEARN</span>
+  </div>
+  <a class="card" href="ability.html" style="display:block; text-decoration:none; color:inherit; position:relative;">
+    <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+      <div>
+        <div style="font-weight:700; font-size:14px;" id="learnSummaryLine">Loading…</div>
+        <div style="font-size:11.5px; color:var(--text-tertiary); margin-top:2px;">Lives on Ability — tap to open</div>
       </div>
       <span style="color:var(--text-tertiary); font-size:18px;">&rsaquo;</span>
     </div>
@@ -1957,6 +1989,12 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
   const PUSHED_COUNT_PREFIX = 'goals_pushed:';
   function getPushedCount(dateStr) { return Number(storeGet(PUSHED_COUNT_PREFIX + dateStr)) || 0; }
   function addPushedCount(dateStr, n) { storeSet(PUSHED_COUNT_PREFIX + dateStr, getPushedCount(dateStr) + n); }
+  // 6.6: parallel P1-only counter, same reasoning -- a pushed P1 still
+  // needs to count against that day's P1 completion rate once the day's
+  // own goals:<date> key is gone.
+  const PUSHED_P1_COUNT_PREFIX = 'goals_pushed_p1:';
+  function getPushedP1Count(dateStr) { return Number(storeGet(PUSHED_P1_COUNT_PREFIX + dateStr)) || 0; }
+  function addPushedP1Count(dateStr, n) { storeSet(PUSHED_P1_COUNT_PREFIX + dateStr, getPushedP1Count(dateStr) + n); }
 
   function getCompletionSnapshots() {
     const v = storeGet('todo_completion_snapshots_v1');
@@ -1974,9 +2012,14 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
     if (snaps.some(s => s.dateKey === dateStr)) return; // already recorded, don't duplicate
     const completed = list.filter(g => g.done).length;
     const scheduled = list.length + getPushedCount(dateStr);
-    snaps.push({ dateKey: dateStr, completed, scheduled });
+    // 6.6: same shape, P1-only -- feeds the Dashboard completion chart's
+    // optional P1-only view ("did the must-dos happen" per spec).
+    const p1Completed = list.filter(g => (g.priority || 'P2') === 'P1' && g.done).length;
+    const p1Scheduled = list.filter(g => (g.priority || 'P2') === 'P1').length + getPushedP1Count(dateStr);
+    snaps.push({ dateKey: dateStr, completed, scheduled, p1Completed, p1Scheduled });
     setCompletionSnapshots(snaps);
     storeDelete(PUSHED_COUNT_PREFIX + dateStr);
+    storeDelete(PUSHED_P1_COUNT_PREFIX + dateStr);
   }
 
   // ---------- rollover: pull undone older goals into today ----------
@@ -2093,12 +2136,35 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
     });
   }
 
+  // ---------- Priority (6.6) ----------
+  // P1/P2/P3, default P2, confirmed labels (not High/Med/Low). Cap of 3 P1s
+  // per day is enforced (confirmed), counted across the whole day's list
+  // (done + undone) -- the point is honesty about what "must happen today"
+  // meant when the day was planned, not a shrinking remaining-count.
+  const PRIORITY_CYCLE = ['P1', 'P2', 'P3'];
+  const PRIORITY_CAP = { P1: 3 };
+  function priorityOf(goal) { return goal.priority || 'P2'; }
+  function countPriority(list, p, excludeIdx) {
+    return list.filter((g, i) => i !== excludeIdx && priorityOf(g) === p).length;
+  }
+  // Sorts P1 -> P2 -> P3, stable within each tier (preserves manual
+  // drag-reorder among same-priority tasks). Persists the sort back to
+  // storage so display order and storage index stay identical -- every
+  // other row handler (checkbox, delete, drag) mutates by array index.
+  function sortAndPersistPriority(key) {
+    const list = getGoals(key);
+    const sorted = list.slice().sort((a, b) => PRIORITY_CYCLE.indexOf(priorityOf(a)) - PRIORITY_CYCLE.indexOf(priorityOf(b)));
+    if (JSON.stringify(sorted) !== JSON.stringify(list)) setGoals(key, sorted);
+    return sorted;
+  }
+
   function buildGoalRow(goal, idx, key, readOnly, reload) {
     const li = document.createElement('li');
     li.className = 'gm-row';
     li.dataset.idx = String(idx);
     if (goal.done) li.classList.add('gm-row-done');
     if (goal.queued) li.classList.add('gm-row-queued');
+    if (priorityOf(goal) === 'P1') li.classList.add('gm-row-p1');
 
     const handle = document.createElement('span');
     handle.className = 'gm-handle';
@@ -2120,6 +2186,29 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
       reload();
     });
     li.appendChild(cb);
+
+    const priBtn = document.createElement('button');
+    priBtn.type = 'button';
+    const pri = priorityOf(goal);
+    priBtn.className = 'gm-priority-badge gm-priority-' + pri.toLowerCase();
+    priBtn.textContent = pri;
+    priBtn.title = 'Tap to change priority';
+    if (readOnly) priBtn.disabled = true;
+    priBtn.addEventListener('click', () => {
+      const list = getGoals(key);
+      if (!list[idx]) return;
+      const current = priorityOf(list[idx]);
+      const next = PRIORITY_CYCLE[(PRIORITY_CYCLE.indexOf(current) + 1) % PRIORITY_CYCLE.length];
+      if (next === 'P1' && countPriority(list, 'P1', idx) >= PRIORITY_CAP.P1) {
+        showStatus(document.getElementById(key === todayKey() ? 'polishStatus' : 'tomorrowStatus'), 'Already 3 P1 tasks today — demote one first.', true);
+        return;
+      }
+      list[idx].priority = next;
+      setGoals(key, list);
+      sortAndPersistPriority(key);
+      reload();
+    });
+    li.appendChild(priBtn);
 
     const text = document.createElement('span');
     text.className = 'gm-text';
@@ -2149,7 +2238,7 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
       slotBtn.className = 'gm-slot-btn';
       slotBtn.textContent = '🕐';
       slotBtn.title = 'Suggest a time slot';
-      slotBtn.addEventListener('click', (e) => { e.stopPropagation(); ssOpen(goal.text); });
+      slotBtn.addEventListener('click', (e) => { e.stopPropagation(); ssOpen(goal.text, priorityOf(goal), key); });
       li.appendChild(slotBtn);
     }
 
@@ -2250,11 +2339,11 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
   }
 
   function loadToday() {
-    const goals = getGoals(todayKey());
+    const goals = sortAndPersistPriority(todayKey());
     renderListInto(goals, document.getElementById('goalList'), document.getElementById('emptyState'), todayKey(), false);
   }
   function loadTomorrow() {
-    const goals = getGoals(tomorrowKey());
+    const goals = sortAndPersistPriority(tomorrowKey());
     renderListInto(goals, document.getElementById('tomorrowList'), document.getElementById('tomorrowEmpty'), tomorrowKey(), true);
   }
 
@@ -2266,7 +2355,12 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
     const tomorrow = getGoals(tomorrowKey());
     const seen = new Set(tomorrow.map(g => g.text));
     remaining.forEach(g => {
-      if (!seen.has(g.text)) { tomorrow.push(g.id ? { id: g.id, text: g.text, done: false } : { text: g.text, done: false }); seen.add(g.text); }
+      if (!seen.has(g.text)) {
+        const copy = { text: g.text, done: false, priority: priorityOf(g) };
+        if (g.id) copy.id = g.id;
+        tomorrow.push(copy);
+        seen.add(g.text);
+      }
     });
     setGoals(tomorrowKey(), tomorrow);
     setGoals(todayKey(), today.filter(g => g.done));
@@ -2274,6 +2368,7 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
     // once this key is about to be deleted) still counts these as missed
     // instead of silently shrinking the day's scheduled total.
     addPushedCount(getActiveDateString(), remaining.length);
+    addPushedP1Count(getActiveDateString(), remaining.filter(g => priorityOf(g) === 'P1').length);
     loadToday(); loadTomorrow();
   });
 
@@ -2295,7 +2390,7 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
   async function polishOne(text) {
     const res = await fetch('/api/chat', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: Object.assign({ 'Content-Type': 'application/json' }, window.EqAuth ? window.EqAuth.header() : {}),
       body: JSON.stringify({
         messages: [{
           role: 'user',
@@ -2315,7 +2410,7 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
   function makeAddHandlers(input, addBtn, polishBtn, key, statusEl, reload) {
     function plainAdd(text) {
       const list = getGoals(key);
-      list.push({ text, done: false });
+      list.push({ text, done: false, priority: 'P2' });
       setGoals(key, list);
       input.value = '';
       reload();
@@ -2992,7 +3087,7 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
     try {
       const res = await fetch('/api/google-calendar-refresh', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: Object.assign({ 'Content-Type': 'application/json' }, window.EqAuth ? window.EqAuth.header() : {}),
         body: JSON.stringify({ refresh_token: tokens.refresh_token })
       });
       const json = await res.json();
@@ -3123,13 +3218,28 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
     acceptBtn.disabled = false;
   }
 
-  function ssOpen(taskText) {
+  // 6.6: "schedules P1s first" -- this modal only ever suggests one task's
+  // slot at a time (no batch-scheduling flow exists to literally enforce an
+  // order on), so this is a soft advisory nudge rather than a hard block:
+  // if suggesting a slot for a non-P1 task while an undone P1 task in the
+  // same list hasn't had a slot suggested yet, say so.
+  function ssOpen(taskText, priority, key) {
     ssCurrentTaskText = taskText;
     ssCurrentSlot = null;
     document.getElementById('ssTaskText').textContent = taskText;
     document.getElementById('ssDurationInput').value = SS_DEFAULT_DURATION_MIN;
     document.getElementById('ssResult').textContent = '';
     document.getElementById('ssAcceptBtn').disabled = true;
+
+    const hint = document.getElementById('ssP1Hint');
+    const unscheduledP1 = (priority !== 'P1' && key) ? getGoals(key).find(g => !g.done && priorityOf(g) === 'P1' && g.text !== taskText) : null;
+    if (unscheduledP1) {
+      hint.textContent = '⚠ P1 task "' + unscheduledP1.text + '" hasn\'t been scheduled yet — suggest its slot first?';
+      hint.style.display = '';
+    } else {
+      hint.style.display = 'none';
+    }
+
     document.getElementById('ssModalBg').classList.add('show');
     ssRecompute();
   }
@@ -4183,6 +4293,24 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
       (overdueCount > 0 ? ' · ' + overdueCount + ' overdue' : ' · up to date');
   }
 
+  // 6.3: read-only summary, same pattern as Relationships above -- full
+  // management lives on Ability, this is just enough to surface deadlines
+  // due soon and flashcards due today without duplicating the editable UI.
+  function renderLearnSummary() {
+    const line = document.getElementById('learnSummaryLine');
+    if (!line) return;
+    const tracks = storeGet('eq.learn.tracks_v1') || [];
+    if (!tracks.length) { line.textContent = 'No tracks yet'; return; }
+    const deadlines = (storeGet('eq.learn.deadlines_v1') || []).filter((d) => d.status !== 'done');
+    const soon = deadlines.filter((d) => { const days = Math.ceil((new Date(d.dueDate).getTime() - Date.now()) / 86400000); return days >= 0 && days <= 7; });
+    const decks = storeGet('eq.learn.decks_v1') || [];
+    const dueCards = decks.reduce((s, d) => s + (d.cards || []).filter((c) => c.dueDate <= new Date().toISOString()).length, 0);
+    const parts = [];
+    if (soon.length) parts.push(soon.length + ' deadline' + (soon.length === 1 ? '' : 's') + ' due soon');
+    if (dueCards) parts.push(dueCards + ' card' + (dueCards === 1 ? '' : 's') + ' due');
+    line.textContent = parts.length ? parts.join(' · ') : tracks.length + ' track' + (tracks.length === 1 ? '' : 's') + ' · nothing due';
+  }
+
   // ---------- Boot ----------
   rollover();
   processStreak();
@@ -4196,10 +4324,11 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
   initCalendar();
   initProjects();
   renderRelationshipsSummary();
+  renderLearnSummary();
   initSuggestSlot();
 
   window.addEventListener('storage', () => {
-    loadToday(); loadTomorrow(); renderStreak(); renderLongtermGoals(); renderChecklists(); renderProjects(); renderRelationshipsSummary();
+    loadToday(); loadTomorrow(); renderStreak(); renderLongtermGoals(); renderChecklists(); renderProjects(); renderRelationshipsSummary(); renderLearnSummary();
   });
 })();
 </script>

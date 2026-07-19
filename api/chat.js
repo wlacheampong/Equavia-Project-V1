@@ -2,10 +2,30 @@
 // function's environment (ANTHROPIC_API_KEY on Vercel) -- never sent to
 // or stored by the client. Model and max_tokens are fixed here, not
 // client-controlled, so a compromised/buggy client can't drive up spend.
+//
+// 6.0 security gate: this is the one endpoint that actually spends money
+// per call, so it's the primary reason the gate exists at all -- requires
+// a valid signed session (see lib/auth.js) via the X-Eq-Session header.
+import { requireSession } from '../lib/auth.js';
+
 const ANTHROPIC_MODEL = 'claude-sonnet-5';
-const MAX_TOKENS = 1024;
+// Phase 4.2: Smart Capture parses free text into tool calls with Haiku
+// (cheap, and the spec calls a full Sonnet round-trip overkill for a
+// simple extraction task) -- an allowlist, not full client control, so the
+// "model fixed server-side" protection above still holds: a client can
+// pick between these two known-cost options, not name an arbitrary model.
+const ALLOWED_MODELS = ['claude-sonnet-5', 'claude-haiku-4-5-20251001'];
+// 4096, not the original 1024 -- the weekly audit (4.5) needed room for a
+// single structured 6-section reply, and the annual review (6.10) is
+// bigger again (trajectory + commitments + top 5s + themes across a whole
+// year's worth of weekly audits).
+const MAX_TOKENS = 4096;
 const MAX_MESSAGE_CHARS = 8000;
-const MAX_CONTEXT_CHARS = 6000;
+// 20000, not the original 6000 -- the annual review's context is up to 52
+// weeks of prior audit summaries, which a 6000-char cap would truncate
+// mid-year. Still a hard ceiling against a runaway/buggy client, just sized
+// for the biggest real context this app now assembles.
+const MAX_CONTEXT_CHARS = 20000;
 
 // Best-effort only: a Vercel function instance is not guaranteed to stay
 // warm or to be the only instance handling traffic, so this cannot be a
@@ -25,9 +45,10 @@ function withinRateLimit() {
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Eq-Session');
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'method not allowed' });
+  if (!requireSession(req, res)) return;
 
   if (!withinRateLimit()) {
     return res.status(429).json({ error: 'Too many messages in a short window — wait a moment and try again.' });
@@ -73,6 +94,15 @@ export default async function handler(req, res) {
   // ask.html itself -- Anthropic's API is the real validator of schema
   // shape, so this just checks it's an array before passthrough.
   const tools = Array.isArray(body && body.tools) ? body.tools : undefined;
+  const model = ALLOWED_MODELS.includes(body && body.model) ? body.model : ANTHROPIC_MODEL;
+  // Phase 4.5: the weekly audit needs Claude to reply with one specific
+  // structured tool call (submit_audit) rather than free text, so its
+  // sections can render as separate cards with real Implement/Ignore
+  // buttons on the suggestions. Only honored alongside a matching tools
+  // array -- Anthropic's API is the real validator either way.
+  const toolChoice = (body && body.toolChoice && typeof body.toolChoice.name === 'string' && tools)
+    ? { type: 'tool', name: body.toolChoice.name }
+    : undefined;
 
   try {
     const r = await fetch('https://api.anthropic.com/v1/messages', {
@@ -83,11 +113,12 @@ export default async function handler(req, res) {
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: ANTHROPIC_MODEL,
+        model,
         max_tokens: MAX_TOKENS,
         system: systemContext,
         messages,
         tools,
+        tool_choice: toolChoice,
       }),
     });
     const text = await r.text();

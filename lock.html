@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#050506">
+<link rel="icon" type="image/webp" href="images/Index Landing Page.webp">
+<link rel="apple-touch-icon" href="images/apple-touch-icon.png">
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Equavia">
+<title>Sign in — Equavia</title>
+<style>
+:root {
+  --bg: #050506;
+  --bg-card: rgba(255, 255, 255, 0.04);
+  --bg-input: rgba(0, 0, 0, 0.28);
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.14);
+  --text-primary: #FAFAFA;
+  --text-secondary: #B8B6B0;
+  --text-tertiary: #76746E;
+  --accent: #E07658;
+  --danger: #FF6B6B;
+  --font: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+* { box-sizing: border-box; }
+html, body {
+  margin: 0; padding: 0;
+  width: 100%; min-height: 100%;
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+/* Same ambient backdrop as index.html/dashboard.html, so this reads as
+   part of the same app rather than a bolted-on login page. */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background:
+    radial-gradient(circle at 82% 14%, rgba(224, 118, 88, 0.16), transparent 45%),
+    radial-gradient(circle at 18% 90%, rgba(180, 180, 200, 0.06), transparent 50%);
+  filter: blur(40px);
+  pointer-events: none;
+  z-index: -1;
+}
+.lock-wrap {
+  min-height: 100dvh;
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px;
+}
+.lock-card {
+  width: 100%; max-width: 340px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 28px 24px;
+}
+.lock-title {
+  font-size: 19px; font-weight: 700; letter-spacing: -0.01em;
+  margin: 0 0 4px;
+}
+.lock-sub {
+  font-size: 13px; color: var(--text-tertiary);
+  margin: 0 0 22px;
+}
+.lock-input {
+  width: 100%;
+  background: var(--bg-input);
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  color: var(--text-primary);
+  font-family: var(--font);
+  font-size: 16px;
+  padding: 12px 14px;
+  letter-spacing: 0.08em;
+}
+.lock-input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.lock-remember {
+  display: flex; align-items: center; gap: 8px;
+  margin: 14px 2px 0;
+  font-size: 13px; color: var(--text-secondary);
+}
+.lock-remember input { width: 16px; height: 16px; accent-color: var(--accent); }
+.lock-btn {
+  width: 100%;
+  margin-top: 18px;
+  background: var(--accent);
+  color: #1a0d08;
+  border: none;
+  border-radius: 10px;
+  font-family: var(--font);
+  font-size: 15px; font-weight: 700;
+  padding: 13px;
+  cursor: pointer;
+}
+.lock-btn:disabled { opacity: 0.55; cursor: default; }
+.lock-error {
+  min-height: 18px;
+  margin-top: 12px;
+  font-size: 12.5px; color: var(--danger);
+  text-align: center;
+}
+</style>
+</head>
+<body>
+
+<div class="lock-wrap">
+  <div class="lock-card">
+    <div class="lock-title">Equavia is locked</div>
+    <p class="lock-sub">Enter the passcode to continue.</p>
+    <form id="lockForm" autocomplete="off">
+      <input class="lock-input" id="lockPasscode" type="password" inputmode="text" placeholder="Passcode" autocomplete="current-password" autofocus>
+      <label class="lock-remember"><input type="checkbox" id="lockRemember" checked> Remember this device</label>
+      <button class="lock-btn" id="lockSubmit" type="submit">Unlock</button>
+      <div class="lock-error" id="lockError"></div>
+    </form>
+  </div>
+</div>
+
+<script>
+(function () {
+  var KNOWN_PAGES = [
+    'index.html', 'dashboard.html', 'health.html', 'gym.html', 'planner.html',
+    'interactions.html', 'finance.html', 'ability.html', 'notes.html',
+    'train.html', 'vitals.html', 'brand.html', 'settings.html', 'ask.html',
+    'po-water.html', 'privacy.html',
+  ];
+  function safeReturnTarget() {
+    var raw = new URLSearchParams(window.location.search).get('return') || '';
+    try { raw = decodeURIComponent(raw); } catch (e) {}
+    var bare = raw.split('?')[0].split('#')[0];
+    if (KNOWN_PAGES.indexOf(bare) === -1) return 'dashboard.html';
+    return raw;
+  }
+
+  var form = document.getElementById('lockForm');
+  var input = document.getElementById('lockPasscode');
+  var remember = document.getElementById('lockRemember');
+  var btn = document.getElementById('lockSubmit');
+  var err = document.getElementById('lockError');
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var passcode = input.value;
+    if (!passcode) return;
+    err.textContent = '';
+    btn.disabled = true;
+    btn.textContent = 'Checking…';
+    fetch('/api/auth-login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ passcode: passcode, remember: !!remember.checked }),
+    })
+      .then(function (r) { return r.json().then(function (data) { return { ok: r.ok, data: data }; }); })
+      .then(function (res) {
+        if (!res.ok || !res.data || !res.data.token) {
+          err.textContent = (res.data && res.data.error) || 'Incorrect passcode.';
+          btn.disabled = false;
+          btn.textContent = 'Unlock';
+          input.value = '';
+          input.focus();
+          return;
+        }
+        var payload = JSON.stringify({ token: res.data.token, exp: res.data.exp });
+        try {
+          if (remember.checked) window.localStorage.setItem('eq_session', payload);
+          else window.sessionStorage.setItem('eq_session', payload);
+        } catch (e) {}
+        window.location.replace(safeReturnTarget());
+      })
+      .catch(function () {
+        err.textContent = 'Could not reach the server — try again.';
+        btn.disabled = false;
+        btn.textContent = 'Unlock';
+      });
+  });
+})();
+</script>
+
+</body>
+</html>

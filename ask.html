@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<script src="auth-gate.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#0a0a0b">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -13,6 +14,7 @@
 <title>Ask Claude — Equavia</title>
 <script src="topbar.js" defer></script>
 <script src="obsidian-sync.js"></script>
+<script src="assistant-tools.js"></script>
 <style>
 :root {
   --bg: #0A0A0B;
@@ -53,6 +55,16 @@ body {
 .ask-empty { text-align: center; padding: 40px 20px; color: var(--text-tertiary); }
 .ask-empty-title { font-size: 15px; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px; }
 .ask-empty-sub { font-size: 12.5px; line-height: 1.5; }
+
+.ask-onboard { text-align: center; padding: 32px 20px; color: var(--text-tertiary); }
+.ask-onboard-q { font-size: 13.5px; color: var(--text-secondary); margin: 10px 0 14px; line-height: 1.5; }
+.ask-onboard-input {
+  width: 100%; max-width: 360px; box-sizing: border-box; background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: var(--text-primary);
+  font-family: inherit; font-size: 14px; padding: 10px 13px; text-align: left;
+}
+.ask-onboard-actions { display: flex; justify-content: center; gap: 8px; margin: 14px 0 10px; }
+.ask-onboard-actions .ask-proposal-btn { padding: 8px 16px; font-size: 12.5px; }
 
 .ask-messages { display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; }
 .ask-msg { max-width: 82%; padding: 10px 13px; border-radius: 14px; font-size: 13.5px; line-height: 1.5; white-space: pre-wrap; }
@@ -115,6 +127,29 @@ body {
   display: flex; align-items: center; justify-content: center;
 }
 .ask-send-btn:disabled { opacity: 0.4; cursor: default; }
+.ask-mic-btn {
+  flex-shrink: 0; width: 38px; height: 38px; border-radius: 12px; border: none;
+  background: rgba(255,255,255,0.06); color: var(--text-secondary); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.ask-mic-btn.is-listening { background: var(--danger); color: #2a0a0a; }
+@media (prefers-reduced-motion: no-preference) {
+  .ask-mic-btn.is-listening { animation: askMicPulse 1.2s ease-in-out infinite; }
+  @keyframes askMicPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+}
+
+/* ===== Web search toggle (6.7) ===== */
+.ask-web-row { width: 100%; max-width: 688px; margin: 0 auto 8px; display: flex; justify-content: flex-end; }
+.ask-web-toggle {
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+  color: var(--text-tertiary); font-family: var(--font-mono); font-size: 10.5px;
+  font-weight: 700; letter-spacing: 0.03em; padding: 4px 10px; border-radius: 999px; cursor: pointer;
+}
+.ask-web-toggle.is-on { background: var(--accent); border-color: transparent; color: #1a0f0a; }
+.ask-sources { margin-top: 6px; display: flex; flex-direction: column; gap: 3px; }
+.ask-sources-label { font-size: 10px; color: var(--text-quaternary); letter-spacing: 0.04em; text-transform: uppercase; }
+.ask-source-link { font-size: 11.5px; color: var(--text-secondary); text-decoration: none; }
+.ask-source-link:hover { text-decoration: underline; color: var(--text-primary); }
 .ask-server-warn {
   font-size: 11px; color: var(--warning); background: rgba(242,192,99,0.08);
   border: 1px solid rgba(242,192,99,0.25); border-radius: 10px; padding: 10px 12px; margin-bottom: 16px;
@@ -139,6 +174,17 @@ body {
     <div class="ask-empty-sub">Ask something like "how's my sleep trending?" or "what's overdue this week?"</div>
   </div>
 
+  <div class="ask-onboard" id="askOnboard" style="display:none;">
+    <div class="ask-empty-title">A few quick things, so advice fits from the start</div>
+    <div class="ask-onboard-q" id="askOnboardQ"></div>
+    <input type="text" class="ask-onboard-input" id="askOnboardInput" autocomplete="off">
+    <div class="ask-onboard-actions">
+      <button type="button" class="ask-proposal-btn ask-proposal-confirm" id="askOnboardNext">Next</button>
+      <button type="button" class="ask-proposal-btn ask-proposal-decline" id="askOnboardSkip">Skip this one</button>
+    </div>
+    <button type="button" class="ask-clear-link" id="askOnboardSkipAll">Skip onboarding entirely</button>
+  </div>
+
   <div class="ask-actions-row" id="askActionsRow" style="display:none;">
     <button type="button" class="ask-clear-link" id="askClearBtn">Clear conversation</button>
     <button type="button" class="ask-clear-link" id="askSaveObsidianBtn">Save to Obsidian</button>
@@ -148,8 +194,14 @@ body {
 </div>
 
 <div class="ask-input-bar">
+  <div class="ask-web-row">
+    <button type="button" class="ask-web-toggle" id="askWebToggle">Web: on</button>
+  </div>
   <div class="ask-input-row">
     <textarea class="ask-input" id="askInput" placeholder="Message Claude…" rows="1"></textarea>
+    <button type="button" class="ask-mic-btn" id="askMicBtn" aria-label="Voice input" style="display:none;">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1"/><path d="M12 18v4M9 22h6"/></svg>
+    </button>
     <button type="button" class="ask-send-btn" id="askSendBtn" aria-label="Send">
       <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7Z"/></svg>
     </button>
@@ -225,7 +277,7 @@ body {
     if (!tokens.refresh_token) { localStorage.removeItem(GCAL_TOKENS_KEY); return null; }
     try {
       const res = await fetch('/api/google-calendar-refresh', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: Object.assign({ 'Content-Type': 'application/json' }, window.EqAuth ? window.EqAuth.header() : {}),
         body: JSON.stringify({ refresh_token: tokens.refresh_token }),
       });
       const json = await res.json();
@@ -283,89 +335,14 @@ body {
   // input) for tools where only *overwriting* an existing entry needs a
   // confirm -- a brand-new log entry doesn't.
   // ============================================================
-  function genId(prefix) { return prefix + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
-
-  const ASSISTANT_ACTIVITY_KEY = 'eq.assistant.activity_log_v1';
-  const MAX_ACTIVITY_ENTRIES = 200;
-  // Undo only needs to survive the current page session (matches the
-  // "immediate undo link only" scope) -- in-memory, not persisted, so it
-  // never has to serialize a closure through localStorage.
-  const pendingUndos = {};
-  function logAssistantActivity(tool, summary, undo) {
-    const list = storeGet(ASSISTANT_ACTIVITY_KEY) || [];
-    const id = genId('a');
-    list.unshift({ id, tool, summary, at: new Date().toISOString(), undone: false });
-    if (list.length > MAX_ACTIVITY_ENTRIES) list.length = MAX_ACTIVITY_ENTRIES;
-    storeSet(ASSISTANT_ACTIVITY_KEY, list);
-    if (undo) pendingUndos[id] = undo;
-    return id;
-  }
-  async function undoAssistantActivity(activityId) {
-    const undo = pendingUndos[activityId];
-    if (!undo) return false;
-    await undo();
-    delete pendingUndos[activityId];
-    const list = storeGet(ASSISTANT_ACTIVITY_KEY) || [];
-    const entry = list.find((a) => a.id === activityId);
-    if (entry) { entry.undone = true; storeSet(ASSISTANT_ACTIVITY_KEY, list); }
-    return true;
-  }
-
-  // ---------- Shared day-key helpers (mirror planner.html's own 6am
-  // boundary exactly -- a task/entry logged at 2am belongs to the still-
-  // open previous day, not a fresh empty one) ----------
-  function fmtDateKey(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
-  function activeDateKeyLocal() {
-    const now = new Date();
-    return fmtDateKey(now.getHours() < 6 ? new Date(now.getTime() - 86400000) : now);
-  }
-  function tomorrowDateKeyLocal() {
-    const now = new Date();
-    const active = now.getHours() < 6 ? new Date(now.getTime() - 86400000) : now;
-    return fmtDateKey(new Date(active.getTime() + 86400000));
-  }
-
-  // ---------- Tasks (goals:<dateKey>) ----------
-  function getTasksList(dateKey) { return storeGet('goals:' + dateKey) || []; }
-  function setTasksList(dateKey, list) { storeSet('goals:' + dateKey, list); }
-  // Accepts a real task id, or the synthesized 'text:<exact text>' reference
-  // get_data hands out for pre-4.1 tasks that predate the id field (same
-  // backfill spirit as goals' createdAt in 1.6 -- old data isn't fabricated
-  // an id, it's addressed by what it already has).
-  function findTaskByRef(ref) {
-    for (const dk of [activeDateKeyLocal(), tomorrowDateKeyLocal()]) {
-      const list = getTasksList(dk);
-      const idx = list.findIndex((t) => (t.id && t.id === ref) || (!t.id && 'text:' + t.text === ref));
-      if (idx !== -1) return { dateKey: dk, list, idx, task: list[idx] };
-    }
-    return null;
-  }
-
-  // ---------- Weight (po_coach_weights, gym.html's own key/shape) ----------
-  const WEIGHT_KEY = 'po_coach_weights';
-  function refreshFitnessSummaryWeightFields(arr) {
-    // Partial, honest update -- only recomputes the weight-derived fields
-    // this tool actually has enough information to get right, and merges
-    // them into whatever eq.fitness.summary already holds. sessionsThisWeek/
-    // volumeThisWeek/lastSessionDay come from gym.html's own workout-log
-    // state, which isn't available outside that page -- left untouched
-    // rather than guessed at or blanked out.
-    const sorted = arr.slice().sort((a, b) => a.dateKey.localeCompare(b.dateKey));
-    const current = sorted.length ? sorted[sorted.length - 1] : null;
-    const cutoff = fmtDateKey(new Date(Date.now() - 7 * 86400000));
-    const recent = sorted.filter((e) => e.dateKey >= cutoff);
-    const avg7 = recent.length ? recent.reduce((s, e) => s + e.weight, 0) / recent.length : null;
-    const startKey = fmtDateKey(new Date(Date.now() - 14 * 86400000));
-    const prior = sorted.filter((e) => e.dateKey >= startKey && e.dateKey < cutoff);
-    const avg7Prior = prior.length ? prior.reduce((s, e) => s + e.weight, 0) / prior.length : null;
-    const existing = storeGet('eq.fitness.summary') || {};
-    storeSet('eq.fitness.summary', Object.assign({}, existing, {
-      currentWeight: current ? current.weight : null,
-      weight7dAvg: avg7 != null ? Number(avg7.toFixed(1)) : null,
-      weight7dAvgChange: (avg7 != null && avg7Prior != null) ? Number((avg7 - avg7Prior).toFixed(1)) : null,
-      at: new Date().toISOString(),
-    }));
-  }
+  // Phase 4.2: genId/logAssistantActivity/undoAssistantActivity, the 6am
+  // day-key helpers, task helpers, and 11 of the tool schemas+executors
+  // moved to the shared assistant-tools.js so Quick Capture's Smart mode
+  // (topbar.js) can run the exact same tool behavior -- see that file's own
+  // header comment for which tools stayed here instead and why.
+  const AT = window.AssistantTools;
+  const { logAssistantActivity, undoAssistantActivity, genId, activeDateKeyLocal, tomorrowDateKeyLocal, fmtDateKey } = AT;
+  function getStackItemsList() { return storeGet('stack:items') || []; }
 
   // ---------- Calendar (local_cal_events_v1 + Google, per the answered
   // ASK FIRST question: keep the confirm-first card, write both places) ----------
@@ -439,274 +416,14 @@ body {
     return { ok: true, summary: 'Added "' + input.title + '" to your calendar' + googleNote + '.', activityId };
   }
 
-  // ---------- Remaining v1 tools ----------
-  const ADD_TASK_TOOL = {
-    name: 'add_task', description: 'Add a new task to today or tomorrow\'s list.',
-    input_schema: { type: 'object', properties: {
-      title: { type: 'string', description: 'The task text.' },
-      day: { type: 'string', enum: ['today', 'tomorrow'], description: 'Which day\'s list to add it to.' },
-    }, required: ['title', 'day'] },
-  };
-  async function exec_add_task(input) {
-    const dateKey = input.day === 'tomorrow' ? tomorrowDateKeyLocal() : activeDateKeyLocal();
-    const list = getTasksList(dateKey);
-    const id = genId('t');
-    list.push({ id, text: input.title, done: false, source: 'assistant' });
-    setTasksList(dateKey, list);
-    const activityId = logAssistantActivity('add_task', 'Added task: "' + input.title + '" (' + (input.day || 'today') + ')', async () => {
-      const l = getTasksList(dateKey);
-      const i = l.findIndex((t) => t.id === id);
-      if (i !== -1) { l.splice(i, 1); setTasksList(dateKey, l); }
-    });
-    return { ok: true, summary: 'Added task "' + input.title + '" for ' + (input.day || 'today') + ' (id: ' + id + ').', activityId };
-  }
-
-  const COMPLETE_TASK_TOOL = {
-    name: 'complete_task', description: 'Mark a task as done. Look the task up with get_data first if you don\'t already have its id from this conversation.',
-    input_schema: { type: 'object', properties: { task_id: { type: 'string', description: 'The task\'s id, from get_data or a prior add_task result.' } }, required: ['task_id'] },
-  };
-  async function exec_complete_task(input) {
-    const found = findTaskByRef(input.task_id);
-    if (!found) return { ok: false, summary: 'No task found matching "' + input.task_id + '". Use get_data to look up the right task first.' };
-    if (found.task.done) return { ok: true, summary: '"' + found.task.text + '" was already marked complete.' };
-    found.task.done = true;
-    setTasksList(found.dateKey, found.list);
-    const activityId = logAssistantActivity('complete_task', 'Completed task: "' + found.task.text + '"', async () => {
-      const f = findTaskByRef(input.task_id);
-      if (f) { f.task.done = false; setTasksList(f.dateKey, f.list); }
-    });
-    return { ok: true, summary: 'Marked "' + found.task.text + '" complete.', activityId };
-  }
-
-  const PUSH_TASK_TOOL = {
-    name: 'push_task_to_tomorrow', description: 'Move an unfinished task from today to tomorrow.',
-    input_schema: { type: 'object', properties: { task_id: { type: 'string', description: 'The task\'s id, from get_data or a prior add_task result.' } }, required: ['task_id'] },
-  };
-  async function exec_push_task_to_tomorrow(input) {
-    const found = findTaskByRef(input.task_id);
-    if (!found) return { ok: false, summary: 'No task found matching "' + input.task_id + '".' };
-    const task = found.task;
-    found.list.splice(found.idx, 1);
-    setTasksList(found.dateKey, found.list);
-    const tomorrowDk = tomorrowDateKeyLocal();
-    const tomorrowList = getTasksList(tomorrowDk);
-    tomorrowList.push(task);
-    setTasksList(tomorrowDk, tomorrowList);
-    const fromDateKey = found.dateKey;
-    const activityId = logAssistantActivity('push_task_to_tomorrow', 'Pushed "' + task.text + '" to tomorrow', async () => {
-      const tl = getTasksList(tomorrowDk);
-      const i = tl.findIndex((t) => t === task || (t.id && t.id === task.id));
-      if (i !== -1) tl.splice(i, 1);
-      setTasksList(tomorrowDk, tl);
-      const orig = getTasksList(fromDateKey);
-      orig.push(task);
-      setTasksList(fromDateKey, orig);
-    });
-    return { ok: true, summary: 'Pushed "' + task.text + '" to tomorrow.', activityId };
-  }
-
-  const LOG_WEIGHT_TOOL = {
-    name: 'log_weight', description: 'Log a body-weight reading.',
-    input_schema: { type: 'object', properties: {
-      kg: { type: 'number', description: 'Weight in kilograms.' },
-      date: { type: 'string', description: 'ISO date, YYYY-MM-DD. Defaults to today if omitted.' },
-    }, required: ['kg'] },
-  };
-  function weightEntryFor(dateKey) { return (storeGet(WEIGHT_KEY) || []).find((e) => e.dateKey === dateKey) || null; }
-  async function exec_log_weight(input) {
-    const dateKey = input.date || fmtDateKey(new Date());
-    const arr = storeGet(WEIGHT_KEY) || [];
-    const existing = arr.find((e) => e.dateKey === dateKey);
-    const prevWeight = existing ? existing.weight : null;
-    if (existing) existing.weight = input.kg;
-    else { arr.push({ dateKey, weight: input.kg }); arr.sort((a, b) => a.dateKey.localeCompare(b.dateKey)); }
-    storeSet(WEIGHT_KEY, arr);
-    refreshFitnessSummaryWeightFields(arr);
-    const activityId = logAssistantActivity('log_weight', 'Logged weight: ' + input.kg + 'kg (' + dateKey + ')', async () => {
-      const a2 = storeGet(WEIGHT_KEY) || [];
-      if (prevWeight != null) { const e = a2.find((x) => x.dateKey === dateKey); if (e) e.weight = prevWeight; }
-      else { const i = a2.findIndex((x) => x.dateKey === dateKey); if (i !== -1) a2.splice(i, 1); }
-      storeSet(WEIGHT_KEY, a2);
-      refreshFitnessSummaryWeightFields(a2);
-    });
-    return { ok: true, summary: 'Logged ' + input.kg + 'kg for ' + dateKey + '.', activityId };
-  }
-
-  const LOG_SLEEP_TOOL = {
-    name: 'log_sleep', description: 'Log a manual sleep-hours entry (use when the user tells you their sleep rather than it coming from WHOOP).',
-    input_schema: { type: 'object', properties: {
-      hours: { type: 'number', description: 'Hours slept.' },
-      date: { type: 'string', description: 'ISO date, YYYY-MM-DD. Defaults to today if omitted.' },
-    }, required: ['hours'] },
-  };
-  function sleepEntryFor(dateKey) { return (storeGet('sleep_log_v1') || []).find((e) => e.dateKey === dateKey) || null; }
-  async function exec_log_sleep(input) {
-    const dateKey = input.date || activeDateKeyLocal();
-    const arr = storeGet('sleep_log_v1') || [];
-    const existing = arr.find((e) => e.dateKey === dateKey);
-    const prev = existing ? Object.assign({}, existing) : null;
-    if (existing) { existing.hours = input.hours; existing.source = 'manual'; }
-    else arr.push({ dateKey, hours: input.hours, source: 'manual' });
-    storeSet('sleep_log_v1', arr);
-    const activityId = logAssistantActivity('log_sleep', 'Logged sleep: ' + input.hours + 'h (' + dateKey + ')', async () => {
-      const a2 = storeGet('sleep_log_v1') || [];
-      if (prev) { const e = a2.find((x) => x.dateKey === dateKey); if (e) Object.assign(e, prev); }
-      else { const i = a2.findIndex((x) => x.dateKey === dateKey); if (i !== -1) a2.splice(i, 1); }
-      storeSet('sleep_log_v1', a2);
-    });
-    return { ok: true, summary: 'Logged ' + input.hours + 'h sleep for ' + dateKey + '.', activityId };
-  }
-
-  const LOG_CONTACT_TOOL = {
-    name: 'log_contact', description: 'Record that you were in touch with a tracked contact today (or a given date).',
-    input_schema: { type: 'object', properties: {
-      contact_name: { type: 'string', description: 'The contact\'s name, matched case-insensitively.' },
-      date: { type: 'string', description: 'ISO date, YYYY-MM-DD. Defaults to today if omitted.' },
-    }, required: ['contact_name'] },
-  };
-  async function exec_log_contact(input) {
-    const list = storeGet('contacts_v1') || [];
-    const needle = (input.contact_name || '').trim().toLowerCase();
-    const contact = list.find((c) => (c.name || '').trim().toLowerCase() === needle);
-    if (!contact) return { ok: false, summary: 'No contact named "' + input.contact_name + '" found.' };
-    contact.history = Array.isArray(contact.history) ? contact.history : [];
-    const entry = { date: input.date ? new Date(input.date + 'T12:00:00').toISOString() : new Date().toISOString(), channel: 'other', note: '' };
-    contact.history.push(entry);
-    const prevSnooze = contact.snoozedUntil;
-    contact.snoozedUntil = null; // a fresh log is a live "back in touch" signal, same as interactions.html's own log-a-chat sheet
-    storeSet('contacts_v1', list);
-    const activityId = logAssistantActivity('log_contact', 'Logged contact: ' + contact.name, async () => {
-      const l2 = storeGet('contacts_v1') || [];
-      const c2 = l2.find((c) => c.id === contact.id);
-      if (c2 && Array.isArray(c2.history)) {
-        // entry won't be reference-equal after a JSON round-trip through
-        // storeSet/storeGet -- date (millisecond ISO) + channel is unique
-        // enough to find the exact entry this call just added.
-        const i = c2.history.findIndex((h) => h.date === entry.date && h.channel === entry.channel);
-        if (i !== -1) c2.history.splice(i, 1);
-        c2.snoozedUntil = prevSnooze;
-        storeSet('contacts_v1', l2);
-      }
-    });
-    return { ok: true, summary: 'Logged contact with ' + contact.name + '.', activityId };
-  }
-
-  const ADD_SHOPPING_ITEM_TOOL = {
-    name: 'add_shopping_item', description: 'Add an item to the shopping list.',
-    input_schema: { type: 'object', properties: {
-      name: { type: 'string', description: 'Item name.' },
-      grams: { type: 'number', description: 'Optional weight in grams.' },
-      qty: { type: 'number', description: 'Optional quantity, defaults to 1.' },
-    }, required: ['name'] },
-  };
-  async function exec_add_shopping_item(input) {
-    const list = storeGet('shopping_list_v1') || [];
-    const id = genId('sh');
-    list.push({ id, name: input.name, grams: input.grams || 0, qty: input.qty || 1, lastsValue: 0, lastsUnit: 'days', estDays: null, source: 'assistant' });
-    storeSet('shopping_list_v1', list);
-    const activityId = logAssistantActivity('add_shopping_item', 'Added to shopping list: ' + input.name, async () => {
-      const l2 = storeGet('shopping_list_v1') || [];
-      const i = l2.findIndex((x) => x.id === id);
-      if (i !== -1) { l2.splice(i, 1); storeSet('shopping_list_v1', l2); }
-    });
-    return { ok: true, summary: 'Added "' + input.name + '" to your shopping list (id: ' + id + ').', activityId };
-  }
-
-  const ADD_BOOK_TOOL = {
-    name: 'add_book', description: 'Add a book to the tracker.',
-    input_schema: { type: 'object', properties: {
-      title: { type: 'string', description: 'Book title.' },
-      author: { type: 'string', description: 'Optional author.' },
-      status: { type: 'string', enum: ['want', 'reading', 'read'], description: 'Shelf to place it on.' },
-    }, required: ['title', 'status'] },
-  };
-  async function exec_add_book(input) {
-    const list = storeGet('books_v1') || [];
-    const id = genId('bk');
-    list.push({ id, title: input.title, author: input.author || '', status: input.status, rating: 0, finishedAt: input.status === 'read' ? new Date().toISOString() : null, notes: '', source: 'assistant' });
-    storeSet('books_v1', list);
-    const activityId = logAssistantActivity('add_book', 'Added book: "' + input.title + '" (' + input.status + ')', async () => {
-      const l2 = storeGet('books_v1') || [];
-      const i = l2.findIndex((x) => x.id === id);
-      if (i !== -1) { l2.splice(i, 1); storeSet('books_v1', l2); }
-    });
-    return { ok: true, summary: 'Added "' + input.title + '" to your books (' + input.status + ', id: ' + id + ').', activityId };
-  }
-
-  const CHECK_STACK_ITEM_TOOL = {
-    name: 'check_stack_item', description: 'Mark a supplement/stack item as taken today.',
-    input_schema: { type: 'object', properties: { item_name: { type: 'string', description: 'The stack item\'s name, matched case-insensitively (substring match allowed).' } }, required: ['item_name'] },
-  };
-  function getStackItemsList() { return storeGet('stack:items') || []; }
-  async function exec_check_stack_item(input) {
-    const items = getStackItemsList();
-    const needle = (input.item_name || '').trim().toLowerCase();
-    let item = items.find((i) => (i.name || '').trim().toLowerCase() === needle);
-    if (!item) item = items.find((i) => (i.name || '').trim().toLowerCase().indexOf(needle) !== -1);
-    if (!item) return { ok: false, summary: 'No stack item matching "' + input.item_name + '" found.' };
-    const dateKey = activeDateKeyLocal();
-    const takenKey = 'stack:taken:' + dateKey;
-    const taken = storeGet(takenKey) || {};
-    if (taken[item.id]) return { ok: true, summary: '"' + item.name + '" was already marked taken today.' };
-    taken[item.id] = Date.now();
-    storeSet(takenKey, taken);
-    const activityId = logAssistantActivity('check_stack_item', 'Marked taken: ' + item.name, async () => {
-      const t2 = storeGet(takenKey) || {};
-      delete t2[item.id];
-      storeSet(takenKey, t2);
-    });
-    return { ok: true, summary: 'Marked "' + item.name + '" taken.', activityId };
-  }
-
-  const LOG_HABIT_TOOL = {
-    name: 'log_habit', description: 'Mark a habit done or not-done for a day.',
-    input_schema: { type: 'object', properties: {
-      habit_name: { type: 'string', description: 'The habit\'s name, matched case-insensitively.' },
-      done: { type: 'boolean', description: 'Whether it was completed.' },
-      date: { type: 'string', description: 'ISO date, YYYY-MM-DD. Defaults to today if omitted.' },
-    }, required: ['habit_name', 'done'] },
-  };
-  async function exec_log_habit(input) {
-    const list = storeGet('habits_v1') || [];
-    const needle = (input.habit_name || '').trim().toLowerCase();
-    const habit = list.find((h) => (h.name || '').trim().toLowerCase() === needle);
-    if (!habit) return { ok: false, summary: 'No habit named "' + input.habit_name + '" found.' };
-    const dateKey = input.date || activeDateKeyLocal();
-    habit.history = habit.history || {};
-    const prev = habit.history[dateKey];
-    if (input.done) habit.history[dateKey] = true; else delete habit.history[dateKey];
-    storeSet('habits_v1', list);
-    const activityId = logAssistantActivity('log_habit', 'Logged habit "' + habit.name + '": ' + (input.done ? 'done' : 'not done') + ' (' + dateKey + ')', async () => {
-      const l2 = storeGet('habits_v1') || [];
-      const h2 = l2.find((h) => h.id === habit.id);
-      if (h2) { h2.history = h2.history || {}; if (prev === undefined) delete h2.history[dateKey]; else h2.history[dateKey] = prev; storeSet('habits_v1', l2); }
-    });
-    return { ok: true, summary: 'Logged "' + habit.name + '" as ' + (input.done ? 'done' : 'not done') + ' for ' + dateKey + '.', activityId };
-  }
-
-  const ADD_GOAL_NOTE_TOOL = {
-    name: 'add_goal_note', description: 'Attach a short note to a longterm goal.',
-    input_schema: { type: 'object', properties: {
-      goal_id: { type: 'string', description: 'The goal\'s id or exact title.' },
-      note: { type: 'string', description: 'The note text.' },
-    }, required: ['goal_id', 'note'] },
-  };
-  async function exec_add_goal_note(input) {
-    const list = storeGet('longterm_goals_v1') || [];
-    const needle = (input.goal_id || '').trim().toLowerCase();
-    const goal = list.find((g) => g.id === input.goal_id) || list.find((g) => (g.title || '').trim().toLowerCase() === needle);
-    if (!goal) return { ok: false, summary: 'No goal matching "' + input.goal_id + '" found.' };
-    goal.notes = goal.notes || [];
-    goal.notes.push({ text: input.note, at: new Date().toISOString() });
-    const noteIdx = goal.notes.length - 1;
-    storeSet('longterm_goals_v1', list);
-    const activityId = logAssistantActivity('add_goal_note', 'Added note to goal "' + goal.title + '"', async () => {
-      const l2 = storeGet('longterm_goals_v1') || [];
-      const g2 = l2.find((g) => g.id === goal.id);
-      if (g2 && Array.isArray(g2.notes)) { g2.notes.splice(noteIdx, 1); storeSet('longterm_goals_v1', l2); }
-    });
-    return { ok: true, summary: 'Added a note to "' + goal.title + '".', activityId };
-  }
+  // 11 tools moved to assistant-tools.js in Phase 4.2 (see the comment
+  // above AT's destructure) -- add_task, complete_task,
+  // push_task_to_tomorrow, log_weight, log_sleep, log_contact,
+  // add_shopping_item, add_book, check_stack_item, log_habit,
+  // add_goal_note. get_data (below) needs its own tiny local copy of the
+  // one thing it still reads directly, since the tools that used to share
+  // it were the ones that moved.
+  function getTasksList(dateKey) { return storeGet('goals:' + dateKey) || []; }
 
   // ---------- get_data: explicit on-demand read, so front-loaded context
   // doesn't have to carry everything. Most domains reuse the same builder
@@ -735,6 +452,7 @@ body {
     if (tomorrow.length) out.push(tomorrowDateKeyLocal() + ' (tomorrow):\n' + tomorrow.map((t) => '  - [' + (t.done ? 'x' : ' ') + '] ' + t.text + ' (id: ' + (t.id || 'text:' + t.text) + ')').join('\n'));
     return out.length ? out.join('\n') : 'No tasks found in this range.';
   }
+  const WEIGHT_KEY = 'po_coach_weights'; // gym.html's own key/shape -- same one assistant-tools.js's log_weight writes to
   function getDataWeightHistory(range) {
     const days = rangeDays(range);
     const cutoff = fmtDateKey(new Date(Date.now() - days * 86400000));
@@ -796,21 +514,16 @@ body {
   // Silent tools call execute() immediately from the send loop; confirm-
   // gated ones pause and render a proposal card instead (see sendMessage /
   // resolvePendingAction).
-  const TOOL_REGISTRY = {
-    add_task: { schema: ADD_TASK_TOOL, confirmMode: 'never', execute: exec_add_task },
-    complete_task: { schema: COMPLETE_TASK_TOOL, confirmMode: 'never', execute: exec_complete_task },
-    push_task_to_tomorrow: { schema: PUSH_TASK_TOOL, confirmMode: 'never', execute: exec_push_task_to_tomorrow },
-    log_weight: { schema: LOG_WEIGHT_TOOL, confirmMode: (input) => !!weightEntryFor(input.date || fmtDateKey(new Date())), execute: exec_log_weight },
-    log_sleep: { schema: LOG_SLEEP_TOOL, confirmMode: (input) => !!sleepEntryFor(input.date || activeDateKeyLocal()), execute: exec_log_sleep },
-    log_contact: { schema: LOG_CONTACT_TOOL, confirmMode: 'never', execute: exec_log_contact },
+  // 11 entries come from the shared module (Phase 4.2); add_calendar_event
+  // and get_data are merged in locally since both depend on things that
+  // only make sense inside this page (Google Calendar OAuth state, chat
+  // domain-context builders) -- see assistant-tools.js's own header comment.
+  const TOOL_REGISTRY = Object.assign({}, AT.TOOL_REGISTRY, {
     add_calendar_event: { schema: ADD_CALENDAR_EVENT_TOOL, confirmMode: 'always', execute: exec_add_calendar_event },
-    add_shopping_item: { schema: ADD_SHOPPING_ITEM_TOOL, confirmMode: 'never', execute: exec_add_shopping_item },
-    add_book: { schema: ADD_BOOK_TOOL, confirmMode: 'never', execute: exec_add_book },
-    check_stack_item: { schema: CHECK_STACK_ITEM_TOOL, confirmMode: 'never', execute: exec_check_stack_item },
-    log_habit: { schema: LOG_HABIT_TOOL, confirmMode: (input) => { const h = (storeGet('habits_v1') || []).find((x) => (x.name || '').trim().toLowerCase() === (input.habit_name || '').trim().toLowerCase()); const dk = input.date || activeDateKeyLocal(); return !!(h && h.history && h.history[dk] !== undefined); }, execute: exec_log_habit },
-    add_goal_note: { schema: ADD_GOAL_NOTE_TOOL, confirmMode: 'never', execute: exec_add_goal_note },
     get_data: { schema: GET_DATA_TOOL, confirmMode: 'never', execute: exec_get_data },
-  };
+  });
+  // Own copy, not AT.toolNeedsConfirm -- that one closes over the shared
+  // module's own (smaller) registry, not this page's merged one.
   function toolNeedsConfirm(name, input) {
     const t = TOOL_REGISTRY[name];
     if (!t) return false;
@@ -825,6 +538,7 @@ body {
     let s = 'HEALTH:\n';
     if (h.recovery != null) s += 'Recovery: ' + h.recovery + '%\n';
     if (h.sleepHours != null) s += 'Sleep last night: ' + h.sleepHours + 'h\n';
+    if (h.sleepPerf != null) s += 'Sleep performance: ' + h.sleepPerf + '%\n';
     if (h.hrv != null) s += 'HRV: ' + h.hrv + 'ms\n';
     if (h.rhr != null) s += 'Resting HR: ' + h.rhr + 'bpm\n';
     if (h.strain != null) s += 'Strain today: ' + Number(h.strain).toFixed(1) + '\n';
@@ -886,7 +600,9 @@ body {
   // only here; interactions.html owns the actual migration).
   const REL_TIER_CADENCE = { inner: 7, close: 21, acquaintance: 60, networking: 90, network: 90 };
   function contactLastContact(c) {
-    const history = Array.isArray(c.history) ? c.history : (c.lastContactedAt ? [{ date: c.lastContactedAt }] : []);
+    const raw = Array.isArray(c.history) ? c.history : (c.lastContactedAt ? [{ date: c.lastContactedAt }] : []);
+    // 5.5: inbound doesn't reset the cadence clock by default -- same rule as interactions.html's own lastContactDate().
+    const history = raw.filter((h) => h.direction !== 'inbound');
     return history.length ? history.reduce((latest, h) => (!latest || h.date > latest) ? h.date : latest, null) : null;
   }
   function contactIsOverdue(c) {
@@ -944,6 +660,10 @@ body {
     // "Tuesday" when proposing a calendar event) is unreliable without it.
     const now = new Date();
     let out = 'Today\'s date is ' + todayKeyLocal() + ' (' + now.toLocaleDateString(undefined, { weekday: 'long' }) + ').\n\n';
+    // Also always included, not domain-gated (4.3) -- remembered facts are
+    // meant to be there regardless of which chips are on, same reasoning
+    // as the date line above.
+    out += AT.getMemoryContextText();
     for (const key of Object.keys(DOMAIN_BUILDERS)) {
       if (domains[key]) out += (await DOMAIN_BUILDERS[key](query)) + '\n';
     }
@@ -1133,7 +853,7 @@ body {
 
   function renderMessages() {
     const list = getMessages();
-    $('askEmpty').style.display = list.length ? 'none' : '';
+    $('askEmpty').style.display = (list.length || onboardingActive) ? 'none' : '';
     $('askActionsRow').style.display = list.length ? '' : 'none';
     const wrap = $('askMessages');
     wrap.innerHTML = '';
@@ -1145,6 +865,23 @@ body {
       const textEl = document.createElement('div');
       textEl.textContent = m.content;
       el.appendChild(textEl);
+      // 6.7: web search results always render with source links, per spec.
+      if (Array.isArray(m.sources) && m.sources.length) {
+        const srcWrap = document.createElement('div');
+        srcWrap.className = 'ask-sources';
+        const label = document.createElement('div');
+        label.className = 'ask-sources-label';
+        label.textContent = 'Sources';
+        srcWrap.appendChild(label);
+        m.sources.forEach((s) => {
+          const a = document.createElement('a');
+          a.className = 'ask-source-link';
+          a.href = s.url; a.target = '_blank'; a.rel = 'noopener noreferrer';
+          a.textContent = s.title;
+          srcWrap.appendChild(a);
+        });
+        el.appendChild(srcWrap);
+      }
       const timeEl = document.createElement('div');
       timeEl.className = 'ask-msg-time';
       timeEl.textContent = fmtTime(m.at);
@@ -1170,6 +907,69 @@ body {
 
   const MAX_TOOL_ROUNDS = 6; // guards a runaway tool loop from burning through rate limit/spend
 
+  // ============================================================
+  // 6.7 WEB SEARCH -- Anthropic's own server-side tool (web_search_20250305),
+  // not a custom function tool: Anthropic executes the search itself and
+  // returns results inline in the same response, so this needs no
+  // client-side execute()/tool_result round trip the way propose_calendar_
+  // event etc. do. Default ON (confirmed) -- persisted so the choice
+  // survives a reload rather than resetting every session.
+  // ============================================================
+  const WEB_SEARCH_KEY = 'eq.assistant.websearch_v1';
+  function webSearchEnabled() {
+    const v = storeGet(WEB_SEARCH_KEY);
+    return v === null || v === undefined ? true : !!v;
+  }
+  function setWebSearchEnabled(on) { storeSet(WEB_SEARCH_KEY, !!on); }
+  const WEB_SEARCH_TOOL = {
+    type: 'web_search_20250305',
+    name: 'web_search',
+    max_uses: 3,
+    // Biases results toward the user's real location, per spec ("recommended
+    // with my location context").
+    user_location: { type: 'approximate', city: 'London', region: 'London', country: 'GB', timezone: 'Europe/London' },
+  };
+  function buildToolsArray() {
+    const tools = Object.keys(TOOL_REGISTRY).map((name) => TOOL_REGISTRY[name].schema);
+    if (webSearchEnabled()) tools.push(WEB_SEARCH_TOOL);
+    return tools;
+  }
+  function renderWebToggle() {
+    const btn = $('askWebToggle');
+    if (!btn) return;
+    const on = webSearchEnabled();
+    btn.textContent = 'Web: ' + (on ? 'on' : 'off');
+    btn.classList.toggle('is-on', on);
+  }
+  const webToggleBtn = $('askWebToggle');
+  if (webToggleBtn) webToggleBtn.addEventListener('click', () => { setWebSearchEnabled(!webSearchEnabled()); renderWebToggle(); });
+  renderWebToggle();
+
+  // Anthropic returns search results as a web_search_tool_result block
+  // (the raw {title,url} list) plus citations attached to the text
+  // segments that actually used them -- collecting from both, deduped by
+  // url, since either can be present without the other depending on how
+  // the model wrote its reply.
+  function extractSources(rawContent) {
+    if (!Array.isArray(rawContent)) return [];
+    const seen = new Set();
+    const sources = [];
+    function add(title, url) {
+      if (!url || seen.has(url)) return;
+      seen.add(url);
+      sources.push({ title: title || url, url });
+    }
+    rawContent.forEach((block) => {
+      if (block.type === 'web_search_tool_result' && Array.isArray(block.content)) {
+        block.content.forEach((r) => add(r.title, r.url));
+      }
+      if (block.type === 'text' && Array.isArray(block.citations)) {
+        block.citations.forEach((c) => add(c.title, c.url));
+      }
+    });
+    return sources;
+  }
+
   async function sendMessage(text) {
     const messages = getMessages();
     messages.push({ role: 'user', content: text, at: new Date().toISOString() });
@@ -1179,7 +979,7 @@ body {
     const context = await assembleContext(text);
     renderNotesSearchStatus();
     const apiMessages = messages.filter(m => m.role === 'user' || m.role === 'assistant').map(m => ({ role: m.role, content: m.content }));
-    const tools = Object.keys(TOOL_REGISTRY).map((name) => TOOL_REGISTRY[name].schema);
+    const tools = buildToolsArray();
 
     $('askSendBtn').disabled = true;
     setTyping(true);
@@ -1210,7 +1010,7 @@ body {
     }
     const res = await fetch('/api/chat', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: Object.assign({ 'Content-Type': 'application/json' }, window.EqAuth ? window.EqAuth.header() : {}),
       body: JSON.stringify({ messages: apiMessages, systemContext, tools }),
     });
     const data = await res.json().catch(() => ({}));
@@ -1221,7 +1021,8 @@ body {
       const input = data.toolUse.input || {};
       if (data.reply && data.reply.trim()) {
         const list = getMessages();
-        list.push({ role: 'assistant', content: data.reply, at: new Date().toISOString() });
+        const sources = extractSources(data.rawContent);
+        list.push({ role: 'assistant', content: data.reply, sources: sources.length ? sources : undefined, at: new Date().toISOString() });
         setMessages(list);
         renderMessages();
       }
@@ -1243,7 +1044,8 @@ body {
       return runTurn(nextMessages, systemContext, tools, depth + 1);
     }
     const list = getMessages();
-    list.push({ role: 'assistant', content: data.reply || '(empty response)', at: new Date().toISOString() });
+    const sources = extractSources(data.rawContent);
+    list.push({ role: 'assistant', content: data.reply || '(empty response)', sources: sources.length ? sources : undefined, at: new Date().toISOString() });
     setMessages(list);
   }
 
@@ -1303,7 +1105,7 @@ body {
         { role: 'assistant', content: pending.rawAssistantContent },
         { role: 'user', content: [{ type: 'tool_result', tool_use_id: pending.toolUseId, content: resultText }] },
       ]);
-      await runTurn(nextMessages, pending.systemContext, Object.keys(TOOL_REGISTRY).map((name) => TOOL_REGISTRY[name].schema), 0);
+      await runTurn(nextMessages, pending.systemContext, buildToolsArray(), 0);
     } catch (e) { /* the underlying action already resolved above; a failed ack isn't worth an error bubble */ }
     finally { setTyping(false); renderMessages(); }
   }
@@ -1331,10 +1133,92 @@ body {
     saveBtn.disabled = false;
   }
 
+  // ============================================================
+  // 4.3 onboarding -- seeds persistent memory on first-ever open by asking
+  // 3-5 short questions, per spec. Gated on its own flag (not just "memory
+  // is empty") so someone who later clears their memory on purpose isn't
+  // re-onboarded against their will.
+  // ============================================================
+  const ONBOARDED_KEY = 'eq.assistant.onboarded_v1';
+  const ONBOARD_QUESTIONS = [
+    { prompt: 'What phase is your main goal in right now?', fact: (a) => 'Current goal phase: ' + a },
+    { prompt: 'What\'s your current training split?', fact: (a) => 'Training split: ' + a },
+    { prompt: 'What\'s your sleep target, in hours?', fact: (a) => 'Sleep target: ' + a + ' hours' },
+    { prompt: 'How should advice be delivered — direct and no-fluff, or more encouraging?', fact: (a) => 'Advice tone preference: ' + a },
+  ];
+  let onboardingActive = false;
+  let onboardIdx = 0;
+  function shouldOnboard() { return !storeGet(ONBOARDED_KEY) && getMessages().length === 0; }
+  function finishOnboarding() {
+    storeSet(ONBOARDED_KEY, true);
+    onboardingActive = false;
+    $('askOnboard').style.display = 'none';
+    renderMessages();
+  }
+  function renderOnboardStep() {
+    if (onboardIdx >= ONBOARD_QUESTIONS.length) { finishOnboarding(); return; }
+    $('askOnboardQ').textContent = ONBOARD_QUESTIONS[onboardIdx].prompt;
+    $('askOnboardInput').value = '';
+    setTimeout(() => $('askOnboardInput').focus(), 50);
+  }
+  function initOnboarding() {
+    if (!shouldOnboard()) return;
+    onboardingActive = true;
+    $('askEmpty').style.display = 'none';
+    $('askOnboard').style.display = '';
+    renderOnboardStep();
+    function saveCurrentAnswer() {
+      const val = $('askOnboardInput').value.trim();
+      if (!val) return;
+      const list = AT.getMemory();
+      list.push({ id: AT.genId('m'), fact: ONBOARD_QUESTIONS[onboardIdx].fact(val), created: new Date().toISOString() });
+      AT.setMemory(list);
+    }
+    $('askOnboardNext').addEventListener('click', () => { saveCurrentAnswer(); onboardIdx++; renderOnboardStep(); });
+    $('askOnboardInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); saveCurrentAnswer(); onboardIdx++; renderOnboardStep(); } });
+    $('askOnboardSkip').addEventListener('click', () => { onboardIdx++; renderOnboardStep(); });
+    $('askOnboardSkipAll').addEventListener('click', finishOnboarding);
+  }
+
+  // ============================================================
+  // 4.7 VOICE INPUT -- Web Speech API, free/on-device, no key. Transcript
+  // fills the input for review/edit, exactly like typing; it is never
+  // auto-sent, so a misheard word doesn't silently become a chat message
+  // or (worse, on the Smart Capture side) a wrong logged value. Graceful
+  // fallback: the mic button stays hidden (not just disabled) on browsers
+  // without SpeechRecognition, since a visible-but-broken mic is worse
+  // than no mic.
+  // ============================================================
+  function initVoiceInput(micBtn, textInput, onTranscript) {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR || !micBtn) return;
+    micBtn.style.display = '';
+    let recognition = null;
+    let listening = false;
+    micBtn.addEventListener('click', () => {
+      if (listening) { recognition && recognition.stop(); return; }
+      recognition = new SR();
+      recognition.lang = (navigator.language || 'en-US');
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+      recognition.onresult = (e) => {
+        const transcript = e.results[0] && e.results[0][0] ? e.results[0][0].transcript : '';
+        if (transcript) (onTranscript || ((t) => { textInput.value = (textInput.value ? textInput.value + ' ' : '') + t; }))(transcript);
+        textInput.focus();
+      };
+      recognition.onerror = () => { listening = false; micBtn.classList.remove('is-listening'); };
+      recognition.onend = () => { listening = false; micBtn.classList.remove('is-listening'); };
+      try { recognition.start(); listening = true; micBtn.classList.add('is-listening'); }
+      catch (e) { listening = false; }
+    });
+  }
+
   function init() {
     renderDomainChips();
     updateContextSize();
     renderMessages();
+    initOnboarding();
+    initVoiceInput($('askMicBtn'), $('askInput'));
 
     const input = $('askInput');
     const sendBtn = $('askSendBtn');
@@ -1364,6 +1248,20 @@ body {
     $('askSaveObsidianBtn').addEventListener('click', saveToObsidian);
 
     window.addEventListener('storage', () => { renderMessages(); updateContextSize(); });
+
+    // 6.7: deep-link from Interactions' "What's on near me this weekend?"
+    // quick prompt -- ?prompt=<text> pre-fills and auto-sends, forcing Web
+    // search on for this one send (that's the entire point of the link),
+    // without permanently overriding the user's own toggle preference.
+    const params = new URLSearchParams(location.search);
+    const deepLinkPrompt = params.get('prompt');
+    if (deepLinkPrompt) {
+      const wasWebEnabled = webSearchEnabled();
+      if (!wasWebEnabled) setWebSearchEnabled(true);
+      renderWebToggle();
+      sendMessage(deepLinkPrompt).finally(() => { if (!wasWebEnabled) { setWebSearchEnabled(false); renderWebToggle(); } });
+      history.replaceState(null, '', location.pathname);
+    }
   }
 
   init();

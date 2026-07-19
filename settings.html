@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<script src="auth-gate.js"></script>
 <script src="landing-guard.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#050506">
@@ -11,8 +12,10 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Equavia">
 <title>Settings — Equavia</title>
+<script src="assistant-tools.js"></script>
 <script src="topbar.js" defer></script>
 <script src="obsidian-sync.js"></script>
+<script src="dexie.min.js"></script>
 <style>
 :root {
   --bg: #050506;
@@ -119,6 +122,16 @@ input:focus, select:focus { border-color: rgba(255,255,255,0.3); }
 .status-line { font-size: 12px; color: var(--text-tertiary); margin-top: 8px; min-height: 16px; }
 .status-line.ok { color: var(--success); }
 .status-line.err { color: var(--danger); }
+/* ===== 6.8 System Health strip ===== */
+.health-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--border); }
+.health-row:last-child { border-bottom: 0; }
+.health-dot { width: 9px; height: 9px; border-radius: 999px; flex-shrink: 0; background: var(--text-tertiary); }
+.health-dot.is-green { background: var(--success); }
+.health-dot.is-amber { background: #F2C063; }
+.health-dot.is-red { background: var(--danger); }
+.health-row-main { flex: 1; min-width: 0; }
+.health-row-name { font-size: 13.5px; font-weight: 600; }
+.health-row-sub { font-size: 11px; color: var(--text-tertiary); margin-top: 1px; }
 .checkbox-row { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
 .checkbox-row input { width: auto; }
 .checkbox-row label { font-size: 13px; font-weight: 600; margin: 0; text-transform: none; letter-spacing: 0; }
@@ -129,6 +142,19 @@ input:focus, select:focus { border-color: rgba(255,255,255,0.3); }
 
 <div class="page">
   <h1>Settings</h1>
+
+  <div class="section">
+    <div class="section-title">Security</div>
+    <div class="card">
+      <div class="row">
+        <div>
+          <div class="row-label">Sign out this device</div>
+          <div class="row-sub">Clears the saved passcode session — the next visit on this device asks for it again.</div>
+        </div>
+        <button class="btn btn-danger-outline" id="signOutBtn">Sign out</button>
+      </div>
+    </div>
+  </div>
 
   <div class="section">
     <div class="section-title">Backup</div>
@@ -142,8 +168,15 @@ input:focus, select:focus { border-color: rgba(255,255,255,0.3); }
       </div>
       <div class="row">
         <div>
+          <div class="row-label">Full export (with photos)</div>
+          <div class="row-sub">Also includes progress photos — larger file, takes longer</div>
+        </div>
+        <button class="btn" id="fullExportBtn">Full export</button>
+      </div>
+      <div class="row">
+        <div>
           <div class="row-label">Import from backup</div>
-          <div class="row-sub">Replaces all current data — cannot be undone</div>
+          <div class="row-sub">Replaces all current data — cannot be undone. Restores photos too, if the file has them.</div>
         </div>
         <button class="btn btn-danger-outline" id="importBtn">Import…</button>
         <input type="file" id="importFile" accept="application/json,.json" style="display:none">
@@ -243,6 +276,39 @@ input:focus, select:focus { border-color: rgba(255,255,255,0.3); }
   </div>
 
   <div class="section">
+    <div class="section-title">System Health</div>
+    <div class="card">
+      <p class="help-text">Last successful sync per integration. Amber past 48h since success, red if the most recent attempt failed.</p>
+      <div id="healthStripList"></div>
+      <div class="actions-row">
+        <button class="btn" id="healthSyncNowBtn">Sync with vault now</button>
+        <span class="status-line" id="healthSyncStatus" style="margin:0;"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Standing Rules</div>
+    <div class="card">
+      <p class="help-text">Checked locally every time the dashboard opens (Phase 4.6) — no API call unless a rule's action needs a written message. Toggle any on or off; the weight-swing rule also takes a threshold.</p>
+      <div id="rulesList"></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Assistant Memory</div>
+    <div class="card">
+      <p class="help-text">Durable facts and preferences the assistant remembers across every conversation and Smart Capture (Phase 4.3) — capped at <span id="memCapLabel"></span> entries, oldest dropped first. Edit or delete anything here; add one yourself below.</p>
+      <div style="display:flex;gap:8px;margin-bottom:14px;">
+        <input type="text" id="memAddInput" placeholder="Add a fact or preference…" style="flex:1;">
+        <button type="button" class="btn" id="memAddBtn" style="flex:none;">Add</button>
+      </div>
+      <div id="memoryList"></div>
+      <div class="row-sub" id="memoryEmpty" style="display:none;">Nothing remembered yet.</div>
+    </div>
+  </div>
+
+  <div class="section">
     <div class="section-title">Assistant Activity</div>
     <div class="card">
       <p class="help-text">Everything Ask Claude has created or changed on its own, most recent first — the full audit trail Phase 4.1 requires. Undo links only appear in the chat itself and only work for the rest of that browser session.</p>
@@ -277,33 +343,130 @@ input:focus, select:focus { border-color: rgba(255,255,255,0.3); }
   function renderBackupLine() {
     $('lastBackupLine').textContent = fmtBackupAge(storeGet(LAST_BACKUP_KEY));
   }
+
+  // ---------- System Health strip (6.8) ----------
+  const HEALTH_INTEGRATIONS = [
+    { key: 'whoop', label: 'WHOOP' },
+    { key: 'google_calendar', label: 'Google Calendar' },
+    { key: 'obsidian_sync', label: 'Obsidian vault sync' },
+    { key: 'inbox_relay', label: 'Inbox relay (Gmail)' },
+    { key: 'news_proxy', label: 'News' },
+  ];
+  const HEALTH_STALE_MS = 48 * 3600000;
+  function fmtHealthAge(iso) {
+    if (!iso) return 'Never';
+    const then = new Date(iso).getTime();
+    if (isNaN(then)) return 'Never';
+    const mins = Math.floor((Date.now() - then) / 60000);
+    if (mins < 1) return 'Just now';
+    if (mins < 60) return mins + 'm ago';
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return hours + 'h ago';
+    return Math.floor(hours / 24) + 'd ago';
+  }
+  function renderHealthStrip() {
+    const health = (window.AssistantTools && window.AssistantTools.getIntegrationsHealth()) || {};
+    const wrap = $('healthStripList');
+    wrap.innerHTML = HEALTH_INTEGRATIONS.map((integ) => {
+      const entry = health[integ.key] || {};
+      const failed = entry.lastError && (!entry.lastSuccessAt || entry.lastError > entry.lastSuccessAt);
+      const stale = entry.lastSuccessAt && (Date.now() - new Date(entry.lastSuccessAt).getTime() > HEALTH_STALE_MS);
+      const state = !entry.lastSuccessAt && !entry.lastError ? 'unknown' : failed ? 'red' : stale ? 'amber' : 'green';
+      const sub = state === 'unknown' ? 'Not used yet on this device' : 'Last success: ' + fmtHealthAge(entry.lastSuccessAt) + (failed ? ' — most recent attempt failed' : '');
+      return '<div class="health-row">'
+        + '<span class="health-dot' + (state !== 'unknown' ? ' is-' + state : '') + '"></span>'
+        + '<div class="health-row-main"><div class="health-row-name">' + integ.label + '</div>'
+        + '<div class="health-row-sub">' + sub + '</div></div>'
+        + '</div>';
+    }).join('');
+  }
+  $('healthSyncNowBtn').addEventListener('click', async () => {
+    const btn = $('healthSyncNowBtn');
+    btn.disabled = true;
+    showStatus($('healthSyncStatus'), 'Syncing…', null);
+    try {
+      if (window.EqRunObsidianSync) await window.EqRunObsidianSync(true);
+      showStatus($('healthSyncStatus'), 'Done.', 'ok');
+    } catch (e) {
+      showStatus($('healthSyncStatus'), 'Sync failed — ' + (e.message || 'try again') + '.', 'err');
+    } finally {
+      btn.disabled = false;
+      renderHealthStrip();
+    }
+  });
+  renderHealthStrip();
+  window.addEventListener('storage', renderHealthStrip);
   function showStatus(el, msg, kind) {
     el.textContent = msg;
     el.classList.remove('ok', 'err');
     if (kind) el.classList.add(kind);
   }
 
-  $('exportBtn').addEventListener('click', () => {
+  $('signOutBtn').addEventListener('click', () => {
+    if (window.EqAuth && window.EqAuth.signOut) window.EqAuth.signOut();
+  });
+
+  function collectLocalStorageData() {
     const data = {};
     for (let i = 0; i < localStorage.length; i++) {
       const k = localStorage.key(i);
       if (k == null) continue;
       data[k] = localStorage.getItem(k);
     }
-    const exportedAt = new Date().toISOString();
-    const payload = { app: 'equavia', exportedAt, data };
+    return data;
+  }
+  function downloadJson(payload, filename) {
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url;
-    a.download = 'equavia-backup-' + exportedAt.slice(0, 10) + '.json';
+    a.href = url; a.download = filename;
     document.body.appendChild(a);
     a.click();
     a.remove();
     URL.revokeObjectURL(url);
+  }
+  // 6.9: opened here too (same database/store name as gym.html's own) so
+  // Settings can read/write progress photos for full export/import without
+  // gym.html needing to be open -- IndexedDB is origin-scoped, not
+  // page-scoped, so the same store is reachable from any page that opens it.
+  function getPhotoDb() {
+    if (!window.Dexie) return null;
+    const db = new Dexie('EquaviaPhotos');
+    db.version(1).stores({ photos: 'id, dateKey, createdAt' });
+    return db;
+  }
+
+  $('exportBtn').addEventListener('click', () => {
+    const data = collectLocalStorageData();
+    const exportedAt = new Date().toISOString();
+    downloadJson({ app: 'equavia', exportedAt, data }, 'equavia-backup-' + exportedAt.slice(0, 10) + '.json');
     storeSet(LAST_BACKUP_KEY, exportedAt);
     renderBackupLine();
     showStatus($('backupStatus'), 'Exported ' + Object.keys(data).length + ' keys.', 'ok');
+  });
+
+  // 6.9: separate "full export" per the answered ASK FIRST question --
+  // the regular Export above stays fast/small (localStorage only); this
+  // one additionally bundles progress photos from IndexedDB, in its own
+  // top-level `photos` array so a regular-export file's shape is unchanged.
+  $('fullExportBtn').addEventListener('click', async () => {
+    const btn = $('fullExportBtn');
+    btn.disabled = true;
+    showStatus($('backupStatus'), 'Building full export…', null);
+    try {
+      const data = collectLocalStorageData();
+      const db = getPhotoDb();
+      const photos = db ? await db.photos.toArray() : [];
+      const exportedAt = new Date().toISOString();
+      downloadJson({ app: 'equavia', exportedAt, data, photos }, 'equavia-backup-full-' + exportedAt.slice(0, 10) + '.json');
+      storeSet(LAST_BACKUP_KEY, exportedAt);
+      renderBackupLine();
+      showStatus($('backupStatus'), 'Exported ' + Object.keys(data).length + ' keys + ' + photos.length + ' photo' + (photos.length === 1 ? '' : 's') + '.', 'ok');
+    } catch (err) {
+      showStatus($('backupStatus'), 'Full export failed: ' + (err.message || err), 'err');
+    } finally {
+      btn.disabled = false;
+    }
   });
 
   // ---------- Backup: import ----------
@@ -322,22 +485,29 @@ input:focus, select:focus { border-color: rgba(255,255,255,0.3); }
         return;
       }
       const keyCount = Object.keys(parsed.data).length;
+      const hasPhotos = Array.isArray(parsed.photos) && parsed.photos.length;
       const when = parsed.exportedAt ? new Date(parsed.exportedAt).toLocaleString() : 'an unknown date';
       const ok = confirm(
         'Import backup from ' + when + '?\n\n' +
-        'This replaces ALL ' + keyCount + ' stored keys on this device with the backup\'s data and cannot be undone.'
+        'This replaces ALL ' + keyCount + ' stored keys on this device' + (hasPhotos ? ' and ' + parsed.photos.length + ' progress photo' + (parsed.photos.length === 1 ? '' : 's') : '') + ' with the backup\'s data and cannot be undone.'
       );
       if (!ok) return;
-      try {
-        localStorage.clear();
-        Object.keys(parsed.data).forEach((k) => localStorage.setItem(k, parsed.data[k]));
-        storeSet(LAST_BACKUP_KEY, new Date().toISOString());
-      } catch (err) {
-        showStatus($('backupStatus'), 'Import failed: ' + (err.message || err), 'err');
-        return;
-      }
-      showStatus($('backupStatus'), 'Imported ' + keyCount + ' keys. Reloading…', 'ok');
-      setTimeout(() => window.location.reload(), 900);
+      (async () => {
+        try {
+          localStorage.clear();
+          Object.keys(parsed.data).forEach((k) => localStorage.setItem(k, parsed.data[k]));
+          if (hasPhotos) {
+            const db = getPhotoDb();
+            if (db) { await db.photos.clear(); await db.photos.bulkPut(parsed.photos); }
+          }
+          storeSet(LAST_BACKUP_KEY, new Date().toISOString());
+        } catch (err) {
+          showStatus($('backupStatus'), 'Import failed: ' + (err.message || err), 'err');
+          return;
+        }
+        showStatus($('backupStatus'), 'Imported ' + keyCount + ' keys' + (hasPhotos ? ' + ' + parsed.photos.length + ' photos' : '') + '. Reloading…', 'ok');
+        setTimeout(() => window.location.reload(), 900);
+      })();
     };
     reader.readAsText(file);
   });
@@ -503,6 +673,117 @@ input:focus, select:focus { border-color: rgba(255,255,255,0.3); }
       });
     });
   }
+
+  // ---------- Standing Rules (Phase 4.6) -- just enable/threshold state
+  // here; the actual condition logic lives on dashboard.html where rules
+  // are evaluated (small metadata duplication, same convention as this
+  // file's other assistant-adjacent sections). ----------
+  const RULES_STATE_KEY = 'eq.rules.v1';
+  const RULE_LABELS = [
+    { key: 'recovery_low', label: 'Recovery < 33%', sub: 'Assistant writes a one-line message.', defaultEnabled: true },
+    { key: 'contact_emailed', label: 'Tracked contact emailed', sub: 'Off by default — no reliable signal for this yet (see BUILD_EQUAVIA.md).', defaultEnabled: false },
+    { key: 'weight_swing', label: 'Weight 7-day avg moved > threshold', sub: 'Flag only.', defaultEnabled: true, hasThreshold: true, defaultThreshold: 2 },
+    { key: 'habit_score_low', label: 'A habit\'s health score dropped below 60', sub: 'Flag only.', defaultEnabled: true },
+    { key: 'sub_renewing_48h', label: 'Subscription renewing within 48h', sub: 'Flag only.', defaultEnabled: true },
+    { key: 'goal_due_soon', label: 'Goal due within 48h, below 75% progress', sub: 'Flag only.', defaultEnabled: true },
+  ];
+  function getRulesState() {
+    const stored = storeGet(RULES_STATE_KEY) || {};
+    const out = {};
+    RULE_LABELS.forEach((r) => { out[r.key] = Object.assign({ enabled: r.defaultEnabled, threshold: r.defaultThreshold }, stored[r.key] || {}); });
+    return out;
+  }
+  function renderRulesList() {
+    const state = getRulesState();
+    const wrap = $('rulesList');
+    wrap.innerHTML = '';
+    RULE_LABELS.forEach((r) => {
+      const row = document.createElement('div');
+      row.className = 'row';
+      row.style.alignItems = 'flex-start';
+      const left = document.createElement('div');
+      const label = document.createElement('div');
+      label.className = 'row-label';
+      label.style.fontSize = '13px';
+      label.textContent = r.label;
+      left.appendChild(label);
+      const sub = document.createElement('div');
+      sub.className = 'row-sub';
+      sub.textContent = r.sub;
+      left.appendChild(sub);
+      if (r.hasThreshold) {
+        const thWrap = document.createElement('div');
+        thWrap.style.cssText = 'margin-top:6px;display:flex;align-items:center;gap:6px;';
+        thWrap.innerHTML = '<input type="number" min="0.5" step="0.5" value="' + state[r.key].threshold + '" style="width:70px;" data-th="' + r.key + '"><span class="row-sub" style="margin:0;">kg</span>';
+        left.appendChild(thWrap);
+      }
+      row.appendChild(left);
+      const toggle = document.createElement('input');
+      toggle.type = 'checkbox';
+      toggle.checked = !!state[r.key].enabled;
+      toggle.addEventListener('change', () => {
+        const s = getRulesState();
+        s[r.key].enabled = toggle.checked;
+        storeSet(RULES_STATE_KEY, s);
+      });
+      row.appendChild(toggle);
+      wrap.appendChild(row);
+    });
+    wrap.querySelectorAll('[data-th]').forEach((inp) => {
+      inp.addEventListener('change', () => {
+        const s = getRulesState();
+        const v = Number(inp.value);
+        s[inp.dataset.th].threshold = isNaN(v) ? 2 : v;
+        storeSet(RULES_STATE_KEY, s);
+      });
+    });
+  }
+  renderRulesList();
+
+  // ---------- Assistant Memory (Phase 4.3) -- full CRUD, unlike Activity
+  // below (read-only there since it's an audit trail, not editable state) ----------
+  function renderMemoryList() {
+    const AT = window.AssistantTools;
+    $('memCapLabel').textContent = AT.MEMORY_CAP;
+    const list = AT.getMemory();
+    const wrap = $('memoryList');
+    wrap.innerHTML = '';
+    $('memoryEmpty').style.display = list.length ? 'none' : '';
+    list.slice().reverse().forEach((entry) => {
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;gap:8px;align-items:center;margin-bottom:8px;';
+      row.innerHTML =
+        '<input type="text" data-id="' + entry.id + '" value="' + entry.fact.replace(/"/g, '&quot;') + '" style="flex:1;">' +
+        '<button type="button" class="btn btn-danger-outline" data-del="' + entry.id + '" style="padding:8px 10px;flex:none;">×</button>';
+      wrap.appendChild(row);
+    });
+    wrap.querySelectorAll('input').forEach((inp) => {
+      inp.addEventListener('change', () => {
+        const l = AT.getMemory();
+        const e = l.find((m) => m.id === inp.dataset.id);
+        if (e && inp.value.trim()) { e.fact = inp.value.trim(); AT.setMemory(l); }
+      });
+    });
+    wrap.querySelectorAll('[data-del]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        AT.setMemory(AT.getMemory().filter((m) => m.id !== btn.dataset.del));
+        renderMemoryList();
+      });
+    });
+  }
+  $('memAddBtn').addEventListener('click', () => {
+    const AT = window.AssistantTools;
+    const input = $('memAddInput');
+    const fact = input.value.trim();
+    if (!fact) return;
+    const list = AT.getMemory();
+    list.push({ id: AT.genId('m'), fact, created: new Date().toISOString() });
+    while (list.length > AT.MEMORY_CAP) list.shift();
+    AT.setMemory(list);
+    input.value = '';
+    renderMemoryList();
+  });
+  renderMemoryList();
 
   // ---------- Assistant Activity (Phase 4.1 audit trail, read-only here --
   // undo lives only in the chat itself, in-memory for that session, per the

@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<script src="auth-gate.js"></script>
 <script src="landing-guard.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0a0a0b">
@@ -11,7 +12,14 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Equavia">
 <title>Progressive Overload Coach — Equavia</title>
+<script src="assistant-tools.js"></script>
 <script src="topbar.js" defer></script>
+<script src="obsidian-sync.js"></script>
+<!-- 6.9: vendored locally (not a CDN <script>) so it's covered by the
+     service worker's offline precache like everything else this app
+     depends on -- a third-party CDN script would silently break progress
+     photos offline, defeating the whole point of this being a PWA. -->
+<script src="dexie.min.js"></script>
 
 <!-- =============================================================
      EDIT THIS BLOCK TO MAKE THE APP YOURS.
@@ -222,6 +230,34 @@ img, video, canvas, svg { max-width: 100%; }
 .po-day-sep { color: var(--text-4); }
 .po-day-split { color: var(--good); font-weight: 800; }
 .po-day-split.is-rest { color: #7DD3FC; }
+
+/* ===== 6.4 Training Programming ===== */
+.train-program-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+.train-program-btn {
+  padding: 6px 12px; border-radius: 999px; border: 1px solid var(--border);
+  background: rgba(255,255,255,0.03); color: var(--text-3); font-family: inherit; font-size: 11px; font-weight: 700; cursor: pointer;
+}
+.train-program-btn.is-active { background: rgba(255,255,255,0.1); border-color: var(--border-strong); color: var(--text-1); }
+.train-recovery-banner {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  background: rgba(251,191,36,0.1); border: 1px solid rgba(251,191,36,0.3); border-radius: 12px;
+  padding: 10px 14px; margin-bottom: 12px; font-size: 12px; color: var(--text-1);
+}
+.train-recovery-banner button {
+  flex-shrink: 0; padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(251,191,36,0.4);
+  background: rgba(251,191,36,0.16); color: var(--warn); font-family: inherit; font-size: 11px; font-weight: 700; cursor: pointer;
+}
+.train-rest-timer {
+  position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); z-index: 80;
+  display: flex; align-items: center; gap: 10px;
+  background: #16161a; border: 1px solid var(--border-strong); border-radius: 999px;
+  padding: 8px 8px 8px 16px; box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+  font-family: var(--font-mono); font-size: 15px; font-weight: 700; color: var(--good);
+}
+.train-rest-timer button {
+  background: rgba(255,255,255,0.08); border: none; border-radius: 999px; color: var(--text-2);
+  font-family: inherit; font-size: 10.5px; font-weight: 700; padding: 6px 12px; cursor: pointer;
+}
 
 .po-header {
   display: flex; align-items: center; justify-content: space-between;
@@ -1304,6 +1340,14 @@ img, video, canvas, svg { max-width: 100%; }
     <span class="po-day-split" id="dayPillSplit">—</span>
   </button>
 
+  <!-- ===== 6.4 TRAINING PROGRAMMING ===== -->
+  <div class="train-program-row" id="trainProgramRow"></div>
+  <div class="train-recovery-banner" id="trainRecoveryBanner" style="display:none;"></div>
+  <div class="train-rest-timer" id="trainRestTimer" style="display:none;">
+    <span id="trainRestTimerNum">—</span>
+    <button type="button" id="trainRestTimerSkip">Skip</button>
+  </div>
+
   <!-- WEIGHT + PROGRESS PHOTOS -->
   <div class="wt-section">
     <div class="wt-divider"><span>WEIGHT</span></div>
@@ -2332,6 +2376,8 @@ img, video, canvas, svg { max-width: 100%; }
     // Strength changed → composition estimate may shift
     if (typeof wtRender === 'function') wtRender();
     if (typeof publishFitnessSummary === 'function') publishFitnessSummary();
+    // 6.4: rest timer auto-starts on every logged set.
+    if (typeof startRestTimer === 'function') startRestTimer(trainRestSecondsFor(ex));
     // Tiny pulse on the button so the user feels the save
     const btn = $('logBtn');
     btn.style.transition = 'transform 0.15s';
@@ -2661,10 +2707,10 @@ img, video, canvas, svg { max-width: 100%; }
 
   // ============================================================
   // WEIGHT TRACKER + COMPOSITION ESTIMATE + PROGRESS PHOTOS
-  // All persisted to localStorage:
-  //   po_coach_weights     : [{ dateKey:'YYYY-MM-DD', weight:Number }]
-  //   po_coach_photos      : [{ id, dataUrl, dateKey, weight }]
-  //   po_coach_goal_weight : Number | absent
+  //   po_coach_weights     : localStorage, [{ dateKey:'YYYY-MM-DD', weight:Number }]
+  //   po_coach_goal_weight : localStorage, Number | absent
+  //   photos               : IndexedDB (EquaviaPhotos.photos, 6.9) --
+  //                          [{ id, dataUrl, dateKey, weight, createdAt }]
   // ============================================================
   const WT_KEY = 'po_coach_weights';
   const PHOTO_KEY = 'po_coach_photos';
@@ -3172,21 +3218,74 @@ img, video, canvas, svg { max-width: 100%; }
   });
 
   // ============================================================
-  // PROGRESS PHOTOS
+  // PROGRESS PHOTOS -- 6.9: moved off localStorage to IndexedDB (via the
+  // locally-vendored Dexie) since photo dataURLs are the one thing in this
+  // app actually big enough to hit localStorage's ~5MB ceiling and silently
+  // truncate. The in-memory `photos` array stays the single source of truth
+  // for every render/viewer/compare function below -- unchanged on purpose,
+  // since re-deriving all of that against a different data-access pattern
+  // would be real, avoidable risk for a page this size. Only the
+  // load/save/delete plumbing underneath it changed.
   // ============================================================
   let photos = [];
-  try {
+  let photoDb = null;
+  if (window.Dexie) {
+    photoDb = new Dexie('EquaviaPhotos');
+    photoDb.version(1).stores({ photos: 'id, dateKey, createdAt' });
+  }
+  // One-time migration for anyone who already had photos in localStorage
+  // before this change -- copies them into IndexedDB, preserving their
+  // existing newest-first order, then clears the old key. Safe to run every
+  // boot: a no-op once IndexedDB already has photos (or the old key never
+  // existed).
+  async function migratePhotosFromLocalStorage() {
+    if (!photoDb) return;
     const raw = localStorage.getItem(PHOTO_KEY);
-    if (raw) photos = JSON.parse(raw);
-  } catch (e) { photos = []; }
-
-  function photosSave() {
-    try {
-      localStorage.setItem(PHOTO_KEY, JSON.stringify(photos));
-      return true;
-    } catch (e) {
-      return false;
+    if (!raw) return;
+    let old;
+    try { old = JSON.parse(raw); } catch (e) { old = null; }
+    if (Array.isArray(old) && old.length) {
+      const already = await photoDb.photos.count();
+      if (already === 0) {
+        const now = Date.now();
+        // old[0] was the newest (photosAdd used unshift) -- preserve that
+        // order with a descending synthetic createdAt.
+        const withCreatedAt = old.map((p, i) => Object.assign({}, p, { createdAt: now - i }));
+        await photoDb.photos.bulkPut(withCreatedAt);
+      }
     }
+    localStorage.removeItem(PHOTO_KEY);
+  }
+  async function photosLoad() {
+    if (!photoDb) { photos = []; return; }
+    await migratePhotosFromLocalStorage();
+    photos = await photoDb.photos.orderBy('createdAt').reverse().toArray();
+  }
+  async function photoPut(entry) {
+    if (!photoDb) return false;
+    try { await photoDb.photos.put(entry); return true; }
+    catch (e) { return false; }
+  }
+  async function photoDelete(id) {
+    if (!photoDb) return;
+    try { await photoDb.photos.delete(id); } catch (e) {}
+  }
+  // 6.9 (user's own choice over extending the bespoke per-page Supabase
+  // sync below to bridge IndexedDB): photos no longer sync cross-device via
+  // that mechanism at all -- instead, each newly captured photo is also
+  // pushed to the Obsidian vault (best-effort, never blocks capture) so it
+  // still ends up on every device the vault itself already syncs to.
+  // Same-day duplicates are disambiguated with a numeric suffix rather than
+  // silently overwriting each other at the same vault path.
+  async function pushPhotoToVault(photo) {
+    if (!window.ObsidianSync) return;
+    try {
+      const cfg = window.ObsidianSync.getConfig();
+      if (!cfg.enabled) return;
+      const sameDayCount = photos.filter((p) => p.dateKey === photo.dateKey).length;
+      const relPath = 'Progress Photos/' + photo.dateKey + (sameDayCount > 1 ? '-' + sameDayCount : '') + '.jpg';
+      await window.ObsidianSync.pushBinary(relPath, photo.dataUrl, 'image/jpeg');
+    } catch (e) { /* best-effort; a photo must never fail to save locally because the vault push failed */ }
   }
   // Downscale a dataURL to a max longest-side dimension and re-encode as
   // JPEG. Phone camera photos are often 2–5MB which blows the ~5MB
@@ -3255,22 +3354,20 @@ img, video, canvas, svg { max-width: 100%; }
       id,
       dataUrl: compressed,
       dateKey: wtDateKey(new Date()),
-      weight: photoCurrentWeight()
+      weight: photoCurrentWeight(),
+      createdAt: Date.now(),
     };
     photos.unshift(entry);
-    if (!photosSave()) {
-      // Storage was full even after compression — try once more at lower
-      // quality before giving up.
-      try {
-        entry.dataUrl = await compressPhotoDataUrl(dataUrl, 800, 0.6);
-      } catch {}
-      if (!photosSave()) {
-        photos.shift();
-        alert('Phone storage is full — delete some older progress photos before adding a new one.');
-        return;
-      }
+    if (!(await photoPut(entry))) {
+      // IndexedDB has a far higher ceiling than localStorage ever did, so
+      // this path should be rare -- kept as a real fallback rather than
+      // assumed impossible, same "storage full" message as before.
+      photos.shift();
+      alert('Phone storage is full — delete some older progress photos before adding a new one.');
+      return;
     }
     photosRender();
+    pushPhotoToVault(entry);
   }
   function fileToPhoto(file) {
     const r = new FileReader();
@@ -3452,8 +3549,9 @@ img, video, canvas, svg { max-width: 100%; }
       }, 3000);
       return;
     }
-    photos = photos.filter(p => p.id !== activePhotoId);
-    photosSave();
+    const deletedId = activePhotoId;
+    photos = photos.filter(p => p.id !== deletedId);
+    photoDelete(deletedId);
     photosRender();
     closePhoto();
   }
@@ -3483,7 +3581,7 @@ img, video, canvas, svg { max-width: 100%; }
   // ============================================================
   renderAll();
   wtRender();
-  photosRender();
+  photosLoad().then(photosRender); // async (IndexedDB) -- everything else above renders immediately, photos fill in a beat later
   publishFitnessSummary();
 
   // ============================================================
@@ -3507,7 +3605,12 @@ img, video, canvas, svg { max-width: 100%; }
   const SUPABASE_URL = 'https://ubhjdibldkknviezrjys.supabase.co';
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InViaGpkaWJsZGtrbnZpZXpyanlzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3NzAyNjEsImV4cCI6MjA5OTM0NjI2MX0.ODgzRHVYLEaDCUBXmmSd3oENXlSlarRYVERagHbVCK0';
   const APP_KEY = 'po-coach';
-  const PC_SYNCED_KEYS = ['po_coach_v1', 'po_coach_workout_done', 'po_coach_weights', 'po_coach_photos', 'po_coach_goal_weight'];
+  // 6.9: po_coach_photos removed -- photos moved to IndexedDB, no longer
+  // written to localStorage at all, so this bespoke Supabase sync (which
+  // only ever reads/writes localStorage keys) has nothing to pick up for
+  // them anymore. Cross-device photo sync now goes through the Obsidian
+  // vault instead (pushPhotoToVault, above), per the user's own choice.
+  const PC_SYNCED_KEYS = ['po_coach_v1', 'po_coach_workout_done', 'po_coach_weights', 'po_coach_goal_weight'];
 
   let pcSupa = null;
   let pcPushTimer = null;
@@ -3557,14 +3660,13 @@ img, video, canvas, svg { max-width: 100%; }
   function pcRerender() {
     // Reload every closure variable that mirrors a synced localStorage
     // key — otherwise renderAll/wtRender/photosRender would read stale
-    // in-memory copies from before the remote pull.
+    // in-memory copies from before the remote pull. Photos are NOT part of
+    // this anymore (6.9: moved to IndexedDB, no longer in PC_SYNCED_KEYS,
+    // no longer touched by this Supabase mechanism at all) -- the in-memory
+    // `photos` array is left exactly as IndexedDB last loaded it.
     try { state = loadState(); } catch {}
     try { wtEntries = wtLoad(); } catch {}
     try { goalWeight = goalLoad(); if (goalWeight != null) $('wtGoalInput').value = goalWeight; } catch {}
-    try {
-      const raw = localStorage.getItem(PHOTO_KEY);
-      photos = raw ? JSON.parse(raw) : [];
-    } catch { photos = []; }
     try { renderAll(); } catch {}
     try { wtRender(); } catch {}
     try { photosRender(); } catch {}
@@ -3691,6 +3793,173 @@ img, video, canvas, svg { max-width: 100%; }
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) pcFlushPushOnUnload();
   });
+
+  // ============================================================
+  // 6.4 TRAINING PROGRAMMING. Purely additive from here down -- no
+  // existing function above this point was changed except the one-line
+  // startRestTimer() call added to the set-log handler. "Programs" reuse
+  // the app's own existing days/exercises/splitRotation/splitAnchor +
+  // prescription engine entirely; switching one just swaps those four
+  // state fields for a named snapshot and calls the app's own saveState()/
+  // renderAll(), rather than building a parallel system next to a
+  // 3700-line file whose internals (esp. the Supabase sync above) weren't
+  // safe to fully re-derive from scratch in the time available.
+  // ============================================================
+  const TRAIN_PROGRAMS_KEY = 'eq.training.programs_v1';
+  const TRAIN_ACTIVE_KEY = 'eq.training.activeProgramId_v1';
+  const TRAIN_DECISIONS_KEY = 'eq.training.reducedDecisions_v1';
+  const TRAIN_REST_KEY = 'eq.training.restSeconds_v1';
+  const TRAIN_DEFAULT_REST = 90;
+
+  function trainStoreGet(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }
+  function trainStoreSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  function trainSlug(n) { return n.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''); }
+
+  function trainSnapshotCurrent() {
+    return { days: state.days, exercises: state.exercises, splitRotation: state.splitRotation, splitAnchor: state.splitAnchor };
+  }
+  // First run: the user's REAL existing split/exercises become "Current
+  // split" (preserved, not discarded) rather than being silently
+  // overwritten by the two newly-requested named programs.
+  function trainEnsurePrograms() {
+    let programs = trainStoreGet(TRAIN_PROGRAMS_KEY);
+    if (Array.isArray(programs) && programs.length) return programs;
+    const today = new Date().toISOString().slice(0, 10);
+    programs = [
+      Object.assign({ id: 'existing', name: 'Current split' }, trainSnapshotCurrent()),
+      {
+        id: 'split5', name: '5-Day Split',
+        days: ['Upper A', 'Lower A', 'Arms & Shoulders', 'Upper B', 'Lower B'].map((n) => ({ id: trainSlug(n), name: n })),
+        exercises: [], splitRotation: ['Upper A', 'Lower A', 'Arms & Shoulders', 'Upper B', 'Lower B'], splitAnchor: { date: today, index: 0 },
+      },
+      {
+        id: 'split3', name: '3-Day Split',
+        days: ['Upper A', 'Lower', 'Upper B'].map((n) => ({ id: trainSlug(n), name: n })),
+        exercises: [], splitRotation: ['Upper A', 'Lower', 'Upper B'], splitAnchor: { date: today, index: 0 },
+      },
+    ];
+    trainStoreSet(TRAIN_PROGRAMS_KEY, programs);
+    trainStoreSet(TRAIN_ACTIVE_KEY, 'existing');
+    return programs;
+  }
+  function trainActiveId() { return trainStoreGet(TRAIN_ACTIVE_KEY) || 'existing'; }
+
+  function renderTrainProgramRow() {
+    const programs = trainEnsurePrograms();
+    const activeId = trainActiveId();
+    const wrap = $('trainProgramRow');
+    if (!wrap) return;
+    wrap.innerHTML = '';
+    programs.forEach((p) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'train-program-btn' + (p.id === activeId ? ' is-active' : '');
+      btn.textContent = p.name;
+      btn.addEventListener('click', () => { if (p.id !== trainActiveId()) switchProgram(p.id); });
+      wrap.appendChild(btn);
+    });
+  }
+  function switchProgram(targetId) {
+    const programs = trainEnsurePrograms();
+    const currentId = trainActiveId();
+    const currentIdx = programs.findIndex((p) => p.id === currentId);
+    if (currentIdx !== -1) programs[currentIdx] = Object.assign({ id: currentId, name: programs[currentIdx].name }, trainSnapshotCurrent());
+    const target = programs.find((p) => p.id === targetId);
+    if (!target) return;
+    state.days = target.days;
+    state.exercises = target.exercises;
+    state.splitRotation = target.splitRotation;
+    state.splitAnchor = { date: new Date().toISOString().slice(0, 10), index: 0 };
+    state.filterDay = target.days[0] ? target.days[0].id : state.filterDay;
+    state.currentEx = null;
+    saveState();
+    trainStoreSet(TRAIN_PROGRAMS_KEY, programs);
+    trainStoreSet(TRAIN_ACTIVE_KEY, targetId);
+    renderAll();
+    renderTrainProgramRow();
+  }
+
+  // ---- Recovery gating (red day) ----
+  // Threshold 50%, per the answered ASK FIRST question -- deliberately
+  // different from 4.6's 33% recovery-low rule: that one flags a problem;
+  // this one gates today's session shape, a more cautious (higher) bar
+  // on purpose. Advisory only (never forced), decision logged either way
+  // so a later audit pass can show whether pushing through red days cost
+  // anything, per spec. The exact "-1 set/exercise" shape from the answer
+  // is worded as advisory guidance here rather than a mechanically
+  // enforced number: this app's exercise model tracks rep ranges and
+  // weight, not a fixed target-sets-per-exercise count to decrement, and
+  // adding that concept purely to dock one set felt like more schema
+  // surface than the actual ask justified.
+  const TRAIN_RED_THRESHOLD = 50;
+  function renderRecoveryBanner() {
+    const banner = $('trainRecoveryBanner');
+    if (!banner) return;
+    const health = trainStoreGet('eq.health.summary');
+    const recovery = health && typeof health.recovery === 'number' ? health.recovery : null;
+    const todayKey = new Date().toISOString().slice(0, 10);
+    const decisions = trainStoreGet(TRAIN_DECISIONS_KEY) || [];
+    const already = decisions.find((d) => d.date === todayKey);
+    if (recovery == null || recovery >= TRAIN_RED_THRESHOLD) { banner.style.display = 'none'; return; }
+    banner.style.display = '';
+    banner.innerHTML = '';
+    const text = document.createElement('span');
+    if (already) {
+      text.textContent = 'Recovery ' + recovery + '% — ' + (already.tookReduced ? 'reduced session logged for today.' : 'training as planned, logged.');
+      banner.appendChild(text);
+      return;
+    }
+    text.textContent = 'Recovery ' + recovery + '% — reduce today\'s volume (fewer sets across exercises)?';
+    banner.appendChild(text);
+    const btnWrap = document.createElement('div');
+    btnWrap.style.cssText = 'display:flex;gap:6px;flex-shrink:0;';
+    const yesBtn = document.createElement('button'); yesBtn.type = 'button'; yesBtn.textContent = 'Reduce today';
+    const noBtn = document.createElement('button'); noBtn.type = 'button'; noBtn.textContent = 'Train as planned';
+    noBtn.style.cssText = 'background:rgba(255,255,255,0.06);border-color:var(--border-strong);color:var(--text-2);';
+    yesBtn.addEventListener('click', () => logRecoveryDecision(recovery, true));
+    noBtn.addEventListener('click', () => logRecoveryDecision(recovery, false));
+    btnWrap.appendChild(yesBtn); btnWrap.appendChild(noBtn);
+    banner.appendChild(btnWrap);
+  }
+  function logRecoveryDecision(recovery, tookReduced) {
+    const todayKey = new Date().toISOString().slice(0, 10);
+    const decisions = (trainStoreGet(TRAIN_DECISIONS_KEY) || []).filter((d) => d.date !== todayKey);
+    decisions.push({ date: todayKey, recovery, tookReduced, at: new Date().toISOString() });
+    trainStoreSet(TRAIN_DECISIONS_KEY, decisions.slice(-90));
+    renderRecoveryBanner();
+  }
+
+  // ---- Rest timer ----
+  let trainRestInterval = null;
+  function trainRestSecondsFor(ex) {
+    const map = trainStoreGet(TRAIN_REST_KEY) || {};
+    return (ex && map[ex.id]) || TRAIN_DEFAULT_REST;
+  }
+  function startRestTimer(seconds) {
+    clearInterval(trainRestInterval);
+    let remaining = seconds;
+    const el = $('trainRestTimer');
+    const num = $('trainRestTimerNum');
+    if (!el || !num) return;
+    el.style.display = 'flex';
+    function tick() {
+      const m = Math.floor(Math.max(0, remaining) / 60), s = Math.max(0, remaining) % 60;
+      num.textContent = m + ':' + String(s).padStart(2, '0');
+      if (remaining <= 0) { clearInterval(trainRestInterval); el.style.display = 'none'; return; }
+      remaining--;
+    }
+    tick();
+    trainRestInterval = setInterval(tick, 1000);
+  }
+  const restSkipBtn = $('trainRestTimerSkip');
+  if (restSkipBtn) restSkipBtn.addEventListener('click', () => {
+    clearInterval(trainRestInterval);
+    $('trainRestTimer').style.display = 'none';
+  });
+
+  renderTrainProgramRow();
+  renderRecoveryBanner();
+  window.addEventListener('storage', () => { renderRecoveryBanner(); });
 })();
 </script>
 

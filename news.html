@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<script src="auth-gate.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0a0a0b">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="icon" type="image/webp" href="images/Index Landing Page.webp">
+<link rel="apple-touch-icon" href="images/apple-touch-icon.png">
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Equavia">
+<title>News — Equavia</title>
+<script src="assistant-tools.js"></script>
+<script src="topbar.js" defer></script>
+<script src="obsidian-sync.js"></script>
+<style>
+:root {
+  --bg: #0A0A0B; --bg-deep: #050506; --bg-card: rgba(255, 255, 255, 0.04); --bg-input: rgba(0,0,0,0.28);
+  --text-primary: #FAFAFA; --text-secondary: #B8B6B0; --text-tertiary: #76746E; --text-quaternary: #4D4B47;
+  --accent: #E07658; --success: #6BE3A4; --warning: #F2C063; --danger: #FF6B6B;
+  --border: rgba(255,255,255,0.08); --border-strong: rgba(255,255,255,0.14);
+  --font: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg-deep); color: var(--text-primary); font-family: var(--font); -webkit-font-smoothing: antialiased; padding-bottom: 80px; }
+.shell { max-width: 720px; margin: 0 auto; padding: 20px 16px 12px; }
+.section-title { font-size: 10.5px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 10px; }
+.news-title { font-size: 22px; font-weight: 700; margin: 0 0 4px; }
+.news-subtitle { font-size: 12.5px; color: var(--text-tertiary); margin: 0 0 18px; line-height: 1.5; }
+
+/* ---- Digest (centrepiece) ---- */
+.digest-card { background: var(--bg-card); border-radius: 16px; padding: 18px; margin-bottom: 22px; }
+.digest-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.digest-btn {
+  padding: 8px 14px; border-radius: 9px; border: 1px solid var(--border-strong);
+  background: rgba(255,255,255,0.04); color: var(--text-secondary); font-family: inherit; font-size: 11.5px; font-weight: 600; cursor: pointer;
+}
+.digest-btn:hover { background: rgba(255,255,255,0.08); color: var(--text-primary); }
+.digest-btn:disabled { opacity: 0.5; cursor: default; }
+.digest-empty { font-size: 12px; color: var(--text-quaternary); font-style: italic; }
+.digest-cat { margin-top: 14px; }
+.digest-cat-title { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 6px; }
+.digest-cat ul { margin: 0; padding: 0 0 0 16px; }
+.digest-cat li { font-size: 12.5px; line-height: 1.6; margin-bottom: 3px; }
+.digest-cat li a { color: var(--accent); }
+.digest-status { font-size: 11px; color: var(--text-tertiary); margin-top: 8px; }
+
+/* ---- Category feed (collapsed by default) ---- */
+.feed-toggle {
+  width: 100%; background: var(--bg-card); border: none; border-radius: 12px; padding: 12px 16px;
+  color: var(--text-primary); font-family: inherit; font-size: 13px; font-weight: 700; text-align: left; cursor: pointer;
+  display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;
+}
+.feed-wrap { display: none; }
+.feed-wrap.is-open { display: block; }
+.cat-tabs-row { display: flex; gap: 6px; overflow-x: auto; margin-bottom: 14px; padding-bottom: 2px; }
+.cat-tab-btn {
+  flex-shrink: 0; padding: 7px 13px; border-radius: 999px; border: 1px solid var(--border-strong);
+  background: rgba(255,255,255,0.04); color: var(--text-tertiary); font-family: inherit; font-size: 11.5px; font-weight: 700; cursor: pointer;
+}
+.cat-tab-btn.is-active { background: rgba(224,118,88,0.16); border-color: rgba(224,118,88,0.45); color: var(--accent); }
+.story-card { background: var(--bg-card); border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; }
+.story-card.is-seen { opacity: 0.45; }
+.story-title { font-size: 13.5px; font-weight: 700; line-height: 1.4; margin-bottom: 4px; }
+.story-title a { color: var(--text-primary); text-decoration: none; }
+.story-title a:hover { color: var(--accent); }
+.story-meta { font-size: 10.5px; color: var(--text-quaternary); margin-bottom: 6px; }
+.story-snippet { font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 8px; }
+.story-actions { display: flex; gap: 8px; }
+.story-mark-seen {
+  background: none; border: 1px solid var(--border-strong); border-radius: 8px; padding: 5px 10px;
+  font-family: inherit; font-size: 10.5px; font-weight: 600; color: var(--text-tertiary); cursor: pointer;
+}
+.feed-status { font-size: 12px; color: var(--text-tertiary); text-align: center; padding: 10px 0; }
+.feed-load-more {
+  width: 100%; padding: 10px; border-radius: 10px; border: 1px dashed var(--border-strong);
+  background: transparent; color: var(--text-secondary); font-family: inherit; font-size: 12px; font-weight: 600; cursor: pointer; margin-top: 4px;
+}
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="section-title">News</div>
+  <h1 class="news-title">The world</h1>
+  <p class="news-subtitle">A briefing, not a feed — the weekly digest is the point; the live categories below are for when you go looking on purpose.</p>
+
+  <div class="digest-card">
+    <div class="digest-head">
+      <span class="section-title" style="margin:0;">Weekly Digest</span>
+      <button type="button" class="digest-btn" id="digestRunBtn">Generate this week's digest</button>
+    </div>
+    <div id="digestBody"></div>
+    <div class="digest-empty" id="digestEmpty">No digest yet this week.</div>
+    <div class="digest-status" id="digestStatus"></div>
+  </div>
+
+  <button type="button" class="feed-toggle" id="feedToggleBtn">
+    <span>Live categories</span><span id="feedToggleIcon">▾</span>
+  </button>
+  <div class="feed-wrap" id="feedWrap">
+    <div class="cat-tabs-row" id="catTabsRow"></div>
+    <div id="storyList"></div>
+    <div class="feed-status" id="feedStatus"></div>
+    <button type="button" class="feed-load-more" id="feedLoadMoreBtn" style="display:none;">Load more</button>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  function storeGet(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }
+  function storeSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+
+  const CATEGORIES = [
+    { key: 'local', label: 'London/local' },
+    { key: 'global', label: 'Global' },
+    { key: 'gaming', label: 'Gaming' },
+    { key: 'sport', label: 'Sports' },
+    { key: 'politics', label: 'Politics' },
+    { key: 'tech', label: 'Tech' },
+  ];
+  const NEWS_ITEMS_KEY = 'eq.news.items_v1'; // read by 5.3's talking-topics matching
+  const SEEN_KEY = 'eq.news.seen_v1';
+  const DIGESTS_KEY = 'eq.news.digests_v1';
+
+  function pad2(n) { return String(n).padStart(2, '0'); }
+  function dateKeyOf(d) { return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); }
+  function weekStartMonday6am(refDate) {
+    const shifted = new Date(refDate.getTime() - 6 * 3600000);
+    const daysSinceMonday = (shifted.getDay() + 6) % 7;
+    const mondayShifted = new Date(shifted.getFullYear(), shifted.getMonth(), shifted.getDate() - daysSinceMonday);
+    return new Date(mondayShifted.getTime() + 6 * 3600000);
+  }
+  function currentWeekKey() { return dateKeyOf(weekStartMonday6am(new Date())); }
+
+  function getSeen() { return storeGet(SEEN_KEY) || {}; }
+  function markSeen(url) { const s = getSeen(); s[url] = Date.now(); storeSet(SEEN_KEY, s); }
+
+  // ---- Live category feed ----
+  let activeCategory = 'local';
+  let currentPage = 1;
+  let loadedItems = [];
+
+  function fillNewsItemsCache(items) {
+    // Rolling cache across all categories, read by 5.3's news-topic
+    // matching on interactions.html -- keeps the last 60 items seen across
+    // any category, not just the currently-open tab.
+    const existing = storeGet(NEWS_ITEMS_KEY) || [];
+    const merged = items.concat(existing.filter((e) => !items.some((n) => n.url === e.url)));
+    storeSet(NEWS_ITEMS_KEY, merged.slice(0, 60));
+  }
+
+  function renderCatTabs() {
+    const wrap = $('catTabsRow');
+    wrap.innerHTML = '';
+    CATEGORIES.forEach((c) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'cat-tab-btn' + (c.key === activeCategory ? ' is-active' : '');
+      btn.textContent = c.label;
+      btn.addEventListener('click', () => { activeCategory = c.key; currentPage = 1; loadedItems = []; loadCategory(); renderCatTabs(); });
+      wrap.appendChild(btn);
+    });
+  }
+
+  function renderStories() {
+    const wrap = $('storyList');
+    wrap.innerHTML = '';
+    const seen = getSeen();
+    loadedItems.forEach((it) => {
+      const card = document.createElement('div');
+      card.className = 'story-card' + (seen[it.url] ? ' is-seen' : '');
+      const title = document.createElement('div'); title.className = 'story-title';
+      const a = document.createElement('a'); a.href = it.url; a.target = '_blank'; a.rel = 'noopener'; a.textContent = it.title;
+      title.appendChild(a); card.appendChild(title);
+      const meta = document.createElement('div'); meta.className = 'story-meta';
+      meta.textContent = it.source + ' · ' + new Date(it.time).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+      card.appendChild(meta);
+      if (it.snippet) { const sn = document.createElement('div'); sn.className = 'story-snippet'; sn.textContent = it.snippet; card.appendChild(sn); }
+      const actions = document.createElement('div'); actions.className = 'story-actions';
+      const seenBtn = document.createElement('button'); seenBtn.type = 'button'; seenBtn.className = 'story-mark-seen';
+      seenBtn.textContent = seen[it.url] ? 'Seen' : 'Mark seen';
+      seenBtn.disabled = !!seen[it.url];
+      seenBtn.addEventListener('click', () => { markSeen(it.url); renderStories(); });
+      actions.appendChild(seenBtn);
+      card.appendChild(actions);
+      wrap.appendChild(card);
+    });
+  }
+
+  async function loadCategory() {
+    $('feedStatus').textContent = 'Loading…';
+    $('feedLoadMoreBtn').style.display = 'none';
+    try {
+      const res = await fetch('/api/news?category=' + activeCategory + '&page=' + currentPage, {
+        headers: Object.assign({}, window.EqAuth ? window.EqAuth.header() : {}),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'request failed');
+      if (currentPage === 1) loadedItems = data.items || [];
+      else loadedItems = loadedItems.concat(data.items || []);
+      fillNewsItemsCache(loadedItems);
+      renderStories();
+      $('feedStatus').textContent = loadedItems.length ? '' : 'No stories right now.';
+      $('feedLoadMoreBtn').style.display = data.hasMore ? '' : 'none';
+      if (window.AssistantTools) window.AssistantTools.recordIntegrationHealth('news_proxy', true);
+    } catch (e) {
+      $('feedStatus').textContent = 'Could not load news — ' + (e.message || 'try again') + '.';
+      if (window.AssistantTools) window.AssistantTools.recordIntegrationHealth('news_proxy', false);
+    }
+  }
+  $('feedLoadMoreBtn').addEventListener('click', () => { currentPage++; loadCategory(); });
+  $('feedToggleBtn').addEventListener('click', () => {
+    const wrap = $('feedWrap');
+    const open = wrap.classList.toggle('is-open');
+    $('feedToggleIcon').textContent = open ? '▴' : '▾';
+    if (open && !loadedItems.length) loadCategory();
+  });
+
+  // ---- Weekly digest ----
+  function getDigests() { return storeGet(DIGESTS_KEY) || []; }
+  function setDigests(list) { storeSet(DIGESTS_KEY, list); }
+  function renderDigest() {
+    const weekKey = currentWeekKey();
+    const d = getDigests().find((x) => x.weekKey === weekKey);
+    const body = $('digestBody'), empty = $('digestEmpty'), btn = $('digestRunBtn');
+    if (!d) { body.innerHTML = ''; empty.style.display = ''; btn.textContent = 'Generate this week\'s digest'; return; }
+    empty.style.display = 'none';
+    btn.textContent = 'Regenerate';
+    body.innerHTML = Object.keys(d.categories || {}).map((catKey) => {
+      const cat = CATEGORIES.find((c) => c.key === catKey);
+      const bullets = d.categories[catKey] || [];
+      return '<div class="digest-cat"><div class="digest-cat-title">' + (cat ? cat.label : catKey) + '</div><ul>' +
+        bullets.map((b) => '<li>' + b.text + (b.url ? ' <a href="' + b.url + '" target="_blank" rel="noopener">source</a>' : '') + '</li>').join('') +
+        '</ul></div>';
+    }).join('');
+  }
+  async function runDigest() {
+    const btn = $('digestRunBtn');
+    btn.disabled = true; btn.textContent = 'Generating…';
+    $('digestStatus').textContent = '';
+    try {
+      // Gather this week's cached items per category (whatever's been
+      // fetched/viewed recently) -- the digest summarizes what's already
+      // been collected, it doesn't re-fetch every category itself.
+      const items = storeGet(NEWS_ITEMS_KEY) || [];
+      const weekKey = currentWeekKey();
+      let context = 'This week\'s collected headlines by category:\n\n';
+      CATEGORIES.forEach((c) => {
+        const catItems = items.filter((it) => it.category === c.key).slice(0, 10);
+        if (catItems.length) context += c.label + ':\n' + catItems.map((it) => '- ' + it.title + ' (' + it.url + '): ' + (it.snippet || '')).join('\n') + '\n\n';
+      });
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, window.EqAuth ? window.EqAuth.header() : {}),
+        body: JSON.stringify({
+          messages: [{ role: 'user', content: 'Write this week\'s digest.' }],
+          systemContext: 'Write a weekly news digest from the headlines below, one category at a time. For each category with headlines, write 3-5 tight bullets summarizing "what actually happened this week," each citing its source URL. Skip categories with no headlines given. Reply with ONLY a JSON object shaped { "categoryKey": [{"text": "...", "url": "..."}, ...] }, using these exact category keys: local, global, gaming, sport, politics, tech. No markdown fencing, nothing else.\n\n' + context,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'request failed');
+      let categories;
+      try { categories = JSON.parse((data.reply || '').trim().replace(/^```json?|```$/g, '')); } catch (e) { categories = null; }
+      if (!categories || typeof categories !== 'object') throw new Error('unexpected response shape');
+      const digests = getDigests().filter((d) => d.weekKey !== weekKey);
+      digests.push({ weekKey, categories, at: new Date().toISOString() });
+      setDigests(digests.slice(-12));
+      renderDigest();
+      if (window.ObsidianSync && ObsidianSync.getConfig().enabled) {
+        let md = '# News — ' + weekKey + '\n\n';
+        Object.keys(categories).forEach((catKey) => {
+          const cat = CATEGORIES.find((c) => c.key === catKey);
+          md += '## ' + (cat ? cat.label : catKey) + '\n' + (categories[catKey] || []).map((b) => '- ' + b.text + (b.url ? ' [source](' + b.url + ')' : '')).join('\n') + '\n\n';
+        });
+        await ObsidianSync.pushWeeklyReport('News/' + weekKey, md);
+      }
+    } catch (e) {
+      $('digestStatus').textContent = 'Could not generate — ' + (e.message || 'try again') + '.';
+    } finally {
+      btn.disabled = false;
+    }
+  }
+  $('digestRunBtn').addEventListener('click', runDigest);
+
+  renderCatTabs();
+  renderDigest();
+  window.addEventListener('storage', renderDigest);
+})();
+</script>
+</body>
+</html>

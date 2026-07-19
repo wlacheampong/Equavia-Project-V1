@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<script src="auth-gate.js"></script>
 <script src="landing-guard.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#050506">
@@ -14,6 +15,7 @@
 <title>Daily Stack — Equavia</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="sync.js" defer></script>
+<script src="assistant-tools.js"></script>
 <script src="topbar.js" defer></script>
 <style>
 :root {
@@ -623,6 +625,28 @@ main {
     .wh-disconnect-link:hover { color:var(--text-secondary); text-decoration:underline; }
     .wh-err { background:rgba(255,107,107,0.08); border:1px solid rgba(255,107,107,0.28); color:#FF8A8A; padding:10px 12px; border-radius:10px; font-size:11.5px; font-family:var(--font-mono); margin-bottom:14px; }
 
+    /* ===== Energy (Phase 6.1 — ported from the deleted peak.html) ===== */
+    .en-card { background:var(--bg-card); border:1px solid rgba(255,255,255,0.06); border-radius:18px; padding:18px; margin-bottom:22px; }
+    .en-head { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px; flex-wrap:wrap; }
+    .en-now { display:flex; align-items:baseline; gap:10px; }
+    .en-now-num { font-size:38px; font-weight:700; color:var(--text-primary); font-variant-numeric:tabular-nums; line-height:1; }
+    .en-now-tier { font-size:13px; color:var(--text-secondary); font-weight:600; }
+    .en-now-sub { font-size:10.5px; color:var(--text-quaternary); margin-top:2px; }
+    .en-chart-wrap { position:relative; margin:4px 0 8px; }
+    .en-chart { width:100%; height:130px; display:block; }
+    .en-grid { stroke:rgba(255,255,255,0.06); stroke-width:1; }
+    .en-now-line { stroke:var(--warning); stroke-width:1.5; stroke-dasharray:3 3; }
+    .en-event-band { fill:rgba(255,255,255,0.07); }
+    .en-chart-meta { font-size:10.5px; color:var(--text-quaternary); text-align:right; margin-top:4px; }
+    .en-stack-head { font-size:10.5px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; color:var(--text-tertiary); margin:18px 0 10px; }
+    .en-stack-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:10px; }
+    .en-stack-btn { display:flex; flex-direction:column; align-items:flex-start; gap:6px; background:var(--bg-secondary); border:1px solid rgba(255,255,255,0.06); border-radius:12px; padding:12px 14px; cursor:pointer; text-align:left; font-family:inherit; color:var(--text-primary); }
+    .en-stack-btn:hover { border-color:var(--border-strong); }
+    .en-stack-btn.has-logs { border-color:rgba(29,158,117,0.4); background:rgba(29,158,117,0.08); }
+    .en-stack-name { font-size:13.5px; font-weight:600; }
+    .en-stack-meta { font-size:11px; color:var(--text-tertiary); font-family:var(--font-mono); }
+    .en-stack-meta b { color:var(--accent); }
+
     /* ===== Sleep Log ===== */
     .sl-card { background:var(--bg-card); border:1px solid rgba(255,255,255,0.06); border-radius:18px; padding:18px; margin-bottom:22px; }
     .sl-head { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px; gap:10px; flex-wrap:wrap; }
@@ -682,6 +706,43 @@ main {
       font-family:inherit; font-size:12px; font-weight:600; border-radius:9px; cursor:pointer;
     }
     .sl-add-btn:hover { background:var(--accent); color:#fff; }
+
+    /* ===== Symptom Log (6.5) ===== */
+    .sym-card { background:var(--bg-card); border:1px solid rgba(255,255,255,0.06); border-radius:18px; padding:18px; margin-bottom:22px; }
+    .sym-type-row, .sym-sev-row { display:flex; flex-wrap:wrap; gap:6px; }
+    .sym-type-btn, .sym-sev-btn {
+      padding:7px 13px; border-radius:999px; border:1px solid rgba(255,255,255,0.1);
+      background:rgba(255,255,255,0.03); color:var(--text-secondary); font-family:inherit;
+      font-size:12.5px; font-weight:600; cursor:pointer;
+    }
+    .sym-sev-btn { flex:1; min-width:36px; text-align:center; padding:7px 0; }
+    .sym-type-btn.is-selected, .sym-sev-btn.is-selected { background:var(--accent); border-color:transparent; color:#fff; }
+    .sym-sev-row { margin-top:10px; }
+    .sym-add-type-row { display:flex; gap:8px; margin-top:10px; }
+    .sym-add-type-input {
+      flex:1; background:rgba(0,0,0,0.28); border:1px solid rgba(255,255,255,0.1); border-radius:9px;
+      color:var(--text-primary); padding:9px 10px; font-family:inherit; font-size:13px;
+    }
+    .sym-add-type-btn {
+      padding:0 16px; background:rgba(255,255,255,0.06); border:none; color:var(--text-secondary);
+      font-family:inherit; font-size:12px; font-weight:600; border-radius:9px; cursor:pointer;
+    }
+    .sym-add-type-btn:hover { background:var(--accent); color:#fff; }
+    .sym-note-input {
+      width:100%; box-sizing:border-box; margin-top:10px; background:rgba(0,0,0,0.28);
+      border:1px solid rgba(255,255,255,0.1); border-radius:9px; color:var(--text-primary);
+      font-family:inherit; font-size:12.5px; padding:9px 10px;
+    }
+    .sym-list { margin-top:14px; display:flex; flex-direction:column; gap:8px; }
+    .sym-entry { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; padding:10px 12px; background:rgba(255,255,255,0.025); border-radius:10px; }
+    .sym-entry-main { display:flex; flex-wrap:wrap; align-items:baseline; gap:8px; }
+    .sym-entry-type { font-size:12.5px; font-weight:700; color:var(--text-primary); }
+    .sym-entry-sev { font-size:12px; color:var(--text-secondary); }
+    .sym-entry-when { font-size:11px; color:var(--text-tertiary); }
+    .sym-entry-note { flex-basis:100%; font-size:12px; color:var(--text-secondary); margin-top:2px; }
+    .sym-entry-del { background:none; border:none; color:var(--text-tertiary); font-size:16px; cursor:pointer; line-height:1; padding:2px 4px; }
+    .sym-entry-del:hover { color:var(--text-primary); }
+    .sym-empty { font-size:12.5px; color:var(--text-tertiary); padding:8px 0; }
 
     /* ===== Correlation (3.5) ===== */
     .corr-card { background:var(--bg-card); border:1px solid rgba(255,255,255,0.06); border-radius:18px; padding:18px; margin-bottom:22px; }
@@ -983,7 +1044,7 @@ main {
     async function refreshTok(t) {
       if (!t.refresh) return null;
       try {
-        const r = await fetch('/api/whoop-refresh', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ refresh_token: t.refresh }) });
+        const r = await fetch('/api/whoop-refresh', { method:'POST', headers: Object.assign({'Content-Type':'application/json'}, window.EqAuth ? window.EqAuth.header() : {}), body: JSON.stringify({ refresh_token: t.refresh }) });
         const j = await r.json();
         if (j.access_token) {
           const next = { access: j.access_token, refresh: j.refresh_token || t.refresh, expires: Date.now() + (j.expires_in||3500)*1000 };
@@ -995,7 +1056,7 @@ main {
     async function whFetch(path, t) {
       const [p, qs] = path.split('?');
       const params = new URLSearchParams(qs || ''); params.set('path', p);
-      const r = await fetch('/api/whoop-data?' + params.toString(), { headers: { 'Authorization': 'Bearer ' + t.access, 'Accept':'application/json' } });
+      const r = await fetch('/api/whoop-data?' + params.toString(), { headers: Object.assign({ 'Authorization': 'Bearer ' + t.access, 'Accept':'application/json' }, window.EqAuth ? window.EqAuth.header() : {}) });
       if (r.status === 401) { const n = await refreshTok(t); if (n) return whFetch(path, n); throw new Error('unauthorized — reconnect'); }
       if (!r.ok) throw new Error('WHOOP ' + r.status + ': ' + (await r.text()));
       return await r.json();
@@ -1605,6 +1666,7 @@ main {
           localStorage.setItem('eq.health.summary', JSON.stringify({
             recovery: recScore,
             sleepHours: sleepDuration ? Number((sleepDuration / 3.6e6).toFixed(1)) : null,
+            sleepPerf,
             hrv, rhr,
             skinTemp: skin != null ? Number(skin) : null,
             spo2: spo2 != null ? Number(spo2) : null,
@@ -1625,8 +1687,10 @@ main {
 
         const now = new Date();
         $('whUpdated').textContent = 'Updated ' + now.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+        if (window.AssistantTools) window.AssistantTools.recordIntegrationHealth('whoop', true);
       } catch (e) {
         showErr(e.message || String(e));
+        if (window.AssistantTools) window.AssistantTools.recordIntegrationHealth('whoop', false);
       }
     }
 
@@ -1637,6 +1701,180 @@ main {
     }
     wireManualAdjustments();
     render();
+  })();
+  </script>
+
+  <div class="section-title">Energy</div>
+  <div class="en-card">
+    <div class="en-head">
+      <div class="en-now">
+        <span class="en-now-num" id="enNowNum">—</span>
+        <div>
+          <div class="en-now-tier" id="enNowTier">—</div>
+          <div class="en-now-sub">predicted right now</div>
+        </div>
+      </div>
+    </div>
+    <div class="en-chart-wrap">
+      <svg class="en-chart" viewBox="0 0 320 130" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="enFill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#1D9E75" stop-opacity="0.25"/>
+            <stop offset="100%" stop-color="#1D9E75" stop-opacity="0"/>
+          </linearGradient>
+          <filter id="enGlow"><feGaussianBlur stdDeviation="1.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        </defs>
+        <line class="en-grid" x1="0" y1="20" x2="320" y2="20"></line>
+        <line class="en-grid" x1="0" y1="65" x2="320" y2="65"></line>
+        <line class="en-grid" x1="0" y1="110" x2="320" y2="110"></line>
+        <g id="enEventBands"></g>
+        <g id="enChartContent"></g>
+        <line class="en-now-line" id="enNowLine" x1="0" y1="0" x2="0" y2="130"></line>
+      </svg>
+      <div class="en-chart-meta">Predicted energy, next 24h — from your stimulant log + WHOOP recovery/sleep</div>
+    </div>
+    <div class="en-stack-head">Log a stimulant</div>
+    <div class="en-stack-grid" id="enStackGrid"></div>
+  </div>
+  <script>
+  (function () {
+    const $ = (id) => document.getElementById(id);
+    function storeGet(k) { try { const v = JSON.parse(localStorage.getItem(k)); return v; } catch (e) { return null; } }
+    function storeSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+
+    // Ported from the deleted peak.html (Phase 6.1) -- circadian baseline +
+    // stimulant pharmacokinetics, same math. The WHOOP multiplier now reads
+    // eq.health.summary (published by the Whoop section above) instead of a
+    // separate fetch; today's real calendar events (local_cal_events_v1, the
+    // same store Planner writes to) overlay the chart instead of peak's own
+    // separate ad-hoc schedule/parser, so there's one source of truth for
+    // "what's on today," not two. Logs are day-scoped and auto-reset (peak's
+    // never did -- a real gap this port fixes rather than carries over).
+    const BASELINE = [18,12,10,14,16,22,30,42,55,68,75,70,62,50,44,48,56,64,72,84,92,88,64,38,18];
+    const SUBSTANCES = {
+      coffee:       { name: 'Coffee',       defaultDose: 95,  unit: 'mg', amplitude: 16, onsetHours: 0.25, peakHours: 0.75, halfLifeHours: 5.0 },
+      espresso:     { name: 'Espresso',     defaultDose: 75,  unit: 'mg', amplitude: 14, onsetHours: 0.2,  peakHours: 0.5,  halfLifeHours: 5.0 },
+      energy_drink: { name: 'Energy drink', defaultDose: 160, unit: 'mg', amplitude: 20, onsetHours: 0.3,  peakHours: 1.0,  halfLifeHours: 5.0 },
+      matcha:       { name: 'Matcha',       defaultDose: 70,  unit: 'mg', amplitude: 12, onsetHours: 0.4,  peakHours: 1.5,  halfLifeHours: 6.0 },
+    };
+    const ENERGY_KEY = 'eq.energy.logs_v1';
+
+    function todayKeyLocal() {
+      const d = new Date();
+      return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    }
+    function getTodayLogs() {
+      const stored = storeGet(ENERGY_KEY);
+      if (stored && stored.dateKey === todayKeyLocal()) return stored.entries || [];
+      return [];
+    }
+    function saveTodayLogs(entries) { storeSet(ENERGY_KEY, { dateKey: todayKeyLocal(), entries }); }
+
+    function effectiveAmplitude(log) {
+      const def = SUBSTANCES[log.key]; if (!def) return 0;
+      return def.amplitude * (log.dose / def.defaultDose);
+    }
+    function contributionAt(hourOfDay, log) {
+      const def = SUBSTANCES[log.key]; if (!def) return 0;
+      const dt = hourOfDay - log.takenHour;
+      if (dt < def.onsetHours) return 0;
+      const amp = effectiveAmplitude(log);
+      if (dt < def.peakHours) return amp * (dt - def.onsetHours) / (def.peakHours - def.onsetHours);
+      return amp * Math.pow(0.5, (dt - def.peakHours) / def.halfLifeHours);
+    }
+    function whoopMultiplier() {
+      const h = storeGet('eq.health.summary');
+      const m = new Array(25).fill(1);
+      if (!h) return m;
+      if (typeof h.recovery === 'number') { const r = Math.max(0, Math.min(100, h.recovery)); const k = 0.55 + (r / 100) * 0.65; for (let i = 0; i < 25; i++) m[i] *= k; }
+      if (typeof h.sleepPerf === 'number' && h.sleepPerf < 70) { const cap = 0.65 + (Math.max(0, h.sleepPerf) / 70) * 0.35; for (let i = 0; i < 25; i++) m[i] = Math.min(m[i], cap); }
+      return m;
+    }
+    function curveNow() {
+      const logs = getTodayLogs();
+      const wm = whoopMultiplier();
+      return BASELINE.map((b, h) => {
+        let v = b;
+        logs.forEach((log) => { v += contributionAt(h, log); });
+        return Math.max(0, Math.min(100, v * wm[h]));
+      });
+    }
+    function tierFor(s) { if (s >= 80) return 'Peak'; if (s >= 65) return 'Solid'; if (s >= 50) return 'Tired'; if (s >= 35) return 'Low'; return 'Drained'; }
+    function scoreAtHour(curve, h) {
+      if (h <= 0) return curve[0] || 0;
+      if (h >= curve.length - 1) return curve[curve.length - 1] || 0;
+      const i = Math.floor(h), f = h - i;
+      return curve[i] * (1 - f) + (curve[i + 1] != null ? curve[i + 1] : curve[i]) * f;
+    }
+    function escapeXml(s) { return String(s).replace(/[<>&]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c])); }
+
+    // Same SVG chart pattern as Sleep Log's .sl-chart (viewBox 320x130,
+    // quadratic-smoothed path, area fill, glow filter) -- one charting
+    // approach across the app, per the master prompt's own rule.
+    function smoothPath(vals, xForHour, yForScore) {
+      const pts = []; for (let i = 0; i <= 24; i++) pts.push([xForHour(i), yForScore(vals[i] || 0)]);
+      let d = 'M ' + pts[0][0] + ' ' + pts[0][1];
+      for (let i = 0; i < pts.length - 1; i++) {
+        const p0 = pts[i - 1] || pts[i], p1 = pts[i], p2 = pts[i + 1], p3 = pts[i + 2] || p2;
+        d += ' C ' + (p1[0] + (p2[0] - p0[0]) / 6) + ' ' + (p1[1] + (p2[1] - p0[1]) / 6) + ', ' + (p2[0] - (p3[0] - p1[0]) / 6) + ' ' + (p2[1] - (p3[1] - p1[1]) / 6) + ', ' + p2[0] + ' ' + p2[1];
+      }
+      return d;
+    }
+    function renderChart() {
+      const curve = curveNow();
+      const W = 320, H = 130, padTop = 8, padBottom = 8;
+      const xForHour = (h) => (h / 24) * W;
+      const yForScore = (s) => padTop + (1 - s / 100) * (H - padTop - padBottom);
+      const path = smoothPath(curve, xForHour, yForScore);
+      const areaPath = path + ' L ' + xForHour(24) + ' ' + (H - padBottom) + ' L ' + xForHour(0) + ' ' + (H - padBottom) + ' Z';
+      $('enChartContent').innerHTML =
+        '<path d="' + areaPath + '" fill="url(#enFill)"></path>' +
+        '<path d="' + path + '" fill="none" stroke="#1D9E75" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" filter="url(#enGlow)"></path>';
+
+      const now = new Date();
+      const nowHour = now.getHours() + now.getMinutes() / 60;
+      const nowLine = $('enNowLine');
+      nowLine.setAttribute('x1', xForHour(nowHour)); nowLine.setAttribute('x2', xForHour(nowHour));
+      nowLine.setAttribute('y1', padTop); nowLine.setAttribute('y2', H - padBottom);
+
+      const events = (storeGet('local_cal_events_v1') || []).filter((e) => e.dateKey === todayKeyLocal() && e.time);
+      $('enEventBands').innerHTML = events.map((e) => {
+        const parts = e.time.split(':').map(Number);
+        const startH = parts[0] + (parts[1] || 0) / 60;
+        const endH = Math.min(24, startH + (Number(e.duration) || 30) / 60);
+        return '<rect class="en-event-band" x="' + xForHour(startH) + '" y="' + padTop + '" width="' + Math.max(2, xForHour(endH) - xForHour(startH)) + '" height="' + (H - padTop - padBottom) + '"><title>' + escapeXml(e.title || '') + '</title></rect>';
+      }).join('');
+
+      const nowScore = scoreAtHour(curve, nowHour);
+      $('enNowNum').textContent = String(Math.round(nowScore));
+      $('enNowTier').textContent = tierFor(nowScore);
+    }
+
+    function renderStack() {
+      const logs = getTodayLogs();
+      $('enStackGrid').innerHTML = Object.keys(SUBSTANCES).map((key) => {
+        const s = SUBSTANCES[key];
+        const these = logs.filter((l) => l.key === key);
+        const mg = these.reduce((a, l) => a + (l.dose || 0), 0);
+        return '<button type="button" class="en-stack-btn' + (these.length ? ' has-logs' : '') + '" data-key="' + key + '">' +
+          '<span class="en-stack-name">' + s.name + '</span>' +
+          '<span class="en-stack-meta">' + (these.length ? '<b>' + mg + 'mg</b> today (' + these.length + '&times;)' : '+ Log now (' + s.defaultDose + s.unit + ')') + '</span>' +
+          '</button>';
+      }).join('');
+    }
+    $('enStackGrid').addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-key]'); if (!btn) return;
+      const key = btn.getAttribute('data-key'), s = SUBSTANCES[key]; if (!s) return;
+      const now = new Date();
+      const logs = getTodayLogs();
+      logs.push({ key: key, dose: s.defaultDose, takenHour: now.getHours() + now.getMinutes() / 60 });
+      saveTodayLogs(logs);
+      renderStack(); renderChart();
+    });
+
+    renderStack(); renderChart();
+    setInterval(renderChart, 5 * 60000); // keeps the "now" line/score fresh without a full reload
+    window.addEventListener('storage', renderChart);
   })();
   </script>
 
@@ -1846,6 +2084,139 @@ main {
   })();
   </script>
 
+  <div class="section-title">Symptom Log</div>
+
+  <div class="sym-card">
+    <div class="sym-type-row" id="symTypeRow"></div>
+    <div class="sym-add-type-row">
+      <input type="text" class="sym-add-type-input" id="symAddTypeInput" placeholder="Add custom type…">
+      <button type="button" class="sym-add-type-btn" id="symAddTypeBtn">Add</button>
+    </div>
+    <div class="sym-sev-row" id="symSevRow" style="display:none;"></div>
+    <input type="text" class="sym-note-input" id="symNoteInput" placeholder="Note, optional…" style="display:none;">
+    <div class="sym-empty" id="symEmpty">No symptoms logged yet.</div>
+    <div class="sym-list" id="symList"></div>
+  </div>
+  <script>
+  (function () {
+    const $ = (id) => document.getElementById(id);
+    const SYM_LOG_KEY = 'eq.symptoms.log_v1';
+    const SYM_TYPES_KEY = 'eq.symptoms.types_v1';
+    // Spec's own list, confirmed as-is (ASK FIRST) -- editable below, so this
+    // is just the starting set, not a hardcoded ceiling.
+    const DEFAULT_TYPES = ['Gut', 'Skin', 'Energy dip', 'Headache', 'Other'];
+
+    function dateKeyOf(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+    function symLoad() { try { const v = JSON.parse(localStorage.getItem(SYM_LOG_KEY)); return Array.isArray(v) ? v : []; } catch (e) { return []; } }
+    function symSave(list) { try { localStorage.setItem(SYM_LOG_KEY, JSON.stringify(list)); } catch (e) {} }
+    function symTypes() {
+      try { const v = JSON.parse(localStorage.getItem(SYM_TYPES_KEY)); return (Array.isArray(v) && v.length) ? v : DEFAULT_TYPES.slice(); }
+      catch (e) { return DEFAULT_TYPES.slice(); }
+    }
+    function setSymTypes(list) { try { localStorage.setItem(SYM_TYPES_KEY, JSON.stringify(list)); } catch (e) {} }
+    function symUid() { return 'sym_' + Date.now() + '_' + Math.floor(Math.random() * 9999); }
+
+    let selectedType = null;
+
+    // Standard entry is exactly two taps: a type button, then a severity
+    // button. Severity tap saves immediately -- the note field only shows up
+    // after, and is entirely optional (per the answered ASK FIRST question,
+    // there's no special-cased prompt at any severity level).
+    function renderTypes() {
+      const row = $('symTypeRow');
+      row.innerHTML = '';
+      symTypes().forEach((t) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'sym-type-btn' + (selectedType === t ? ' is-selected' : '');
+        btn.textContent = t;
+        btn.addEventListener('click', () => {
+          selectedType = t;
+          renderTypes();
+          renderSeverity();
+          $('symSevRow').style.display = 'flex';
+        });
+        row.appendChild(btn);
+      });
+    }
+    function renderSeverity() {
+      const row = $('symSevRow');
+      row.innerHTML = '';
+      for (let i = 1; i <= 5; i++) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'sym-sev-btn';
+        btn.textContent = String(i);
+        btn.addEventListener('click', () => logSymptom(selectedType, i));
+        row.appendChild(btn);
+      }
+    }
+    function logSymptom(type, severity) {
+      if (!type || !severity) return;
+      const list = symLoad();
+      const entry = { id: symUid(), type: type, severity: severity, note: '', dateKey: dateKeyOf(new Date()), at: new Date().toISOString() };
+      list.push(entry);
+      symSave(list);
+      selectedType = null;
+      $('symSevRow').style.display = 'none';
+      $('symSevRow').innerHTML = '';
+      renderTypes();
+      renderList();
+      const noteInput = $('symNoteInput');
+      noteInput.style.display = '';
+      noteInput.value = '';
+      noteInput.dataset.forId = entry.id;
+      noteInput.focus();
+    }
+    $('symNoteInput').addEventListener('change', () => {
+      const id = $('symNoteInput').dataset.forId;
+      if (!id) return;
+      const list = symLoad();
+      const idx = list.findIndex((e) => e.id === id);
+      if (idx === -1) return;
+      list[idx].note = $('symNoteInput').value.trim();
+      symSave(list);
+      renderList();
+    });
+    $('symAddTypeBtn').addEventListener('click', () => {
+      const val = $('symAddTypeInput').value.trim();
+      if (!val) return;
+      const types = symTypes();
+      if (!types.some((t) => t.toLowerCase() === val.toLowerCase())) { types.push(val); setSymTypes(types); }
+      $('symAddTypeInput').value = '';
+      renderTypes();
+    });
+
+    function renderList() {
+      const list = symLoad().slice().sort((a, b) => b.at.localeCompare(a.at)).slice(0, 20);
+      $('symEmpty').style.display = list.length ? 'none' : '';
+      $('symList').innerHTML = list.map((e) => {
+        const d = new Date(e.at);
+        const when = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + ' ' + d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+        return '<div class="sym-entry">'
+          + '<div class="sym-entry-main">'
+          + '<span class="sym-entry-type">' + e.type.replace(/</g, '&lt;') + '</span>'
+          + '<span class="sym-entry-sev">Sev ' + e.severity + '/5</span>'
+          + '<span class="sym-entry-when">' + when + '</span>'
+          + (e.note ? '<div class="sym-entry-note">' + e.note.replace(/</g, '&lt;') + '</div>' : '')
+          + '</div>'
+          + '<button type="button" class="sym-entry-del" data-id="' + e.id + '">×</button>'
+          + '</div>';
+      }).join('');
+      $('symList').querySelectorAll('.sym-entry-del').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          symSave(symLoad().filter((e) => e.id !== btn.dataset.id));
+          renderList();
+        });
+      });
+    }
+
+    renderTypes();
+    renderList();
+    window.addEventListener('storage', () => { renderTypes(); renderList(); });
+  })();
+  </script>
+
   <div class="section-title">Correlation</div>
 
   <div class="corr-card">
@@ -1937,6 +2308,38 @@ main {
     function corrWeightUnit() {
       try { return (JSON.parse(localStorage.getItem('eq.fitness.summary')) || {}).units || 'kg'; } catch (e) { return 'kg'; }
     }
+    // 6.2: mood is a per-day series (eq.mood.log_v1), so it drops straight
+    // into this window the same way sleep/recovery do. "Mood x training
+    // done" and "mood x interaction score" from the spec weren't added as
+    // presets -- gym.html's per-session log lives inside its own internal
+    // `state.logs` object, which 3.3's own code comment already flags as
+    // "not safely re-derivable from outside" (it's been through that
+    // page's normalize() step); and interaction score (5.7) is a weekly
+    // figure, not a daily series, so it doesn't fit this per-day
+    // correlation engine's shape at all without a redesign. Real gaps,
+    // not silently skipped.
+    function corrMoodSeries() {
+      const map = {};
+      (corrGet('eq.mood.log_v1') || []).forEach((m) => { map[m.dateKey] = m.mood; });
+      return map;
+    }
+    // 6.5: per-day aggregates of the symptom log, same "drop straight into
+    // this window" shape as mood above -- severity averages same-day
+    // multiple entries, frequency is a plain same-day count.
+    function corrSymptomSeveritySeries() {
+      const byDay = {};
+      (corrGet('eq.symptoms.log_v1') || []).forEach((e) => {
+        (byDay[e.dateKey] = byDay[e.dateKey] || []).push(e.severity);
+      });
+      const map = {};
+      Object.keys(byDay).forEach((k) => { map[k] = byDay[k].reduce((a, b) => a + b, 0) / byDay[k].length; });
+      return map;
+    }
+    function corrSymptomFrequencySeries() {
+      const map = {};
+      (corrGet('eq.symptoms.log_v1') || []).forEach((e) => { map[e.dateKey] = (map[e.dateKey] || 0) + 1; });
+      return map;
+    }
 
     const CORR_METRICS = {
       sleep: { label: 'Sleep hours', unit: 'h', series: corrSleepSeries },
@@ -1944,6 +2347,9 @@ main {
       taskCompletion: { label: 'Task completion %', unit: '%', series: corrTaskCompletionSeries },
       habitScore: { label: 'Habit success %', unit: '%', series: corrHabitSeries },
       weightTrend: { label: 'Weight 7d trend', unit: corrWeightUnit(), series: corrWeightTrendSeries },
+      mood: { label: 'Mood (1-10)', unit: '', series: corrMoodSeries },
+      symptomSeverity: { label: 'Symptom severity (avg/5)', unit: '', series: corrSymptomSeveritySeries },
+      symptomFrequency: { label: 'Symptom frequency (count)', unit: '', series: corrSymptomFrequencySeries },
     };
     const CORR_PRESETS = [
       { label: 'Recovery × Task', a: 'recovery', b: 'taskCompletion' },
@@ -2631,7 +3037,7 @@ document.addEventListener('DOMContentLoaded', function () {
   if (typeof initCloudSync !== 'function') return;
   initCloudSync({
     appKey: 'health',
-    syncedKeys: ['stack:items', 'stack:version', 'stack:low', 'po_water_v1'],
+    syncedKeys: ['stack:items', 'stack:version', 'stack:low', 'po_water_v1', 'eq.energy.logs_v1'],
     syncedPrefixes: ['stack:taken:'],
     onApplied: function () { window.dispatchEvent(new Event('storage')); }
   });

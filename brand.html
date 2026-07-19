@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
+<script src="auth-gate.js"></script>
 <script src="landing-guard.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="vitality-bridge.js"></script>
@@ -13,6 +14,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Equavia">
 <title>Brand — Equavia</title>
+<script src="assistant-tools.js"></script>
 <script src="topbar.js" defer></script>
 <!--
   BRAND — bare minimum, built to be built on.
@@ -152,7 +154,7 @@ function emptyMsg(a){
   return 'tap the number to log · your mentor files the rest';
 }
 
-/* smooth area graph from history (same curve style as the Peak page) */
+/* smooth area graph from history (same curve style used by the app's other charts, e.g. health.html's Sleep Log/Energy) */
 function graph(a){
   const h=(a.history||[]).filter(s=>typeof s.count==='number');
   const pc=(PLATFORMS[a.platform]||{}).color||'#6EE7B7';

@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
+<script src="auth-gate.js"></script>
 <script src="landing-guard.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="vitality-bridge.js"></script>
@@ -13,6 +14,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Equavia">
 <title>Vitals — Equavia</title>
+<script src="assistant-tools.js"></script>
 <script src="topbar.js" defer></script>
 <!--
   VITALS — bone-simple. One recovery number, from two inputs you bring: how you
@@ -22,8 +24,10 @@
   Sealed: no network. Saves through window.Vitality.
   Store: { 'YYYY-MM-DD': { sleepHours, feel, whoopRecovery? } }
   Recovery: whoopRecovery wins when a device fills it; else 0.6·feel + 0.4·sleep.
-  The SAME formula lives in peak.html (recoveryFromVitals) + docs/THE-MATH.md §5
-  + /sweep — change one, change all, so Peak never disagrees.
+  Also documented in docs/THE-MATH.md §5. (Phase 6.1: this comment previously
+  claimed the identical formula also lived in peak.html — that page never
+  actually had a matching function, and it's deleted now regardless; fixed
+  the stale cross-reference rather than carry it forward.)
 -->
 <style>
   :root{
@@ -105,9 +109,12 @@ let draft={sleepHours:7.5,feel:null};
 function persist(){window.Vitality.save(store)}
 function todayKey(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 
-/* THE shared recovery formula — identical to peak.html recoveryFromVitals,
-   docs/THE-MATH.md §5 and /sweep. whoopRecovery (a device) wins; else the two
-   manual inputs. Change here — change all. */
+/* THE shared recovery formula — docs/THE-MATH.md §5 and /sweep. whoopRecovery
+   (a device) wins; else the two manual inputs. Change here — change all.
+   (Phase 6.1: the old "identical to peak.html recoveryFromVitals" note above
+   was already stale before peak.html was deleted — no such function ever
+   existed there; peak's own WHOOP handling was a differently-shaped
+   multiplier, not this estimate. Removed the incorrect cross-reference.) */
 function estRecovery(h){
   if(!h) return null;
   if(typeof h.whoopRecovery==='number') return Math.max(1,Math.min(99,Math.round(h.whoopRecovery)));

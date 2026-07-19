@@ -274,6 +274,21 @@
     } catch (e) { return { ok: false, reason: 'network' }; }
   }
 
+  // 4.4's evening "Close the day" review -- same one-shot overwrite shape
+  // as pushWeeklyReport/pushChatTranscript, keyed by date so re-closing the
+  // same day (shouldn't normally happen, but harmless if it does) updates
+  // one file instead of piling up.
+  async function pushDailyNote(dateKey, markdown) {
+    const cfg = getConfig();
+    if (!cfg.enabled) return { ok: false, reason: 'disabled' };
+    const relPath = (cfg.folder || 'AppNotes') + '/Daily/' + dateKey + '.md';
+    try {
+      const res = await apiFetch(vaultPath(cfg, relPath), { method: 'PUT', body: markdown, headers: { 'Content-Type': 'text/markdown' } });
+      if (!res.ok) return { ok: false, reason: 'http_' + res.status };
+      return { ok: true, path: relPath };
+    } catch (e) { return { ok: false, reason: 'network' }; }
+  }
+
   async function pullAll(existingNotes) {
     const cfg = getConfig();
     if (!cfg.enabled) return { ok: false, reason: 'disabled', notes: existingNotes };
@@ -330,5 +345,84 @@
     return { ok: true, notes };
   }
 
-  window.ObsidianSync = { getConfig, setConfig, testConnection, pushNote, deleteNote, pullAll, pushProjectPage, moveProjectPageToFolder, pushWeeklyReport, searchNotes, pushChatTranscript };
+  // ============================================================
+  // 6.8 -- multi-device sync file (equavia-sync.json), one JSON object at
+  // the vault root of cfg.folder holding every synced namespace's raw
+  // key/value data plus a per-namespace updatedAt. Kept as one file (not
+  // one file per namespace) since the Local REST API has no batch-read
+  // verb -- one GET/PUT round trip beats N of them for an app this size.
+  // ============================================================
+  const SYNC_FILE_PATH = 'equavia-sync.json';
+  async function pullSyncFile() {
+    const cfg = getConfig();
+    if (!cfg.enabled) return { ok: false, reason: 'disabled' };
+    try {
+      const res = await apiFetch(vaultPath(cfg, SYNC_FILE_PATH));
+      if (res.status === 404) return { ok: true, missing: true, doc: null };
+      if (!res.ok) return { ok: false, reason: 'http_' + res.status };
+      const text = await res.text();
+      try { return { ok: true, doc: JSON.parse(text) }; }
+      catch (e) { return { ok: false, reason: 'bad_json' }; }
+    } catch (e) { return { ok: false, reason: 'network' }; }
+  }
+  async function pushSyncFile(doc) {
+    const cfg = getConfig();
+    if (!cfg.enabled) return { ok: false, reason: 'disabled' };
+    try {
+      const res = await apiFetch(vaultPath(cfg, SYNC_FILE_PATH), {
+        method: 'PUT', body: JSON.stringify(doc, null, 2), headers: { 'Content-Type': 'application/json' },
+      });
+      if (!res.ok) return { ok: false, reason: 'http_' + res.status };
+      return { ok: true };
+    } catch (e) { return { ok: false, reason: 'network' }; }
+  }
+
+  // ============================================================
+  // 6.9 -- generic binary PUT (progress photos) and the weekly auto-backup
+  // file family. Both reuse the same apiFetch/vaultPath/dataUrlToBlob
+  // plumbing every push function above already uses; nothing new at the
+  // transport layer, just new relative paths and content types.
+  // ============================================================
+  async function pushBinary(relPath, dataUrl, contentType) {
+    const cfg = getConfig();
+    if (!cfg.enabled) return { ok: false, reason: 'disabled' };
+    try {
+      const blob = dataUrlToBlob(dataUrl);
+      const res = await apiFetch(vaultPath(cfg, relPath), { method: 'PUT', body: blob, headers: { 'Content-Type': contentType || blob.type } });
+      if (!res.ok) return { ok: false, reason: 'http_' + res.status };
+      return { ok: true, path: relPath };
+    } catch (e) { return { ok: false, reason: 'network' }; }
+  }
+
+  const BACKUP_FOLDER = 'Backups';
+  async function pushBackupFile(weekKey, jsonString) {
+    const cfg = getConfig();
+    if (!cfg.enabled) return { ok: false, reason: 'disabled' };
+    const relPath = BACKUP_FOLDER + '/equavia-' + weekKey + '.json';
+    try {
+      const res = await apiFetch(vaultPath(cfg, relPath), { method: 'PUT', body: jsonString, headers: { 'Content-Type': 'application/json' } });
+      if (!res.ok) return { ok: false, reason: 'http_' + res.status };
+      return { ok: true, path: relPath };
+    } catch (e) { return { ok: false, reason: 'network' }; }
+  }
+  async function listBackupFiles() {
+    const cfg = getConfig();
+    if (!cfg.enabled) return { ok: false, reason: 'disabled', files: [] };
+    try {
+      const res = await apiFetch(vaultPath(cfg, BACKUP_FOLDER) + '/');
+      if (res.status === 404) return { ok: true, files: [] };
+      if (!res.ok) return { ok: false, reason: 'http_' + res.status, files: [] };
+      const json = await res.json();
+      const files = (json.files || []).filter((f) => /^equavia-.*\.json$/i.test(f));
+      return { ok: true, files };
+    } catch (e) { return { ok: false, reason: 'network', files: [] }; }
+  }
+  async function deleteBackupFile(filename) {
+    const cfg = getConfig();
+    if (!cfg.enabled) return { ok: false };
+    try { await apiFetch(vaultPath(cfg, BACKUP_FOLDER + '/' + filename), { method: 'DELETE' }); return { ok: true }; }
+    catch (e) { return { ok: false }; }
+  }
+
+  window.ObsidianSync = { getConfig, setConfig, testConnection, pushNote, deleteNote, pullAll, pushProjectPage, moveProjectPageToFolder, pushWeeklyReport, searchNotes, pushChatTranscript, pushDailyNote, pullSyncFile, pushSyncFile, pushBinary, pushBackupFile, listBackupFiles, deleteBackupFile };
 })();

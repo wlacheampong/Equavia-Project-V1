@@ -1,5 +1,8 @@
 // =============================================================
-// Bridge for the "sealed" Vitality tiles (peak/train/notes/vitals.html).
+// Bridge for the "sealed" Vitality tiles (train/notes/vitals/brand.html).
+// (Phase 6.1: peak.html used to be one of these -- deleted and merged into
+// health.html's Energy section, which uses sync.js/initCloudSync instead,
+// not this bridge.)
 // Each tile is deliberately network- and storage-agnostic -- it just calls
 // window.Vitality.load()/save() and expects "the dashboard" to handle
 // persistence. This is that dashboard: it backs onto the same Supabase

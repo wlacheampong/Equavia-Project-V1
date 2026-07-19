@@ -7,16 +7,18 @@
 // Bump CACHE_NAME on any app-shell file change so clients pick up
 // the new list and drop the old cache on next activate.
 // =============================================================
-const CACHE_NAME = 'equavia-shell-v2';
+const CACHE_NAME = 'equavia-shell-v14';
 const APP_SHELL = [
   'index.html',
+  'lock.html',
   'dashboard.html',
   'health.html',
   'gym.html',
-  'peak.html',
   'finance.html',
   'planner.html',
   'ability.html',
+  'interactions.html',
+  'news.html',
   'notes.html',
   'train.html',
   'vitals.html',
@@ -28,9 +30,12 @@ const APP_SHELL = [
   'manifest.json',
   'topbar.js',
   'landing-guard.js',
+  'auth-gate.js',
+  'assistant-tools.js',
   'obsidian-sync.js',
   'sync.js',
   'vitality-bridge.js',
+  'dexie.min.js',
   'images/Index Landing Page.webp',
   'images/splash-red-wing.jpg',
   'images/icon-192.png',

@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<script src="auth-gate.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#0a0a0b">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -11,6 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Equavia">
 <title>Ability — Equavia</title>
+<script src="assistant-tools.js"></script>
 <script src="topbar.js" defer></script>
 <style>
 :root {
@@ -264,6 +266,62 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
 .hab-year-modal-pct { font-size: 12px; color: var(--text-tertiary); margin-bottom: 14px; }
 .hab-year-modal-grid-wrap { overflow-x: auto; padding-bottom: 8px; }
 .hab-year-modal-grid { display: grid; grid-template-rows: repeat(7, 1fr); grid-auto-flow: column; gap: 3px; width: max-content; }
+
+/* ===== Learn Hub (6.3) ===== */
+.learn-due-chip {
+  background: rgba(224,118,88,0.16); color: var(--accent); border-radius: 999px;
+  padding: 3px 10px; font-size: 10.5px; font-weight: 700;
+}
+.learn-track-add-row, .learn-status-row, .learn-deadline-add-row, .learn-hours-add-row, .learn-deck-add-row, .learn-log-add-row {
+  display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;
+}
+.learn-track-add-row input, .learn-deadline-add-row input, .learn-hours-add-row input, .learn-deck-add-row input, .learn-log-add-row input, .learn-status-row select, .learn-status-row input {
+  flex: 1; min-width: 90px; background: rgba(0,0,0,0.28); border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px; color: var(--text-primary); font-family: inherit; font-size: 12.5px; padding: 8px 10px;
+}
+.learn-track-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 11px 4px; border-bottom: 1px solid rgba(255,255,255,0.06); cursor: pointer;
+}
+.learn-track-row:last-child { border-bottom: none; }
+.learn-track-name { font-size: 13.5px; font-weight: 600; }
+.learn-track-status { font-size: 10.5px; color: var(--text-tertiary); text-transform: capitalize; }
+.learn-subsection-title { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-tertiary); margin: 18px 0 8px; }
+.learn-item-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 12.5px; }
+.learn-item-row:last-child { border-bottom: none; }
+.learn-item-sub { color: var(--text-tertiary); font-size: 11px; }
+.learn-item-del { background: none; border: none; color: var(--text-quaternary); cursor: pointer; font-size: 14px; padding: 0 4px; }
+.learn-deadline-soon { color: var(--warning); font-weight: 700; }
+.learn-hours-total { font-size: 12px; color: var(--text-secondary); margin-bottom: 8px; }
+.learn-export-btn {
+  margin-top: 8px; background: none; border: 1px dashed rgba(255,255,255,0.16); border-radius: 8px;
+  padding: 7px 12px; font-family: inherit; font-size: 11px; font-weight: 600; color: var(--text-secondary); cursor: pointer;
+}
+.learn-deck-row { padding: 9px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.learn-deck-row:last-child { border-bottom: none; }
+.learn-deck-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.learn-deck-name { font-size: 13px; font-weight: 600; }
+.learn-deck-meta { font-size: 11px; color: var(--text-tertiary); }
+.learn-deck-actions { display: flex; gap: 6px; margin-top: 6px; }
+.learn-deck-actions button {
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14); border-radius: 7px;
+  padding: 5px 10px; font-family: inherit; font-size: 10.5px; font-weight: 600; color: var(--text-primary); cursor: pointer;
+}
+.learn-import-hint { font-size: 11.5px; color: var(--text-tertiary); margin: 0 0 10px; }
+#learnDeckImportText {
+  width: 100%; box-sizing: border-box; background: rgba(0,0,0,0.28); border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px; color: var(--text-primary); font-family: inherit; font-size: 12.5px; padding: 9px 11px; margin-bottom: 10px;
+}
+.learn-review-card { text-align: center; padding: 20px 10px; }
+.learn-review-face { font-size: 15px; line-height: 1.5; margin-bottom: 16px; min-height: 40px; }
+.learn-review-grades { display: flex; gap: 8px; justify-content: center; margin-top: 12px; }
+.learn-grade-btn {
+  flex: 1; padding: 10px; border-radius: 9px; border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.06); color: var(--text-primary); font-family: inherit; font-size: 12px; font-weight: 700; cursor: pointer;
+}
+.learn-grade-btn[data-grade="2"] { border-color: rgba(255,107,107,0.4); color: #FF9B9B; }
+.learn-grade-btn[data-grade="5"] { border-color: rgba(107,227,164,0.4); color: #6BE3A4; }
+.learn-review-status { text-align: center; font-size: 12px; color: var(--text-tertiary); margin-top: 12px; }
 .hab-year-modal-cell { width: 11px; height: 11px; border-radius: 2px; }
 .hab-year-modal-cell.is-done { background: var(--success); }
 .hab-year-modal-cell.is-missed { background: rgba(255,107,107,0.55); }
@@ -510,6 +568,106 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
   </div>
 </div>
 
+<!-- ===== LEARN HUB (6.3) ===== -->
+<div class="section" data-section="learn" id="learn-hub">
+  <div class="section-title">
+    <span class="section-title-text">LEARN HUB</span>
+    <span class="learn-due-chip" id="learnDueChip" style="display:none;"></span>
+  </div>
+  <div class="card">
+    <div class="learn-track-add-row">
+      <input type="text" class="hab-input" id="learnTrackInput" placeholder="New track (e.g. Adult Nursing BSc)…">
+      <button type="button" class="hab-add-btn" id="learnTrackAddBtn">+ Add</button>
+    </div>
+    <div id="learnTracksList"></div>
+    <div class="empty-state" id="learnEmptyState" style="display:none;">No tracks yet — add one above.</div>
+  </div>
+</div>
+
+</div>
+
+<div class="hab-year-modal-bg" id="learnTrackModalBg">
+  <div class="hab-year-modal">
+    <div class="hab-year-modal-head">
+      <span class="hab-year-modal-title" id="learnTrackModalTitle">Track</span>
+      <button type="button" class="hab-year-modal-close" id="learnTrackModalClose" aria-label="Close">&times;</button>
+    </div>
+    <div class="learn-status-row">
+      <select id="learnTrackStatus">
+        <option value="active">Active</option>
+        <option value="paused">Paused</option>
+        <option value="done">Done</option>
+      </select>
+      <input type="date" id="learnTrackEndDate">
+      <button type="button" class="hab-add-btn" id="learnTrackDelBtn">Delete track</button>
+    </div>
+
+    <div class="learn-subsection-title">Deadlines</div>
+    <div class="learn-deadline-add-row">
+      <input type="text" id="learnDeadlineTitle" placeholder="Assignment / exam / application…">
+      <input type="date" id="learnDeadlineDate">
+      <input type="number" id="learnDeadlineWeight" placeholder="Weight %" min="0" max="100">
+      <button type="button" class="hab-add-btn" id="learnDeadlineAddBtn">+ Add</button>
+    </div>
+    <div id="learnDeadlinesList"></div>
+
+    <div class="learn-subsection-title">Hours log</div>
+    <div class="learn-hours-add-row">
+      <input type="number" id="learnHoursInput" placeholder="Minutes" min="1">
+      <input type="text" id="learnHoursNote" placeholder="Note (optional)…">
+      <button type="button" class="hab-add-btn" id="learnHoursAddBtn">Log</button>
+    </div>
+    <div class="learn-hours-total" id="learnHoursTotal"></div>
+    <div id="learnHoursList"></div>
+    <button type="button" class="learn-export-btn" id="learnHoursExportBtn">Export CSV</button>
+
+    <div class="learn-subsection-title">Flashcard decks</div>
+    <div class="learn-deck-add-row">
+      <input type="text" id="learnDeckNameInput" placeholder="New deck name…">
+      <button type="button" class="hab-add-btn" id="learnDeckAddBtn">+ Deck</button>
+    </div>
+    <div id="learnDecksList"></div>
+
+    <div class="learn-subsection-title">Learning log</div>
+    <div class="learn-log-add-row">
+      <input type="text" id="learnLogText" placeholder="Thing you learned…">
+      <input type="text" id="learnLogLink" placeholder="Link (optional)…">
+      <button type="button" class="hab-add-btn" id="learnLogAddBtn">+ Log</button>
+    </div>
+    <div id="learnLogList"></div>
+  </div>
+</div>
+
+<div class="hab-year-modal-bg" id="learnDeckImportModalBg">
+  <div class="hab-year-modal">
+    <div class="hab-year-modal-head">
+      <span class="hab-year-modal-title">Paste cards</span>
+      <button type="button" class="hab-year-modal-close" id="learnDeckImportClose" aria-label="Close">&times;</button>
+    </div>
+    <p class="learn-import-hint">One card per line, front and back separated by a tab or " :: ". Paste output from Ask Claude directly.</p>
+    <textarea id="learnDeckImportText" rows="8" placeholder="What is the normal adult resting HR range? :: 60-100 bpm"></textarea>
+    <button type="button" class="hab-add-btn" id="learnDeckImportSaveBtn">Import</button>
+  </div>
+</div>
+
+<div class="hab-year-modal-bg" id="learnReviewModalBg">
+  <div class="hab-year-modal">
+    <div class="hab-year-modal-head">
+      <span class="hab-year-modal-title" id="learnReviewTitle">Review</span>
+      <button type="button" class="hab-year-modal-close" id="learnReviewClose" aria-label="Close">&times;</button>
+    </div>
+    <div class="learn-review-card" id="learnReviewCard">
+      <div class="learn-review-face" id="learnReviewFront"></div>
+      <div class="learn-review-face" id="learnReviewBack" style="display:none;"></div>
+      <button type="button" class="hab-add-btn" id="learnReviewShowBtn">Show answer</button>
+    </div>
+    <div class="learn-review-grades" id="learnReviewGrades" style="display:none;">
+      <button type="button" class="learn-grade-btn" data-grade="2">Again</button>
+      <button type="button" class="learn-grade-btn" data-grade="4">Good</button>
+      <button type="button" class="learn-grade-btn" data-grade="5">Easy</button>
+    </div>
+    <div class="learn-review-status" id="learnReviewStatus"></div>
+  </div>
 </div>
 
 <div class="hab-year-modal-bg" id="habYearModalBg">
@@ -1108,6 +1266,334 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
 
   // Re-render if storage changes from another tab.
   window.addEventListener('storage', () => { renderHabits(); renderSkills(); renderBooks(); });
+})();
+</script>
+<script>
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  function storeGet(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }
+  function storeSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  function genId(p) { return p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+
+  // ============================================================
+  // 6.3 LEARN HUB -- lives on Ability (the user explicitly kept this page's
+  // name rather than the spec's proposed "Growth" rename, earlier in this
+  // same Phase 6 pass). Starts empty, no seed tracks, per the answered
+  // ASK FIRST question. Flashcards included in v1 (also answered) --
+  // classic SM-2 spaced repetition, not a simplified variant.
+  // ============================================================
+  const TRACKS_KEY = 'eq.learn.tracks_v1';
+  const DEADLINES_KEY = 'eq.learn.deadlines_v1';
+  const HOURS_KEY = 'eq.learn.hours_v1';
+  const DECKS_KEY = 'eq.learn.decks_v1';
+  const LOG_KEY = 'eq.learn.log_v1';
+
+  function getTracks() { return storeGet(TRACKS_KEY) || []; }
+  function setTracks(v) { storeSet(TRACKS_KEY, v); }
+  function getDeadlines() { return storeGet(DEADLINES_KEY) || []; }
+  function setDeadlines(v) { storeSet(DEADLINES_KEY, v); }
+  function getHours() { return storeGet(HOURS_KEY) || []; }
+  function setHours(v) { storeSet(HOURS_KEY, v); }
+  function getDecks() { return storeGet(DECKS_KEY) || []; }
+  function setDecks(v) { storeSet(DECKS_KEY, v); }
+  function getLearnLog() { return storeGet(LOG_KEY) || []; }
+  function setLearnLog(v) { storeSet(LOG_KEY, v); }
+
+  let activeTrackId = null;
+
+  // ---- Tracks ----
+  function renderTracks() {
+    const wrap = $('learnTracksList');
+    const tracks = getTracks();
+    wrap.innerHTML = '';
+    $('learnEmptyState').style.display = tracks.length ? 'none' : '';
+    tracks.forEach((t) => {
+      const row = document.createElement('div');
+      row.className = 'learn-track-row';
+      row.innerHTML = '<span class="learn-track-name"></span><span class="learn-track-status"></span>';
+      row.querySelector('.learn-track-name').textContent = t.name;
+      row.querySelector('.learn-track-status').textContent = t.status;
+      row.addEventListener('click', () => openTrackModal(t.id));
+      wrap.appendChild(row);
+    });
+  }
+  $('learnTrackAddBtn').addEventListener('click', () => {
+    const input = $('learnTrackInput');
+    const name = input.value.trim();
+    if (!name) return;
+    const tracks = getTracks();
+    tracks.push({ id: genId('lt'), name, status: 'active', endDate: null, createdAt: new Date().toISOString() });
+    setTracks(tracks);
+    input.value = '';
+    renderTracks();
+  });
+
+  // ---- Track detail modal ----
+  function openTrackModal(id) {
+    activeTrackId = id;
+    const t = getTracks().find((x) => x.id === id);
+    if (!t) return;
+    $('learnTrackModalTitle').textContent = t.name;
+    $('learnTrackStatus').value = t.status;
+    $('learnTrackEndDate').value = t.endDate || '';
+    renderDeadlines();
+    renderHoursLog();
+    renderDecks();
+    renderLearnLog();
+    $('learnTrackModalBg').classList.add('show');
+  }
+  function closeTrackModal() { $('learnTrackModalBg').classList.remove('show'); activeTrackId = null; }
+  $('learnTrackModalClose').addEventListener('click', closeTrackModal);
+  $('learnTrackModalBg').addEventListener('click', (e) => { if (e.target === $('learnTrackModalBg')) closeTrackModal(); });
+  $('learnTrackStatus').addEventListener('change', () => {
+    const tracks = getTracks();
+    const t = tracks.find((x) => x.id === activeTrackId);
+    if (t) { t.status = $('learnTrackStatus').value; setTracks(tracks); renderTracks(); }
+  });
+  $('learnTrackEndDate').addEventListener('change', () => {
+    const tracks = getTracks();
+    const t = tracks.find((x) => x.id === activeTrackId);
+    if (t) { t.endDate = $('learnTrackEndDate').value || null; setTracks(tracks); }
+  });
+  $('learnTrackDelBtn').addEventListener('click', () => {
+    if (!confirm('Delete this track and all its deadlines/hours/decks/log entries? This can\'t be undone.')) return;
+    setTracks(getTracks().filter((x) => x.id !== activeTrackId));
+    setDeadlines(getDeadlines().filter((x) => x.trackId !== activeTrackId));
+    setHours(getHours().filter((x) => x.trackId !== activeTrackId));
+    setDecks(getDecks().filter((x) => x.trackId !== activeTrackId));
+    setLearnLog(getLearnLog().filter((x) => x.trackId !== activeTrackId));
+    closeTrackModal();
+    renderTracks();
+    renderDueChip();
+  });
+
+  // ---- Deadlines ----
+  function renderDeadlines() {
+    const wrap = $('learnDeadlinesList');
+    const items = getDeadlines().filter((d) => d.trackId === activeTrackId).sort((a, b) => a.dueDate.localeCompare(b.dueDate));
+    wrap.innerHTML = '';
+    items.forEach((d) => {
+      const daysOut = Math.ceil((new Date(d.dueDate).getTime() - Date.now()) / 86400000);
+      const row = document.createElement('div');
+      row.className = 'learn-item-row';
+      row.innerHTML = '<span></span><button type="button" class="learn-item-del" aria-label="Delete">×</button>';
+      const label = row.querySelector('span');
+      label.innerHTML = (d.status === 'done' ? '<s>' : '') + escapeHtml(d.title) + (d.status === 'done' ? '</s>' : '') +
+        ' <span class="learn-item-sub' + (daysOut <= 7 && d.status !== 'done' ? ' learn-deadline-soon' : '') + '">' + d.dueDate + (d.weight ? ' · ' + d.weight + '%' : '') + '</span>';
+      label.style.cursor = 'pointer';
+      label.addEventListener('click', () => {
+        const list = getDeadlines();
+        const idx = list.findIndex((x) => x.id === d.id);
+        list[idx].status = list[idx].status === 'done' ? 'pending' : 'done';
+        setDeadlines(list);
+        renderDeadlines();
+        renderDueChip();
+      });
+      row.querySelector('.learn-item-del').addEventListener('click', () => { setDeadlines(getDeadlines().filter((x) => x.id !== d.id)); renderDeadlines(); renderDueChip(); });
+      wrap.appendChild(row);
+    });
+  }
+  function escapeHtml(s) { return String(s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c])); }
+  $('learnDeadlineAddBtn').addEventListener('click', () => {
+    const title = $('learnDeadlineTitle').value.trim();
+    const dueDate = $('learnDeadlineDate').value;
+    if (!title || !dueDate || !activeTrackId) return;
+    const list = getDeadlines();
+    list.push({ id: genId('ld'), trackId: activeTrackId, title, dueDate, weight: Number($('learnDeadlineWeight').value) || null, status: 'pending', createdAt: new Date().toISOString() });
+    setDeadlines(list);
+    $('learnDeadlineTitle').value = ''; $('learnDeadlineDate').value = ''; $('learnDeadlineWeight').value = '';
+    renderDeadlines();
+  });
+
+  // ---- Hours log ----
+  function trackName(id) { const t = getTracks().find((x) => x.id === id); return t ? t.name : 'Unknown track'; }
+  function renderHoursLog() {
+    const entries = getHours().filter((h) => h.trackId === activeTrackId).sort((a, b) => b.at.localeCompare(a.at));
+    const totalMin = entries.reduce((s, h) => s + h.minutes, 0);
+    $('learnHoursTotal').textContent = entries.length ? (totalMin / 60).toFixed(1) + 'h total (' + entries.length + ' sessions)' : 'No sessions logged yet.';
+    const wrap = $('learnHoursList');
+    wrap.innerHTML = '';
+    entries.slice(0, 15).forEach((h) => {
+      const row = document.createElement('div');
+      row.className = 'learn-item-row';
+      row.innerHTML = '<span>' + new Date(h.at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + ' — ' + h.minutes + 'min' + (h.note ? ' <span class="learn-item-sub">' + escapeHtml(h.note) + '</span>' : '') + '</span><button type="button" class="learn-item-del" aria-label="Delete">×</button>';
+      row.querySelector('.learn-item-del').addEventListener('click', () => { setHours(getHours().filter((x) => x.id !== h.id)); renderHoursLog(); });
+      wrap.appendChild(row);
+    });
+  }
+  $('learnHoursAddBtn').addEventListener('click', () => {
+    const minutes = Number($('learnHoursInput').value);
+    if (!minutes || !activeTrackId) return;
+    const list = getHours();
+    list.push({ id: genId('lh'), trackId: activeTrackId, minutes, note: $('learnHoursNote').value.trim(), at: new Date().toISOString() });
+    setHours(list);
+    $('learnHoursInput').value = ''; $('learnHoursNote').value = '';
+    renderHoursLog();
+  });
+  // CSV, per the answered ASK FIRST question -- date/hours/note columns,
+  // opens cleanly anywhere; reformatting into a specific placement
+  // template is left to the user rather than guessing that template's
+  // exact layout.
+  $('learnHoursExportBtn').addEventListener('click', () => {
+    const entries = getHours().filter((h) => h.trackId === activeTrackId).sort((a, b) => a.at.localeCompare(b.at));
+    const rows = [['Date', 'Hours', 'Note']].concat(entries.map((h) => [new Date(h.at).toISOString().slice(0, 10), (h.minutes / 60).toFixed(2), (h.note || '').replace(/"/g, '""')]));
+    const csv = rows.map((r) => r.map((c) => '"' + c + '"').join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = trackName(activeTrackId).replace(/[^a-z0-9]+/gi, '-') + '-hours.csv';
+    a.click();
+  });
+
+  // ---- Flashcard decks (SM-2) ----
+  function sm2Update(card, quality) {
+    if (quality < 3) { card.repetition = 0; card.interval = 1; }
+    else {
+      if (card.repetition === 0) card.interval = 1;
+      else if (card.repetition === 1) card.interval = 6;
+      else card.interval = Math.round(card.interval * card.efactor);
+      card.repetition++;
+    }
+    card.efactor = Math.max(1.3, card.efactor + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02)));
+    card.dueDate = new Date(Date.now() + card.interval * 86400000).toISOString();
+    return card;
+  }
+  function newCard(front, back) { return { id: genId('lc'), front, back, repetition: 0, interval: 0, efactor: 2.5, dueDate: new Date().toISOString() }; }
+  function dueCardCount(deck) { return (deck.cards || []).filter((c) => c.dueDate <= new Date().toISOString()).length; }
+  function allDueCount() {
+    return getDecks().reduce((s, d) => s + dueCardCount(d), 0);
+  }
+  function renderDueChip() {
+    const n = allDueCount();
+    const chip = $('learnDueChip');
+    if (n > 0) { chip.style.display = ''; chip.textContent = 'due today: ' + n; }
+    else chip.style.display = 'none';
+  }
+  function renderDecks() {
+    const wrap = $('learnDecksList');
+    const decks = getDecks().filter((d) => d.trackId === activeTrackId);
+    wrap.innerHTML = '';
+    decks.forEach((d) => {
+      const row = document.createElement('div');
+      row.className = 'learn-deck-row';
+      row.innerHTML =
+        '<div class="learn-deck-top"><span class="learn-deck-name"></span><span class="learn-deck-meta"></span></div>' +
+        '<div class="learn-deck-actions"><button type="button" data-act="import">Paste cards</button><button type="button" data-act="review">Review</button><button type="button" data-act="del">Delete</button></div>';
+      row.querySelector('.learn-deck-name').textContent = d.name;
+      row.querySelector('.learn-deck-meta').textContent = (d.cards || []).length + ' cards · ' + dueCardCount(d) + ' due';
+      row.querySelector('[data-act="import"]').addEventListener('click', () => openDeckImport(d.id));
+      row.querySelector('[data-act="review"]').addEventListener('click', () => openReview(d.id));
+      row.querySelector('[data-act="del"]').addEventListener('click', () => { if (confirm('Delete deck "' + d.name + '"?')) { setDecks(getDecks().filter((x) => x.id !== d.id)); renderDecks(); renderDueChip(); } });
+      wrap.appendChild(row);
+    });
+  }
+  $('learnDeckAddBtn').addEventListener('click', () => {
+    const name = $('learnDeckNameInput').value.trim();
+    if (!name || !activeTrackId) return;
+    const decks = getDecks();
+    decks.push({ id: genId('ld2'), trackId: activeTrackId, name, cards: [] });
+    setDecks(decks);
+    $('learnDeckNameInput').value = '';
+    renderDecks();
+  });
+
+  let importDeckId = null;
+  function openDeckImport(deckId) { importDeckId = deckId; $('learnDeckImportText').value = ''; $('learnDeckImportModalBg').classList.add('show'); }
+  $('learnDeckImportClose').addEventListener('click', () => $('learnDeckImportModalBg').classList.remove('show'));
+  $('learnDeckImportModalBg').addEventListener('click', (e) => { if (e.target === $('learnDeckImportModalBg')) $('learnDeckImportModalBg').classList.remove('show'); });
+  $('learnDeckImportSaveBtn').addEventListener('click', () => {
+    const text = $('learnDeckImportText').value;
+    const lines = text.split('\n').map((l) => l.trim()).filter(Boolean);
+    const decks = getDecks();
+    const deck = decks.find((x) => x.id === importDeckId);
+    if (!deck) return;
+    let added = 0;
+    lines.forEach((line) => {
+      const sep = line.indexOf('\t') !== -1 ? '\t' : ' :: ';
+      const parts = line.split(sep);
+      if (parts.length >= 2) { deck.cards.push(newCard(parts[0].trim(), parts.slice(1).join(sep).trim())); added++; }
+    });
+    setDecks(decks);
+    $('learnDeckImportModalBg').classList.remove('show');
+    renderDecks();
+    renderDueChip();
+  });
+
+  let reviewDeckId = null, reviewQueue = [], reviewCard = null;
+  function openReview(deckId) {
+    reviewDeckId = deckId;
+    const deck = getDecks().find((x) => x.id === deckId);
+    if (!deck) return;
+    reviewQueue = (deck.cards || []).filter((c) => c.dueDate <= new Date().toISOString());
+    $('learnReviewTitle').textContent = deck.name;
+    $('learnReviewModalBg').classList.add('show');
+    nextReviewCard();
+  }
+  function nextReviewCard() {
+    if (!reviewQueue.length) {
+      $('learnReviewCard').style.display = 'none';
+      $('learnReviewGrades').style.display = 'none';
+      $('learnReviewStatus').textContent = 'All done for now.';
+      return;
+    }
+    reviewCard = reviewQueue.shift();
+    $('learnReviewCard').style.display = '';
+    $('learnReviewFront').textContent = reviewCard.front;
+    $('learnReviewFront').style.display = '';
+    $('learnReviewBack').style.display = 'none';
+    $('learnReviewBack').textContent = reviewCard.back;
+    $('learnReviewShowBtn').style.display = '';
+    $('learnReviewGrades').style.display = 'none';
+    $('learnReviewStatus').textContent = reviewQueue.length + ' more after this.';
+  }
+  $('learnReviewShowBtn').addEventListener('click', () => {
+    $('learnReviewBack').style.display = '';
+    $('learnReviewShowBtn').style.display = 'none';
+    $('learnReviewGrades').style.display = '';
+  });
+  document.querySelectorAll('.learn-grade-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const quality = Number(btn.dataset.grade);
+      const decks = getDecks();
+      const deck = decks.find((x) => x.id === reviewDeckId);
+      const card = (deck.cards || []).find((c) => c.id === reviewCard.id);
+      sm2Update(card, quality);
+      setDecks(decks);
+      renderDecks();
+      renderDueChip();
+      nextReviewCard();
+    });
+  });
+  $('learnReviewClose').addEventListener('click', () => { $('learnReviewModalBg').classList.remove('show'); renderDecks(); });
+  $('learnReviewModalBg').addEventListener('click', (e) => { if (e.target === $('learnReviewModalBg')) { $('learnReviewModalBg').classList.remove('show'); renderDecks(); } });
+
+  // ---- Learning log ----
+  function renderLearnLog() {
+    const items = getLearnLog().filter((l) => l.trackId === activeTrackId).sort((a, b) => b.at.localeCompare(a.at));
+    const wrap = $('learnLogList');
+    wrap.innerHTML = '';
+    items.slice(0, 15).forEach((l) => {
+      const row = document.createElement('div');
+      row.className = 'learn-item-row';
+      row.innerHTML = '<span>' + escapeHtml(l.text) + (l.link ? ' <a href="' + l.link + '" target="_blank" rel="noopener" class="learn-item-sub">link</a>' : '') + '</span><button type="button" class="learn-item-del" aria-label="Delete">×</button>';
+      row.querySelector('.learn-item-del').addEventListener('click', () => { setLearnLog(getLearnLog().filter((x) => x.id !== l.id)); renderLearnLog(); });
+      wrap.appendChild(row);
+    });
+  }
+  $('learnLogAddBtn').addEventListener('click', () => {
+    const text = $('learnLogText').value.trim();
+    if (!text || !activeTrackId) return;
+    const list = getLearnLog();
+    list.push({ id: genId('ll'), trackId: activeTrackId, text, link: $('learnLogLink').value.trim() || null, at: new Date().toISOString() });
+    setLearnLog(list);
+    $('learnLogText').value = ''; $('learnLogLink').value = '';
+    renderLearnLog();
+  });
+
+  renderTracks();
+  renderDueChip();
+  window.addEventListener('storage', () => { renderTracks(); renderDueChip(); });
 })();
 </script>
 

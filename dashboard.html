@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<script src="auth-gate.js"></script>
 <script src="landing-guard.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#050506">
@@ -13,6 +14,7 @@
 <title>Equavia</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="sync.js" defer></script>
+<script src="assistant-tools.js"></script>
 <script src="topbar.js" defer></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
@@ -744,6 +746,14 @@ body::after {
   font-weight: 700; letter-spacing: 0.04em; padding: 4px 9px; border-radius: 6px; cursor: pointer;
 }
 .todo-chart-range-btn.is-active { background: var(--success); border-color: var(--success); color: #0a0a0b; }
+/* 6.6: "did the must-dos happen" optional P1-only view on this chart. */
+.todo-chart-p1-row { display: flex; justify-content: flex-end; margin-bottom: 6px; }
+.todo-chart-p1-btn {
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+  color: var(--text-tertiary); font-family: var(--font-mono); font-size: 10px;
+  font-weight: 700; letter-spacing: 0.04em; padding: 4px 9px; border-radius: 6px; cursor: pointer;
+}
+.todo-chart-p1-btn.is-active { background: #FF8A8A; border-color: #FF8A8A; color: #0a0a0b; }
 .todo-chart-empty { font-size: 12px; color: var(--text-tertiary); text-align: center; padding: 14px 4px; }
 .todo-chart-wrap { position: relative; margin: 4px 0 4px; }
 .todo-chart-wrap.hidden, .todo-chart-legend.hidden { display: none; }
@@ -763,6 +773,27 @@ body::after {
 .todo-legend-item { display: inline-flex; align-items: center; gap: 6px; font-size: 9.5px; letter-spacing: 0.06em; color: var(--text-tertiary); }
 .todo-legend-dot { width: 12px; height: 2px; border-radius: 1px; background: var(--success); opacity: 0.55; }
 .todo-legend-dot-avg { opacity: 1; height: 2.5px; }
+
+/* ===== Morning Brief + Close the Day (4.4) ===== */
+.brief-card { background: rgba(255,255,255,0.04); border-radius: 16px; padding: 18px; max-width: 640px; margin: 0 auto 18px; }
+.brief-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 4px; }
+.brief-title { font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-tertiary); }
+.brief-btn {
+  padding: 8px 14px; border-radius: 9px; border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.04); color: var(--text-secondary);
+  font-family: inherit; font-size: 11.5px; font-weight: 600; cursor: pointer;
+}
+.brief-btn:hover { background: rgba(255,255,255,0.08); color: var(--text-primary); }
+.brief-btn:disabled { opacity: 0.5; cursor: default; }
+.brief-text { font-size: 13.5px; line-height: 1.6; color: var(--text-primary); white-space: pre-wrap; margin-top: 10px; }
+.brief-empty { font-size: 12px; color: var(--text-quaternary); font-style: italic; margin-top: 6px; }
+.brief-meta { font-size: 10.5px; color: var(--text-quaternary); font-family: var(--font-mono); margin-top: 10px; }
+.brief-tomorrow { margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.06); }
+.brief-tomorrow-label { font-size: 12px; color: var(--text-secondary); margin-bottom: 8px; }
+.brief-tomorrow input {
+  flex: 1; padding: 9px 11px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(0,0,0,0.28); color: var(--text-primary); font-family: inherit; font-size: 13px;
+}
 
 /* ===== Weekly Report (3.3) ===== */
 .wkr-card { background: rgba(255,255,255,0.04); border-radius: 16px; padding: 18px; max-width: 640px; margin: 0 auto 18px; }
@@ -791,6 +822,67 @@ body::after {
 .wkr-obsidian-status { font-size: 11px; color: var(--text-tertiary); }
 .wkr-obsidian-status.is-error { color: var(--danger); }
 .wkr-empty { max-width: 640px; margin: 0 auto 18px; text-align: center; font-size: 12px; color: var(--text-tertiary); padding: 16px; }
+
+.audit-review-prompt { margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.06); text-align: center; }
+.audit-review-q { font-size: 12.5px; color: var(--text-secondary); margin: 8px 0 10px; }
+.audit-review-input {
+  width: 100%; max-width: 400px; box-sizing: border-box; background: rgba(0,0,0,0.28);
+  border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: var(--text-primary);
+  font-family: inherit; font-size: 13px; padding: 9px 11px;
+}
+.audit-review-done { font-size: 12px; color: var(--text-tertiary); font-style: italic; }
+
+/* ===== Mood + journal (6.2) ===== */
+.mood-chip { max-width: 640px; margin: 0 auto 18px; background: rgba(255,255,255,0.04); border-radius: 14px; padding: 14px 16px; }
+.mood-chip-head { font-size: 12.5px; font-weight: 700; color: var(--text-secondary); margin-bottom: 10px; }
+.mood-scale { display: flex; gap: 5px; flex-wrap: wrap; }
+.mood-num-btn {
+  flex: 1; min-width: 26px; height: 32px; border-radius: 8px; border: 1px solid var(--border-strong);
+  background: rgba(255,255,255,0.04); color: var(--text-secondary); font-family: inherit; font-size: 12px; font-weight: 700; cursor: pointer;
+}
+.mood-num-btn.is-selected { background: var(--accent); border-color: transparent; color: #1a0f0a; }
+.mood-note-input {
+  width: 100%; box-sizing: border-box; margin-top: 10px; background: rgba(0,0,0,0.28);
+  border: 1px solid var(--border-strong); border-radius: 8px; color: var(--text-primary);
+  font-family: inherit; font-size: 12.5px; padding: 8px 10px;
+}
+
+/* ===== Standing Rules / Alerts (4.6) ===== */
+.alerts-wrap { max-width: 640px; margin: 0 auto 18px; display: flex; flex-direction: column; gap: 8px; }
+.alert-row {
+  display: flex; align-items: flex-start; gap: 10px;
+  background: rgba(242,192,99,0.08); border: 1px solid rgba(242,192,99,0.25);
+  border-radius: 12px; padding: 12px 14px;
+}
+.alert-icon { font-size: 15px; line-height: 1.3; flex-shrink: 0; }
+.alert-text { font-size: 12.5px; color: var(--text-primary); line-height: 1.5; }
+
+/* ===== 6.8 integration-failure chip ===== */
+.health-fail-row {
+  display: flex; align-items: flex-start; gap: 10px;
+  background: rgba(255,138,138,0.08); border: 1px solid rgba(255,138,138,0.25);
+  border-radius: 12px; padding: 12px 14px;
+}
+.health-fail-text { flex: 1; font-size: 12.5px; color: var(--text-primary); line-height: 1.5; }
+.health-fail-dismiss { background: none; border: none; color: var(--text-tertiary); font-size: 16px; cursor: pointer; line-height: 1; padding: 0 2px; }
+.health-fail-dismiss:hover { color: var(--text-primary); }
+
+/* ===== Weekly Audit (4.5) -- sections rendered inside the same card,
+   below the stat header the Weekly Report (3.3) already provides ===== */
+.audit-section { margin-top: 16px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.06); }
+.audit-section-title { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 8px; }
+.audit-list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.audit-list li { font-size: 12.5px; color: var(--text-primary); line-height: 1.5; padding-left: 14px; position: relative; }
+.audit-list li::before { content: '—'; position: absolute; left: 0; color: var(--text-quaternary); }
+.audit-suggestion { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; background: rgba(255,255,255,0.025); border-radius: 10px; margin-bottom: 8px; }
+.audit-suggestion-text { font-size: 12.5px; color: var(--text-primary); line-height: 1.5; }
+.audit-suggestion-actions { display: flex; gap: 8px; }
+.audit-sugg-btn { border: none; border-radius: 8px; padding: 6px 12px; font-family: inherit; font-size: 11.5px; font-weight: 600; cursor: pointer; }
+.audit-sugg-implement { background: var(--accent); color: #1a0f0a; }
+.audit-sugg-ignore { background: rgba(255,255,255,0.08); color: var(--text-secondary); }
+.audit-sugg-status { font-size: 11px; color: var(--text-tertiary); font-style: italic; }
+.audit-verdict { font-size: 15px; font-weight: 700; color: var(--text-primary); }
+.audit-verdict-score { color: var(--accent); font-family: var(--font-mono); }
 
 /* ===== Component 7: Goals (sidebar) ===== */
 .dgt-add-form { margin-bottom: 14px; display: flex; flex-direction: column; gap: 6px; }
@@ -1392,6 +1484,41 @@ body::after {
     <span class="backup-nudge-cta">Back up now →</span>
   </a>
 
+  <div class="brief-card" id="briefCard">
+    <div class="brief-head">
+      <span class="brief-title">Morning Brief</span>
+      <button type="button" class="brief-btn" id="briefGenBtn">Generate brief</button>
+    </div>
+    <div class="brief-text" id="briefText" style="display:none;"></div>
+    <div class="brief-empty" id="briefEmpty">Not generated yet today — tap Generate brief.</div>
+    <div class="brief-meta" id="briefMeta"></div>
+  </div>
+
+  <div class="mood-chip" id="moodChip" style="display:none;">
+    <div class="mood-chip-head" id="moodChipHead">How's today?</div>
+    <div class="mood-scale" id="moodScale"></div>
+    <input type="text" class="mood-note-input" id="moodNoteInput" placeholder="One line, optional…" style="display:none;">
+  </div>
+
+  <div class="alerts-wrap" id="alertsWrap" style="display:none;"></div>
+  <div class="alerts-wrap" id="healthFailWrap" style="display:none;"></div>
+
+  <div class="brief-card" id="closeDayCard" style="display:none;">
+    <div class="brief-head">
+      <span class="brief-title">Close the Day</span>
+      <button type="button" class="brief-btn" id="closeDayBtn">Close the day</button>
+    </div>
+    <div class="brief-text" id="closeDayText" style="display:none;"></div>
+    <div class="brief-tomorrow" id="briefTomorrowPrompt" style="display:none;">
+      <div class="brief-tomorrow-label">Tomorrow's top task isn't set yet — what matters most?</div>
+      <div style="display:flex;gap:8px;">
+        <input type="text" id="briefTomorrowInput" placeholder="e.g. Finish the placement application">
+        <button type="button" class="brief-btn" id="briefTomorrowSave">Save</button>
+      </div>
+    </div>
+    <div class="brief-meta" id="closeDayMeta"></div>
+  </div>
+
   <div class="ticker-row">
     <div class="goal-ticker" id="goalTicker" aria-live="polite" aria-atomic="true">
       <div class="goal-ticker-led"><span class="goal-ticker-led-dot"></span></div>
@@ -1495,6 +1622,9 @@ body::after {
           <button type="button" class="todo-chart-range-btn" id="todoRange52">52W</button>
         </div>
       </div>
+      <div class="todo-chart-p1-row">
+        <button type="button" class="todo-chart-p1-btn" id="todoP1Toggle">P1-only view</button>
+      </div>
       <div class="todo-chart-empty" id="todoChartEmpty">Not enough history yet — check back after a few days.</div>
       <div class="todo-chart-wrap hidden" id="todoChartWrap">
         <div class="todo-chart-yaxis">
@@ -1576,6 +1706,15 @@ body::after {
       </div>
       <div class="dsum-body" id="dsumInteractionsBody">Loading…</div>
     </a>
+
+    <a class="dsum-card" href="news.html" data-card="news">
+      <div class="dsum-head">
+        <span class="dsum-icon">📰</span>
+        <span class="dsum-title">News</span>
+        <span class="dsum-arrow">→</span>
+      </div>
+      <div class="dsum-body" id="dsumNewsBody">Loading…</div>
+    </a>
   </div>
 
   <div class="wkr-card" id="weeklyReportCard" style="display:none;">
@@ -1592,8 +1731,31 @@ body::after {
       <button type="button" class="wkr-obsidian-btn" id="wkrObsidianBtn">Write to Obsidian</button>
       <span class="wkr-obsidian-status" id="wkrObsidianStatus"></span>
     </div>
+    <div class="wkr-footer" style="margin-top:6px;">
+      <button type="button" class="wkr-obsidian-btn" id="auditRunBtn">Run audit</button>
+      <span class="wkr-obsidian-status" id="auditStatus"></span>
+    </div>
+    <div id="auditSections" style="display:none;"></div>
   </div>
   <div class="wkr-empty" id="weeklyReportEmpty" style="display:none;">No completed week yet — your first Weekly Report appears after this week closes (Monday 6 AM).</div>
+
+  <div class="wkr-card" id="annualReviewCard">
+    <div class="wkr-head">
+      <div class="wkr-head-center">
+        <span class="section-title" style="margin:0;">Annual Review</span>
+        <span class="wkr-range" id="annualReviewYear">—</span>
+      </div>
+    </div>
+    <div class="alert-row" id="annualDecemberNudge" style="display:none;margin-bottom:12px;">
+      <span class="alert-icon">🗓️</span>
+      <span class="alert-text">It's December — a good time to run this year's Annual Review.</span>
+    </div>
+    <div class="wkr-footer">
+      <button type="button" class="wkr-obsidian-btn" id="annualReviewRunBtn">Run annual review</button>
+      <span class="wkr-obsidian-status" id="annualReviewStatus"></span>
+    </div>
+    <div id="annualReviewSections" style="display:none;"></div>
+  </div>
 
 <script>
 (function () {
@@ -1993,7 +2155,7 @@ body::after {
     try {
       const res = await fetch('/api/google-calendar-refresh', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: Object.assign({ 'Content-Type': 'application/json' }, window.EqAuth ? window.EqAuth.header() : {}),
         body: JSON.stringify({ refresh_token: tokens.refresh_token })
       });
       const json = await res.json();
@@ -2139,6 +2301,11 @@ body::after {
   }
 
   let todoRangeWeeks = 12;
+  // 6.6: optional P1-only view -- "did the must-dos happen" is a truer
+  // signal than raw completion %, per spec. Snapshots from before this
+  // section shipped have no p1Scheduled field at all, so they correctly
+  // read as gaps in this view rather than a misleading 0%.
+  let todoShowP1Only = false;
 
   function renderTodoChart() {
     const wrapEl = document.getElementById('todoChartWrap');
@@ -2163,7 +2330,10 @@ body::after {
       const dt = new Date(today); dt.setDate(dt.getDate() - i);
       const dk = todoDateKeyOf(dt);
       const snap = byDate[dk];
-      slots.push(snap && snap.scheduled > 0 ? { dateKey: dk, percent: (snap.completed / snap.scheduled) * 100 } : null);
+      if (!snap) { slots.push(null); continue; }
+      const scheduled = todoShowP1Only ? snap.p1Scheduled : snap.scheduled;
+      const completed = todoShowP1Only ? snap.p1Completed : snap.completed;
+      slots.push(scheduled > 0 ? { dateKey: dk, percent: (completed / scheduled) * 100 } : null);
     }
 
     const validCount = slots.filter(Boolean).length;
@@ -2224,7 +2394,8 @@ body::after {
     if (avgRun.length >= 2) html += '<path class="todo-avg-line" d="' + todoSmoothPath(avgRun) + '"></path>';
 
     document.getElementById('todoChartContent').innerHTML = html;
-    document.getElementById('todoChartMeta').textContent = validCount + ' day' + (validCount === 1 ? '' : 's') + ' with tasks · last ' + todoRangeWeeks + ' week' + (todoRangeWeeks === 1 ? '' : 's');
+    document.getElementById('todoChartMeta').textContent = validCount + ' day' + (validCount === 1 ? '' : 's') +
+      (todoShowP1Only ? ' with P1 tasks' : ' with tasks') + ' · last ' + todoRangeWeeks + ' week' + (todoRangeWeeks === 1 ? '' : 's');
   }
 
   function initTodoChartRangeToggle() {
@@ -2239,6 +2410,14 @@ body::after {
         renderTodoChart();
       });
     });
+    const p1Btn = document.getElementById('todoP1Toggle');
+    if (p1Btn) {
+      p1Btn.addEventListener('click', () => {
+        todoShowP1Only = !todoShowP1Only;
+        p1Btn.classList.toggle('is-active', todoShowP1Only);
+        renderTodoChart();
+      });
+    }
   }
 
   // Phase 5.1: Relationships is Interactions' own card now, not folded into
@@ -2252,7 +2431,11 @@ body::after {
     if (!contacts.length) { el.textContent = 'No contacts yet — add one in Interactions.'; return; }
     const overdueCount = contacts.filter((c) => {
       if (c.snoozedUntil && new Date(c.snoozedUntil).getTime() > Date.now()) return false;
-      const history = Array.isArray(c.history) ? c.history : (c.lastContactedAt ? [{ date: c.lastContactedAt }] : []);
+      const rawHistory = Array.isArray(c.history) ? c.history : (c.lastContactedAt ? [{ date: c.lastContactedAt }] : []);
+      // 5.5: inbound (they messaged you) doesn't reset the cadence clock by
+      // default -- only outbound counts, same rule as interactions.html's
+      // own lastContactDate().
+      const history = rawHistory.filter((h) => h.direction !== 'inbound');
       if (!history.length) return true;
       const last = history.reduce((latest, h) => (!latest || h.date > latest) ? h.date : latest, null);
       const days = Math.floor((Date.now() - new Date(last).getTime()) / 86400000);
@@ -2262,16 +2445,78 @@ body::after {
       (overdueCount > 0 ? ' · ' + overdueCount + ' overdue' : ' · up to date');
   }
 
+  // Same Monday-6am week key convention as news.html itself.
+  function newsWeekKey() {
+    const now = new Date();
+    const shifted = new Date(now.getTime() - 6 * 3600000);
+    const daysSinceMonday = (shifted.getDay() + 6) % 7;
+    const monday = new Date(shifted.getFullYear(), shifted.getMonth(), shifted.getDate() - daysSinceMonday);
+    return monday.getFullYear() + '-' + String(monday.getMonth() + 1).padStart(2, '0') + '-' + String(monday.getDate()).padStart(2, '0');
+  }
+  function renderNewsSummary() {
+    const el = document.getElementById('dsumNewsBody');
+    if (!el) return;
+    const digests = storeGet('eq.news.digests_v1') || [];
+    const d = digests.find((x) => x.weekKey === newsWeekKey());
+    if (!d) { el.textContent = 'No digest yet this week.'; return; }
+    const catCount = Object.keys(d.categories || {}).length;
+    el.textContent = 'This week\'s digest ready — ' + catCount + ' categor' + (catCount === 1 ? 'y' : 'ies') + '.';
+  }
+
+  // 6.8: a failed integration chips on the dashboard once, dismissible --
+  // re-derived from the same shared eq.integrations.health_v1 key Settings'
+  // System Health strip reads, per this file's own small-helper-duplication
+  // convention (same as the habit-score/tier-cadence re-derivations
+  // elsewhere in this file) rather than a cross-page function call.
+  const HEALTH_FAIL_LABELS = { whoop: 'WHOOP', google_calendar: 'Google Calendar', obsidian_sync: 'Obsidian vault sync', inbox_relay: 'Inbox relay (Gmail)', news_proxy: 'News' };
+  function renderHealthFailChip() {
+    const wrap = document.getElementById('healthFailWrap');
+    if (!wrap) return;
+    const health = storeGet('eq.integrations.health_v1') || {};
+    const dismissed = storeGet('eq.integrations.dismissed_v1') || {};
+    const failing = Object.keys(HEALTH_FAIL_LABELS).filter((name) => {
+      const e = health[name];
+      if (!e || !e.lastError) return false;
+      if (e.lastSuccessAt && e.lastSuccessAt > e.lastError) return false; // recovered since
+      return dismissed[name] !== e.lastError;
+    });
+    if (!failing.length) { wrap.style.display = 'none'; wrap.innerHTML = ''; return; }
+    wrap.style.display = '';
+    wrap.innerHTML = failing.map((name) =>
+      '<div class="health-fail-row" data-name="' + name + '">'
+      + '<span class="alert-icon">⚠️</span>'
+      + '<span class="health-fail-text">' + HEALTH_FAIL_LABELS[name] + ' failed to sync — check Settings → System Health.</span>'
+      + '<button type="button" class="health-fail-dismiss" data-name="' + name + '">×</button>'
+      + '</div>'
+    ).join('');
+    wrap.querySelectorAll('.health-fail-dismiss').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const name = btn.dataset.name;
+        const h = storeGet('eq.integrations.health_v1') || {};
+        const d = storeGet('eq.integrations.dismissed_v1') || {};
+        if (h[name]) d[name] = h[name].lastError;
+        storeSet('eq.integrations.dismissed_v1', d);
+        renderHealthFailChip();
+      });
+    });
+  }
+
   function renderDashboardSummaries() {
     renderInteractionsSummary();
+    renderNewsSummary();
+    renderHealthFailChip();
     const tasksEl = document.getElementById('dsumTasksBody');
     if (tasksEl) {
       const todayGoals = getGoals(todayKey());
       const doneCount = todayGoals.filter(g => g.done).length;
       const streak = loadStreak();
+      // 6.6: P1s remaining, per spec's own exact phrasing.
+      const p1Remaining = todayGoals.filter(g => (g.priority || 'P2') === 'P1' && !g.done).length;
       tasksEl.textContent = todayGoals.length === 0
         ? 'No tasks yet — plan your day in Planner.'
-        : doneCount + ' / ' + todayGoals.length + ' done today' + (streak.count > 0 ? ' · ⚡ ' + streak.count + ' day streak' : '');
+        : doneCount + ' / ' + todayGoals.length + ' done today' +
+          (p1Remaining > 0 ? ' · P1s remaining: ' + p1Remaining : '') +
+          (streak.count > 0 ? ' · ⚡ ' + streak.count + ' day streak' : '');
     }
 
     const goalsEl = document.getElementById('dsumGoalsBody');
@@ -2301,8 +2546,8 @@ body::after {
       if (tokens && tokens.access_token) {
         const start = calMidnight(new Date());
         fetchGcalEvents(start.toISOString(), calAddDays(start, 1).toISOString())
-          .then(events => finish(Array.isArray(events) ? events.length : 0))
-          .catch(() => finish(0));
+          .then(events => { if (window.AssistantTools) window.AssistantTools.recordIntegrationHealth('google_calendar', true); finish(Array.isArray(events) ? events.length : 0); })
+          .catch(() => { if (window.AssistantTools) window.AssistantTools.recordIntegrationHealth('google_calendar', false); finish(0); });
       } else {
         finish(0);
       }
@@ -2469,13 +2714,24 @@ document.addEventListener('DOMContentLoaded', function () {
     const needle = name.trim().toLowerCase();
     return contacts.find(c => c.name && c.name.trim().toLowerCase() === needle) || null;
   }
+  // Real bug fixed while building 5.5: this used to write a bare
+  // `lastContactedAt` field, which Interactions' Phase 5.2 schema migration
+  // only ever reads once (as a one-time seed into `history` for contacts
+  // still on the old shape) -- on any contact already migrated to __v2
+  // (i.e. every contact, after its first load post-5.2), that write was a
+  // silent no-op: the button showed "Logged" but never actually touched
+  // overdue status. Pushes a real history entry now, same shape
+  // interactions.html's own "Log a chat" uses. Receiving an email is
+  // inbound, not outbound -- tagged accordingly (5.5/5.7 read this).
   function logContact(contactId, btn) {
     let contacts;
     try { contacts = JSON.parse(localStorage.getItem('contacts_v1')); } catch (e) { contacts = null; }
     if (!Array.isArray(contacts)) return;
     const idx = contacts.findIndex(c => c.id === contactId);
     if (idx === -1) return;
-    contacts[idx] = Object.assign({}, contacts[idx], { lastContactedAt: new Date().toISOString() });
+    const c = contacts[idx];
+    c.history = Array.isArray(c.history) ? c.history : [];
+    c.history.push({ date: new Date().toISOString(), channel: 'other', note: 'Emailed', direction: 'inbound' });
     localStorage.setItem('contacts_v1', JSON.stringify(contacts));
     btn.textContent = 'Logged ✓';
     btn.classList.add('is-done');
@@ -2881,10 +3137,10 @@ document.addEventListener('DOMContentLoaded', function () {
     ensureWeeklyReports();
     renderWeeklyReport();
 
-    $('wkrPrevBtn').addEventListener('click', () => { if (wkrIndex > 0) { wkrIndex--; renderWeeklyReport(); } });
+    $('wkrPrevBtn').addEventListener('click', () => { if (wkrIndex > 0) { wkrIndex--; renderWeeklyReport(); syncAuditToBrowsedWeek(); } });
     $('wkrNextBtn').addEventListener('click', () => {
       const reports = getWeeklyReports();
-      if (wkrIndex < reports.length - 1) { wkrIndex++; renderWeeklyReport(); }
+      if (wkrIndex < reports.length - 1) { wkrIndex++; renderWeeklyReport(); syncAuditToBrowsedWeek(); }
     });
     $('wkrObsidianBtn').addEventListener('click', async () => {
       const reports = getWeeklyReports();
@@ -2902,10 +3158,1086 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     });
 
-    window.addEventListener('storage', () => { ensureWeeklyReports(); renderWeeklyReport(); });
+    window.addEventListener('storage', () => { ensureWeeklyReports(); renderWeeklyReport(); syncAuditToBrowsedWeek(); });
   }
 
+  // ============================================================
+  // 4.5 WEEKLY AUDIT -- absorbs 3.3's stat card above as its own section 1
+  // ("the week in numbers"); sections 2-6 are new, generated manually
+  // ("Run audit"), per the answered ASK FIRST question (manual-only, same
+  // no-baseline-spend bias as 4.4's morning brief). Ties to whichever week
+  // is currently browsed via the prev/next buttons above, not just "this
+  // week" -- a natural extension of the existing browsing UX, not a new
+  // concept.
+  // ============================================================
+  const AT = window.AssistantTools;
+  const AUDITS_KEY = 'eq.audits.v1';
+  function getAudits() { const v = storeGet(AUDITS_KEY); return Array.isArray(v) ? v : []; }
+  function setAudits(list) { storeSet(AUDITS_KEY, list); }
+  function auditFor(weekKey) { return getAudits().find((a) => a.weekKey === weekKey) || null; }
+
+  const SUBMIT_AUDIT_TOOL = {
+    name: 'submit_audit',
+    description: 'Submit the completed weekly audit in structured form. Every claim must cite an actual number from the data given -- never infer or pad. If a domain has no data, say so plainly rather than inventing something.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        what_went_well: { type: 'array', items: { type: 'string' }, description: '3-5 specific, evidence-cited wins, each citing a real number from the data.' },
+        what_went_badly: { type: 'array', items: { type: 'string' }, description: 'Specific, evidence-cited misses, each citing a real number. Include any broken commitments from last week\'s audit if given.' },
+        what_to_do_better: { type: 'array', items: { type: 'string' }, description: '2-3 highest-leverage fixes for next week, each tied to a specific metric that would prove it worked.' },
+        suggestions: { type: 'array', items: { type: 'string' }, description: '1-3 NEW routine/habit/tracking suggestions, each a short actionable sentence. Do not repeat anything in the "recently declined" list given in context.' },
+        verdict_word: { type: 'string', description: 'One word summarizing the week, e.g. "Solid", "Slipping", "Strong". Direct, no flattery.' },
+        verdict_score: { type: 'number', description: 'A score out of 10 for the week.' },
+      },
+      required: ['what_went_well', 'what_went_badly', 'what_to_do_better', 'suggestions', 'verdict_word', 'verdict_score'],
+    },
+  };
+
+  function auditContactStats(weekStartIso, weekEndIso) {
+    const contacts = storeGet('contacts_v1') || [];
+    let loggedThisWeek = 0;
+    contacts.forEach((c) => {
+      (c.history || []).forEach((h) => { if (h.date >= weekStartIso && h.date < weekEndIso) loggedThisWeek++; });
+    });
+    const REL_TIER_CADENCE = { inner: 7, close: 21, acquaintance: 60, networking: 90, network: 90 };
+    const overdueNow = contacts.filter((c) => {
+      if (c.snoozedUntil && new Date(c.snoozedUntil).getTime() > Date.now()) return false;
+      const rawHistory = Array.isArray(c.history) ? c.history : (c.lastContactedAt ? [{ date: c.lastContactedAt }] : []);
+      // 5.5: inbound (they messaged you) doesn't reset the cadence clock by
+      // default -- only outbound counts, same rule as interactions.html's
+      // own lastContactDate().
+      const history = rawHistory.filter((h) => h.direction !== 'inbound');
+      if (!history.length) return true;
+      const last = history.reduce((latest, h) => (!latest || h.date > latest) ? h.date : latest, null);
+      const days = Math.floor((Date.now() - new Date(last).getTime()) / 86400000);
+      return days >= (REL_TIER_CADENCE[c.tier] || 21);
+    }).length;
+    return { loggedThisWeek, overdueNow };
+  }
+  function auditStackAdherence(weekStart, weekEnd) {
+    const items = storeGet('stack:items') || [];
+    if (!items.length) return null;
+    let taken = 0, possible = 0;
+    for (let d = new Date(weekStart); d < weekEnd && d <= new Date(); d.setDate(d.getDate() + 1)) {
+      const dk = dateKeyOf(d);
+      const t = storeGet('stack:taken:' + dk) || {};
+      items.forEach((it) => { possible++; if (t[it.id]) taken++; });
+    }
+    return possible > 0 ? Math.round((taken / possible) * 100) : null;
+  }
+
+  function buildAuditContext(r) {
+    const m = r.metrics;
+    const contactStats = auditContactStats(r.weekStart, r.weekEnd);
+    const stackPct = auditStackAdherence(new Date(r.weekStart), new Date(r.weekEnd));
+    const goals = (storeGet('longterm_goals_v1') || []).filter((g) => !g.archived);
+
+    let s = 'WEEK: ' + fmtRange(r.weekStart, r.weekEnd) + '\n\n';
+    // 6.10: this year's adopted Annual Review themes, so the assistant
+    // keeps the user's own stated yearly focus in mind week to week.
+    const adoptedThemes = adoptedThemesThisYear();
+    if (adoptedThemes.length) s += 'THIS YEAR\'S ADOPTED THEMES: ' + adoptedThemes.join('; ') + '\n\n';
+    s += 'Avg sleep: ' + (m.health.avgSleep != null ? m.health.avgSleep + 'h' : 'no data') + '\n';
+    s += 'Avg recovery: ' + (m.health.avgRecovery != null ? m.health.avgRecovery + '%' : 'no data') + '\n';
+    s += 'Training sessions: ' + (m.fitness.sessionsThisWeek != null ? m.fitness.sessionsThisWeek : 'no data') + '\n';
+    s += 'Training volume: ' + (m.fitness.volumeThisWeek != null ? m.fitness.volumeThisWeek : 'no data') + '\n';
+    s += 'Weight 7-day trend: ' + (m.fitness.weight7dAvgChange != null ? (m.fitness.weight7dAvgChange >= 0 ? '+' : '') + m.fitness.weight7dAvgChange + m.fitness.units : 'no data') + '\n';
+    s += 'Task completion avg: ' + (m.planner.avgTaskCompletion != null ? m.planner.avgTaskCompletion + '%' : 'no data') + '\n';
+    s += 'Goals completed this week: ' + m.planner.goalsArchivedThisWeek + '\n';
+    s += 'Active goals current standing: ' + (goals.length ? goals.map((g) => g.title + ' (' + (g.value || 0) + '%)').join(', ') : 'none active') + '\n';
+    s += 'Habit success rate: ' + (m.ability.habitSuccessPct != null ? m.ability.habitSuccessPct + '%' : 'no data') + '\n';
+    s += 'Contacts logged this week: ' + contactStats.loggedThisWeek + '; currently overdue: ' + contactStats.overdueNow + '\n';
+    const scores = storeGet('eq.interaction_scores_v1') || [];
+    if (scores.length) {
+      const latest = scores[scores.length - 1];
+      s += 'Interaction score (5.7): ' + latest.score + '/100 (' + latest.pctDueContacted + '% of due contacts reached, ' + latest.contactedCount + ' of ' + latest.totalContacts + ' contacted, ' + latest.unanswered72h + ' inbound unanswered >72h)\n';
+    }
+    s += 'Monthly cash-flow pace: ' + (m.finance.monthlyCashFlow != null ? (m.finance.monthlyCashFlow >= 0 ? '+' : '') + 'GBP ' + m.finance.monthlyCashFlow : 'no data') + '\n';
+    s += 'Stack adherence this week: ' + (stackPct != null ? stackPct + '%' : 'no data') + '\n';
+    const moodLog = (storeGet('eq.mood.log_v1') || []).filter((m) => m.dateKey >= r.weekStart.slice(0, 10) && m.dateKey < r.weekEnd.slice(0, 10));
+    s += 'Mood this week: ' + (moodLog.length ? (moodLog.reduce((a, m) => a + m.mood, 0) / moodLog.length).toFixed(1) + '/10 avg (' + moodLog.length + ' entries)' : 'no data') + '\n';
+    // 6.5: symptom frequency/severity trend as its own audit domain, per
+    // spec's own example phrasing ("skin flare incidents: 1 this week, down
+    // from 4"). Re-derived directly from the raw log (health.html's own
+    // storage key), same per-file convention already used for moodLog above
+    // and elsewhere in this function -- there's no cross-page function
+    // sharing in this app, only shared localStorage keys.
+    const symLog = storeGet('eq.symptoms.log_v1') || [];
+    const symWeekStartKey = r.weekStart.slice(0, 10), symWeekEndKey = r.weekEnd.slice(0, 10);
+    const symPrevStartKey = AT.fmtDateKey(new Date(new Date(r.weekStart).getTime() - 7 * 86400000));
+    const symPrevEndKey = AT.fmtDateKey(new Date(new Date(r.weekEnd).getTime() - 7 * 86400000));
+    const symThisWeek = symLog.filter((e) => e.dateKey >= symWeekStartKey && e.dateKey < symWeekEndKey);
+    const symPrevWeek = symLog.filter((e) => e.dateKey >= symPrevStartKey && e.dateKey < symPrevEndKey);
+    if (symThisWeek.length || symPrevWeek.length) {
+      const byType = {}, prevByType = {};
+      symThisWeek.forEach((e) => { byType[e.type] = (byType[e.type] || 0) + 1; });
+      symPrevWeek.forEach((e) => { prevByType[e.type] = (prevByType[e.type] || 0) + 1; });
+      const parts = Object.keys(byType).map((t) => t + ': ' + byType[t] + ' this week (was ' + (prevByType[t] || 0) + ')');
+      const avgSev = symThisWeek.length ? (symThisWeek.reduce((a, e) => a + e.severity, 0) / symThisWeek.length).toFixed(1) : null;
+      s += 'Symptoms this week: ' + (parts.length ? parts.join(', ') : 'none') + (avgSev ? '; avg severity ' + avgSev + '/5' : '') + '\n';
+    }
+
+    const audits = getAudits().filter((a) => a.weekKey < r.weekKey).sort((a, b) => a.weekKey.localeCompare(b.weekKey));
+    const prev = audits.length ? audits[audits.length - 1] : null;
+    if (prev) {
+      s += '\nPREVIOUS WEEK\'S AUDIT (' + prev.weekKey + '):\n';
+      s += 'Verdict: ' + prev.verdictWord + ' (' + prev.verdictScore + '/10)\n';
+      s += 'What to do better, as suggested last week: ' + (prev.whatToDoBetter || []).join('; ') + '\n';
+      const implemented = (prev.suggestions || []).filter((sg) => sg.status === 'implemented');
+      if (implemented.length) s += 'Suggestions implemented after last week\'s audit: ' + implemented.map((sg) => sg.text).join('; ') + '\n';
+      if (prev.review) {
+        s += 'User\'s own reflection on last week (4.8): hardest="' + (prev.review.hardest || '') + '", wanted to protect="' + (prev.review.protect || '') + '", data missed="' + (prev.review.missed || '') + '"\n';
+      }
+    }
+    const cooldownCutoff = Date.now();
+    const declinedRecently = [];
+    audits.forEach((a) => (a.suggestions || []).forEach((sg) => {
+      if (sg.status === 'ignored' && sg.ignoredUntil && new Date(sg.ignoredUntil).getTime() > cooldownCutoff) declinedRecently.push(sg.text);
+    }));
+    if (declinedRecently.length) s += '\nRECENTLY DECLINED (do not re-suggest these): ' + declinedRecently.join('; ') + '\n';
+    return s;
+  }
+
+  function renderAuditSuggestion(weekKey, sg, idx) {
+    const wrap = document.createElement('div');
+    wrap.className = 'audit-suggestion';
+    const text = document.createElement('div');
+    text.className = 'audit-suggestion-text';
+    text.textContent = sg.text;
+    wrap.appendChild(text);
+    if (sg.status === 'pending') {
+      const actions = document.createElement('div');
+      actions.className = 'audit-suggestion-actions';
+      const implBtn = document.createElement('button');
+      implBtn.type = 'button'; implBtn.className = 'audit-sugg-btn audit-sugg-implement'; implBtn.textContent = 'Implement';
+      const ignBtn = document.createElement('button');
+      ignBtn.type = 'button'; ignBtn.className = 'audit-sugg-btn audit-sugg-ignore'; ignBtn.textContent = 'Ignore';
+      implBtn.addEventListener('click', () => implementSuggestion(weekKey, idx, implBtn));
+      ignBtn.addEventListener('click', () => {
+        const audits = getAudits();
+        const a = audits.find((x) => x.weekKey === weekKey);
+        a.suggestions[idx].status = 'ignored';
+        a.suggestions[idx].ignoredUntil = new Date(Date.now() + 28 * 86400000).toISOString();
+        setAudits(audits);
+        renderAudit(weekKey);
+      });
+      actions.appendChild(implBtn); actions.appendChild(ignBtn);
+      wrap.appendChild(actions);
+    } else {
+      const status = document.createElement('div');
+      status.className = 'audit-sugg-status';
+      status.textContent = sg.status === 'implemented' ? '✓ Implemented' + (sg.implementedVia ? ' (' + sg.implementedVia + ')' : '') : 'Ignored — won\'t be re-suggested for 4 weeks';
+      wrap.appendChild(status);
+    }
+    return wrap;
+  }
+
+  // Suggestions are free text, not a fixed schema -- Implement re-sends the
+  // one suggestion to the assistant's own tool loop (the same registry
+  // 4.1/4.2 already use) and lets it pick the single right tool, rather
+  // than trying to hand-parse arbitrary phrasing here. Known gap, not
+  // silently papered over: none of the 11 shared tools can create a brand
+  // new habit (log_habit only logs against one that already exists), so an
+  // "add a new habit" suggestion will fail gracefully with a clear message
+  // rather than silently doing nothing.
+  async function implementSuggestion(weekKey, idx, btn) {
+    btn.disabled = true; btn.textContent = 'Implementing…';
+    const audits = getAudits();
+    const a = audits.find((x) => x.weekKey === weekKey);
+    const sg = a.suggestions[idx];
+    try {
+      const tools = Object.keys(AT.TOOL_REGISTRY).map((name) => AT.TOOL_REGISTRY[name].schema);
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, window.EqAuth ? window.EqAuth.header() : {}),
+        body: JSON.stringify({
+          messages: [{ role: 'user', content: 'Implement this suggestion from my Week ' + weekKey + ' audit: ' + sg.text }],
+          systemContext: 'Call the ONE tool that best implements the user\'s stated suggestion. If nothing fits, do not call a tool.',
+          tools,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'request failed');
+      if (data.toolUse && AT.TOOL_REGISTRY[data.toolUse.name]) {
+        const result = await AT.TOOL_REGISTRY[data.toolUse.name].execute(data.toolUse.input || {});
+        sg.status = result.ok === false ? 'pending' : 'implemented';
+        sg.implementedVia = result.ok === false ? null : data.toolUse.name;
+        if (result.ok === false) $('auditStatus').textContent = 'Could not implement: ' + result.summary;
+      } else {
+        $('auditStatus').textContent = 'Nothing in the app matched that suggestion closely enough to act on automatically.';
+      }
+    } catch (e) {
+      $('auditStatus').textContent = 'Could not implement — ' + (e.message || 'try again') + '.';
+    } finally {
+      setAudits(audits);
+      renderAudit(weekKey);
+    }
+  }
+
+  function renderAudit(weekKey) {
+    const a = auditFor(weekKey);
+    const wrap = $('auditSections');
+    const runBtn = $('auditRunBtn');
+    if (!a) { wrap.style.display = 'none'; runBtn.textContent = 'Run audit'; runBtn.disabled = false; return; }
+    runBtn.textContent = 'Re-run audit';
+    runBtn.disabled = false;
+    wrap.style.display = '';
+    wrap.innerHTML = '';
+    function section(title, items) {
+      const sec = document.createElement('div');
+      sec.className = 'audit-section';
+      sec.innerHTML = '<div class="audit-section-title">' + title + '</div>';
+      const ul = document.createElement('ul');
+      ul.className = 'audit-list';
+      (items || []).forEach((t) => { const li = document.createElement('li'); li.textContent = t; ul.appendChild(li); });
+      sec.appendChild(ul);
+      return sec;
+    }
+    wrap.appendChild(section('What went well', a.whatWentWell));
+    wrap.appendChild(section('What went badly', a.whatWentBadly));
+    wrap.appendChild(section('What to do better', a.whatToDoBetter));
+    const suggSec = document.createElement('div');
+    suggSec.className = 'audit-section';
+    suggSec.innerHTML = '<div class="audit-section-title">Suggested additions</div>';
+    (a.suggestions || []).forEach((sg, idx) => suggSec.appendChild(renderAuditSuggestion(weekKey, sg, idx)));
+    wrap.appendChild(suggSec);
+    const verdictSec = document.createElement('div');
+    verdictSec.className = 'audit-section';
+    verdictSec.innerHTML = '<div class="audit-section-title">Verdict</div><div class="audit-verdict">' + a.verdictWord + ' <span class="audit-verdict-score">' + a.verdictScore + '/10</span></div>';
+    wrap.appendChild(verdictSec);
+    wrap.appendChild(renderReviewSection(weekKey, a));
+  }
+
+  // ============================================================
+  // 4.8 CONVERSATIONAL WEEKLY REVIEW -- strictly optional layer on 4.5.
+  // 3 short questions max, no assistant call at all (these are the user's
+  // own reflections, not something to parse or generate) -- answers are
+  // just appended to the audit's own stored record, re-pushed to the same
+  // Obsidian note, and read back into next week's audit context. Skippable
+  // at any point; the audit above already stands alone without this.
+  // ============================================================
+  const REVIEW_QUESTIONS = [
+    { key: 'hardest', prompt: 'What felt hardest this week?' },
+    { key: 'protect', prompt: 'What should next week protect?' },
+    { key: 'missed', prompt: 'Anything the data missed?' },
+  ];
+  function renderReviewSection(weekKey, a) {
+    const sec = document.createElement('div');
+    sec.className = 'audit-review-prompt';
+    if (a.review) {
+      sec.innerHTML = '<div class="audit-review-done">✓ Reviewed — ' + REVIEW_QUESTIONS.map((q) => q.prompt + ' ' + (a.review[q.key] || '—')).join(' · ') + '</div>';
+      return sec;
+    }
+    let idx = 0;
+    function renderStep() {
+      if (idx >= REVIEW_QUESTIONS.length) { finish(); return; }
+      sec.innerHTML =
+        '<div class="audit-review-q">' + REVIEW_QUESTIONS[idx].prompt + '</div>' +
+        '<input type="text" class="audit-review-input" id="auditReviewInput">' +
+        '<div style="margin-top:10px;display:flex;gap:8px;justify-content:center;">' +
+          '<button type="button" class="audit-sugg-btn audit-sugg-implement" id="auditReviewNext">Next</button>' +
+          '<button type="button" class="audit-sugg-btn audit-sugg-ignore" id="auditReviewSkip">Skip review</button>' +
+        '</div>';
+      const input = sec.querySelector('#auditReviewInput');
+      setTimeout(() => input.focus(), 30);
+      sec.querySelector('#auditReviewNext').addEventListener('click', () => {
+        answers[REVIEW_QUESTIONS[idx].key] = input.value.trim();
+        idx++;
+        renderStep();
+      });
+      sec.querySelector('#auditReviewSkip').addEventListener('click', () => { sec.innerHTML = ''; });
+      input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); sec.querySelector('#auditReviewNext').click(); } });
+    }
+    const answers = {};
+    async function finish() {
+      const audits = getAudits();
+      const audit = audits.find((x) => x.weekKey === weekKey);
+      audit.review = Object.assign({ at: new Date().toISOString() }, answers);
+      setAudits(audits);
+      sec.innerHTML = '<div class="audit-review-done">✓ Reviewed — ' + REVIEW_QUESTIONS.map((q) => q.prompt + ' ' + (audit.review[q.key] || '—')).join(' · ') + '</div>';
+      if (window.ObsidianSync && ObsidianSync.getConfig().enabled) {
+        const md = '# Audit — ' + weekKey + '\n\n' +
+          '## What went well\n' + (audit.whatWentWell || []).map((t) => '- ' + t).join('\n') + '\n\n' +
+          '## What went badly\n' + (audit.whatWentBadly || []).map((t) => '- ' + t).join('\n') + '\n\n' +
+          '## What to do better\n' + (audit.whatToDoBetter || []).map((t) => '- ' + t).join('\n') + '\n\n' +
+          '## Suggested additions\n' + (audit.suggestions || []).map((s) => '- ' + s.text).join('\n') + '\n\n' +
+          '## Verdict\n' + audit.verdictWord + ' (' + audit.verdictScore + '/10)\n\n' +
+          '## Conversational review\n' + REVIEW_QUESTIONS.map((q) => '**' + q.prompt + '** ' + (audit.review[q.key] || '—')).join('\n\n') + '\n';
+        await ObsidianSync.pushWeeklyReport('Audits/' + weekKey, md);
+      }
+    }
+    const startBtn = document.createElement('button');
+    startBtn.type = 'button';
+    startBtn.className = 'audit-sugg-btn audit-sugg-implement';
+    startBtn.textContent = 'Review this week with me?';
+    startBtn.addEventListener('click', () => renderStep());
+    sec.appendChild(startBtn);
+    return sec;
+  }
+
+  async function runAudit() {
+    const reports = getWeeklyReports();
+    const r = reports[wkrIndex];
+    if (!r) return;
+    const btn = $('auditRunBtn');
+    btn.disabled = true; btn.textContent = 'Running audit…';
+    $('auditStatus').textContent = '';
+    try {
+      const context = buildAuditContext(r);
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, window.EqAuth ? window.EqAuth.header() : {}),
+        body: JSON.stringify({
+          messages: [{ role: 'user', content: 'Run my weekly audit from the data in context.' }],
+          systemContext: 'You are a direct, specific, zero-flattery weekly reviewer for a personal tracking app. Every claim must cite a real number from the data below -- never infer or pad, and say "no data" plainly where data is missing rather than inventing something. Call submit_audit with your findings.\n\n' + context,
+          tools: [SUBMIT_AUDIT_TOOL],
+          toolChoice: { name: 'submit_audit' },
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'request failed');
+      if (!data.toolUse || data.toolUse.name !== 'submit_audit') throw new Error('unexpected response shape');
+      const out = data.toolUse.input || {};
+      const audits = getAudits().filter((a) => a.weekKey !== r.weekKey);
+      audits.push({
+        weekKey: r.weekKey,
+        whatWentWell: out.what_went_well || [],
+        whatWentBadly: out.what_went_badly || [],
+        whatToDoBetter: out.what_to_do_better || [],
+        suggestions: (out.suggestions || []).map((text) => ({ text, status: 'pending' })),
+        verdictWord: out.verdict_word || '—',
+        verdictScore: typeof out.verdict_score === 'number' ? out.verdict_score : null,
+        at: new Date().toISOString(),
+      });
+      setAudits(audits);
+      renderAudit(r.weekKey);
+
+      if (window.ObsidianSync && ObsidianSync.getConfig().enabled) {
+        const md = '# Audit — ' + r.weekKey + '\n\n' +
+          '## What went well\n' + (out.what_went_well || []).map((t) => '- ' + t).join('\n') + '\n\n' +
+          '## What went badly\n' + (out.what_went_badly || []).map((t) => '- ' + t).join('\n') + '\n\n' +
+          '## What to do better\n' + (out.what_to_do_better || []).map((t) => '- ' + t).join('\n') + '\n\n' +
+          '## Suggested additions\n' + (out.suggestions || []).map((t) => '- ' + t).join('\n') + '\n\n' +
+          '## Verdict\n' + (out.verdict_word || '—') + ' (' + out.verdict_score + '/10)\n';
+        await ObsidianSync.pushWeeklyReport('Audits/' + r.weekKey, md);
+      }
+    } catch (e) {
+      $('auditStatus').textContent = 'Could not run audit — ' + (e.message || 'try again') + '.';
+    } finally {
+      btn.disabled = false;
+    }
+  }
+  $('auditRunBtn').addEventListener('click', runAudit);
+  function syncAuditToBrowsedWeek() {
+    const reports = getWeeklyReports();
+    const r = reports[wkrIndex];
+    if (r) renderAudit(r.weekKey);
+    else { $('auditSections').style.display = 'none'; }
+  }
+
+  // ============================================================
+  // 6.10 ANNUAL REVIEW -- reuses 4.5's audit machinery per spec: same
+  // forced-tool-call structured-output pattern, same Implement/Ignore
+  // suggestion-card styling, same manual-only trigger bias as every other
+  // assistant-generated section in this build. Assembled from the year's
+  // own weekly audits (eq.audits.v1) rather than re-deriving 12 months of
+  // raw per-feature data from scratch -- those audits already are the
+  // condensed weekly synthesis of that raw data, so re-summarizing THEM is
+  // both cheaper and avoids inventing a second, parallel data-assembly path
+  // that could drift from what the weekly audits themselves say happened.
+  // Cached per year, "Run again" re-generates -- same as the weekly audit.
+  // ============================================================
+  const ANNUAL_REVIEWS_KEY = 'eq.annual_reviews_v1';
+  function getAnnualReviews() { const v = storeGet(ANNUAL_REVIEWS_KEY); return Array.isArray(v) ? v : []; }
+  function setAnnualReviews(list) { storeSet(ANNUAL_REVIEWS_KEY, list); }
+  function annualReviewYear() { return new Date().getFullYear(); }
+  function annualReviewFor(year) { return getAnnualReviews().find((r) => r.year === year) || null; }
+
+  const SUBMIT_ANNUAL_REVIEW_TOOL = {
+    name: 'submit_annual_review',
+    description: 'Submit the completed annual review in structured form. Every claim must cite something real from the weekly audits given -- never invent a number or event. If a domain has too little data across the year, say so plainly rather than inventing a trajectory for it.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        trajectory: {
+          type: 'array',
+          items: { type: 'object', properties: { domain: { type: 'string' }, text: { type: 'string' } }, required: ['domain', 'text'] },
+          description: 'One entry per domain that actually appears in the weekly audits (e.g. health, fitness, finance, planner/tasks, ability/habits, interactions) describing how it trended across the year.',
+        },
+        kept_commitments: { type: 'array', items: { type: 'string' }, description: 'Things repeatedly named in "what to do better" or suggestions across the year that the LATER weeks show actually changed.' },
+        broken_commitments: { type: 'array', items: { type: 'string' }, description: 'Things repeatedly flagged across the year\'s audits that never actually changed by year end.' },
+        top_wins: { type: 'array', items: { type: 'string' }, description: 'Top 5 wins of the year, each citing something real from a specific week.' },
+        top_costs: { type: 'array', items: { type: 'string' }, description: 'Top 5 costs/regrets of the year, each citing something real from a specific week.' },
+        themes: { type: 'array', items: { type: 'string' }, description: 'Exactly 3 proposed themes/areas of focus for next year, each a short actionable sentence.' },
+        verdict_word: { type: 'string', description: 'One word summarizing the year overall.' },
+        verdict_score: { type: 'number', description: 'A score out of 10 for the year overall.' },
+      },
+      required: ['trajectory', 'kept_commitments', 'broken_commitments', 'top_wins', 'top_costs', 'themes', 'verdict_word', 'verdict_score'],
+    },
+  };
+
+  function buildAnnualReviewContext(year) {
+    const audits = getAudits().filter((a) => a.weekKey.slice(0, 4) === String(year)).sort((a, b) => a.weekKey.localeCompare(b.weekKey));
+    let s = 'ANNUAL REVIEW FOR ' + year + '\n' + audits.length + ' weekly audit(s) recorded this year.\n\n';
+    if (!audits.length) { s += 'No weekly audits exist for this year yet -- say so plainly rather than inventing a year in review.\n'; return s; }
+    audits.forEach((a) => {
+      s += 'WEEK ' + a.weekKey + ': verdict ' + (a.verdictWord || '—') + ' (' + (a.verdictScore != null ? a.verdictScore : '—') + '/10)\n';
+      if (a.whatWentWell && a.whatWentWell.length) s += '  Wins: ' + a.whatWentWell.join('; ') + '\n';
+      if (a.whatWentBadly && a.whatWentBadly.length) s += '  Misses: ' + a.whatWentBadly.join('; ') + '\n';
+      if (a.whatToDoBetter && a.whatToDoBetter.length) s += '  To do better: ' + a.whatToDoBetter.join('; ') + '\n';
+      if (a.suggestions && a.suggestions.length) s += '  Suggestions: ' + a.suggestions.map((sg) => sg.text + ' [' + sg.status + ']').join('; ') + '\n';
+    });
+    // Weekly audits are prose, not per-domain numeric scores, so verdict
+    // score is the one consistent number available to show a real trend
+    // across the year -- not a substitute for the model's own qualitative
+    // per-domain trajectory read of the prose above.
+    const scored = audits.filter((a) => typeof a.verdictScore === 'number');
+    if (scored.length >= 2) {
+      const mid = Math.floor(scored.length / 2);
+      const firstHalf = scored.slice(0, mid).reduce((sum, a) => sum + a.verdictScore, 0) / mid;
+      const secondHalf = scored.slice(mid).reduce((sum, a) => sum + a.verdictScore, 0) / (scored.length - mid);
+      s += '\nVerdict-score trend: first half of the year averaged ' + firstHalf.toFixed(1) + '/10, second half averaged ' + secondHalf.toFixed(1) + '/10.\n';
+    }
+    return s;
+  }
+
+  function renderAnnualReview() {
+    const year = annualReviewYear();
+    $('annualReviewYear').textContent = String(year);
+    $('annualDecemberNudge').style.display = (new Date().getMonth() === 11) ? '' : 'none';
+    const review = annualReviewFor(year);
+    const wrap = $('annualReviewSections');
+    const btn = $('annualReviewRunBtn');
+    if (!review) { wrap.style.display = 'none'; wrap.innerHTML = ''; btn.textContent = 'Run annual review'; return; }
+    btn.textContent = 'Run again';
+    wrap.style.display = '';
+    wrap.innerHTML = '';
+
+    function section(title, items) {
+      if (!items || !items.length) return;
+      const sec = document.createElement('div');
+      sec.className = 'audit-section';
+      sec.innerHTML = '<div class="audit-section-title">' + title + '</div>';
+      const list = document.createElement('ul');
+      list.className = 'audit-list';
+      items.forEach((t) => { const li = document.createElement('li'); li.textContent = t; list.appendChild(li); });
+      sec.appendChild(list);
+      wrap.appendChild(sec);
+    }
+
+    const verdictSec = document.createElement('div');
+    verdictSec.className = 'audit-section';
+    verdictSec.innerHTML = '<div class="audit-section-title">Verdict</div><div class="audit-list" style="font-size:14px;font-weight:700;">' + (review.verdictWord || '—') + ' (' + (review.verdictScore != null ? review.verdictScore : '—') + '/10)</div>';
+    wrap.appendChild(verdictSec);
+
+    if (review.trajectory && review.trajectory.length) {
+      section('Trajectory by domain', review.trajectory.map((t) => t.domain + ': ' + t.text));
+    }
+    section('Kept commitments', review.keptCommitments);
+    section('Broken commitments', review.brokenCommitments);
+    section('Top 5 wins', review.topWins);
+    section('Top 5 costs', review.topCosts);
+
+    if (review.themes && review.themes.length) {
+      const themeSec = document.createElement('div');
+      themeSec.className = 'audit-section';
+      themeSec.innerHTML = '<div class="audit-section-title">Proposed themes for next year</div>';
+      review.themes.forEach((theme, idx) => { themeSec.appendChild(renderThemeCard(year, theme, idx)); });
+      wrap.appendChild(themeSec);
+    }
+  }
+
+  // 6.10 answered question: Implement = adopt as a standing focus (stored,
+  // surfaced in future Weekly Audits' context), NOT a re-send through the
+  // assistant tool loop -- a yearly theme like "protect deep-work time" has
+  // no single tool call it maps to, unlike a concrete weekly suggestion.
+  function renderThemeCard(year, theme, idx) {
+    const wrap = document.createElement('div');
+    wrap.className = 'audit-suggestion';
+    const text = document.createElement('div');
+    text.className = 'audit-suggestion-text';
+    text.textContent = theme.text;
+    wrap.appendChild(text);
+    if (theme.status === 'pending') {
+      const actions = document.createElement('div');
+      actions.className = 'audit-suggestion-actions';
+      const implBtn = document.createElement('button');
+      implBtn.type = 'button'; implBtn.className = 'audit-sugg-btn audit-sugg-implement'; implBtn.textContent = 'Adopt';
+      const ignBtn = document.createElement('button');
+      ignBtn.type = 'button'; ignBtn.className = 'audit-sugg-btn audit-sugg-ignore'; ignBtn.textContent = 'Ignore';
+      implBtn.addEventListener('click', () => { setThemeStatus(year, idx, 'adopted'); });
+      ignBtn.addEventListener('click', () => { setThemeStatus(year, idx, 'ignored'); });
+      actions.appendChild(implBtn); actions.appendChild(ignBtn);
+      wrap.appendChild(actions);
+    } else {
+      const status = document.createElement('div');
+      status.className = 'audit-sugg-status';
+      status.textContent = theme.status === 'adopted' ? '✓ Adopted as a standing focus for ' + year : 'Ignored';
+      wrap.appendChild(status);
+    }
+    return wrap;
+  }
+  function setThemeStatus(year, idx, status) {
+    const reviews = getAnnualReviews();
+    const r = reviews.find((x) => x.year === year);
+    if (!r || !r.themes[idx]) return;
+    r.themes[idx].status = status;
+    setAnnualReviews(reviews);
+    renderAnnualReview();
+  }
+  // Adopted themes for the current year, surfaced in the Weekly Audit's own
+  // context (buildAuditContext, above) so the assistant keeps this year's
+  // stated focus in mind week to week -- the actual wiring for "surfaced in
+  // future Weekly Audits' context" per the answered question.
+  function adoptedThemesThisYear() {
+    const r = annualReviewFor(annualReviewYear());
+    if (!r || !r.themes) return [];
+    return r.themes.filter((t) => t.status === 'adopted').map((t) => t.text);
+  }
+
+  async function runAnnualReview() {
+    const year = annualReviewYear();
+    const btn = $('annualReviewRunBtn');
+    btn.disabled = true; btn.textContent = 'Running…';
+    $('annualReviewStatus').textContent = '';
+    try {
+      const context = buildAnnualReviewContext(year);
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, window.EqAuth ? window.EqAuth.header() : {}),
+        body: JSON.stringify({
+          messages: [{ role: 'user', content: 'Run my annual review from the data in context.' }],
+          systemContext: 'You are a direct, specific, zero-flattery annual reviewer for a personal tracking app, synthesizing a full year of weekly audits into one year-in-review. Every claim must cite something real from the weekly data below -- never invent a number or event, and say "not enough data" plainly where a domain has too little to say something real. Call submit_annual_review with your findings.\n\n' + context,
+          tools: [SUBMIT_ANNUAL_REVIEW_TOOL],
+          toolChoice: { name: 'submit_annual_review' },
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'request failed');
+      if (!data.toolUse || data.toolUse.name !== 'submit_annual_review') throw new Error('unexpected response shape');
+      const out = data.toolUse.input || {};
+      const reviews = getAnnualReviews().filter((r) => r.year !== year);
+      reviews.push({
+        year,
+        trajectory: out.trajectory || [],
+        keptCommitments: out.kept_commitments || [],
+        brokenCommitments: out.broken_commitments || [],
+        topWins: out.top_wins || [],
+        topCosts: out.top_costs || [],
+        themes: (out.themes || []).map((text) => ({ text, status: 'pending' })),
+        verdictWord: out.verdict_word || '—',
+        verdictScore: typeof out.verdict_score === 'number' ? out.verdict_score : null,
+        at: new Date().toISOString(),
+      });
+      setAnnualReviews(reviews);
+      renderAnnualReview();
+
+      if (window.ObsidianSync && ObsidianSync.getConfig().enabled) {
+        const md = '# Annual Review — ' + year + '\n\n' +
+          '## Verdict\n' + (out.verdict_word || '—') + ' (' + out.verdict_score + '/10)\n\n' +
+          '## Trajectory by domain\n' + (out.trajectory || []).map((t) => '- **' + t.domain + '**: ' + t.text).join('\n') + '\n\n' +
+          '## Kept commitments\n' + (out.kept_commitments || []).map((t) => '- ' + t).join('\n') + '\n\n' +
+          '## Broken commitments\n' + (out.broken_commitments || []).map((t) => '- ' + t).join('\n') + '\n\n' +
+          '## Top 5 wins\n' + (out.top_wins || []).map((t) => '- ' + t).join('\n') + '\n\n' +
+          '## Top 5 costs\n' + (out.top_costs || []).map((t) => '- ' + t).join('\n') + '\n\n' +
+          '## Proposed themes for next year\n' + (out.themes || []).map((t) => '- ' + t).join('\n') + '\n';
+        await ObsidianSync.pushWeeklyReport('Reviews/' + year, md);
+      }
+    } catch (e) {
+      $('annualReviewStatus').textContent = 'Could not run annual review — ' + (e.message || 'try again') + '.';
+    } finally {
+      btn.disabled = false;
+    }
+  }
+  $('annualReviewRunBtn').addEventListener('click', runAnnualReview);
+  renderAnnualReview();
+  window.addEventListener('storage', renderAnnualReview);
+
   initWeeklyReport();
+  syncAuditToBrowsedWeek();
+})();
+</script>
+<script>
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  function storeGet(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }
+  function storeSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  const AT = window.AssistantTools;
+
+  // ============================================================
+  // 4.4 MORNING BRIEF + CLOSE THE DAY. Button-only generation (no
+  // auto-call on open, per the answered ASK FIRST question) -- cached per
+  // day so a re-open of the dashboard doesn't imply a re-spend. Data is
+  // assembled client-side same as every other assistant context builder in
+  // this app (there's no server-side store to assemble from); "serverless
+  // assembles" in the master prompt is read as "the assistant call
+  // produces the brief," not a literal server-side data fetch.
+  // ============================================================
+  const BRIEF_KEY = 'eq.assistant.morning_brief_v1';
+  const CLOSE_KEY = 'eq.assistant.close_day_v1';
+
+  function pad2(n) { return String(n).padStart(2, '0'); }
+  function dateToKey(d) { return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); }
+
+  // Same tier-cadence map and snooze-checked-first order as
+  // renderInteractionsSummary() above (the 5.2 bug fix) -- re-derived here
+  // rather than shared since this script block keeps its own small helpers,
+  // same convention the rest of this file already uses.
+  const REL_TIER_CADENCE = { inner: 7, close: 21, acquaintance: 60, networking: 90, network: 90 };
+  function overdueContactNames() {
+    const contacts = storeGet('contacts_v1') || [];
+    return contacts.filter((c) => {
+      if (c.snoozedUntil && new Date(c.snoozedUntil).getTime() > Date.now()) return false;
+      const rawHistory = Array.isArray(c.history) ? c.history : (c.lastContactedAt ? [{ date: c.lastContactedAt }] : []);
+      // 5.5: inbound (they messaged you) doesn't reset the cadence clock by
+      // default -- only outbound counts, same rule as interactions.html's
+      // own lastContactDate().
+      const history = rawHistory.filter((h) => h.direction !== 'inbound');
+      if (!history.length) return true;
+      const last = history.reduce((latest, h) => (!latest || h.date > latest) ? h.date : latest, null);
+      const days = Math.floor((Date.now() - new Date(last).getTime()) / 86400000);
+      return days >= (REL_TIER_CADENCE[c.tier] || 21);
+    }).map((c) => c.name);
+  }
+
+  // Same rolling-forward logic as finance.html's own nextRenewalDate().
+  function subsRenewingSoon() {
+    const subs = storeGet('subs') || [];
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const cutoff = new Date(today.getTime() + 7 * 86400000);
+    const out = [];
+    subs.forEach((s) => {
+      if (!s.renewal) return;
+      let d = new Date(/^\d{4}-\d{2}-\d{2}$/.test(s.renewal) ? s.renewal + 'T00:00' : s.renewal);
+      if (isNaN(d)) return;
+      let safety = 0;
+      while (d < today && safety++ < 600) {
+        if (s.period === 'weekly') d.setDate(d.getDate() + 7);
+        else if (s.period === 'yearly') d.setFullYear(d.getFullYear() + 1);
+        else d.setMonth(d.getMonth() + 1);
+      }
+      if (d <= cutoff) out.push(s.name + ' (' + dateToKey(d) + ')');
+    });
+    return out;
+  }
+
+  function buildBriefContext() {
+    const todayKey = AT.activeDateKeyLocal();
+    const health = storeGet('eq.health.summary') || {};
+    const fitness = storeGet('eq.fitness.summary') || {};
+    const tasks = storeGet('goals:' + todayKey) || [];
+    const events = (storeGet('local_cal_events_v1') || []).filter((e) => e.dateKey === todayKey);
+    const overdue = overdueContactNames();
+    const subs = subsRenewingSoon();
+    const habits = storeGet('habits_v1') || [];
+    const habitsDoneToday = habits.filter((h) => h.history && h.history[todayKey]).length;
+
+    let s = 'Today is ' + todayKey + '.\n\n';
+    s += 'SLEEP: ' + (health.sleepHours != null ? health.sleepHours + 'h last night' + (health.sleepPerf != null ? ' (' + health.sleepPerf + '% performance)' : '') : 'no data') + '\n';
+    s += 'RECOVERY: ' + (health.recovery != null ? health.recovery + '%' : 'no data') + '\n';
+    s += 'TASKS TODAY (' + tasks.length + '): ' + (tasks.length ? tasks.map((t) => (t.done ? '[x] ' : '[ ] ') + '(' + (t.priority || 'P2') + ') ' + t.text).join('; ') : 'none scheduled') + '\n';
+    // 6.6: P1s named explicitly, per spec, not just inline in the list above.
+    const p1Tasks = tasks.filter((t) => (t.priority || 'P2') === 'P1' && !t.done);
+    s += 'P1 (MUST HAPPEN TODAY): ' + (p1Tasks.length ? p1Tasks.map((t) => t.text).join(', ') : 'none set') + '\n';
+    s += 'CALENDAR TODAY: ' + (events.length ? events.map((e) => (e.time || '') + ' ' + e.title).join('; ') : 'nothing scheduled') + '\n';
+    s += 'OVERDUE CONTACTS: ' + (overdue.length ? overdue.join(', ') : 'none') + '\n';
+    s += 'SUBSCRIPTIONS RENEWING WITHIN 7 DAYS: ' + (subs.length ? subs.join(', ') : 'none') + '\n';
+    s += 'HABITS DONE TODAY SO FAR: ' + habitsDoneToday + ' of ' + habits.length + '\n';
+    s += 'WEIGHT 7-DAY TREND: ' + (fitness.weight7dAvg != null ? fitness.weight7dAvg + 'kg' + (fitness.weight7dAvgChange != null ? ' (' + (fitness.weight7dAvgChange >= 0 ? '+' : '') + fitness.weight7dAvgChange + 'kg vs prior 7d)' : '') : 'no data') + '\n';
+    // 6.3: deadlines within 7 days, named explicitly, per spec.
+    const deadlines = (storeGet('eq.learn.deadlines_v1') || []).filter((d) => d.status !== 'done');
+    const soonDeadlines = deadlines.filter((d) => { const days = Math.ceil((new Date(d.dueDate).getTime() - Date.now()) / 86400000); return days >= 0 && days <= 7; });
+    if (soonDeadlines.length) s += 'LEARN HUB DEADLINES DUE WITHIN 7 DAYS: ' + soonDeadlines.map((d) => d.title + ' (' + d.dueDate + ')').join(', ') + '\n';
+    const decks = storeGet('eq.learn.decks_v1') || [];
+    const dueCards = decks.reduce((sum, d) => sum + (d.cards || []).filter((c) => c.dueDate <= new Date().toISOString()).length, 0);
+    if (dueCards > 0) s += 'FLASHCARDS DUE TODAY: ' + dueCards + '\n';
+    return s;
+  }
+
+  async function generateBrief() {
+    const btn = $('briefGenBtn');
+    btn.disabled = true; btn.textContent = 'Generating…';
+    try {
+      const context = buildBriefContext();
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, window.EqAuth ? window.EqAuth.header() : {}),
+        body: JSON.stringify({
+          messages: [{ role: 'user', content: 'Generate my morning brief from the data in context.' }],
+          systemContext: 'You write a morning brief for a personal tracking app. Given the data below, write AT MOST 6 lines: a brief state-of-play, then exactly ONE recommended focus for the day. No generic filler, no motivational padding, no "have a great day" -- direct and specific, citing the actual numbers given. If a data point says "no data," don\'t invent one.\n\n' + context,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'request failed');
+      storeSet(BRIEF_KEY, { dateKey: AT.activeDateKeyLocal(), text: data.reply || '', at: new Date().toISOString() });
+      renderBrief();
+    } catch (e) {
+      $('briefMeta').textContent = 'Could not generate — ' + (e.message || 'try again') + '.';
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  function renderBrief() {
+    const cached = storeGet(BRIEF_KEY);
+    const todayKey = AT.activeDateKeyLocal();
+    const btn = $('briefGenBtn');
+    if (cached && cached.dateKey === todayKey && cached.text) {
+      $('briefText').style.display = '';
+      $('briefText').textContent = cached.text;
+      $('briefEmpty').style.display = 'none';
+      $('briefMeta').textContent = 'Generated ' + new Date(cached.at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+      btn.textContent = 'Regenerate';
+    } else {
+      $('briefText').style.display = 'none';
+      $('briefEmpty').style.display = '';
+      $('briefMeta').textContent = '';
+      btn.textContent = 'Generate brief';
+    }
+  }
+  $('briefGenBtn').addEventListener('click', generateBrief);
+  renderBrief();
+
+  // ---------- Close the Day (evening variant) -- visible after 8 PM,
+  // through the rest of the still-active day (i.e. also before the 6 AM
+  // reset), per the app's own day-boundary convention. ----------
+  function buildCloseDayContext() {
+    const todayKey = AT.activeDateKeyLocal();
+    const tasks = storeGet('goals:' + todayKey) || [];
+    const completed = tasks.filter((t) => t.done).length;
+    const tomorrowTasks = storeGet('goals:' + AT.tomorrowDateKeyLocal()) || [];
+    let s = 'Today is ' + todayKey + '.\n';
+    s += 'TASKS: ' + completed + ' of ' + tasks.length + ' completed' + (tasks.length ? ' (' + tasks.map((t) => (t.done ? '[x] ' : '[ ] ') + t.text).join('; ') + ')' : '') + '.\n';
+    s += 'TOMORROW\'S TASKS SO FAR: ' + (tomorrowTasks.length ? tomorrowTasks.map((t) => t.text).join('; ') : 'none set yet') + '.\n';
+    return s;
+  }
+  async function closeDay() {
+    const btn = $('closeDayBtn');
+    btn.disabled = true; btn.textContent = 'Closing…';
+    try {
+      const context = buildCloseDayContext();
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, window.EqAuth ? window.EqAuth.header() : {}),
+        body: JSON.stringify({
+          messages: [{ role: 'user', content: 'Review today and close it out.' }],
+          systemContext: 'You write a short evening review for a personal tracking app, checking completion against the day\'s plan. Given the data below, write AT MOST 5 lines: what got done vs planned, and one honest observation. Direct, specific, no filler. Do not ask what tomorrow\'s top task is -- the app handles that separately, not you.\n\n' + context,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'request failed');
+      const todayKey = AT.activeDateKeyLocal();
+      storeSet(CLOSE_KEY, { dateKey: todayKey, text: data.reply || '', at: new Date().toISOString() });
+      renderCloseDay();
+      // Shared with 6.2's mood log (defined below in the same page) so
+      // logging mood earlier in the day and closing the day later both
+      // write ONE merged daily note instead of each overwriting the
+      // other's section via a plain PUT.
+      if (window.EqDailyNote) await window.EqDailyNote(todayKey);
+    } catch (e) {
+      $('closeDayMeta').textContent = 'Could not close the day — ' + (e.message || 'try again') + '.';
+    } finally {
+      btn.disabled = false;
+    }
+  }
+  function renderCloseDay() {
+    const now = new Date();
+    const showCard = now.getHours() >= 20 || now.getHours() < 6;
+    $('closeDayCard').style.display = showCard ? '' : 'none';
+    if (!showCard) return;
+    const todayKey = AT.activeDateKeyLocal();
+    const cached = storeGet(CLOSE_KEY);
+    const isClosed = cached && cached.dateKey === todayKey && cached.text;
+    if (isClosed) {
+      $('closeDayText').style.display = '';
+      $('closeDayText').textContent = cached.text;
+      $('closeDayMeta').textContent = 'Closed ' + new Date(cached.at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+      $('closeDayBtn').textContent = 'Regenerate';
+    } else {
+      $('closeDayText').style.display = 'none';
+      $('closeDayBtn').textContent = 'Close the day';
+    }
+    const tomorrowTasks = storeGet('goals:' + AT.tomorrowDateKeyLocal()) || [];
+    $('briefTomorrowPrompt').style.display = (isClosed && !tomorrowTasks.length) ? '' : 'none';
+  }
+  $('closeDayBtn').addEventListener('click', closeDay);
+  $('briefTomorrowSave').addEventListener('click', () => {
+    const val = $('briefTomorrowInput').value.trim();
+    if (!val) return;
+    const key = 'goals:' + AT.tomorrowDateKeyLocal();
+    const list = storeGet(key) || [];
+    list.push({ id: AT.genId('t'), text: val, done: false });
+    storeSet(key, list);
+    $('briefTomorrowInput').value = '';
+    $('briefTomorrowPrompt').style.display = 'none';
+  });
+  renderCloseDay();
+
+  window.addEventListener('storage', () => { renderBrief(); renderCloseDay(); });
+})();
+</script>
+<script>
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  function storeGet(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }
+  function storeSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  const AT = window.AssistantTools;
+
+  // ============================================================
+  // 6.2 MOOD + ONE-LINE JOURNAL. 1-10 scale (answered ASK FIRST, not the
+  // spec's own 1-5-with-faces suggestion -- more granular week-to-week
+  // movement for the correlation view). Purely observational, per the
+  // answered question -- no special-casing a low entry anywhere.
+  // Idempotent per day: tapping a new number after already logging today
+  // just updates the same entry, doesn't create a second one.
+  // ============================================================
+  const MOOD_KEY = 'eq.mood.log_v1';
+  function getMoodLog() { const v = storeGet(MOOD_KEY); return Array.isArray(v) ? v : []; }
+  function setMoodLog(list) { storeSet(MOOD_KEY, list); }
+  function moodToday() { return getMoodLog().find((m) => m.dateKey === AT.activeDateKeyLocal()) || null; }
+
+  async function writeDailyNote(dateKey) {
+    if (!window.ObsidianSync || !ObsidianSync.getConfig().enabled) return;
+    const mood = getMoodLog().find((m) => m.dateKey === dateKey);
+    const close = storeGet('eq.assistant.close_day_v1');
+    let md = '# ' + dateKey + '\n\n';
+    if (mood) md += '## Mood\n' + mood.mood + '/10' + (mood.note ? ' — ' + mood.note : '') + '\n\n';
+    if (close && close.dateKey === dateKey && close.text) md += '## Close the day\n\n' + close.text + '\n\n';
+    if (md.trim() === '# ' + dateKey) return; // nothing to write yet
+    try { await ObsidianSync.pushDailyNote(dateKey, md); } catch (e) {}
+  }
+  window.EqDailyNote = writeDailyNote;
+
+  function renderMoodChip() {
+    const chip = $('moodChip');
+    if (!chip) return;
+    chip.style.display = '';
+    const today = moodToday();
+    const scale = $('moodScale');
+    scale.innerHTML = '';
+    for (let i = 1; i <= 10; i++) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'mood-num-btn' + (today && today.mood === i ? ' is-selected' : '');
+      btn.textContent = String(i);
+      btn.addEventListener('click', () => saveMood(i));
+      scale.appendChild(btn);
+    }
+    $('moodChipHead').textContent = today ? 'Today: ' + today.mood + '/10' : 'How\'s today?';
+    const noteInput = $('moodNoteInput');
+    noteInput.style.display = '';
+    noteInput.value = today ? (today.note || '') : '';
+  }
+  async function saveMood(value) {
+    const dateKey = AT.activeDateKeyLocal();
+    const list = getMoodLog();
+    const idx = list.findIndex((m) => m.dateKey === dateKey);
+    const note = $('moodNoteInput').value.trim();
+    const entry = { dateKey, mood: value, note, at: new Date().toISOString() };
+    if (idx !== -1) list[idx] = entry; else list.push(entry);
+    setMoodLog(list.slice(-120));
+    renderMoodChip();
+    await writeDailyNote(dateKey);
+  }
+  $('moodNoteInput').addEventListener('change', () => { const today = moodToday(); if (today) saveMood(today.mood); });
+
+  renderMoodChip();
+  window.addEventListener('storage', renderMoodChip);
+})();
+</script>
+<script>
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  function storeGet(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }
+  function storeSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  const AT = window.AssistantTools;
+
+  // ============================================================
+  // 4.6 STANDING RULES ENGINE. Checked locally on app open (dashboard
+  // load) -- plain JS conditions against localStorage, no API call at all
+  // for 'flag' rules. Only 'assistant_message' rules (just recovery, per
+  // spec's own "suggest training swap" language for that one specifically
+  // -- every other template says "flag"/"surface", not "suggest") spend a
+  // cheap Haiku call, and only once per day even then (cached, same
+  // pattern as 4.4's brief).
+  //
+  // A 6th rule (goals/projects due within 48h below 75% progress) was
+  // added at the user's explicit request alongside the 5 spec templates --
+  // scoped to goals specifically (deadline + value fields both exist on
+  // longterm_goals_v1; there's no separate "assignment" or per-project
+  // deadline concept anywhere else in this app to extend it to).
+  // ============================================================
+  const RULES_STATE_KEY = 'eq.rules.v1';
+  const RULES_FIRED_KEY = 'eq.rules.fired.v1';
+
+  function pad2(n) { return String(n).padStart(2, '0'); }
+  function dateKeyOf(d) { return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); }
+  function todayKey() { return dateKeyOf(new Date()); }
+
+  const HABIT_SCORE_K = 0.95; // same constant as ability.html's computeHabitScore -- see that file for the full rationale
+  function habitStartBoundary(habit) {
+    if (habit.createdAt) { const t = new Date(habit.createdAt); t.setHours(0, 0, 0, 0); return t; }
+    const keys = Object.keys(habit.history || {}).sort();
+    return keys.length ? new Date(keys[0] + 'T00:00:00') : new Date();
+  }
+  function computeHabitScore(habit) {
+    const history = habit.history || {};
+    const start = habitStartBoundary(habit);
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    let score = 50;
+    let cursor = new Date(start);
+    while (cursor < today) {
+      score = score * HABIT_SCORE_K + (history[dateKeyOf(cursor)] ? 100 : 0) * (1 - HABIT_SCORE_K);
+      cursor = new Date(cursor.getTime() + 86400000);
+    }
+    if (history[dateKeyOf(today)]) score = score * HABIT_SCORE_K + 100 * (1 - HABIT_SCORE_K);
+    return Math.round(score);
+  }
+
+  function nextRenewal(sub) {
+    if (!sub.renewal) return null;
+    let d = new Date(/^\d{4}-\d{2}-\d{2}$/.test(sub.renewal) ? sub.renewal + 'T00:00' : sub.renewal);
+    if (isNaN(d)) return null;
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    let safety = 0;
+    while (d < today && safety++ < 600) {
+      if (sub.period === 'weekly') d.setDate(d.getDate() + 7);
+      else if (sub.period === 'yearly') d.setFullYear(d.getFullYear() + 1);
+      else d.setMonth(d.getMonth() + 1);
+    }
+    return d;
+  }
+
+  const RULE_TEMPLATES = [
+    {
+      key: 'recovery_low', label: 'Recovery < 33%', action: 'assistant_message', defaultEnabled: true,
+      check: function () {
+        const h = storeGet('eq.health.summary') || {};
+        if (typeof h.recovery !== 'number') return null;
+        return h.recovery < 33 ? { recovery: h.recovery } : null;
+      },
+    },
+    {
+      key: 'contact_emailed', label: 'Tracked contact emailed', action: 'flag', defaultEnabled: false,
+      // No persisted record of "contact X emailed on date Y" exists
+      // anywhere -- Gmail's unread state is in-memory only (1.4's own
+      // design, no server-side token storage), not something a later
+      // page load can see. Off by default and never fires rather than
+      // faking a signal this app genuinely doesn't have.
+      check: function () { return null; },
+    },
+    {
+      key: 'weight_swing', label: 'Weight 7-day avg moved > threshold', action: 'flag', defaultEnabled: true, hasThreshold: true, defaultThreshold: 2,
+      check: function (threshold) {
+        const f = storeGet('eq.fitness.summary') || {};
+        if (typeof f.weight7dAvgChange !== 'number') return null;
+        return Math.abs(f.weight7dAvgChange) > threshold ? { change: f.weight7dAvgChange } : null;
+      },
+    },
+    {
+      key: 'habit_score_low', label: 'A habit\'s health score dropped below 60', action: 'flag', defaultEnabled: true,
+      check: function () {
+        const habits = storeGet('habits_v1') || [];
+        const low = habits.filter((h) => computeHabitScore(h) < 60);
+        return low.length ? { names: low.map((h) => h.name + ' (' + computeHabitScore(h) + ')') } : null;
+      },
+    },
+    {
+      key: 'sub_renewing_48h', label: 'Subscription renewing within 48h', action: 'flag', defaultEnabled: true,
+      check: function () {
+        const subs = storeGet('subs') || [];
+        const cutoff = new Date(Date.now() + 48 * 3600000);
+        const soon = subs.filter((s) => { const d = nextRenewal(s); return d && d <= cutoff; });
+        return soon.length ? { names: soon.map((s) => s.name) } : null;
+      },
+    },
+    {
+      key: 'goal_due_soon', label: 'Goal due within 48h, below 75% progress', action: 'flag', defaultEnabled: true,
+      check: function () {
+        const goals = (storeGet('longterm_goals_v1') || []).filter((g) => !g.archived && g.deadline);
+        const cutoff = new Date(Date.now() + 48 * 3600000);
+        const due = goals.filter((g) => {
+          const d = new Date(g.deadline + 'T23:59:59');
+          return d <= cutoff && d >= new Date() && (g.value || 0) < 75;
+        });
+        return due.length ? { names: due.map((g) => g.title + ' (' + (g.value || 0) + '%)') } : null;
+      },
+    },
+  ];
+
+  function getRuleState() {
+    const stored = storeGet(RULES_STATE_KEY) || {};
+    const out = {};
+    RULE_TEMPLATES.forEach((t) => {
+      out[t.key] = Object.assign({ enabled: t.defaultEnabled, threshold: t.defaultThreshold }, stored[t.key] || {});
+    });
+    return out;
+  }
+  function getFiredState() { const v = storeGet(RULES_FIRED_KEY); return (v && typeof v === 'object') ? v : {}; }
+  function setFiredState(v) { storeSet(RULES_FIRED_KEY, v); }
+
+  async function evaluateRules() {
+    const state = getRuleState();
+    const fired = getFiredState();
+    const active = [];
+    for (const t of RULE_TEMPLATES) {
+      const s = state[t.key];
+      if (!s.enabled) continue;
+      const data = t.check(s.threshold);
+      if (!data) continue;
+      const cached = fired[t.key];
+      if (cached && cached.dateKey === todayKey()) { active.push({ template: t, message: cached.message }); continue; }
+      if (t.action === 'flag') {
+        const message = flagMessage(t, data);
+        fired[t.key] = { dateKey: todayKey(), message };
+        active.push({ template: t, message });
+      } else {
+        // assistant_message -- one cheap Haiku call, cached for the day.
+        try {
+          const res = await fetch('/api/chat', {
+            method: 'POST',
+            headers: Object.assign({ 'Content-Type': 'application/json' }, window.EqAuth ? window.EqAuth.header() : {}),
+            body: JSON.stringify({
+              messages: [{ role: 'user', content: 'Write the alert.' }],
+              systemContext: 'A standing rule just fired: "' + t.label + '". Data: ' + JSON.stringify(data) + '. Write ONE short direct sentence including the actual number(s), suggesting a concrete adjustment. No filler, no greeting.',
+              model: 'claude-haiku-4-5-20251001',
+            }),
+          });
+          const rd = await res.json().catch(() => ({}));
+          const message = (res.ok && rd.reply) ? rd.reply.trim() : flagMessage(t, data);
+          fired[t.key] = { dateKey: todayKey(), message };
+          active.push({ template: t, message });
+        } catch (e) {
+          const message = flagMessage(t, data);
+          fired[t.key] = { dateKey: todayKey(), message };
+          active.push({ template: t, message });
+        }
+      }
+    }
+    setFiredState(fired);
+    renderAlerts(active);
+  }
+
+  function flagMessage(t, data) {
+    if (t.key === 'weight_swing') return 'Weight 7-day average moved ' + (data.change >= 0 ? '+' : '') + data.change + 'kg in a week.';
+    if (t.key === 'habit_score_low') return 'Habit score dropped below 60: ' + data.names.join(', ') + '.';
+    if (t.key === 'sub_renewing_48h') return 'Renewing within 48h: ' + data.names.join(', ') + '.';
+    if (t.key === 'goal_due_soon') return 'Due within 48h, still under 75%: ' + data.names.join(', ') + '.';
+    return t.label;
+  }
+
+  function renderAlerts(active) {
+    const wrap = $('alertsWrap');
+    if (!active.length) { wrap.style.display = 'none'; wrap.innerHTML = ''; return; }
+    wrap.style.display = '';
+    wrap.innerHTML = active.map((a) => '<div class="alert-row"><span class="alert-icon">⚠️</span><span class="alert-text">' + a.message + '</span></div>').join('');
+  }
+
+  evaluateRules();
+  window.addEventListener('storage', evaluateRules);
 })();
 </script>
 </body>

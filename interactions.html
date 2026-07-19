@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<script src="auth-gate.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#0a0a0b">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -11,7 +12,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Equavia">
 <title>Interactions — Equavia</title>
+<script src="assistant-tools.js"></script>
 <script src="topbar.js" defer></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
 :root {
   --bg-deep: #050506;
@@ -41,9 +44,50 @@ body {
 .section-title { font-size: 10.5px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 10px; }
 .int-title { font-size: 22px; font-weight: 700; margin: 0 0 4px; }
 .int-subtitle { font-size: 12.5px; color: var(--text-tertiary); margin: 0 0 18px; line-height: 1.5; }
+.int-head-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.int-score-badge {
+  flex-shrink: 0; display: flex; align-items: baseline; gap: 2px;
+  background: rgba(224,118,88,0.1); border: 1px solid rgba(224,118,88,0.3); border-radius: 12px;
+  padding: 8px 12px; margin-top: 2px;
+}
+.int-score-num { font-size: 19px; font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; }
+.int-score-label { font-size: 10.5px; color: var(--text-tertiary); font-weight: 700; }
 
 /* ---- toolbar / list ---- */
 .int-toolbar { display: flex; gap: 8px; margin-bottom: 10px; }
+
+/* ===== Inbox (5.5) ===== */
+.int-zone-tabs { display: flex; gap: 6px; margin-bottom: 16px; }
+.int-zone-tab {
+  flex: 1; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 10px;
+  padding: 9px; font-family: inherit; font-size: 12.5px; font-weight: 700; color: var(--text-tertiary);
+  cursor: pointer; position: relative;
+}
+.int-zone-tab.is-active { background: rgba(224,118,88,0.14); border-color: rgba(224,118,88,0.4); color: var(--accent); }
+.int-zone-badge {
+  display: inline-flex; align-items: center; justify-content: center; min-width: 16px; height: 16px;
+  background: var(--danger); color: #2a0a0a; border-radius: 999px; font-size: 9.5px; font-weight: 800;
+  margin-left: 6px; padding: 0 4px;
+}
+.inbox-tier-note { font-size: 11.5px; color: var(--text-tertiary); background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin-bottom: 16px; }
+.inbox-section { margin-bottom: 22px; }
+.inbox-quicklog-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+.inbox-quicklog-row select { flex: 1; min-width: 100px; }
+.inbox-msg {
+  display: flex; flex-direction: column; gap: 2px; padding: 10px 0; border-bottom: 1px solid var(--border);
+}
+.inbox-msg:last-child { border-bottom: none; }
+.inbox-msg-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.inbox-msg-sender { font-size: 12.5px; font-weight: 700; }
+.inbox-msg-time { font-size: 10.5px; color: var(--text-quaternary); flex-shrink: 0; }
+.inbox-msg-preview { font-size: 12px; color: var(--text-secondary); line-height: 1.4; }
+.inbox-msg-actions { display: flex; gap: 8px; margin-top: 6px; }
+.inbox-msg-actions button {
+  background: rgba(255,255,255,0.06); border: 1px solid var(--border-strong); border-radius: 8px;
+  padding: 5px 10px; font-family: inherit; font-size: 11px; font-weight: 600; color: var(--text-primary); cursor: pointer;
+}
+.inbox-msg-actions button:disabled { opacity: 0.5; cursor: default; }
+.inbox-msg-contact-chip { background: rgba(224,118,88,0.16); color: var(--accent); border-radius: 999px; padding: 2px 8px; font-size: 10px; font-weight: 700; }
 .int-search {
   flex: 1; background: var(--bg-input); border: 1px solid var(--border-strong); border-radius: 10px;
   padding: 9px 12px; color: var(--text-primary); font-family: inherit; font-size: 13.5px; outline: none;
@@ -96,6 +140,14 @@ body {
   border-radius: 10px; padding: 8px 14px; font-family: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer;
 }
 .ct-action-btn.is-primary { background: var(--accent); color: #1a0f0a; border-color: transparent; }
+/* ===== 6.7: web-search quick prompt, fueling social plans ===== */
+.int-websearch-btn {
+  display: inline-flex; align-items: center; gap: 6px; margin-bottom: 16px;
+  background: rgba(255,255,255,0.05); color: var(--text-primary); border: 1px solid var(--border-strong);
+  border-radius: 10px; padding: 8px 14px; font-family: inherit; font-size: 12.5px; font-weight: 600;
+  text-decoration: none; cursor: pointer;
+}
+.int-websearch-btn:hover { background: rgba(255,255,255,0.09); }
 .ct-field { margin-bottom: 14px; }
 .ct-field label { display: block; font-size: 10.5px; font-weight: 700; color: var(--text-tertiary); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.05em; }
 .ct-field input[type="text"], .ct-field input[type="date"], .ct-field select, .ct-field textarea {
@@ -108,6 +160,41 @@ body {
 .ct-tags-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
 .ct-tag-pill { background: rgba(255,255,255,0.06); border: 1px solid var(--border-strong); border-radius: 999px; padding: 4px 10px 4px 12px; font-size: 11.5px; display: flex; align-items: center; gap: 6px; }
 .ct-tag-pill button { background: none; border: none; color: var(--text-quaternary); cursor: pointer; padding: 0; font-size: 13px; line-height: 1; }
+
+/* ===== Talking Topics + Reply Helper (5.3/5.4) ===== */
+.ct-topics-block, .ct-reply-block { margin-bottom: 8px; }
+.ct-topics-sub { font-size: 10.5px; font-weight: 700; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+.ct-topics-status, .row-sub { font-size: 11.5px; color: var(--text-tertiary); margin-top: 6px; }
+.ct-thread-row { display: flex; align-items: center; gap: 8px; padding: 6px 0; }
+.ct-thread-row.is-done .ct-thread-text { text-decoration: line-through; color: var(--text-quaternary); }
+.ct-thread-text { flex: 1; font-size: 13px; }
+.ct-thread-del { background: none; border: none; color: var(--text-quaternary); cursor: pointer; font-size: 14px; padding: 0 4px; }
+.ct-thread-add-row { display: flex; gap: 8px; margin-top: 8px; }
+.ct-thread-add-row input { flex: 1; }
+.ct-topic-card {
+  background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 10px;
+  padding: 10px 12px; margin-bottom: 8px; font-size: 12.5px; cursor: pointer; line-height: 1.4;
+}
+.ct-topic-card:hover { border-color: var(--accent); }
+.ct-topic-card.is-news { display: flex; flex-direction: column; gap: 2px; }
+.ct-topic-card a { color: var(--accent); }
+.ct-reply-block textarea {
+  width: 100%; box-sizing: border-box; background: var(--bg-input); border: 1px solid var(--border-strong);
+  border-radius: 10px; color: var(--text-primary); font-family: inherit; font-size: 13px; padding: 9px 11px;
+  margin-bottom: 8px; resize: vertical;
+}
+.ct-reply-modes { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.ct-reply-mode-btn {
+  background: rgba(255,255,255,0.06); border: 1px solid var(--border-strong); border-radius: 999px;
+  padding: 6px 12px; font-family: inherit; font-size: 11.5px; font-weight: 600; color: var(--text-primary); cursor: pointer;
+}
+.ct-reply-mode-btn:disabled { opacity: 0.5; cursor: default; }
+.ct-reply-option {
+  background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 10px;
+  padding: 10px 12px; margin-bottom: 8px; font-size: 12.5px; line-height: 1.5; cursor: pointer;
+}
+.ct-reply-option:hover { border-color: var(--accent); }
+.ct-reply-option-copied { color: var(--accent); font-size: 10.5px; font-weight: 700; margin-top: 4px; }
 
 .ct-history-item { padding: 10px 0; border-bottom: 1px solid var(--border); }
 .ct-history-item:last-child { border-bottom: none; }
@@ -140,8 +227,57 @@ body {
 <body>
 <div class="shell">
   <div class="section-title">Interactions</div>
-  <h1 class="int-title">People</h1>
-  <p class="int-subtitle">Who to reach out to, what to say. The Relationship Tracker moved here from Planner.</p>
+  <div class="int-head-row">
+    <div>
+      <h1 class="int-title">People</h1>
+      <p class="int-subtitle">Who to reach out to, what to say. The Relationship Tracker moved here from Planner.</p>
+    </div>
+    <div class="int-score-badge" id="intScoreBadge" title="This week's interaction score" style="display:none;">
+      <span class="int-score-num" id="intScoreNum">—</span>
+      <span class="int-score-label">/100</span>
+    </div>
+  </div>
+
+  <div class="int-zone-tabs">
+    <button type="button" class="int-zone-tab is-active" id="intZonePeopleBtn">People</button>
+    <button type="button" class="int-zone-tab" id="intZoneInboxBtn">Inbox<span class="int-zone-badge" id="intInboxBadge" style="display:none;"></span></button>
+  </div>
+
+  <a class="int-websearch-btn" id="intWeekendBtn" href="ask.html?prompt=What%27s%20on%20near%20me%20this%20weekend%3F">🔎 What's on near me this weekend?</a>
+
+  <div id="intInboxView" style="display:none;">
+    <div class="inbox-tier-note" id="inboxPlatformNote"></div>
+
+    <div class="inbox-section">
+      <div class="section-title" style="margin-bottom:8px;">Gmail</div>
+      <div id="inboxGmailDisc">
+        <button type="button" class="ct-action-btn is-primary" id="inboxGmailConnectBtn">Connect Gmail</button>
+      </div>
+      <div id="inboxGmailConn" style="display:none;">
+        <div id="inboxGmailList"></div>
+        <div class="row-sub" id="inboxGmailEmpty" style="display:none;">No unread mail.</div>
+        <div class="row-sub" id="inboxGmailErr" style="display:none;color:#FF8A8A;"></div>
+      </div>
+    </div>
+
+    <div class="inbox-section">
+      <div class="section-title" style="margin-bottom:8px;">Quick log</div>
+      <p class="row-sub" style="margin-top:0;">No automated DM relay on iPhone (Instagram/WhatsApp/Snapchat/TikTok don't expose that to any app, iOS blocks notification interception entirely) — one tap here keeps the cadence tracker honest anyway.</p>
+      <div class="inbox-quicklog-row">
+        <select id="inboxQuickLogContact"></select>
+        <select id="inboxQuickLogApp">
+          <option value="WhatsApp">WhatsApp</option>
+          <option value="Instagram">Instagram</option>
+          <option value="Snapchat">Snapchat</option>
+          <option value="TikTok">TikTok</option>
+          <option value="SMS">SMS</option>
+          <option value="Other">Other</option>
+        </select>
+        <button type="button" class="ct-action-btn" id="inboxQuickLogBtn">They messaged me</button>
+      </div>
+      <div id="inboxQuickLogList"></div>
+    </div>
+  </div>
 
   <div id="intListView">
     <div class="int-toolbar">
@@ -192,6 +328,40 @@ body {
     <div class="ct-field">
       <label for="ctpNotes">Notes</label>
       <textarea id="ctpNotes" placeholder="What did you last talk about…"></textarea>
+    </div>
+
+    <div class="section-title" style="margin-top:22px;">What to talk about</div>
+    <div class="ct-topics-block">
+      <div class="ct-topics-sub">Open threads</div>
+      <div id="ctpThreadsList"></div>
+      <div class="ct-thread-add-row">
+        <input type="text" id="ctpThreadInput" placeholder="e.g. Ask how the 6c project went…">
+        <button type="button" class="ct-action-btn" id="ctpThreadAddBtn">Add</button>
+      </div>
+
+      <div class="ct-topics-sub" style="margin-top:16px;">From their interests</div>
+      <div id="ctpSuggestedTopics"></div>
+      <button type="button" class="ct-action-btn" id="ctpSuggestBtn">Suggest topics</button>
+      <div class="ct-topics-status" id="ctpSuggestStatus"></div>
+
+      <div class="ct-topics-sub" style="margin-top:16px;">From this week's news</div>
+      <div id="ctpNewsTopics"></div>
+      <div class="row-sub" id="ctpNewsEmpty" style="display:none;">No matching news this week.</div>
+    </div>
+
+    <div class="section-title" style="margin-top:22px;">Reply helper</div>
+    <div class="ct-reply-block">
+      <textarea id="ctpReplyTheirs" placeholder="What they said (paste it)…" rows="2"></textarea>
+      <textarea id="ctpReplyDraft" placeholder="Your rough draft (optional)…" rows="2"></textarea>
+      <div class="ct-reply-modes" id="ctpReplyModes">
+        <button type="button" class="ct-reply-mode-btn" data-mode="open">Open-ended reply</button>
+        <button type="button" class="ct-reply-mode-btn" data-mode="followup">Follow-up question</button>
+        <button type="button" class="ct-reply-mode-btn" data-mode="subject">Change subject</button>
+        <button type="button" class="ct-reply-mode-btn" data-mode="smooth">Smooth my draft</button>
+        <button type="button" class="ct-reply-mode-btn" data-mode="reopen">Re-open after silence</button>
+      </div>
+      <div id="ctpReplyOptions"></div>
+      <div class="ct-topics-status" id="ctpReplyStatus"></div>
     </div>
 
     <div class="section-title" style="margin-top:22px;">History</div>
@@ -290,9 +460,16 @@ body {
   function setContacts(list) { storeSet(CONTACTS_KEY, list); }
 
   // ---------- Derived values ----------
+  // 5.5: inbound entries (they messaged/emailed you) do NOT reset the
+  // cadence clock by default, per spec -- only outbound counts as "you
+  // stayed in touch." Legacy entries with no direction field predate 5.5
+  // and are treated as outbound (their original meaning, before inbound
+  // existed as a concept at all).
   function lastContactDate(c) {
     if (!c.history || !c.history.length) return null;
-    return c.history.reduce((latest, h) => (!latest || h.date > latest) ? h.date : latest, null);
+    const outbound = c.history.filter((h) => h.direction !== 'inbound');
+    if (!outbound.length) return null;
+    return outbound.reduce((latest, h) => (!latest || h.date > latest) ? h.date : latest, null);
   }
   function daysSince(iso) {
     if (!iso) return Infinity;
@@ -468,6 +645,200 @@ body {
     });
   }
 
+  // ============================================================
+  // 5.3 TALKING TOPICS -- three stacked sources per contact, per spec.
+  // ============================================================
+  function renderThreads(c) {
+    const wrap = $('ctpThreadsList');
+    wrap.innerHTML = '';
+    const threads = c.openThreads || [];
+    if (!threads.length) { wrap.innerHTML = '<div class="row-sub">No open threads yet.</div>'; return; }
+    threads.forEach((t, i) => {
+      const row = document.createElement('div');
+      row.className = 'ct-thread-row' + (t.done ? ' is-done' : '');
+      const cb = document.createElement('input');
+      cb.type = 'checkbox'; cb.checked = !!t.done;
+      cb.addEventListener('change', () => {
+        const list = getContacts();
+        const idx = list.findIndex((x) => x.id === c.id);
+        if (idx === -1) return;
+        list[idx].openThreads[i].done = cb.checked;
+        if (cb.checked) {
+          // "Checked items move into that day's interaction history note" -- per spec.
+          list[idx].history = list[idx].history || [];
+          list[idx].history.push({ date: new Date().toISOString(), channel: 'other', note: 'Talked about: ' + t.text, direction: 'outbound' });
+        }
+        setContacts(list);
+        openDetail(c.id);
+      });
+      row.appendChild(cb);
+      const txt = document.createElement('span'); txt.className = 'ct-thread-text'; txt.textContent = t.text;
+      row.appendChild(txt);
+      const del = document.createElement('button');
+      del.type = 'button'; del.className = 'ct-thread-del'; del.textContent = '×'; del.setAttribute('aria-label', 'Remove thread');
+      del.addEventListener('click', () => {
+        const list = getContacts();
+        const idx = list.findIndex((x) => x.id === c.id);
+        if (idx === -1) return;
+        list[idx].openThreads.splice(i, 1);
+        setContacts(list);
+        openDetail(c.id);
+      });
+      row.appendChild(del);
+      wrap.appendChild(row);
+    });
+  }
+  $('ctpThreadAddBtn').addEventListener('click', () => {
+    const input = $('ctpThreadInput');
+    const text = input.value.trim();
+    if (!text || !activeContactId) return;
+    const list = getContacts();
+    const idx = list.findIndex((x) => x.id === activeContactId);
+    if (idx === -1) return;
+    list[idx].openThreads = list[idx].openThreads || [];
+    list[idx].openThreads.push({ id: 'th' + Date.now() + Math.random().toString(36).slice(2, 6), text, done: false });
+    setContacts(list);
+    input.value = '';
+    openDetail(activeContactId);
+  });
+
+  // Cached until notes/tags/recent-history-notes actually change (per
+  // spec) -- keyed on a hash of exactly those inputs, not a timer.
+  function topicsCacheKey(c) {
+    const lastNotes = (c.history || []).slice().sort((a, b) => b.date.localeCompare(a.date)).slice(0, 2).map((h) => h.note || '');
+    return JSON.stringify({ tags: c.tags || [], notes: c.notes || '', lastNotes });
+  }
+  function buildTopicCard(text, isNews, url) {
+    const card = document.createElement('div');
+    card.className = 'ct-topic-card' + (isNews ? ' is-news' : '');
+    if (isNews) { card.innerHTML = 'You could mention: <a href="' + url + '" target="_blank" rel="noopener"></a>'; card.querySelector('a').textContent = text; }
+    else { card.textContent = text; card.title = 'Tap to copy'; card.addEventListener('click', () => { try { navigator.clipboard.writeText(text); } catch (e) {} }); }
+    return card;
+  }
+  function renderSuggestedTopics(c) {
+    const wrap = $('ctpSuggestedTopics');
+    wrap.innerHTML = '';
+    const cache = c.topicsCache;
+    if (cache && cache.key === topicsCacheKey(c) && Array.isArray(cache.topics)) {
+      cache.topics.forEach((t) => wrap.appendChild(buildTopicCard(t, false)));
+    }
+  }
+  async function suggestTopics() {
+    const c = getContacts().find((x) => x.id === activeContactId);
+    if (!c) return;
+    const btn = $('ctpSuggestBtn');
+    btn.disabled = true; btn.textContent = 'Thinking…';
+    $('ctpSuggestStatus').textContent = '';
+    try {
+      const lastNotes = (c.history || []).slice().sort((a, b) => b.date.localeCompare(a.date)).slice(0, 2).map((h) => h.note).filter(Boolean);
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, window.EqAuth ? window.EqAuth.header() : {}),
+        body: JSON.stringify({
+          messages: [{ role: 'user', content: 'Suggest conversation topics for this person.' }],
+          systemContext: 'Interest tags: ' + (c.tags || []).join(', ') + '. Notes: ' + (c.notes || '') + '. Recent chat notes: ' + lastNotes.join('; ') + '. Suggest 4-6 specific, concrete conversation prompts tuned to this exact person -- not generic small talk. Reply with ONLY a JSON array of strings, nothing else, no markdown fencing.',
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'request failed');
+      let topics;
+      try { topics = JSON.parse((data.reply || '').trim().replace(/^```json?|```$/g, '')); } catch (e) { topics = null; }
+      if (!Array.isArray(topics) || !topics.length) throw new Error('unexpected response shape');
+      const list = getContacts();
+      const idx = list.findIndex((x) => x.id === c.id);
+      list[idx].topicsCache = { key: topicsCacheKey(c), topics, at: new Date().toISOString() };
+      setContacts(list);
+      renderSuggestedTopics(list[idx]);
+    } catch (e) {
+      $('ctpSuggestStatus').textContent = 'Could not generate — ' + (e.message || 'try again') + '.';
+    } finally {
+      btn.disabled = false; btn.textContent = 'Suggest topics';
+    }
+  }
+  $('ctpSuggestBtn').addEventListener('click', suggestTopics);
+
+  // Zero API cost -- plain client-side keyword/category matching against
+  // whatever news.html (5.6) has cached, per spec.
+  function renderNewsTopics(c) {
+    const wrap = $('ctpNewsTopics');
+    wrap.innerHTML = '';
+    const items = storeGet('eq.news.items_v1') || [];
+    const tags = (c.tags || []).map((t) => t.toLowerCase());
+    const matches = tags.length ? items.filter((it) => {
+      const hay = ((it.category || '') + ' ' + (it.title || '') + ' ' + (it.snippet || '')).toLowerCase();
+      return tags.some((t) => hay.indexOf(t) !== -1);
+    }).slice(0, 5) : [];
+    $('ctpNewsEmpty').style.display = matches.length ? 'none' : '';
+    matches.forEach((it) => wrap.appendChild(buildTopicCard(it.title, true, it.url)));
+  }
+
+  // ============================================================
+  // 5.4 REPLY HELPER -- Sonnet (answered ASK FIRST, not the spec's own
+  // Haiku suggestion -- relationship nuance from notes/tags weighed higher
+  // than per-generation cost here specifically).
+  // ============================================================
+  const REPLY_MODE_PROMPTS = {
+    open: 'Write an open-ended reply to what they said.',
+    followup: 'Write a reply that asks a natural follow-up question.',
+    subject: 'Write a reply that smoothly changes the subject.',
+    smooth: 'Smooth and improve my rough draft reply below, keeping its intent and my voice.',
+    reopen: 'Write a warm re-engagement opener to re-open contact after a period of silence. Reference the given open thread only if it fits naturally.',
+  };
+  async function generateReplies(mode) {
+    const c = getContacts().find((x) => x.id === activeContactId);
+    if (!c) return;
+    const theirs = $('ctpReplyTheirs').value.trim();
+    const draft = $('ctpReplyDraft').value.trim();
+    if (mode === 'smooth' && !draft) { $('ctpReplyStatus').textContent = 'Add your rough draft first.'; return; }
+    if (mode !== 'reopen' && mode !== 'smooth' && !theirs) { $('ctpReplyStatus').textContent = 'Paste what they said first.'; return; }
+    document.querySelectorAll('.ct-reply-mode-btn').forEach((b) => { b.disabled = true; });
+    $('ctpReplyStatus').textContent = 'Generating…';
+    $('ctpReplyOptions').innerHTML = '';
+    try {
+      const lastNotes = (c.history || []).slice().sort((a, b) => b.date.localeCompare(a.date)).slice(0, 2).map((h) => h.note).filter(Boolean);
+      const openThread = (c.openThreads || []).find((t) => !t.done);
+      let userMsg = REPLY_MODE_PROMPTS[mode];
+      if (theirs) userMsg += ' What they said: "' + theirs + '"';
+      if (draft) userMsg += ' My rough draft: "' + draft + '"';
+      if (mode === 'reopen' && openThread) userMsg += ' Open thread to reference if natural: "' + openThread.text + '"';
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, window.EqAuth ? window.EqAuth.header() : {}),
+        body: JSON.stringify({
+          messages: [{ role: 'user', content: userMsg }],
+          systemContext: 'You help draft replies to a specific contact so they fit the actual relationship. Tier: ' + c.tier + '. Notes: ' + (c.notes || '') + '. Interest tags: ' + (c.tags || []).join(', ') + '. Recent chat notes: ' + lastNotes.join('; ') + '. Reply with ONLY a JSON array of exactly 3 short, ready-to-send message options, nothing else, no markdown fencing.',
+          model: 'claude-sonnet-5',
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'request failed');
+      let options;
+      try { options = JSON.parse((data.reply || '').trim().replace(/^```json?|```$/g, '')); } catch (e) { options = null; }
+      if (!Array.isArray(options) || !options.length) throw new Error('unexpected response shape');
+      $('ctpReplyStatus').textContent = '';
+      options.forEach((opt) => {
+        const card = document.createElement('div');
+        card.className = 'ct-reply-option';
+        card.textContent = opt;
+        card.addEventListener('click', () => {
+          try { navigator.clipboard.writeText(opt); } catch (e) {}
+          if (!card.querySelector('.ct-reply-option-copied')) {
+            const tag = document.createElement('div'); tag.className = 'ct-reply-option-copied'; tag.textContent = 'Copied';
+            card.appendChild(tag);
+          }
+        });
+        $('ctpReplyOptions').appendChild(card);
+      });
+    } catch (e) {
+      $('ctpReplyStatus').textContent = 'Could not generate — ' + (e.message || 'try again') + '.';
+    } finally {
+      document.querySelectorAll('.ct-reply-mode-btn').forEach((b) => { b.disabled = false; });
+    }
+  }
+  document.querySelectorAll('.ct-reply-mode-btn').forEach((btn) => {
+    btn.addEventListener('click', () => generateReplies(btn.dataset.mode));
+  });
+
   function openDetail(id) {
     activeContactId = id;
     const c = getContacts().find((x) => x.id === id);
@@ -486,6 +857,11 @@ body {
     $('ctpNotes').value = c.notes || '';
     renderTags(c);
     renderHistory(c);
+    renderThreads(c);
+    renderSuggestedTopics(c);
+    renderNewsTopics(c);
+    $('ctpReplyTheirs').value = ''; $('ctpReplyDraft').value = '';
+    $('ctpReplyOptions').innerHTML = ''; $('ctpReplyStatus').textContent = '';
     window.scrollTo(0, 0);
   }
   function closeDetail() {
@@ -547,7 +923,7 @@ body {
       const idx = list.findIndex((x) => x.id === activeContactId);
       if (idx === -1) return;
       list[idx].history = list[idx].history || [];
-      list[idx].history.push({ date: new Date().toISOString(), channel: btn.dataset.channel, note: $('ctLogNote').value.trim() });
+      list[idx].history.push({ date: new Date().toISOString(), channel: btn.dataset.channel, note: $('ctLogNote').value.trim(), direction: 'outbound' });
       // A fresh log is a live "I'm back in touch" signal -- clear any snooze
       // rather than leave a contact both "just logged" and "snoozed".
       list[idx].snoozedUntil = null;
@@ -586,6 +962,313 @@ body {
   window.addEventListener('storage', () => { if (activeContactId) openDetail(activeContactId); else renderList(); });
 
   renderList();
+})();
+</script>
+<script>
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  function storeGet(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }
+  function storeSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  function getContacts() { try { return JSON.parse(localStorage.getItem('contacts_v1')) || []; } catch (e) { return []; } }
+  function setContacts(list) { storeSet('contacts_v1', list); }
+
+  // ============================================================
+  // 5.5 INBOX -- "honest constraints" per spec. Daily phone is iPhone
+  // (answered ASK FIRST): Tier B (Android notification relay for
+  // WhatsApp/IG/Snapchat/TikTok) is not buildable at all -- iOS forbids
+  // notification interception outright, no workaround exists. Ships Tier A
+  // (Gmail, mirrored from the already-built 1.4) and Tier C (manual
+  // quick-log) only, with the UI stating plainly why Tier B is absent
+  // rather than silently omitting it.
+  // ============================================================
+  $('inboxPlatformNote').textContent = 'Daily phone: iPhone. Instagram/WhatsApp/Snapchat/TikTok expose no DM access to any app, and iOS blocks notification interception entirely -- there is no automated relay possible here. Gmail (below) and the manual quick-log are the real options.';
+
+  // ---- Zone tabs ----
+  $('intZonePeopleBtn').addEventListener('click', () => {
+    $('intZonePeopleBtn').classList.add('is-active');
+    $('intZoneInboxBtn').classList.remove('is-active');
+    $('intInboxView').style.display = 'none';
+    $('intListView').style.display = '';
+  });
+  $('intZoneInboxBtn').addEventListener('click', () => {
+    $('intZoneInboxBtn').classList.add('is-active');
+    $('intZonePeopleBtn').classList.remove('is-active');
+    $('intListView').style.display = 'none';
+    $('intDetailView').style.display = 'none';
+    $('intInboxView').style.display = '';
+  });
+
+  // ---- Tier C: manual quick-log fallback ----
+  const QUICKLOG_KEY = 'eq.inbox.quicklog_v1';
+  const QUICKLOG_EXPIRE_DAYS = 7;
+  function getQuickLog() {
+    const list = storeGet(QUICKLOG_KEY) || [];
+    const cutoff = Date.now() - QUICKLOG_EXPIRE_DAYS * 86400000;
+    const fresh = list.filter((x) => new Date(x.at).getTime() > cutoff);
+    if (fresh.length !== list.length) storeSet(QUICKLOG_KEY, fresh);
+    return fresh;
+  }
+  function fillQuickLogContactSelect() {
+    const sel = $('inboxQuickLogContact');
+    sel.innerHTML = getContacts().map((c) => '<option value="' + c.id + '">' + c.name + '</option>').join('');
+  }
+  function renderQuickLog() {
+    const wrap = $('inboxQuickLogList');
+    const items = getQuickLog().slice().sort((a, b) => b.at.localeCompare(a.at));
+    wrap.innerHTML = items.map((it) => '<div class="inbox-msg"><div class="inbox-msg-top"><span class="inbox-msg-sender">' + it.contactName + ' via ' + it.app + '</span><span class="inbox-msg-time">' + new Date(it.at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + '</span></div></div>').join('');
+  }
+  $('inboxQuickLogBtn').addEventListener('click', () => {
+    const contactId = $('inboxQuickLogContact').value;
+    const app = $('inboxQuickLogApp').value;
+    const contacts = getContacts();
+    const c = contacts.find((x) => x.id === contactId);
+    if (!c) return;
+    c.history = Array.isArray(c.history) ? c.history : [];
+    c.history.push({ date: new Date().toISOString(), channel: 'other', note: 'Messaged via ' + app, direction: 'inbound' });
+    setContacts(contacts);
+    const log = getQuickLog();
+    log.unshift({ id: 'ql' + Date.now(), contactId, contactName: c.name, app, at: new Date().toISOString() });
+    storeSet(QUICKLOG_KEY, log);
+    renderQuickLog();
+  });
+
+  // ---- Tier A: Gmail mirror (same client/scope/silent-reauth pattern as
+  // dashboard.html's 1.4 panel -- tokens are session-only by the same
+  // design, so this page runs its own independent connect, it can't borrow
+  // dashboard.html's in-memory token across a page navigation). ----
+  const GMAIL_CLIENT_ID = '83878675540-40tpq4hkpd05jarl8m8nj9i8vhm5rnel.apps.googleusercontent.com';
+  const GMAIL_SCOPE = 'https://www.googleapis.com/auth/gmail.readonly';
+  const GMAIL_EVER_GRANTED_KEY = 'eq.gmail.everGranted';
+  let accessToken = null;
+  let tokenClient = null;
+  let retrying401 = false;
+
+  function setGmailConnectedUI(connected) {
+    $('inboxGmailDisc').style.display = connected ? 'none' : '';
+    $('inboxGmailConn').style.display = connected ? '' : 'none';
+  }
+  function ensureTokenClient() {
+    if (tokenClient || !window.google || !google.accounts || !google.accounts.oauth2) return tokenClient;
+    tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: GMAIL_CLIENT_ID,
+      scope: GMAIL_SCOPE,
+      callback: (resp) => {
+        if (!resp || resp.error) { $('inboxGmailErr').textContent = 'Gmail connect failed.'; $('inboxGmailErr').style.display = ''; return; }
+        accessToken = resp.access_token;
+        localStorage.setItem(GMAIL_EVER_GRANTED_KEY, '1');
+        $('inboxGmailErr').style.display = 'none';
+        setGmailConnectedUI(true);
+        fetchGmailMessages();
+      },
+    });
+    return tokenClient;
+  }
+  function parseFrom(headerValue) {
+    if (!headerValue) return { name: 'Unknown' };
+    const m = headerValue.match(/^\s*"?([^"<]*)"?\s*(?:<([^>]+)>)?\s*$/);
+    if (!m) return { name: headerValue };
+    return { name: (m[1] || '').trim() || (m[2] || '').trim() || 'Unknown' };
+  }
+  function headerVal(headers, name) { const h = (headers || []).find((x) => x.name === name); return h ? h.value : ''; }
+  function matchContact(name) {
+    if (!name) return null;
+    const needle = name.trim().toLowerCase();
+    return getContacts().find((c) => c.name && c.name.trim().toLowerCase() === needle) || null;
+  }
+  async function gmailFetch(url) {
+    const r = await fetch(url, { headers: { Authorization: 'Bearer ' + accessToken } });
+    if (!r.ok) { const err = new Error('Gmail ' + r.status); err.status = r.status; throw err; }
+    return r.json();
+  }
+  async function fetchGmailMessages() {
+    if (!accessToken) return;
+    $('inboxGmailErr').style.display = 'none';
+    try {
+      const list = await gmailFetch('https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=10&q=' + encodeURIComponent('is:unread in:inbox'));
+      const ids = (list.messages || []).map((m) => m.id);
+      const details = await Promise.all(ids.map((id) => gmailFetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/' + id + '?format=metadata&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=Date')));
+      retrying401 = false;
+      renderGmailMessages(details);
+      if (window.AssistantTools) window.AssistantTools.recordIntegrationHealth('inbox_relay', true);
+    } catch (e) {
+      if (e.status === 401 && !retrying401 && ensureTokenClient()) { retrying401 = true; tokenClient.requestAccessToken({ prompt: '' }); return; }
+      retrying401 = false;
+      if (e.status === 401) { accessToken = null; setGmailConnectedUI(false); }
+      else { $('inboxGmailErr').textContent = 'Could not load Gmail — ' + e.message; $('inboxGmailErr').style.display = ''; }
+      if (window.AssistantTools) window.AssistantTools.recordIntegrationHealth('inbox_relay', false);
+    }
+  }
+  function renderGmailMessages(details) {
+    const listEl = $('inboxGmailList');
+    listEl.innerHTML = '';
+    $('inboxGmailEmpty').style.display = details.length ? 'none' : '';
+    let badgeCount = 0;
+    details.forEach((msg) => {
+      const headers = msg.payload ? msg.payload.headers : [];
+      const from = parseFrom(headerVal(headers, 'From'));
+      const subject = headerVal(headers, 'Subject') || '(no subject)';
+      const contact = matchContact(from.name);
+      const row = document.createElement('div');
+      row.className = 'inbox-msg';
+      const top = document.createElement('div');
+      top.className = 'inbox-msg-top';
+      const sender = document.createElement('span'); sender.className = 'inbox-msg-sender'; sender.textContent = 'Gmail: ' + from.name;
+      top.appendChild(sender);
+      const time = document.createElement('span'); time.className = 'inbox-msg-time'; time.textContent = new Date(Number(msg.internalDate)).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+      top.appendChild(time);
+      row.appendChild(top);
+      const preview = document.createElement('div'); preview.className = 'inbox-msg-preview'; preview.textContent = subject;
+      row.appendChild(preview);
+      if (contact) {
+        const actions = document.createElement('div'); actions.className = 'inbox-msg-actions';
+        const chip = document.createElement('span'); chip.className = 'inbox-msg-contact-chip'; chip.textContent = contact.name; actions.appendChild(chip);
+        const btn = document.createElement('button'); btn.type = 'button'; btn.textContent = 'Count as contact received';
+        btn.addEventListener('click', () => {
+          const contacts = getContacts();
+          const c = contacts.find((x) => x.id === contact.id);
+          if (!c) return;
+          c.history = Array.isArray(c.history) ? c.history : [];
+          c.history.push({ date: new Date().toISOString(), channel: 'other', note: 'Emailed: ' + subject, direction: 'inbound' });
+          setContacts(contacts);
+          btn.textContent = 'Logged ✓'; btn.disabled = true;
+        });
+        actions.appendChild(btn);
+        row.appendChild(actions);
+      }
+      listEl.appendChild(row);
+      badgeCount++;
+    });
+    const badge = $('intInboxBadge');
+    badge.textContent = String(badgeCount);
+    badge.style.display = badgeCount ? '' : 'none';
+  }
+  $('inboxGmailConnectBtn').addEventListener('click', () => { const c = ensureTokenClient(); if (c) c.requestAccessToken({ prompt: 'consent' }); });
+  function trySilentGmailAuth(attemptsLeft) {
+    if (localStorage.getItem(GMAIL_EVER_GRANTED_KEY) !== '1') return;
+    const client = ensureTokenClient();
+    if (!client) { if (attemptsLeft > 0) setTimeout(() => trySilentGmailAuth(attemptsLeft - 1), 300); return; }
+    client.requestAccessToken({ prompt: '' });
+  }
+
+  fillQuickLogContactSelect();
+  renderQuickLog();
+  trySilentGmailAuth(20);
+  window.addEventListener('storage', () => { fillQuickLogContactSelect(); renderQuickLog(); });
+})();
+</script>
+<script>
+(function () {
+  'use strict';
+  function storeGet(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }
+  function storeSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  function getContacts() { try { return JSON.parse(localStorage.getItem('contacts_v1')) || []; } catch (e) { return []; } }
+
+  // ============================================================
+  // 5.7 INTERACTION SCORE -- pure local computation, no API call, so it
+  // just recomputes live on every load (no button/cache needed the way
+  // 4.4/4.5's assistant-generated content does). Weighting wasn't part of
+  // the answered ASK FIRST round (only the /100-vs-grade format was), so
+  // this is a documented judgment call, not a silent default: 35% of due
+  // contacts actually contacted this week (the core signal), 25% overdue
+  // trend vs last week, 20% breadth (distinct people reached, not just
+  // clearing the most-overdue few), 20% inbound left unanswered >72h.
+  // Same Monday-6am week boundary as 3.3/4.5 throughout this app.
+  // ============================================================
+  const SCORES_KEY = 'eq.interaction_scores_v1';
+  const TIER_CADENCE = { inner: 7, close: 21, acquaintance: 60, networking: 90, network: 90 };
+
+  function pad2(n) { return String(n).padStart(2, '0'); }
+  function dateKeyOf(d) { return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); }
+  function weekStartMonday6am(refDate) {
+    const shifted = new Date(refDate.getTime() - 6 * 3600000);
+    const daysSinceMonday = (shifted.getDay() + 6) % 7;
+    const mondayShifted = new Date(shifted.getFullYear(), shifted.getMonth(), shifted.getDate() - daysSinceMonday);
+    return new Date(mondayShifted.getTime() + 6 * 3600000);
+  }
+  function outboundOnly(c) { return (c.history || []).filter((h) => h.direction !== 'inbound'); }
+  function inboundOnly(c) { return (c.history || []).filter((h) => h.direction === 'inbound'); }
+  function currentOverdueCount(contacts) {
+    return contacts.filter((c) => {
+      if (c.snoozedUntil && new Date(c.snoozedUntil).getTime() > Date.now()) return false;
+      const out = outboundOnly(c);
+      if (!out.length) return true;
+      const last = out.reduce((l, h) => (!l || h.date > l) ? h.date : l, null);
+      const days = Math.floor((Date.now() - new Date(last).getTime()) / 86400000);
+      return days >= (TIER_CADENCE[c.tier] || 21);
+    }).length;
+  }
+
+  function computeInteractionScore() {
+    const contacts = getContacts();
+    const weekStart = weekStartMonday6am(new Date());
+    const weekStartIso = weekStart.toISOString();
+    const nowIso = new Date().toISOString();
+
+    let dueAtStart = 0, dueContacted = 0, unanswered72h = 0;
+    const contactedThisWeek = new Set();
+    contacts.forEach((c) => {
+      const out = outboundOnly(c);
+      const beforeDates = out.map((h) => h.date).filter((d) => d < weekStartIso).sort();
+      const lastBefore = beforeDates.length ? beforeDates[beforeDates.length - 1] : null;
+      const daysBefore = lastBefore ? Math.floor((weekStart.getTime() - new Date(lastBefore).getTime()) / 86400000) : Infinity;
+      const cadence = TIER_CADENCE[c.tier] || 21;
+      const wasDue = (daysBefore / cadence) >= 0.8;
+      const newOutbound = out.some((h) => h.date >= weekStartIso && h.date < nowIso);
+      if (wasDue) { dueAtStart++; if (newOutbound) dueContacted++; }
+      if (newOutbound) contactedThisWeek.add(c.id);
+
+      const inb = inboundOnly(c);
+      const inbDates = inb.map((h) => h.date).sort();
+      const lastInbound = inbDates.length ? inbDates[inbDates.length - 1] : null;
+      if (lastInbound) {
+        const hoursSince = (Date.now() - new Date(lastInbound).getTime()) / 3600000;
+        const answeredSince = out.some((h) => h.date > lastInbound);
+        if (hoursSince > 72 && !answeredSince) unanswered72h++;
+      }
+    });
+
+    const pctDueContacted = dueAtStart > 0 ? (dueContacted / dueAtStart) * 100 : 100;
+    const overdueNow = currentOverdueCount(contacts);
+    const scores = storeGet(SCORES_KEY) || [];
+    const prevEntry = scores.length ? scores[scores.length - 1] : null;
+    const overdueLastWeek = prevEntry ? prevEntry.overdueCount : overdueNow;
+    // Improving (fewer overdue than last week) scores near 100; worsening
+    // scores near 0; unchanged sits at 50. Clamped so one bad week among
+    // many good ones can't swing it to an extreme.
+    const overdueTrendScore = Math.max(0, Math.min(100, 50 + (overdueLastWeek - overdueNow) * 10));
+    const breadthPct = contacts.length ? (contactedThisWeek.size / contacts.length) * 100 : 100;
+    const unansweredPenaltyScore = Math.max(0, 100 - unanswered72h * 25);
+
+    const score = Math.round(
+      0.35 * pctDueContacted +
+      0.25 * overdueTrendScore +
+      0.20 * breadthPct +
+      0.20 * unansweredPenaltyScore
+    );
+
+    const weekKey = dateKeyOf(weekStart);
+    const entry = {
+      weekKey, score, overdueCount: overdueNow, pctDueContacted: Math.round(pctDueContacted),
+      breadthPct: Math.round(breadthPct), unanswered72h, contactedCount: contactedThisWeek.size,
+      totalContacts: contacts.length, at: new Date().toISOString(),
+    };
+    const idx = scores.findIndex((s) => s.weekKey === weekKey);
+    if (idx !== -1) scores[idx] = entry; else scores.push(entry);
+    storeSet(SCORES_KEY, scores.slice(-12));
+    return entry;
+  }
+
+  function renderScoreBadge() {
+    const contacts = getContacts();
+    if (!contacts.length) return;
+    const entry = computeInteractionScore();
+    const badge = document.getElementById('intScoreBadge');
+    document.getElementById('intScoreNum').textContent = String(entry.score);
+    badge.style.display = '';
+  }
+  renderScoreBadge();
+  window.addEventListener('storage', renderScoreBadge);
 })();
 </script>
 </body>
