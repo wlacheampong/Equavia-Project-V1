@@ -199,6 +199,19 @@ input:focus, select:focus { border-color: rgba(255,255,255,0.3); }
   </div>
 
   <div class="section">
+    <div class="section-title">Finance</div>
+    <div class="card">
+      <p class="help-text">The allocation split shown when you tap the total net worth card on Finance. Percentages must total 100%.</p>
+      <div id="allocBucketsList"></div>
+      <div class="actions-row">
+        <button class="btn" id="allocAddBtn">+ Add bucket</button>
+        <button class="btn btn-primary" id="allocSaveBtn">Save</button>
+        <span class="status-line" id="allocStatus" style="margin:0;"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
     <div class="section-title">Obsidian Sync</div>
     <div class="card">
       <p class="help-text">Requires the free "Local REST API" community plugin, installed in Obsidian and running while Obsidian is open on this device — sync only works from the machine/network where Obsidian is reachable. Shared by Notes and Planner's Projects.</p>
@@ -345,6 +358,85 @@ input:focus, select:focus { border-color: rgba(255,255,255,0.3); }
     b.addEventListener('click', () => { storeSet(UNITS_KEY, b.dataset.u); renderUnitsSeg(); });
   });
   renderUnitsSeg();
+
+  // ---------- Finance: allocation buckets ----------
+  const ALLOC_KEY = 'eq.finance.allocation.buckets';
+  const ALLOC_DEFAULTS = [
+    { id: 'investment', name: 'Investment', pct: 50, desc: 'Longer-term investing toward FI' },
+    { id: 'operations', name: 'Operations', pct: 30, desc: 'Everything non-invest/non-tax — living costs and everyday spending' },
+    { id: 'tax',        name: 'Tax',        pct: 15, desc: 'Aspirational set-aside for possible future self-employment tax' },
+    { id: 'play',       name: 'Play money', pct: 5,  desc: 'Guilt-free spending' }
+  ];
+  function escAttr(s) { return String(s == null ? '' : s).replace(/"/g, '&quot;'); }
+  function getAllocBuckets() {
+    const saved = storeGet(ALLOC_KEY);
+    return (Array.isArray(saved) && saved.length) ? saved.map((b) => ({ ...b })) : ALLOC_DEFAULTS.map((b) => ({ ...b }));
+  }
+  let allocWorking = getAllocBuckets();
+  const allocListEl = $('allocBucketsList');
+  const allocStatusEl = $('allocStatus');
+  function allocPctTotal() {
+    const raw = allocWorking.reduce((s, b) => s + (Number(b.pct) || 0), 0);
+    return Math.round(raw * 100) / 100; // guard against float dust (e.g. 33.3+33.3+33.4)
+  }
+  function updateAllocStatus() {
+    const total = allocPctTotal();
+    if (total !== 100) showStatus(allocStatusEl, 'Total ' + total + '% — must equal 100% to save.', 'err');
+    else showStatus(allocStatusEl, '', '');
+  }
+  function renderAllocList() {
+    allocListEl.innerHTML = '';
+    allocWorking.forEach((b, i) => {
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;gap:8px;align-items:flex-start;margin-bottom:10px;';
+      row.innerHTML =
+        '<div style="flex:1;">' +
+          '<input type="text" data-f="name" data-i="' + i + '" value="' + escAttr(b.name) + '" placeholder="Bucket name">' +
+          '<input type="text" data-f="desc" data-i="' + i + '" value="' + escAttr(b.desc || '') + '" placeholder="One-line description" style="margin-top:6px;font-size:12px;">' +
+        '</div>' +
+        '<input type="number" data-f="pct" data-i="' + i + '" value="' + (Number(b.pct) || 0) + '" min="0" max="100" style="width:64px;text-align:right;flex:none;">' +
+        '<button type="button" class="btn btn-danger-outline" data-del="' + i + '" style="padding:8px 10px;flex:none;">×</button>';
+      allocListEl.appendChild(row);
+    });
+    allocListEl.querySelectorAll('input').forEach((inp) => {
+      inp.addEventListener('input', () => {
+        const i = Number(inp.dataset.i);
+        const f = inp.dataset.f;
+        if (f === 'pct') {
+          let v = Number(inp.value);
+          if (isNaN(v)) v = 0;
+          v = Math.min(100, Math.max(0, v));
+          allocWorking[i][f] = v;
+          if (String(v) !== inp.value) inp.value = String(v); // min/max on <input type=number> aren't enforced on typed input
+        } else {
+          allocWorking[i][f] = inp.value;
+        }
+        updateAllocStatus();
+      });
+    });
+    allocListEl.querySelectorAll('[data-del]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        allocWorking.splice(Number(btn.dataset.del), 1);
+        renderAllocList();
+        updateAllocStatus();
+      });
+    });
+    updateAllocStatus();
+  }
+  $('allocAddBtn').addEventListener('click', () => {
+    allocWorking.push({ id: 'bucket' + Date.now(), name: 'New bucket', pct: 0, desc: '' });
+    renderAllocList();
+  });
+  $('allocSaveBtn').addEventListener('click', () => {
+    const total = allocPctTotal();
+    if (total !== 100) { showStatus(allocStatusEl, 'Total ' + total + '% — must equal 100% before saving.', 'err'); return; }
+    if (!allocWorking.length) { showStatus(allocStatusEl, 'Add at least one bucket.', 'err'); return; }
+    storeSet(ALLOC_KEY, allocWorking.map((b) => ({
+      id: b.id, name: (b.name || '').trim() || 'Untitled', pct: Number(b.pct) || 0, desc: (b.desc || '').trim()
+    })));
+    showStatus(allocStatusEl, 'Saved.', 'ok');
+  });
+  renderAllocList();
 
   // ---------- Preferences: wake / bedtime ----------
   function hourToTimeStr(hourDecimal) {

@@ -356,6 +356,36 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
   .section .card .card-grid { grid-template-columns: 1fr; }
 }
 
+/* Total net worth card — tap to flip between the plain total and the allocation split */
+.nw-total-flip {
+  position: relative;
+  cursor: pointer;
+  border-radius: 12px;
+  padding: 8px 10px;
+  margin: -8px -10px;
+  min-width: 200px;
+}
+.nw-total-flip:hover { background: rgba(255,255,255,0.02); }
+.nw-total-flip:focus-visible { outline: 1px solid var(--border-strong, rgba(255,255,255,0.2)); outline-offset: 2px; }
+.nw-total-face { transition: opacity 0.16s ease; }
+.nw-total-face.nw-face-enter { opacity: 0; }
+.nw-total-back { min-width: 220px; }
+.nw-alloc-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.nw-alloc-title { font-size: 11px; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 500; }
+.nw-alloc-close {
+  background: transparent; border: 1px solid rgba(255,255,255,0.12); color: var(--text-tertiary);
+  border-radius: 6px; width: 22px; height: 22px; font-size: 12px; line-height: 1; cursor: pointer;
+}
+.nw-alloc-close:hover { color: var(--text-primary); border-color: rgba(255,255,255,0.24); }
+.nw-alloc-row { margin-bottom: 8px; }
+.nw-alloc-row:last-child { margin-bottom: 0; }
+.nw-alloc-row-top { display: flex; align-items: baseline; gap: 8px; font-size: 12.5px; }
+.nw-alloc-name { font-weight: 600; color: var(--text-primary); flex: 1; }
+.nw-alloc-pct { color: var(--text-tertiary); font-size: 11px; }
+.nw-alloc-amt { font-weight: 600; font-variant-numeric: tabular-nums; color: var(--text-primary); }
+.nw-alloc-bar { height: 4px; border-radius: 2px; background: rgba(255,255,255,0.06); margin-top: 4px; overflow: hidden; }
+.nw-alloc-bar-fill { height: 100%; border-radius: 2px; }
+
 /* Stock-style net-worth chart */
 .nw-chart-wrap {
   margin: 14px 0 18px;
@@ -1567,11 +1597,20 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     <span class="section-title-text">NET WORTH</span>
   </div>
   <div class="card" style="background:transparent;border:none !important;box-shadow:none;padding:0;overflow:visible">
-    <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px;margin-bottom:14px">
-      <div>
-        <div style="font-size:11px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.04em;font-weight:500">Total net worth</div>
-        <div id="netWorthTotal" style="font-size:34px;font-weight:700;color:var(--text-primary);line-height:1.05;margin-top:2px">GBP 0</div>
-        <div id="netWorthBreakdown" style="font-size:11px;color:var(--text-tertiary);margin-top:4px"></div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:14px">
+      <div class="nw-total-flip" id="nwTotalFlip" role="button" tabindex="0" aria-expanded="false" title="Tap to see allocation split">
+        <div class="nw-total-face nw-total-front" id="nwTotalFront">
+          <div style="font-size:11px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.04em;font-weight:500">Total net worth</div>
+          <div id="netWorthTotal" style="font-size:34px;font-weight:700;color:var(--text-primary);line-height:1.05;margin-top:2px">GBP 0</div>
+          <div id="netWorthBreakdown" style="font-size:11px;color:var(--text-tertiary);margin-top:4px"></div>
+        </div>
+        <div class="nw-total-face nw-total-back" id="nwTotalBack" hidden>
+          <div class="nw-alloc-head">
+            <span class="nw-alloc-title">Allocation split</span>
+            <button type="button" class="nw-alloc-close" id="nwAllocClose" aria-label="Close allocation split">✕</button>
+          </div>
+          <div id="nwAllocRows"></div>
+        </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px">
         <span style="font-size:11px;color:var(--text-tertiary)">GBP</span>
@@ -1997,6 +2036,93 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     return symbol + ' ' + num.toLocaleString('en-US', { minimumFractionDigits: num % 1 === 0 ? 0 : 2, maximumFractionDigits: 2 });
   }
 
+  // ============================================================
+  // ALLOCATION SPLIT — total net worth card flips to show a
+  // bucketed breakdown (Investment/Operations/Tax/Play money by
+  // default). Display-only lens on the total; no separate accounts.
+  // ============================================================
+  const ALLOC_KEY = 'eq.finance.allocation.buckets';
+  const ALLOC_DEFAULTS = [
+    { id: 'investment', name: 'Investment', pct: 50, desc: 'Longer-term investing toward FI' },
+    { id: 'operations', name: 'Operations', pct: 30, desc: 'Everything non-invest/non-tax — living costs and everyday spending' },
+    { id: 'tax',        name: 'Tax',        pct: 15, desc: 'Aspirational set-aside for possible future self-employment tax' },
+    { id: 'play',       name: 'Play money', pct: 5,  desc: 'Guilt-free spending' }
+  ];
+  const ALLOC_COLORS = ['#6EE7B7', '#7DD3FC', '#FBBF24', '#B794F4'];
+
+  function getAllocBuckets() {
+    const saved = storeGet(ALLOC_KEY);
+    return (Array.isArray(saved) && saved.length) ? saved : ALLOC_DEFAULTS;
+  }
+
+  function computeAllocation(grandGBP) {
+    const symbol = currencyEl ? currencyEl.value : 'GBP';
+    const rate = exchangeRates[symbol] || 1;
+    const totalDisplay = Math.round((Number(grandGBP) || 0) * rate);
+    const buckets = getAllocBuckets();
+    const rounded = buckets.map(b => Math.round(totalDisplay * (Number(b.pct) || 0) / 100));
+    const sum = rounded.reduce((a, b) => a + b, 0);
+    const remainder = totalDisplay - sum;
+    if (buckets.length) {
+      let largestIdx = 0;
+      for (let i = 1; i < buckets.length; i++) {
+        if ((Number(buckets[i].pct) || 0) > (Number(buckets[largestIdx].pct) || 0)) largestIdx = i;
+      }
+      rounded[largestIdx] += remainder;
+    }
+    return buckets.map((b, i) => ({ ...b, amount: rounded[i], symbol }));
+  }
+
+  function renderAllocation(grandGBP) {
+    const rowsEl = document.getElementById('nwAllocRows');
+    if (!rowsEl) return;
+    const rows = computeAllocation(grandGBP);
+    rowsEl.innerHTML = '';
+    rows.forEach((b, i) => {
+      const row = document.createElement('div');
+      row.className = 'nw-alloc-row';
+      const color = ALLOC_COLORS[i % ALLOC_COLORS.length];
+      row.innerHTML =
+        '<div class="nw-alloc-row-top">' +
+          '<span class="nw-alloc-name">' + escapeHtml(b.name) + '</span>' +
+          '<span class="nw-alloc-pct">' + (Number(b.pct) || 0) + '%</span>' +
+          '<span class="nw-alloc-amt">' + b.symbol + ' ' + b.amount.toLocaleString('en-US') + '</span>' +
+        '</div>' +
+        '<div class="nw-alloc-bar"><div class="nw-alloc-bar-fill" style="width:' + Math.max(0, Math.min(100, Number(b.pct) || 0)) + '%;background:' + color + '"></div></div>';
+      rowsEl.appendChild(row);
+    });
+  }
+
+  (function setupAllocFlip() {
+    const flip = document.getElementById('nwTotalFlip');
+    const front = document.getElementById('nwTotalFront');
+    const back = document.getElementById('nwTotalBack');
+    const closeBtn = document.getElementById('nwAllocClose');
+    if (!flip || !front || !back) return;
+    function showFace(el) {
+      el.removeAttribute('hidden');
+      el.classList.add('nw-face-enter');
+      requestAnimationFrame(() => el.classList.remove('nw-face-enter'));
+    }
+    function expand() {
+      front.setAttribute('hidden', '');
+      showFace(back);
+      flip.setAttribute('aria-expanded', 'true');
+    }
+    function collapse() {
+      back.setAttribute('hidden', '');
+      showFace(front);
+      flip.setAttribute('aria-expanded', 'false');
+    }
+    flip.addEventListener('click', () => {
+      if (back.hasAttribute('hidden')) expand(); else collapse();
+    });
+    flip.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (back.hasAttribute('hidden')) expand(); else collapse(); }
+    });
+    if (closeBtn) closeBtn.addEventListener('click', (e) => { e.stopPropagation(); collapse(); });
+  })();
+
   function renderNetWorthCategory(cat) {
     const items = storeGet('nw:' + cat.key) || [];
     const list = document.getElementById(cat.listId);
@@ -2114,6 +2240,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     logNetWorthSnapshot(grand);
     renderNetWorthChart();
     renderAllocationDonut(sliceTotals, grand);
+    renderAllocation(grand);
     renderActivity();
     if (typeof renderWishlist === 'function') renderWishlist();
     if (typeof renderOrders   === 'function') renderOrders();
