@@ -9,7 +9,9 @@
 //
 // Requires GUARDIAN_API_KEY (free key from https://open-platform.theguardian.com/)
 // as a Vercel env var.
-import { requireSession } from '../lib/auth.js';
+//
+// 6.0 security gate temporarily disabled -- see api/chat.js for the note.
+// import { requireSession } from '../lib/auth.js';
 
 const SECTION_MAP = {
   local: 'uk-news',
@@ -34,7 +36,7 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'X-Eq-Session');
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'GET') return res.status(405).json({ error: 'method not allowed' });
-  if (!requireSession(req, res)) return;
+  // if (!requireSession(req, res)) return; -- 6.0 gate temporarily disabled
 
   const category = String(req.query.category || '').toLowerCase();
   const section = SECTION_MAP[category];

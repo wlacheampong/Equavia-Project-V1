@@ -3,10 +3,11 @@
 // or stored by the client. Model and max_tokens are fixed here, not
 // client-controlled, so a compromised/buggy client can't drive up spend.
 //
-// 6.0 security gate: this is the one endpoint that actually spends money
-// per call, so it's the primary reason the gate exists at all -- requires
-// a valid signed session (see lib/auth.js) via the X-Eq-Session header.
-import { requireSession } from '../lib/auth.js';
+// 6.0 security gate temporarily disabled (removed the requireSession call
+// below) -- plan is to re-integrate later. lib/auth.js and the rest of the
+// gate (lock.html, auth-gate.js, api/auth-login.js) are left in place, not
+// deleted, so re-enabling is just restoring this import + the call site.
+// import { requireSession } from '../lib/auth.js';
 
 const ANTHROPIC_MODEL = 'claude-sonnet-5';
 // Phase 4.2: Smart Capture parses free text into tool calls with Haiku
@@ -48,7 +49,7 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Eq-Session');
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'method not allowed' });
-  if (!requireSession(req, res)) return;
+  // if (!requireSession(req, res)) return; -- 6.0 gate temporarily disabled
 
   if (!withinRateLimit()) {
     return res.status(429).json({ error: 'Too many messages in a short window — wait a moment and try again.' });
