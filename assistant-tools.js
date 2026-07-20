@@ -66,6 +66,72 @@ window.AssistantTools = (function () {
 
   function getTasksList(dateKey) { return storeGet('goals:' + dateKey) || []; }
   function setTasksList(dateKey, list) { storeSet('goals:' + dateKey, list); }
+  function yesterdayDateKeyLocal() {
+    const now = new Date();
+    const active = now.getHours() < 6 ? new Date(now.getTime() - 86400000) : now;
+    return fmtDateKey(new Date(active.getTime() - 86400000));
+  }
+
+  // Batch-2 fix #1: a shared, page-agnostic snapshot of "yesterday's tasks"
+  // (done + undone), read by both dashboard.html (the unfinished-only
+  // alert) and planner.html (the full collapsible history view). Lives
+  // here, not in either page, specifically so whichever page loads FIRST
+  // on a given day captures it correctly -- planner.html's own rollover()
+  // used to be the only place a day's goals:<date> record was ever read
+  // before being deleted, which meant dashboard-only days silently lost
+  // that data. Idempotent: only re-snapshots when the stored snapshot's
+  // own dateKey no longer matches "yesterday" (i.e. once per real day),
+  // so in-place edits made via removeFromYesterdaySnapshot/
+  // moveYesterdayTaskToToday during the day are never clobbered by a
+  // same-day repeat call.
+  const YESTERDAY_SNAPSHOT_KEY = 'eq.tasks.yesterday';
+  function ensureYesterdaySnapshot() {
+    const yKey = yesterdayDateKeyLocal();
+    const existing = storeGet(YESTERDAY_SNAPSHOT_KEY);
+    if (existing && existing.dateKey === yKey) return existing;
+    // Some pre-Phase-4.1 tasks predate the id field -- backfill a synthetic
+    // one on the snapshot copy (not on the original, which gets deleted by
+    // rollover() right after this runs) so every row here is addressable
+    // for "Do today"/"Dismiss" regardless of how old the task is.
+    const tasks = getTasksList(yKey).map((t) => Object.assign({ id: genId('yt') }, t));
+    const snap = { dateKey: yKey, tasks };
+    storeSet(YESTERDAY_SNAPSHOT_KEY, snap);
+    return snap;
+  }
+  function getYesterdaySnapshot() {
+    const snap = ensureYesterdaySnapshot();
+    return snap || { dateKey: null, tasks: [] };
+  }
+  function removeFromYesterdaySnapshot(taskId) {
+    const snap = getYesterdaySnapshot();
+    snap.tasks = snap.tasks.filter((t) => t.id !== taskId);
+    storeSet(YESTERDAY_SNAPSHOT_KEY, snap);
+    return snap;
+  }
+  // "Do today": copies the task into today's list (fresh id, undone) and
+  // removes it from the yesterday view -- a copy, not a move of the
+  // historical record itself, so what actually happened yesterday stays
+  // exactly as it was for anything that later reads that snapshot (e.g.
+  // Planner's read-only history rows) up until the next day's snapshot
+  // overwrites it. Silently demotes P1 to P2 if today is already at the
+  // 3-P1 cap, rather than blocking the action outright -- this is a quick
+  // one-tap "get it done" affordance, not the full add-task flow that
+  // already has its own explicit cap-rejection message.
+  function moveYesterdayTaskToToday(taskId) {
+    const snap = getYesterdaySnapshot();
+    const idx = snap.tasks.findIndex((t) => t.id === taskId);
+    if (idx === -1) return false;
+    const task = snap.tasks[idx];
+    snap.tasks.splice(idx, 1);
+    storeSet(YESTERDAY_SNAPSHOT_KEY, snap);
+    const todayKey = activeDateKeyLocal();
+    const list = getTasksList(todayKey);
+    let priority = task.priority || 'P2';
+    if (priority === 'P1' && list.filter((t) => (t.priority || 'P2') === 'P1').length >= TASK_PRIORITY_CAP_P1) priority = 'P2';
+    list.push({ id: genId('t'), text: task.text, done: false, priority, source: 'yesterday' });
+    setTasksList(todayKey, list);
+    return true;
+  }
   function findTaskByRef(ref) {
     for (const dk of [activeDateKeyLocal(), tomorrowDateKeyLocal()]) {
       const list = getTasksList(dk);
@@ -477,6 +543,13 @@ window.AssistantTools = (function () {
     fmtDateKey,
     activeDateKeyLocal,
     tomorrowDateKeyLocal,
+    yesterdayDateKeyLocal,
+    getTasksList,
+    setTasksList,
+    ensureYesterdaySnapshot,
+    getYesterdaySnapshot,
+    removeFromYesterdaySnapshot,
+    moveYesterdayTaskToToday,
     MEMORY_KEY,
     MEMORY_CAP,
     getMemory,

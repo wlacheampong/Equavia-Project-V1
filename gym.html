@@ -329,6 +329,8 @@ img, video, canvas, svg { max-width: 100%; }
 .po-sub-title::before {
   content: ''; width: 24px; height: 1px; background: var(--border-strong);
 }
+/* Batch-2 fix #5 */
+.po-spark-caption { font-size: 11px; color: var(--text-3); margin: -6px 0 8px; }
 
 /* ----- Exercise picker ----- */
 .po-exercise-bar { display: flex; gap: 8px; align-items: center; }
@@ -1616,6 +1618,7 @@ img, video, canvas, svg { max-width: 100%; }
     <!-- Trend -->
     <div class="po-sub-section">
       <div class="po-sub-title">Trend (last 10 sessions)</div>
+      <div class="po-spark-caption">Tracking top set per session</div>
       <div class="po-spark-wrap">
         <svg class="po-spark-svg" id="sparkline" viewBox="0 0 300 60" preserveAspectRatio="none">
           <defs>
@@ -2018,11 +2021,32 @@ img, video, canvas, svg { max-width: 100%; }
     $('bestSet').textContent = ex.bw ? (best.reps + 'r') : (best.weight + '×' + best.reps);
     $('sessionCount').textContent = logs.length;
   }
+  // Batch-2 fix #5: the trend line was plotting every logged SET, which
+  // makes a multi-set session's own backoff sets drag the line around --
+  // noisy and misleading versus the session's real top-set strength. This
+  // is a render-time filter only (getLogs()/state.logs are untouched, so
+  // every set is still there for the session detail/history list below;
+  // only the chart's own data source changes).
+  function scoreForLog(ex, l) { return ex.bw ? l.reps : estimate1RM(l.weight, l.reps); }
+  function topSetPerDay(ex, logs) {
+    const byDay = {};
+    logs.forEach((l) => {
+      const dayKey = (l.date || '').slice(0, 10);
+      const existing = byDay[dayKey];
+      if (!existing) { byDay[dayKey] = l; return; }
+      const curScore = scoreForLog(ex, l), exScore = scoreForLog(ex, existing);
+      // Highest e1RM (or reps, for bodyweight) wins; ties broken by higher absolute weight.
+      if (curScore > exScore || (curScore === exScore && (l.weight || 0) > (existing.weight || 0))) {
+        byDay[dayKey] = l;
+      }
+    });
+    return Object.keys(byDay).sort().map((k) => byDay[k]);
+  }
   function renderSparkline() {
     const svg = $('sparkline');
     const empty = $('sparkEmpty');
     const ex = getCurrentEx();
-    const logs = ex ? getLogs().slice(-10) : [];
+    const logs = ex ? topSetPerDay(ex, getLogs()).slice(-10) : [];
     if (logs.length < 2) {
       svg.style.display = 'none'; empty.style.display = 'block';
       return;

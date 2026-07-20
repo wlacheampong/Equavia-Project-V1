@@ -856,6 +856,25 @@ body::after {
 .alert-icon { font-size: 15px; line-height: 1.3; flex-shrink: 0; }
 .alert-text { font-size: 12.5px; color: var(--text-primary); line-height: 1.5; }
 
+/* ===== Yesterday unfinished (Batch-2 fix #1a) ===== */
+.yd-alert-wrap {
+  max-width: 640px; margin: 0 auto 18px; background: rgba(255,107,107,0.06);
+  border: 1px solid rgba(255,107,107,0.22); border-radius: 14px; padding: 14px 16px;
+}
+.yd-alert-head { font-size: 12.5px; font-weight: 700; color: var(--text-primary); margin-bottom: 10px; }
+.yd-alert-list { display: flex; flex-direction: column; gap: 8px; }
+.yd-alert-row { display: flex; align-items: center; gap: 10px; }
+.yd-alert-warn { color: var(--danger); flex-shrink: 0; font-size: 13px; }
+.yd-alert-text { flex: 1; min-width: 0; font-size: 12.5px; color: var(--text-primary); overflow-wrap: break-word; }
+.yd-alert-actions { display: flex; gap: 6px; flex-shrink: 0; flex-wrap: wrap; }
+.yd-alert-today, .yd-alert-dismiss {
+  padding: 5px 10px; border-radius: 7px; border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.04); color: var(--text-secondary);
+  font-family: inherit; font-size: 11px; font-weight: 600; cursor: pointer; white-space: nowrap;
+}
+.yd-alert-today:hover { background: var(--success); border-color: transparent; color: #0a0a0b; }
+.yd-alert-dismiss:hover { color: var(--text-primary); }
+
 /* ===== 6.8 integration-failure chip ===== */
 .health-fail-row {
   display: flex; align-items: flex-start; gap: 10px;
@@ -1602,6 +1621,11 @@ body::after {
     </div>
   </div>
 
+  <div class="yd-alert-wrap" id="ydAlertWrap" style="display:none;">
+    <div class="yd-alert-head">Yesterday — <span id="ydAlertCount">0</span> unfinished</div>
+    <div class="yd-alert-list" id="ydAlertList"></div>
+  </div>
+
   <div class="dash-summary-stack" id="dashSummaryStack">
     <a class="dsum-card" href="planner.html#tasks" data-card="tasks">
       <div class="dsum-head">
@@ -1857,26 +1881,22 @@ body::after {
   }
   function setGoals(key, list) { storeSet(key, list); }
 
-  // ---------- rollover: pull undone older goals into today ----------
+  // ---------- rollover: retire old goals: keys ----------
+  // Batch-2 fix #1: this was a near-duplicate of planner.html's old
+  // rollover() -- same silent "merge yesterday's undone tasks into today,
+  // then delete yesterday's record" bug, but reachable here too since
+  // Dashboard is opened as often or more than Planner. Same fix applied:
+  // snapshot yesterday into the shared eq.tasks.yesterday store before
+  // deleting anything, and stop the silent auto-merge -- tasks only reach
+  // today's list via an explicit "Do today" tap in the Yesterday panel now.
   function rollover() {
+    if (window.AssistantTools) window.AssistantTools.ensureYesterdaySnapshot();
     const todayDateStr = getActiveDateString();
-    const todayK = 'goals:' + todayDateStr;
-    let today = getGoals(todayK);
-    const texts = new Set(today.map(g => g.text));
-
     storeListKeys('goals:').forEach(k => {
       const dateStr = k.slice('goals:'.length);
       if (dateStr >= todayDateStr) return;
-      const old = getGoals(k);
-      old.forEach(g => {
-        if (!g.done && g.text && !texts.has(g.text)) {
-          today.push({ text: g.text, done: false });
-          texts.add(g.text);
-        }
-      });
       storeDelete(k);
     });
-    setGoals(todayK, today);
   }
 
   // ---------- streak ----------
@@ -2500,6 +2520,38 @@ body::after {
     });
   }
 
+  // Batch-2 fix #1a: the alert version -- unfinished-only, red ⚠, quick
+  // "Do today"/"Dismiss" actions, auto-hides at zero. Reads the same
+  // shared eq.tasks.yesterday snapshot Planner's full history view (1b)
+  // reads, kept current by rollover() above on whichever page loads first.
+  function escapeHtmlYd(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+  function renderYesterdayAlert() {
+    const AT = window.AssistantTools;
+    const wrap = document.getElementById('ydAlertWrap');
+    if (!AT || !wrap) return;
+    const snap = AT.getYesterdaySnapshot();
+    const unfinished = (snap.tasks || []).filter((t) => !t.done);
+    if (!unfinished.length) { wrap.style.display = 'none'; return; }
+    wrap.style.display = '';
+    document.getElementById('ydAlertCount').textContent = String(unfinished.length);
+    document.getElementById('ydAlertList').innerHTML = unfinished.map((t) =>
+      '<div class="yd-alert-row"><span class="yd-alert-warn">⚠</span><span class="yd-alert-text">' + escapeHtmlYd(t.text) + '</span>' +
+      '<div class="yd-alert-actions">' +
+      '<button type="button" class="yd-alert-today" data-id="' + t.id + '" data-action="today">Do today</button>' +
+      '<button type="button" class="yd-alert-dismiss" data-id="' + t.id + '" data-action="dismiss">Dismiss</button>' +
+      '</div></div>'
+    ).join('');
+  }
+  document.getElementById('ydAlertList').addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-action]'); if (!btn) return;
+    const AT = window.AssistantTools; if (!AT) return;
+    const id = btn.getAttribute('data-id');
+    if (btn.getAttribute('data-action') === 'today') AT.moveYesterdayTaskToToday(id);
+    else AT.removeFromYesterdaySnapshot(id);
+    renderYesterdayAlert();
+    renderDashboardSummaries();
+  });
+
   function renderDashboardSummaries() {
     renderInteractionsSummary();
     renderNewsSummary();
@@ -2613,9 +2665,10 @@ body::after {
   initCalendar();
   initTodoChartRangeToggle();
   renderDashboardSummaries();
+  renderYesterdayAlert();
 
   // Re-render when storage changes from another tab (or our bridged parent).
-  window.addEventListener('storage', renderDashboardSummaries);
+  window.addEventListener('storage', () => { renderDashboardSummaries(); renderYesterdayAlert(); });
 })();
 </script>
 <script>

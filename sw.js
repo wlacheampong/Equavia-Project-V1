@@ -7,7 +7,7 @@
 // Bump CACHE_NAME on any app-shell file change so clients pick up
 // the new list and drop the old cache on next activate.
 // =============================================================
-const CACHE_NAME = 'equavia-shell-v16';
+const CACHE_NAME = 'equavia-shell-v17';
 const APP_SHELL = [
   'index.html',
   'lock.html',

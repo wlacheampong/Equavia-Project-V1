@@ -231,6 +231,17 @@ main {
   color: var(--text-quaternary);
   font-style: italic;
 }
+/* Batch-2 fix #4: optional time on "anytime"-window items only, shown
+   once checked -- lives inside .stack-item-body (already min-width:0 and
+   flex-wrapping) rather than a new grid column, so it can't reintroduce
+   the row-overflow issue fixed for this section previously. */
+.stack-item-time-row { display: flex; align-items: center; gap: 6px; margin-top: 4px; flex-wrap: wrap; }
+.stack-item-time-label { font-size: 10.5px; color: var(--text-tertiary); }
+.stack-item-time-input {
+  background: rgba(0,0,0,0.28); border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 6px; color: var(--text-secondary); font-family: inherit;
+  font-size: 11px; padding: 3px 6px;
+}
 
 .stack-item-tag {
   font-family: var(--font-mono);
@@ -666,6 +677,17 @@ main {
       font-size:12.5px; font-weight:600; cursor:pointer;
     }
     .en-add-type-pill.is-selected { background:var(--accent); border-color:transparent; color:#fff; }
+    .en-custom-row { margin-bottom:10px; }
+    .en-custom-name {
+      width:100%; box-sizing:border-box; background:rgba(0,0,0,0.30); border:1px solid rgba(255,255,255,0.1);
+      border-radius:9px; color:var(--text-primary); font-family:inherit; font-size:13px; padding:9px 10px;
+    }
+    .en-recent-sources { display:flex; flex-wrap:wrap; gap:5px; margin-top:8px; }
+    .en-recent-chip {
+      padding:5px 11px; border-radius:999px; border:1px dashed rgba(255,255,255,0.14);
+      background:transparent; color:var(--text-tertiary); font-family:inherit; font-size:11.5px; font-weight:600; cursor:pointer;
+    }
+    .en-recent-chip:hover { color:var(--text-primary); border-color:rgba(255,255,255,0.3); }
     .en-add-fields { display:flex; flex-wrap:wrap; gap:6px; align-items:stretch; padding:4px; background:rgba(0,0,0,0.30); border-radius:12px; }
     .en-add-fields input {
       background:transparent; border:none; outline:none; color:var(--text-primary);
@@ -1786,6 +1808,10 @@ main {
     </div>
     <div class="en-stack-head">Log caffeine</div>
     <div class="en-add-types" id="enAddTypes"></div>
+    <div class="en-custom-row" id="enCustomNameRow" style="display:none;">
+      <input type="text" class="en-custom-name" id="enCustomName" placeholder="e.g. matcha, pre-workout, energy drink">
+      <div class="en-recent-sources" id="enRecentSources"></div>
+    </div>
     <div class="en-add-fields">
       <input type="number" class="en-add-amount" id="enAddAmount" placeholder="mg" min="0" step="1" inputmode="numeric">
       <input type="time" class="en-add-time" id="enAddTime">
@@ -1831,12 +1857,19 @@ main {
     }
     function saveTodayLogs(entries) { storeSet(ENERGY_KEY, { dateKey: todayKeyLocal(), entries }); }
 
+    // Batch-2 fix #3: a Custom-named entry has no tuned pharmacokinetic
+    // profile, but it should still actually move the predicted-energy
+    // curve rather than being a log-only entry the model silently ignores
+    // -- a generic caffeine-like profile (close to coffee's own numbers)
+    // stands in for anything not in SUBSTANCES.
+    const CUSTOM_DEFAULT_PROFILE = { amplitude: 16, defaultDose: 100, onsetHours: 0.25, peakHours: 0.75, halfLifeHours: 5.0 };
+    function substanceDef(key) { return SUBSTANCES[key] || CUSTOM_DEFAULT_PROFILE; }
     function effectiveAmplitude(log) {
-      const def = SUBSTANCES[log.key]; if (!def) return 0;
+      const def = substanceDef(log.key);
       return def.amplitude * (log.dose / def.defaultDose);
     }
     function contributionAt(hourOfDay, log) {
-      const def = SUBSTANCES[log.key]; if (!def) return 0;
+      const def = substanceDef(log.key);
       const dt = hourOfDay - log.takenHour;
       if (dt < def.onsetHours) return 0;
       const amp = effectiveAmplitude(log);
@@ -1981,15 +2014,45 @@ main {
     // only how the dose gets captured changed).
     let selectedKey = 'coffee';
     function renderTypeSelector() {
-      $('enAddTypes').innerHTML = Object.keys(SUBSTANCES).map((key) => {
+      const pills = Object.keys(SUBSTANCES).map((key) => {
         const s = SUBSTANCES[key];
         return '<button type="button" class="en-add-type-pill' + (key === selectedKey ? ' is-selected' : '') + '" data-key="' + key + '">' + s.name + '</button>';
-      }).join('');
+      });
+      // Batch-2 fix #3: Custom isn't a tuned substance in SUBSTANCES -- a
+      // separate pill appended after the real ones, switching in a free-text
+      // name field instead of relying on a fixed dose/label.
+      pills.push('<button type="button" class="en-add-type-pill' + (selectedKey === 'custom' ? ' is-selected' : '') + '" data-key="custom">Custom</button>');
+      $('enAddTypes').innerHTML = pills.join('');
+      $('enCustomNameRow').style.display = selectedKey === 'custom' ? '' : 'none';
+      if (selectedKey === 'custom') renderRecentCustomSources();
     }
     $('enAddTypes').addEventListener('click', (e) => {
       const btn = e.target.closest('[data-key]'); if (!btn) return;
       selectedKey = btn.getAttribute('data-key');
       renderTypeSelector();
+    });
+
+    // Recent custom sources: any name typed once becomes available as a
+    // one-tap re-selection from then on, so a second (or later) use of the
+    // same custom source doesn't need retyping. Capped at 10, most-recent
+    // first, deduped case-insensitively.
+    const CUSTOM_SOURCES_KEY = 'eq.energy.customSources_v1';
+    function getRecentCustomSources() { const v = storeGet(CUSTOM_SOURCES_KEY); return Array.isArray(v) ? v : []; }
+    function addRecentCustomSource(name) {
+      let list = getRecentCustomSources().filter((n) => n.toLowerCase() !== name.toLowerCase());
+      list.unshift(name);
+      storeSet(CUSTOM_SOURCES_KEY, list.slice(0, 10));
+    }
+    function renderRecentCustomSources() {
+      const list = getRecentCustomSources();
+      $('enRecentSources').innerHTML = list.map((n) =>
+        '<button type="button" class="en-recent-chip" data-name="' + n.replace(/"/g, '&quot;') + '">' + n.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c])) + '</button>'
+      ).join('');
+    }
+    $('enRecentSources').addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-name]'); if (!btn) return;
+      $('enCustomName').value = btn.getAttribute('data-name');
+      $('enCustomName').focus();
     });
 
     function nowTimeStr() {
@@ -2010,14 +2073,25 @@ main {
     $('enAddBtn').addEventListener('click', () => {
       const amount = Number($('enAddAmount').value);
       if (!amount || amount <= 0) return; // empty/zero -- no-op, no error per spec
+      let key = selectedKey;
+      if (selectedKey === 'custom') {
+        const customName = $('enCustomName').value.trim();
+        if (!customName) return; // no name typed -- same silent no-op as an empty amount
+        key = customName;
+      }
       const parsedHour = timeStrToHour($('enAddTime').value);
       const takenHour = parsedHour != null ? parsedHour : (new Date().getHours() + new Date().getMinutes() / 60);
       const logs = getTodayLogs();
-      logs.push({ key: selectedKey, dose: amount, takenHour: takenHour });
+      logs.push({ key: key, dose: amount, takenHour: takenHour });
       logs.sort((a, b) => a.takenHour - b.takenHour); // storage stays time-ordered, so index-based delete below always matches display order
       saveTodayLogs(logs);
       $('enAddAmount').value = '';
       $('enAddTime').value = nowTimeStr();
+      if (selectedKey === 'custom') {
+        addRecentCustomSource(key);
+        $('enCustomName').value = '';
+        renderRecentCustomSources();
+      }
       renderLogList(); renderChart();
     });
 
@@ -2840,6 +2914,23 @@ main {
     if (taken[id]) delete taken[id]; else taken[id] = Date.now();
     setTaken(taken); render();
   }
+  // Batch-2 fix #4: the checkbox already timestamps to now in the
+  // background (Date.now() above) -- this just lets that stamp be
+  // corrected afterward for "anytime" items, keeping the same real
+  // calendar date and only replacing the time-of-day.
+  function timeStrFromTimestamp(ts) {
+    const d = new Date(ts);
+    return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+  }
+  function setTakenTime(id, timeStr) {
+    const taken = getTaken();
+    if (!taken[id]) return;
+    const parts = String(timeStr || '').split(':').map(Number);
+    if (parts.length < 2 || isNaN(parts[0]) || isNaN(parts[1])) return;
+    const existing = new Date(taken[id]);
+    taken[id] = new Date(existing.getFullYear(), existing.getMonth(), existing.getDate(), parts[0], parts[1], existing.getSeconds()).getTime();
+    setTaken(taken); render();
+  }
   function toggleLow(id) {
     const low = getLow();
     if (low.includes(id)) setLow(low.filter(x => x !== id));
@@ -2921,6 +3012,17 @@ main {
         if (item.tag === 'stack') tagHtml = '<span class="stack-item-tag tag-stack">stack</span>';
         else if (item.tag === 'not-ordered') tagHtml = '<span class="stack-item-tag tag-not-ordered">not ordered</span>';
 
+        // Batch-2 fix #4: "anytime" items only -- morning/lunch/evening
+        // already carry timing context via their own window, so an
+        // editable time field there would be redundant with what the
+        // window already communicates.
+        const timeRowHtml = (isTaken && win.key === 'anytime')
+          ? `<div class="stack-item-time-row">
+               <span class="stack-item-time-label">Taken at</span>
+               <input type="time" class="stack-item-time-input" data-action="settime" data-id="${item.id}" value="${timeStrFromTimestamp(taken[item.id])}">
+             </div>`
+          : '';
+
         row.innerHTML = `
           <button class="stack-check ${isTaken ? 'checked' : ''}" data-action="toggle" data-id="${item.id}" aria-label="Mark taken">${isTaken ? '✓' : ''}</button>
           <div class="stack-item-body">
@@ -2928,6 +3030,7 @@ main {
               <span class="stack-item-name-text">${escapeHtml(item.name)}</span>${tagHtml}
             </div>
             <div class="stack-item-meta" data-edit="meta" data-id="${item.id}">${escapeHtml(metaText(item))}</div>
+            ${timeRowHtml}
           </div>
           <button class="stack-low-btn ${isLow ? 'is-low' : ''}" data-action="low" data-id="${item.id}">↓ Running low</button>
           <button class="stack-item-del" data-action="del" data-id="${item.id}" aria-label="Delete">×</button>`;
@@ -3045,6 +3148,12 @@ main {
     if (btn.dataset.action === 'toggle') toggleTaken(id);
     else if (btn.dataset.action === 'low') toggleLow(id);
     else if (btn.dataset.action === 'del') deleteItem(id);
+  });
+  document.getElementById('stackGroups').addEventListener('change', (e) => {
+    const input = e.target.closest('[data-action="settime"]');
+    if (!input) return;
+    e.stopPropagation();
+    setTakenTime(input.dataset.id, input.value);
   });
   document.getElementById('stackGroups').addEventListener('pointerdown', (e) => {
     const btn = e.target.closest('[data-action="del"]');

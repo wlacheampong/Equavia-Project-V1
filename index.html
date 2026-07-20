@@ -80,6 +80,16 @@ body::before {
   .landing { animation: none; opacity: 1; }
   .hero-link { transition: none; }
 }
+
+/* Batch-2 fix #2: mobile shows the splash at half the linear size (both
+   width and height, so the image's own proportions and crop stay
+   identical to desktop -- just scaled down), centered rather than
+   filling the screen edge to edge. Desktop is untouched. */
+@media (max-width: 767px) {
+  .landing { align-items: center; justify-content: center; }
+  .hero-link { width: 50%; height: 50%; }
+  .hero-image { width: 100%; height: 100%; }
+}
 </style>
 </head>
 <body>

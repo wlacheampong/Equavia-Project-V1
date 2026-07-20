@@ -430,6 +430,32 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
   box-shadow: 0 0 6px rgba(107,227,164,0.40);
 }
 
+/* ===== Yesterday (Batch-2 fix #1b) ===== */
+.yd-card { background: var(--bg-card); border-radius: 16px; margin-bottom: 14px; overflow: hidden; }
+.yd-toggle {
+  width: 100%; display: flex; align-items: center; gap: 10px;
+  background: none; border: none; padding: 13px 16px; cursor: pointer;
+  font-family: inherit; text-align: left; color: var(--text-primary);
+}
+.yd-toggle-title { font-size: 13.5px; font-weight: 700; }
+.yd-toggle-count { flex: 1; font-size: 12px; color: var(--text-tertiary); }
+.yd-toggle-icon { color: var(--text-tertiary); flex-shrink: 0; }
+.yd-list { list-style: none; margin: 0; padding: 0 12px 12px; }
+.yd-row { display: flex; align-items: center; gap: 10px; padding: 9px 4px; border-top: 1px solid rgba(255,255,255,0.06); }
+.yd-row:first-child { border-top: none; }
+.yd-check { color: var(--success, #6BE3A4); flex-shrink: 0; font-size: 13px; }
+.yd-warn { color: var(--danger); flex-shrink: 0; font-size: 13px; }
+.yd-text { flex: 1; min-width: 0; font-size: 13px; color: var(--text-primary); overflow-wrap: break-word; }
+.yd-row-done .yd-text { color: var(--text-tertiary); text-decoration: line-through; }
+.yd-actions { display: flex; gap: 6px; flex-shrink: 0; flex-wrap: wrap; }
+.yd-do-today, .yd-dismiss {
+  padding: 5px 10px; border-radius: 7px; border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.04); color: var(--text-secondary);
+  font-family: inherit; font-size: 11px; font-weight: 600; cursor: pointer; white-space: nowrap;
+}
+.yd-do-today:hover { background: var(--accent); border-color: transparent; color: #fff; }
+.yd-dismiss:hover { color: var(--text-primary); }
+
 .goal-list { list-style: none; margin: 0; padding: 0; }
 .empty-state {
   text-align: center;
@@ -1438,6 +1464,16 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
   <div class="section-title">
     <span class="section-title-text">TASKS</span>
   </div>
+
+  <div class="yd-card" id="ydCard" style="display:none;">
+    <button type="button" class="yd-toggle" id="ydToggle" aria-expanded="false">
+      <span class="yd-toggle-title">Yesterday</span>
+      <span class="yd-toggle-count" id="ydToggleCount">—</span>
+      <span class="yd-toggle-icon" id="ydToggleIcon">▾</span>
+    </button>
+    <ul class="yd-list" id="ydList" style="display:none;"></ul>
+  </div>
+
   <div class="task-cols">
     <div class="card" id="gmCardToday">
       <div class="gm-header">
@@ -2021,31 +2057,25 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
     storeDelete(PUSHED_P1_COUNT_PREFIX + dateStr);
   }
 
-  // ---------- rollover: pull undone older goals into today ----------
+  // ---------- rollover: retire old goals: keys, snapshot completion ----------
+  // Batch-2 fix #1: this used to ALSO silently merge yesterday's undone
+  // tasks into today's list (unflagged, indistinguishable from a task
+  // added today) before deleting yesterday's record outright -- that
+  // silent merge-then-delete was the actual root cause of "yesterday's
+  // tasks just disappear." Replaced with an explicit flow: capture
+  // yesterday's full record (done + undone) into the shared
+  // eq.tasks.yesterday snapshot BEFORE it's deleted, and only ever carry a
+  // task into today when the user taps "Do today" on it themselves (see
+  // the Yesterday panel below). Completion-rate snapshotting is unchanged.
   function rollover() {
+    if (window.AssistantTools) window.AssistantTools.ensureYesterdaySnapshot();
     const todayDateStr = getActiveDateString();
-    const todayK = 'goals:' + todayDateStr;
-    let today = getGoals(todayK);
-    const texts = new Set(today.map(g => g.text));
-
     storeListKeys('goals:').forEach(k => {
       const dateStr = k.slice('goals:'.length);
       if (dateStr >= todayDateStr) return;
-      const old = getGoals(k);
-      snapshotCompletionForDay(dateStr, old);
-      old.forEach(g => {
-        if (!g.done && g.text && !texts.has(g.text)) {
-          // Preserve id (Phase 4.1) so a task Ask Claude created/referenced
-          // stays addressable by the same id after it rolls forward a day --
-          // tasks predating that field simply have none, same as goals'
-          // createdAt backfill in 1.6.
-          today.push(g.id ? { id: g.id, text: g.text, done: false } : { text: g.text, done: false });
-          texts.add(g.text);
-        }
-      });
+      snapshotCompletionForDay(dateStr, getGoals(k));
       storeDelete(k);
     });
-    setGoals(todayK, today);
   }
 
   // ---------- streak ----------
@@ -2345,6 +2375,49 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
     const goals = sortAndPersistPriority(tomorrowKey());
     renderListInto(goals, document.getElementById('tomorrowList'), document.getElementById('tomorrowEmpty'), tomorrowKey(), true);
   }
+
+  // Batch-2 fix #1b: reference view of yesterday's full task history (done
+  // + undone) -- collapsed by default per spec, "Yesterday · N done, M
+  // unfinished" as the collapsed summary. Reads/writes the same shared
+  // eq.tasks.yesterday snapshot dashboard.html's alert panel uses.
+  let ydExpanded = false;
+  function renderYesterdayPanel() {
+    const AT = window.AssistantTools;
+    if (!AT) return;
+    const snap = AT.getYesterdaySnapshot();
+    const tasks = snap.tasks || [];
+    const card = document.getElementById('ydCard');
+    if (!tasks.length) { card.style.display = 'none'; return; }
+    card.style.display = '';
+    const doneCount = tasks.filter((t) => t.done).length;
+    const undoneCount = tasks.length - doneCount;
+    document.getElementById('ydToggleCount').textContent = doneCount + ' done, ' + undoneCount + ' unfinished';
+    document.getElementById('ydToggle').setAttribute('aria-expanded', String(ydExpanded));
+    document.getElementById('ydToggleIcon').textContent = ydExpanded ? '▴' : '▾';
+    const list = document.getElementById('ydList');
+    list.style.display = ydExpanded ? '' : 'none';
+    list.innerHTML = tasks.map((t) => {
+      if (t.done) {
+        return '<li class="yd-row yd-row-done"><span class="yd-check">✓</span><span class="yd-text">' + escapeHtmlYd(t.text) + '</span></li>';
+      }
+      return '<li class="yd-row yd-row-undone"><span class="yd-warn">⚠</span><span class="yd-text">' + escapeHtmlYd(t.text) + '</span>' +
+        '<div class="yd-actions">' +
+        '<button type="button" class="yd-do-today" data-id="' + t.id + '" data-action="today">Do today</button>' +
+        '<button type="button" class="yd-dismiss" data-id="' + t.id + '" data-action="dismiss">Dismiss</button>' +
+        '</div></li>';
+    }).join('');
+  }
+  function escapeHtmlYd(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+  document.getElementById('ydToggle').addEventListener('click', () => { ydExpanded = !ydExpanded; renderYesterdayPanel(); });
+  document.getElementById('ydList').addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-action]'); if (!btn) return;
+    const AT = window.AssistantTools; if (!AT) return;
+    const id = btn.getAttribute('data-id');
+    if (btn.getAttribute('data-action') === 'today') AT.moveYesterdayTaskToToday(id);
+    else AT.removeFromYesterdaySnapshot(id);
+    renderYesterdayPanel();
+    loadToday();
+  });
 
   document.getElementById('gmPushBtn').addEventListener('click', () => {
     const today    = getGoals(todayKey());
@@ -4316,6 +4389,7 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
   loadToday();
   loadTomorrow();
   renderStreak();
+  renderYesterdayPanel();
 
   renderLongtermGoals();
   initGoalAddForm();
@@ -4327,7 +4401,7 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
   initSuggestSlot();
 
   window.addEventListener('storage', () => {
-    loadToday(); loadTomorrow(); renderStreak(); renderLongtermGoals(); renderChecklists(); renderProjects(); renderRelationshipsSummary(); renderLearnSummary();
+    loadToday(); loadTomorrow(); renderStreak(); renderLongtermGoals(); renderChecklists(); renderProjects(); renderRelationshipsSummary(); renderLearnSummary(); renderYesterdayPanel();
   });
 })();
 </script>
