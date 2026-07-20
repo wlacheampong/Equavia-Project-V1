@@ -638,13 +638,46 @@ main {
     .en-event-band { fill:rgba(255,255,255,0.07); }
     .en-chart-meta { font-size:10.5px; color:var(--text-quaternary); text-align:right; margin-top:4px; }
     .en-stack-head { font-size:10.5px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; color:var(--text-tertiary); margin:18px 0 10px; }
-    .en-stack-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:10px; }
-    .en-stack-btn { display:flex; flex-direction:column; align-items:flex-start; gap:6px; background:var(--bg-secondary); border:1px solid rgba(255,255,255,0.06); border-radius:12px; padding:12px 14px; cursor:pointer; text-align:left; font-family:inherit; color:var(--text-primary); }
-    .en-stack-btn:hover { border-color:var(--border-strong); }
-    .en-stack-btn.has-logs { border-color:rgba(29,158,117,0.4); background:rgba(29,158,117,0.08); }
-    .en-stack-name { font-size:13.5px; font-weight:600; }
-    .en-stack-meta { font-size:11px; color:var(--text-tertiary); font-family:var(--font-mono); }
-    .en-stack-meta b { color:var(--accent); }
+    /* 6.9 follow-up: presets replaced with typed amount+time -- source stays
+       a selectable pill row (kept per the request, "keep whatever
+       source/label field already exists"), just no longer double as the
+       amount-and-log-immediately control. */
+    .en-add-types { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
+    .en-add-type-pill {
+      padding:7px 13px; border-radius:999px; border:1px solid rgba(255,255,255,0.1);
+      background:rgba(255,255,255,0.03); color:var(--text-secondary); font-family:inherit;
+      font-size:12.5px; font-weight:600; cursor:pointer;
+    }
+    .en-add-type-pill.is-selected { background:var(--accent); border-color:transparent; color:#fff; }
+    .en-add-fields { display:flex; flex-wrap:wrap; gap:6px; align-items:stretch; padding:4px; background:rgba(0,0,0,0.30); border-radius:12px; }
+    .en-add-fields input {
+      background:transparent; border:none; outline:none; color:var(--text-primary);
+      padding:9px 10px; font-family:inherit; font-size:13px; min-width:0;
+    }
+    .en-add-amount { flex:1; min-width:70px; }
+    .en-add-time { flex:1; min-width:100px; }
+    .en-add-btn {
+      padding:0 16px; background:rgba(255,255,255,0.06); border:none; color:var(--text-secondary);
+      font-family:inherit; font-size:12px; font-weight:600; border-radius:9px; cursor:pointer; flex-shrink:0;
+    }
+    .en-add-btn:hover { background:var(--accent); color:#fff; }
+    .en-log-toggle {
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      margin-top:14px; padding:10px 12px; background:rgba(255,255,255,0.03);
+      border-radius:10px; cursor:pointer; font-size:12.5px; color:var(--text-secondary); font-weight:600;
+    }
+    .en-log-toggle-icon { color:var(--text-tertiary); flex-shrink:0; }
+    .en-log-list { display:flex; flex-direction:column; gap:6px; margin-top:8px; }
+    .en-log-entry {
+      display:flex; align-items:center; gap:8px; padding:9px 10px;
+      background:rgba(255,255,255,0.025); border-radius:9px; font-size:12.5px;
+    }
+    .en-log-time { font-family:var(--font-mono); color:var(--text-tertiary); flex-shrink:0; }
+    .en-log-source { color:var(--text-primary); font-weight:600; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .en-log-amount { color:var(--text-secondary); font-family:var(--font-mono); flex-shrink:0; }
+    .en-log-del { background:none; border:none; color:var(--text-tertiary); font-size:16px; cursor:pointer; line-height:1; padding:2px 4px; flex-shrink:0; }
+    .en-log-del:hover { color:var(--text-primary); }
+    .en-log-empty { font-size:12px; color:var(--text-tertiary); padding:4px 2px; }
 
     /* ===== Sleep Log ===== */
     .sl-card { background:var(--bg-card); border:1px solid rgba(255,255,255,0.06); border-radius:18px; padding:18px; margin-bottom:22px; }
@@ -1732,8 +1765,18 @@ main {
       </svg>
       <div class="en-chart-meta">Predicted energy, next 24h — from your stimulant log + WHOOP recovery/sleep</div>
     </div>
-    <div class="en-stack-head">Log a stimulant</div>
-    <div class="en-stack-grid" id="enStackGrid"></div>
+    <div class="en-stack-head">Log caffeine</div>
+    <div class="en-add-types" id="enAddTypes"></div>
+    <div class="en-add-fields">
+      <input type="number" class="en-add-amount" id="enAddAmount" placeholder="mg" min="0" step="1" inputmode="numeric">
+      <input type="time" class="en-add-time" id="enAddTime">
+      <button type="button" class="en-add-btn" id="enAddBtn">Add</button>
+    </div>
+    <div class="en-log-toggle" id="enLogToggle" role="button" tabindex="0" aria-expanded="false">
+      <span id="enLogSummary">No entries yet today</span>
+      <span class="en-log-toggle-icon" id="enLogToggleIcon">▾</span>
+    </div>
+    <div class="en-log-list" id="enLogList"></div>
   </div>
   <script>
   (function () {
@@ -1849,31 +1892,91 @@ main {
       $('enNowTier').textContent = tierFor(nowScore);
     }
 
-    function renderStack() {
-      const logs = getTodayLogs();
-      $('enStackGrid').innerHTML = Object.keys(SUBSTANCES).map((key) => {
+    // Follow-up fix: presets removed -- amount and time are typed, source
+    // stays a selectable pill (the pharmacokinetic model still needs to
+    // know WHICH substance, since onset/peak/half-life differ per type;
+    // only how the dose gets captured changed).
+    let selectedKey = 'coffee';
+    function renderTypeSelector() {
+      $('enAddTypes').innerHTML = Object.keys(SUBSTANCES).map((key) => {
         const s = SUBSTANCES[key];
-        const these = logs.filter((l) => l.key === key);
-        const mg = these.reduce((a, l) => a + (l.dose || 0), 0);
-        return '<button type="button" class="en-stack-btn' + (these.length ? ' has-logs' : '') + '" data-key="' + key + '">' +
-          '<span class="en-stack-name">' + s.name + '</span>' +
-          '<span class="en-stack-meta">' + (these.length ? '<b>' + mg + 'mg</b> today (' + these.length + '&times;)' : '+ Log now (' + s.defaultDose + s.unit + ')') + '</span>' +
-          '</button>';
+        return '<button type="button" class="en-add-type-pill' + (key === selectedKey ? ' is-selected' : '') + '" data-key="' + key + '">' + s.name + '</button>';
       }).join('');
     }
-    $('enStackGrid').addEventListener('click', (e) => {
+    $('enAddTypes').addEventListener('click', (e) => {
       const btn = e.target.closest('[data-key]'); if (!btn) return;
-      const key = btn.getAttribute('data-key'), s = SUBSTANCES[key]; if (!s) return;
-      const now = new Date();
-      const logs = getTodayLogs();
-      logs.push({ key: key, dose: s.defaultDose, takenHour: now.getHours() + now.getMinutes() / 60 });
-      saveTodayLogs(logs);
-      renderStack(); renderChart();
+      selectedKey = btn.getAttribute('data-key');
+      renderTypeSelector();
     });
 
-    renderStack(); renderChart();
+    function nowTimeStr() {
+      const d = new Date();
+      return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+    }
+    function timeStrToHour(t) {
+      const parts = String(t || '').split(':').map(Number);
+      if (parts.length < 2 || isNaN(parts[0]) || isNaN(parts[1])) return null;
+      return parts[0] + parts[1] / 60;
+    }
+    function hourToClockStr(h) {
+      const totalMin = Math.round((((h % 24) + 24) % 24) * 60);
+      return String(Math.floor(totalMin / 60)).padStart(2, '0') + ':' + String(totalMin % 60).padStart(2, '0');
+    }
+
+    $('enAddTime').value = nowTimeStr();
+    $('enAddBtn').addEventListener('click', () => {
+      const amount = Number($('enAddAmount').value);
+      if (!amount || amount <= 0) return; // empty/zero -- no-op, no error per spec
+      const parsedHour = timeStrToHour($('enAddTime').value);
+      const takenHour = parsedHour != null ? parsedHour : (new Date().getHours() + new Date().getMinutes() / 60);
+      const logs = getTodayLogs();
+      logs.push({ key: selectedKey, dose: amount, takenHour: takenHour });
+      logs.sort((a, b) => a.takenHour - b.takenHour); // storage stays time-ordered, so index-based delete below always matches display order
+      saveTodayLogs(logs);
+      $('enAddAmount').value = '';
+      $('enAddTime').value = nowTimeStr();
+      renderLogList(); renderChart();
+    });
+
+    // Expandable log: collapsed by default once logging gets heavy (>3
+    // entries) so the section doesn't dominate the page; user's manual
+    // toggle wins over that default until the next full page load.
+    let logExpanded = null;
+    function renderLogList() {
+      const logs = getTodayLogs();
+      if (logExpanded === null) logExpanded = logs.length <= 3;
+      const totalMg = logs.reduce((a, l) => a + (l.dose || 0), 0);
+      $('enLogSummary').textContent = logs.length
+        ? logs.length + ' ' + (logs.length === 1 ? 'entry' : 'entries') + ' · ' + totalMg + 'mg total'
+        : 'No entries yet today';
+      $('enLogToggle').setAttribute('aria-expanded', String(logExpanded));
+      $('enLogToggleIcon').textContent = logExpanded ? '▴' : '▾';
+      const list = $('enLogList');
+      list.style.display = logExpanded ? '' : 'none';
+      list.innerHTML = logs.length ? logs.map((l, idx) => {
+        const s = SUBSTANCES[l.key] || { name: l.key };
+        return '<div class="en-log-entry">' +
+          '<span class="en-log-time">' + hourToClockStr(l.takenHour) + '</span>' +
+          '<span class="en-log-source">' + s.name + '</span>' +
+          '<span class="en-log-amount">' + (l.dose || 0) + 'mg</span>' +
+          '<button type="button" class="en-log-del" data-idx="' + idx + '" aria-label="Remove entry">×</button>' +
+          '</div>';
+      }).join('') : '<div class="en-log-empty">No entries yet today</div>';
+    }
+    $('enLogToggle').addEventListener('click', () => { logExpanded = !logExpanded; renderLogList(); });
+    $('enLogToggle').addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('enLogToggle').click(); } });
+    $('enLogList').addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-idx]'); if (!btn) return;
+      const idx = Number(btn.getAttribute('data-idx'));
+      const logs = getTodayLogs();
+      logs.splice(idx, 1);
+      saveTodayLogs(logs);
+      renderLogList(); renderChart();
+    });
+
+    renderTypeSelector(); renderLogList(); renderChart();
     setInterval(renderChart, 5 * 60000); // keeps the "now" line/score fresh without a full reload
-    window.addEventListener('storage', renderChart);
+    window.addEventListener('storage', () => { renderLogList(); renderChart(); });
   })();
   </script>
 
