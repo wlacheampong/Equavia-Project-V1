@@ -370,6 +370,8 @@ main {
   color: var(--text-primary);
   font-family: inherit;
   transition: border-color 0.18s, background 0.18s;
+  width: 100%;
+  min-width: 0;
 }
 .stack-input::placeholder { color: var(--text-tertiary); }
 .stack-input:focus {
@@ -401,7 +403,7 @@ main {
 .stack-add-btn:active { transform: translateY(0) scale(0.97); }
 
 /* ====== SEARCH AUTOCOMPLETE — appears below the form when typing in Name ====== */
-.stack-name-wrap { position: relative; }
+.stack-name-wrap { position: relative; min-width: 0; }
 
 .stack-search-results {
   position: absolute;
@@ -636,6 +638,21 @@ main {
     .en-grid { stroke:rgba(255,255,255,0.06); stroke-width:1; }
     .en-now-line { stroke:var(--warning); stroke-width:1.5; stroke-dasharray:3 3; }
     .en-event-band { fill:rgba(255,255,255,0.07); }
+    .en-chart-point { fill:#1D9E75; stroke:var(--bg-card); stroke-width:1.5; cursor:pointer; }
+    .en-chart-xaxis { position:relative; height:14px; margin-top:2px; }
+    .en-chart-xaxis-label {
+      position:absolute; top:0; transform:translateX(-50%);
+      font-size:9.5px; color:var(--text-quaternary); font-family:var(--font-mono);
+      white-space:nowrap; line-height:1;
+    }
+    .en-chart-xaxis-label.is-rotated { transform:translateX(-50%) rotate(-45deg); transform-origin:top center; }
+    .en-chart-tooltip {
+      position:absolute; transform:translate(-50%, -100%); margin-top:-6px;
+      background:rgba(15,15,15,0.95); color:#fff; font-size:11px; font-family:var(--font-mono);
+      padding:5px 8px; border-radius:6px; white-space:nowrap; pointer-events:none;
+      display:none; z-index:5; box-shadow:0 2px 8px rgba(0,0,0,0.3);
+    }
+    .en-chart-tooltip.is-visible { display:block; }
     .en-chart-meta { font-size:10.5px; color:var(--text-quaternary); text-align:right; margin-top:4px; }
     .en-stack-head { font-size:10.5px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; color:var(--text-tertiary); margin:18px 0 10px; }
     /* 6.9 follow-up: presets replaced with typed amount+time -- source stays
@@ -1763,6 +1780,8 @@ main {
         <g id="enChartContent"></g>
         <line class="en-now-line" id="enNowLine" x1="0" y1="0" x2="0" y2="130"></line>
       </svg>
+      <div class="en-chart-xaxis" id="enChartXAxis"></div>
+      <div class="en-chart-tooltip" id="enChartTooltip"></div>
       <div class="en-chart-meta">Predicted energy, next 24h — from your stimulant log + WHOOP recovery/sleep</div>
     </div>
     <div class="en-stack-head">Log caffeine</div>
@@ -1887,10 +1906,74 @@ main {
         return '<rect class="en-event-band" x="' + xForHour(startH) + '" y="' + padTop + '" width="' + Math.max(2, xForHour(endH) - xForHour(startH)) + '" height="' + (H - padTop - padBottom) + '"><title>' + escapeXml(e.title || '') + '</title></rect>';
       }).join('');
 
+      // Fix: mark each logged entry on the curve so its time is readable --
+      // dots always render (so every entry stays tap/hover-reachable);
+      // the text labels below the chart get thinned separately when dense.
+      const logs = getTodayLogs();
+      $('enChartContent').innerHTML += logs.map((log, i) => {
+        const x = xForHour(log.takenHour), y = yForScore(scoreAtHour(curve, log.takenHour));
+        return '<circle class="en-chart-point" data-idx="' + i + '" data-hour="' + log.takenHour + '" data-y="' + y.toFixed(2) + '" cx="' + x.toFixed(2) + '" cy="' + y.toFixed(2) + '" r="3.5"></circle>';
+      }).join('');
+      renderChartXAxis(logs);
+
       const nowScore = scoreAtHour(curve, nowHour);
       $('enNowNum').textContent = String(Math.round(nowScore));
       $('enNowTier').textContent = tierFor(nowScore);
     }
+
+    // X-axis labels sit in an HTML row (not SVG) below the chart so they can
+    // be positioned by measured pixel width and rotated on mobile -- SVG text
+    // doesn't wrap/rotate as cleanly against a percentage-based layout.
+    function renderChartXAxis(logs) {
+      const wrapEl = $('enChartXAxis').parentElement;
+      const containerWidth = wrapEl ? wrapEl.getBoundingClientRect().width : 320;
+      const isMobile = containerWidth > 0 && containerWidth < 420;
+      const minGapPx = isMobile ? 30 : 40;
+
+      const candidates = logs.map((log) => ({ hour: log.takenHour, xPct: (log.takenHour / 24) * 100 }))
+        .sort((a, b) => a.hour - b.hour);
+
+      let lastShownPx = -Infinity;
+      const shown = [];
+      candidates.forEach((c) => {
+        const xPx = (c.xPct / 100) * containerWidth;
+        if (xPx - lastShownPx >= minGapPx) { shown.push(c); lastShownPx = xPx; }
+      });
+
+      $('enChartXAxis').innerHTML = shown.map((c) =>
+        '<span class="en-chart-xaxis-label' + (isMobile ? ' is-rotated' : '') + '" style="left:' + c.xPct.toFixed(2) + '%">' + hourToClockStr(c.hour) + '</span>'
+      ).join('');
+    }
+
+    function showChartPointTooltip(el) {
+      const idx = Number(el.getAttribute('data-idx'));
+      const hour = Number(el.getAttribute('data-hour'));
+      const y = Number(el.getAttribute('data-y'));
+      const log = getTodayLogs()[idx]; if (!log) return;
+      const s = SUBSTANCES[log.key] || { name: log.key };
+      const tip = $('enChartTooltip');
+      tip.textContent = hourToClockStr(hour) + ' · ' + s.name + ' · ' + (log.dose || 0) + 'mg';
+      tip.style.left = ((hour / 24) * 100) + '%';
+      tip.style.top = Math.max(0, y) + 'px';
+      tip.classList.add('is-visible');
+    }
+    function hideChartPointTooltip() { $('enChartTooltip').classList.remove('is-visible'); }
+    $('enChartContent').addEventListener('click', (e) => {
+      const pt = e.target.closest('.en-chart-point');
+      if (!pt) return;
+      e.stopPropagation();
+      showChartPointTooltip(pt);
+    });
+    $('enChartContent').addEventListener('mouseover', (e) => {
+      const pt = e.target.closest('.en-chart-point'); if (pt) showChartPointTooltip(pt);
+    });
+    $('enChartContent').addEventListener('mouseout', (e) => {
+      if (e.target.closest('.en-chart-point')) hideChartPointTooltip();
+    });
+    document.addEventListener('click', (e) => { if (!e.target.closest('.en-chart-point')) hideChartPointTooltip(); });
+
+    let enResizeTimer;
+    window.addEventListener('resize', () => { clearTimeout(enResizeTimer); enResizeTimer = setTimeout(renderChart, 150); });
 
     // Follow-up fix: presets removed -- amount and time are typed, source
     // stays a selectable pill (the pharmacokinetic model still needs to
