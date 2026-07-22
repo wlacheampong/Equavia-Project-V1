@@ -415,69 +415,110 @@ const ROMAN = ['i','ii','iii','iv','v','vi','vii','viii','ix','x'];
 function mmss(s){ return Math.floor(s/60)+':'+pad(s%60); }
 const TIER_LABEL = { 1:'tier 1', 2:'tier 2', 3:'tier 3', ab:'abs' };
 
-/* ---- the program: Luke's real Push / Pull / Legs split ------------- */
-/* Structure (which lifts, tier, target sets x reps) is real. The kg are a
-   realistic starting prescription; a real user retunes them.            */
+/* ---- the program: 5-day real split (Push/Pull/Legs/Chest & Back/
+   Shoulders & Arms) -- replaces the old 3-day PPL split entirely, per
+   explicit user fix. Also supersedes the separate Upper/Lower A/B split
+   built from equavia-pre-answers-final.md into gym.html's OWN program
+   builder -- that is a different system entirely and was not touched by
+   this change; this file's program is independent.
+   `reps` is a single target number (this schema has no min/max range
+   field) -- where the source spec gave a range (e.g. "5-8"), the TOP of
+   the range is stored here, since that's the number the progression rule
+   below actually triggers on. Loads marked "new, no load history" or
+   otherwise unspecified are seeded at 0 so the first logged session
+   establishes the real baseline, same convention the old program used
+   for hanging leg raise. Dumbbell-named lifts use perHand:true (the kg
+   given is per hand, matching the old program's own incline DB
+   press/hammer curl convention). Frequency notes, for reference:
+   Chest: Days 1+4 · Back: Days 2+4 · Shoulders: Days 1+5 · Arms: Days
+   2+5 · Legs: Day 3 only · Core: Day 5 tag-on only. On judo/basketball
+   days, cut lower-body accessory volume rather than stacking full leg
+   work on top. If HRV/recovery is suppressed two days running: pull a
+   session or drop to volume-only rather than pushing through. */
 const PROGRAM = {
   push: { name:'Push', type:'Heavy', exercises:[
-    { id:'bench_bb',        name:'Barbell bench',        tier:1, sets:4, reps:6,  kg:85,   rest:180 },
-    { id:'standing_ohp',    name:'Standing barbell OHP', tier:1, sets:3, reps:8,  kg:50,   rest:150 },
-    { id:'incl_db_press',   name:'Incline DB press',     tier:2, sets:3, reps:10, kg:32.5, perHand:true, rest:120 },
-    { id:'cable_fly',       name:'Cable chest fly',      tier:3, sets:3, reps:12, kg:18,   rest:75  },
-    { id:'cable_lat_raise', name:'Cable lateral raise',  tier:3, sets:4, reps:12, kg:9,    rest:60  },
-    { id:'tri_pushdown',    name:'Tricep rope pushdown', tier:3, sets:3, reps:12, kg:27.5, rest:75  },
-    { id:'oh_tri_ext',      name:'Overhead cable tri ext', tier:3, sets:3, reps:12, kg:22.5, rest:75 },
+    { id:'db_bench_press',        name:'Dumbbell Bench Press',   tier:1, sets:3, reps:8,  kg:36,   perHand:true, rest:180 },
+    { id:'ohp_bb',                name:'Overhead Press',         tier:1, sets:3, reps:10, kg:54,   rest:150 },
+    { id:'incline_machine_press', name:'Incline Machine Press',  tier:2, sets:2, reps:12, kg:90,   rest:120 },
+    { id:'dips',                  name:'Dips (near failure)',    tier:2, sets:2, reps:10, kg:0,    rest:120 },
+    { id:'cable_tri_pushdown_1',  name:'Cable Triceps Pushdown', tier:3, sets:2, reps:15, kg:25.3, rest:75  },
   ]},
   pull: { name:'Pull', type:'Heavy', exercises:[
-    { id:'conv_dl',         name:'Conventional deadlift', tier:1, sets:3, reps:5,  kg:140, rest:210 },
-    { id:'pullup_weighted', name:'Weighted pull-ups',     tier:1, sets:4, reps:8,  kg:15,  rest:150 },
-    { id:'bb_row',          name:'Barbell row',           tier:1, sets:3, reps:8,  kg:80,  rest:150 },
-    { id:'lat_pulldown',    name:'Lat pulldown',          tier:2, sets:3, reps:10, kg:64,  rest:120 },
-    { id:'face_pull',       name:'Cable face pull',       tier:3, sets:3, reps:15, kg:22.5, rest:60 },
-    { id:'bb_curl',         name:'Barbell curl',          tier:2, sets:3, reps:10, kg:35,  rest:75  },
-    { id:'hammer_curl',     name:'Hammer curl',           tier:3, sets:3, reps:12, kg:16,  perHand:true, rest:60 },
+    { id:'pullup',              name:'Pull-Up',                tier:1, sets:3, reps:10, kg:0,    rest:180 },
+    { id:'chest_supported_row', name:'Chest-Supported Row',    tier:1, sets:3, reps:10, kg:68.3, rest:150 },
+    { id:'lat_pulldown_1',      name:'Lat Pulldown',           tier:2, sets:2, reps:12, kg:81.3, rest:120 },
+    { id:'bb_curl_1',           name:'Barbell Curl',           tier:3, sets:2, reps:12, kg:30,   rest:75  },
+    { id:'face_pulls_1',        name:'Face Pulls',             tier:3, sets:3, reps:20, kg:20,   rest:60  },
   ]},
   legs: { name:'Legs', type:'Heavy', exercises:[
-    { id:'back_squat',      name:'Barbell back squat',    tier:1, sets:4, reps:6,  kg:120, rest:210 },
-    { id:'rdl',             name:'Romanian deadlift',     tier:1, sets:3, reps:8,  kg:100, rest:150 },
-    { id:'leg_press',       name:'Leg press',             tier:2, sets:3, reps:10, kg:200, rest:120 },
-    { id:'lying_leg_curl',  name:'Lying leg curl',        tier:3, sets:3, reps:12, kg:50,  rest:75  },
-    { id:'leg_ext',         name:'Leg extension',         tier:3, sets:3, reps:12, kg:60,  rest:75  },
-    { id:'calf_raise',      name:'Calf raise',            tier:3, sets:4, reps:12, kg:90,  rest:60  },
-    { id:'hang_leg_raise',  name:'Hanging leg raise',     tier:'ab', sets:3, reps:12, kg:0, rest:60 },
+    { id:'squat_or_trap_dl',    name:'Back Squat or Trap-Bar Deadlift', tier:1, sets:3, reps:8,  kg:0,  rest:210 },
+    { id:'rdl_1',               name:'Romanian Deadlift',               tier:1, sets:3, reps:12, kg:26, rest:150 },
+    { id:'bulgarian_split_squat', name:'Bulgarian Split Squat',         tier:2, sets:3, reps:12, kg:22, perHand:true, rest:120 },
+    { id:'leg_curl_1',          name:'Leg Curl',                       tier:3, sets:3, reps:15, kg:0,  rest:75  },
+    { id:'calf_raise_1',        name:'Calf Raise',                     tier:3, sets:3, reps:15, kg:0,  rest:60  },
+    { id:'hang_leg_raise_1',    name:'Hanging Leg Raise',               tier:'ab', sets:3, reps:15, kg:0, rest:60 },
+  ]},
+  chest_back: { name:'Chest & Back', type:'Volume', exercises:[
+    { id:'incline_db_press',       name:'Incline Dumbbell Press',              tier:1, sets:3, reps:12, kg:36,   perHand:true, rest:120 },
+    { id:'supinated_lat_pulldown', name:'Supinated Lat Pulldown',              tier:1, sets:3, reps:12, kg:84.6, rest:120 },
+    { id:'machine_press_stretch',  name:'Machine Press (stretch focus)',       tier:2, sets:2, reps:15, kg:79,   rest:90  },
+    { id:'seated_cable_row',       name:'Seated Cable Row, Neutral Close Grip', tier:2, sets:3, reps:15, kg:82.3, rest:90  },
+    { id:'back_extension',         name:'Back Extension',                     tier:3, sets:2, reps:15, kg:15,   rest:60  },
+  ]},
+  shoulders_arms: { name:'Shoulders & Arms', type:'Volume', exercises:[
+    { id:'machine_lateral_raise', name:'Machine Lateral Raise (rest-pause)',     tier:1, sets:3, reps:15, kg:64, rest:75 },
+    { id:'hammer_curl_1',         name:'Hammer Curl',                           tier:2, sets:2, reps:12, kg:16, perHand:true, rest:60 },
+    { id:'curl_variant_2',        name:'Barbell or Cable Curl (2nd variant)',   tier:2, sets:2, reps:12, kg:0,  rest:60 },
+    { id:'cable_tri_pushdown_2',  name:'Cable Triceps Pushdown',                tier:3, sets:2, reps:15, kg:0,  rest:75 },
+    { id:'face_pulls_2',          name:'Face Pulls or Rear-Delt Fly',           tier:3, sets:2, reps:20, kg:0,  rest:60 },
+    { id:'plank_hang',            name:'Reverse Plank + Dead Hang (30-60s each)', tier:'ab', sets:2, reps:45, kg:0, rest:60 },
   ]},
   rest: { name:'Rest', restDay:true, exercises:[] },
 };
-const ORDER = ['push','pull','legs','rest'];
+const ORDER = ['push','pull','legs','chest_back','shoulders_arms','rest'];
 
-/* form reference + swap library (cues for the ⓘ button + swap options) */
+/* form reference + swap library (cues for the ⓘ button + swap options).
+   Re-keyed to the new 5-day program's exercise ids -- both LIB and
+   SWAPS lookups already fall back gracefully to a generic entry/empty
+   list when a key is missing, so nothing would have broken left stale,
+   but that means every exercise on the new program showing the same
+   bland fallback instead of real cues, which isn't worth the silent
+   quality drop given how specific the old entries were. */
 const LIB = {
-  bench_bb:{ equipment:'Barbell', primary:['Chest'], secondary:['Front delts','Triceps'], gist:'The barbell chest builder your push day is built around.', steps:['Unrack over your chest, shoulder blades pinned','Lower under control to the base of your sternum','Drive up and squeeze the chest at the top'], cues:['Lower slower than you press','Feet planted, glutes tight'] },
-  standing_ohp:{ equipment:'Barbell', primary:['Front delts'], secondary:['Triceps','Upper chest'], gist:'Vertical press for raw overhead strength.', steps:['Bar on your front delts, elbows under','Brace hard, press straight up','Shrug the bar overhead, head through'], cues:['Squeeze glutes, no lean back','Bar over mid-foot at lockout'] },
-  incl_db_press:{ equipment:'Dumbbell', primary:['Upper chest'], secondary:['Front delts'], gist:'Incline dumbbell press for the upper chest.', steps:['Bench at about 30 degrees','Dumbbells at shoulder width, palms forward','Press up over the chest, lower slow'], cues:['Lower slower than you press','Stay in full control'] },
-  cable_fly:{ equipment:'Cable', primary:['Chest'], secondary:[], gist:'Cable fly to finish the chest with constant tension.', steps:['Set the pulleys high, soft elbows','Sweep your hands together in front','Squeeze, return slow'], cues:['Soft elbows held still','Squeeze hard at the middle'] },
-  cable_lat_raise:{ equipment:'Cable', primary:['Side delts'], secondary:[], gist:'Cable lateral raise for round, capped shoulders.', steps:['Cable from the low pulley behind you','Raise to shoulder height, pinky led','Lower slow against the cable'], cues:['Lead with the elbow','No swinging, all delt'] },
-  tri_pushdown:{ equipment:'Cable', primary:['Triceps'], secondary:[], gist:'Rope pushdown for the triceps.', steps:['Rope at the high pulley, elbows pinned in','Push down and spread the rope','Return slow to a full stretch'], cues:['Upper arms by your sides','Only the forearms move'] },
-  oh_tri_ext:{ equipment:'Cable', primary:['Triceps'], secondary:[], gist:'Overhead extension for the long head of the triceps.', steps:['Rope overhead, lean in slightly','Extend until your arms are straight','Lower slow to a deep stretch'], cues:['Keep the stretch at the bottom','Elbows tight, point forward'] },
-  conv_dl:{ equipment:'Barbell', primary:['Posterior chain'], secondary:['Back','Glutes'], gist:'The deadlift, your pull day anchor.', steps:['Bar over mid-foot, shins to the bar','Brace, take the slack out','Push the floor away and stand tall'], cues:['Flat back, lats tight','Bar drags up your legs'] },
-  pullup_weighted:{ equipment:'Bodyweight', primary:['Lats'], secondary:['Biceps','Upper back'], gist:'Weighted pull-ups for back width.', steps:['Belt the plate, dead hang start','Pull your chest to the bar','Lower under full control'], cues:['Drive elbows down and back','Full stretch at the bottom'] },
-  bb_row:{ equipment:'Barbell', primary:['Upper back'], secondary:['Lats','Biceps'], gist:'Barbell row for a thick back.', steps:['Hinge to about 45 degrees, flat back','Row to your lower ribs','Lower slow, no jerking'], cues:['Lead with the elbows','Squeeze the back at the top'] },
-  lat_pulldown:{ equipment:'Cable', primary:['Lats'], secondary:['Biceps'], gist:'Lat pulldown for width when pull-ups are done.', steps:['Wide grip, chest up','Pull the bar to your collarbone','Control the bar back up'], cues:['Drive elbows to your hips','No leaning back'] },
-  face_pull:{ equipment:'Cable', primary:['Rear delts'], secondary:['Upper back'], gist:'Face pull for rear delts and healthy shoulders.', steps:['Rope at face height','Pull to your forehead, elbows high','Externally rotate at the end'], cues:['High elbows the whole way','Squeeze, then return slow'] },
-  bb_curl:{ equipment:'Barbell', primary:['Biceps'], secondary:['Forearms'], gist:'Barbell curl for biceps mass.', steps:['Shoulder-width grip, elbows pinned','Curl the bar up, no swing','Lower slow to a full stretch'], cues:['Elbows stay still by your sides','Control the negative'] },
-  hammer_curl:{ equipment:'Dumbbell', primary:['Biceps'], secondary:['Forearms'], gist:'Hammer curl for the brachialis and forearms.', steps:['Neutral grip, palms facing in','Curl up keeping the wrist neutral','Lower slow'], cues:['No swinging','Squeeze at the top'] },
-  back_squat:{ equipment:'Barbell', primary:['Quads'], secondary:['Glutes','Core'], gist:'The back squat, your leg day anchor.', steps:['Bar on your upper back, brace','Break at the hips and knees together','Drive up out of the hole'], cues:['Knees track over your toes','Chest up, deep brace'] },
-  rdl:{ equipment:'Barbell', primary:['Hamstrings'], secondary:['Glutes','Back'], gist:'Romanian deadlift for hamstrings and glutes.', steps:['Soft knees, bar on your thighs','Push your hips back, bar close','Stand tall, squeeze the glutes'], cues:['Feel the hamstring stretch','Flat back throughout'] },
-  leg_press:{ equipment:'Machine', primary:['Quads'], secondary:['Glutes'], gist:'Leg press to pile on quad volume.', steps:['Feet mid-platform, shoulder width','Lower to about 90 degrees','Press up without locking hard'], cues:['Heels down, knees tracking out','Controlled depth'] },
-  lying_leg_curl:{ equipment:'Machine', primary:['Hamstrings'], secondary:[], gist:'Lying leg curl to isolate the hamstrings.', steps:['Pad just above the heels','Curl up fully, squeeze','Lower slow, full stretch'], cues:['Hips stay down','Slow on the way down'] },
-  leg_ext:{ equipment:'Machine', primary:['Quads'], secondary:[], gist:'Leg extension to finish the quads.', steps:['Pad on your lower shins','Extend fully, squeeze at the top','Lower slow'], cues:['Pause at the top','No swinging the weight'] },
-  calf_raise:{ equipment:'Machine', primary:['Calves'], secondary:[], gist:'Calf raise for the lower legs.', steps:['Balls of the feet on the platform','Rise to a full contraction','Lower to a deep stretch'], cues:['Full range, top to bottom','Pause and squeeze the top'] },
-  hang_leg_raise:{ equipment:'Bodyweight', primary:['Abs'], secondary:['Hip flexors'], gist:'Hanging leg raise for the lower abs.', steps:['Dead hang, no swing','Raise your legs to parallel or higher','Lower slow, stay controlled'], cues:['Curl the pelvis up','No momentum'] },
+  db_bench_press:{ equipment:'Dumbbell', primary:['Chest'], secondary:['Front delts','Triceps'], gist:'Dumbbell press for chest with a freer path than a barbell.', steps:['Dumbbells racked at chest height, elbows in','Press up and slightly together, lower under control','Stop just below chest level for a full stretch'], cues:['Lower slower than you press','Feet planted, glutes tight'] },
+  ohp_bb:{ equipment:'Barbell', primary:['Front delts'], secondary:['Triceps','Upper chest'], gist:'Vertical press for raw overhead strength.', steps:['Bar on your front delts, elbows under','Brace hard, press straight up','Shrug the bar overhead, head through'], cues:['Squeeze glutes, no lean back','Bar over mid-foot at lockout'] },
+  incline_machine_press:{ equipment:'Machine', primary:['Upper chest'], secondary:['Front delts'], gist:'Machine incline press for upper chest without stabilizing the weight.', steps:['Seat set so handles align with upper chest','Press up and together, don’t lock out hard','Lower slow to a full stretch'], cues:['Shoulder blades pinned to the pad','Control the negative'] },
+  dips:{ equipment:'Bodyweight', primary:['Lower chest'], secondary:['Triceps','Front delts'], gist:'Dips near failure for chest and triceps mass.', steps:['Lean forward for chest emphasis','Lower until a deep stretch in the shoulders','Press back up without locking out hard'], cues:['Lean in, don’t stay upright','Go until close to failure, not to pain'] },
+  cable_tri_pushdown_1:{ equipment:'Cable', primary:['Triceps'], secondary:[], gist:'Rope pushdown for the triceps.', steps:['Rope at the high pulley, elbows pinned in','Push down and spread the rope','Return slow to a full stretch'], cues:['Upper arms by your sides','Only the forearms move'] },
+  pullup:{ equipment:'Bodyweight', primary:['Lats'], secondary:['Biceps','Upper back'], gist:'The bodyweight back builder your pull day is built around.', steps:['Dead hang start, shoulder blades set','Pull your chest to the bar','Lower under full control'], cues:['Drive elbows down and back','Full stretch at the bottom'] },
+  chest_supported_row:{ equipment:'Machine', primary:['Upper back'], secondary:['Lats','Biceps'], gist:'Chest-supported row for a thick back with no lower-back strain.', steps:['Chest flat on the pad, arms extended','Row to your lower ribs, elbows back','Lower slow, no jerking'], cues:['Lead with the elbows','Squeeze the back at the top'] },
+  lat_pulldown_1:{ equipment:'Cable', primary:['Lats'], secondary:['Biceps'], gist:'Lat pulldown for width when pull-ups are done.', steps:['Wide grip, chest up','Pull the bar to your collarbone','Control the bar back up'], cues:['Drive elbows to your hips','No leaning back'] },
+  bb_curl_1:{ equipment:'Barbell', primary:['Biceps'], secondary:['Forearms'], gist:'Barbell curl for biceps mass.', steps:['Shoulder-width grip, elbows pinned','Curl the bar up, no swing','Lower slow to a full stretch'], cues:['Elbows stay still by your sides','Control the negative'] },
+  face_pulls_1:{ equipment:'Cable', primary:['Rear delts'], secondary:['Upper back'], gist:'Face pull for rear delts and healthy shoulders.', steps:['Rope at face height','Pull to your forehead, elbows high','Externally rotate at the end'], cues:['High elbows the whole way','Squeeze, then return slow'] },
+  squat_or_trap_dl:{ equipment:'Barbell', primary:['Quads'], secondary:['Glutes','Core'], gist:'Your leg day anchor -- back squat or trap-bar deadlift, whichever your knees/back prefer that day.', steps:['Brace hard before you unrack or pull','Break at the hips and knees together','Drive up out of the bottom'], cues:['Knees track over your toes','Chest up, deep brace'] },
+  rdl_1:{ equipment:'Barbell', primary:['Hamstrings'], secondary:['Glutes','Back'], gist:'Romanian deadlift for hamstrings and glutes.', steps:['Soft knees, bar on your thighs','Push your hips back, bar close','Stand tall, squeeze the glutes'], cues:['Feel the hamstring stretch','Flat back throughout'] },
+  bulgarian_split_squat:{ equipment:'Dumbbell', primary:['Quads'], secondary:['Glutes'], gist:'Single-leg squat for quads and glutes with less spinal load.', steps:['Rear foot up on a bench, torso upright','Lower until the front thigh is near parallel','Drive up through the front heel'], cues:['Most of the weight on the front leg','Keep the torso tall, don’t lean in'] },
+  leg_curl_1:{ equipment:'Machine', primary:['Hamstrings'], secondary:[], gist:'Leg curl to isolate the hamstrings.', steps:['Pad just above the heels','Curl up fully, squeeze','Lower slow, full stretch'], cues:['Hips stay down','Slow on the way down'] },
+  calf_raise_1:{ equipment:'Machine', primary:['Calves'], secondary:[], gist:'Calf raise for the lower legs.', steps:['Balls of the feet on the platform','Rise to a full contraction','Lower to a deep stretch'], cues:['Full range, top to bottom','Pause and squeeze the top'] },
+  hang_leg_raise_1:{ equipment:'Bodyweight', primary:['Abs'], secondary:['Hip flexors'], gist:'Hanging leg raise for the lower abs.', steps:['Dead hang, no swing','Raise your legs to parallel or higher','Lower slow, stay controlled'], cues:['Curl the pelvis up','No momentum'] },
+  incline_db_press:{ equipment:'Dumbbell', primary:['Upper chest'], secondary:['Front delts'], gist:'Incline dumbbell press for the upper chest.', steps:['Bench at about 30 degrees','Dumbbells at shoulder width, palms forward','Press up over the chest, lower slow'], cues:['Lower slower than you press','Stay in full control'] },
+  supinated_lat_pulldown:{ equipment:'Cable', primary:['Lats'], secondary:['Biceps'], gist:'Underhand pulldown -- more biceps and lower-lat emphasis than a wide grip.', steps:['Underhand grip, just inside shoulder width','Pull the bar to your upper chest','Control the bar back up'], cues:['Drive elbows down, not back','Squeeze the lats at the bottom'] },
+  machine_press_stretch:{ equipment:'Machine', primary:['Chest'], secondary:['Front delts','Triceps'], gist:'Machine press worked for the stretch, not just the lockout.', steps:['Set the seat so the handles start behind your chest line','Press out fully without slamming the lockout','Lower slow to the deepest comfortable stretch'], cues:['Pause a beat at full stretch','Don’t rush the eccentric'] },
+  seated_cable_row:{ equipment:'Cable', primary:['Upper back'], secondary:['Lats','Biceps'], gist:'Close neutral-grip row for mid-back thickness.', steps:['Neutral-grip handle, knees soft','Row to your stomach, elbows close to your sides','Control the return, full stretch forward'], cues:['Chest up, don’t round forward','Squeeze the shoulder blades together'] },
+  back_extension:{ equipment:'Machine', primary:['Lower back'], secondary:['Glutes','Hamstrings'], gist:'Back extension for posterior-chain endurance and lower-back health.', steps:['Hips on the pad, ankles secured','Lower under control to a full stretch','Raise to a flat line, don’t hyperextend'], cues:['Squeeze glutes at the top, not just the back','No jerking at the bottom'] },
+  machine_lateral_raise:{ equipment:'Machine', primary:['Side delts'], secondary:[], gist:'Lateral raise for round shoulders, taken to rest-pause when the reps run out.', steps:['Pads against the outside of your upper arms','Raise to shoulder height, no shrugging','Lower slow against the machine'], cues:['Lead with the elbows','On rest-pause, take a few breaths and squeeze out a few more'] },
+  hammer_curl_1:{ equipment:'Dumbbell', primary:['Biceps'], secondary:['Forearms'], gist:'Hammer curl for the brachialis and forearms.', steps:['Neutral grip, palms facing in','Curl up keeping the wrist neutral','Lower slow'], cues:['No swinging','Squeeze at the top'] },
+  curl_variant_2:{ equipment:'Barbell or Cable', primary:['Biceps'], secondary:['Forearms'], gist:'A second curl variant for a different angle than the hammer curl.', steps:['Set up strict, elbows pinned to your sides','Curl up without swinging the weight','Lower slow to a full stretch'], cues:['No momentum from the hips','Control the negative every rep'] },
+  cable_tri_pushdown_2:{ equipment:'Cable', primary:['Triceps'], secondary:[], gist:'Rope pushdown for the triceps.', steps:['Rope at the high pulley, elbows pinned in','Push down and spread the rope','Return slow to a full stretch'], cues:['Upper arms by your sides','Only the forearms move'] },
+  face_pulls_2:{ equipment:'Cable', primary:['Rear delts'], secondary:['Upper back'], gist:'Face pull or rear-delt fly to finish the shoulders.', steps:['Rope at face height, or fly handles at shoulder height','Pull/raise with elbows high','Squeeze at the back, return slow'], cues:['High elbows the whole way','Light weight, strict form'] },
+  plank_hang:{ equipment:'Bodyweight', primary:['Core'], secondary:['Grip','Shoulders'], gist:'A core + grip finisher tag-on, not a main lift.', steps:['Reverse plank: hands behind you, hips lifted, hold','Dead hang: relaxed hang from a bar, shoulders long'], cues:['Reverse plank: squeeze glutes, don’t sag','Dead hang: let the shoulders stretch, don’t shrug up'] },
 };
 const SWAPS = {
   push:[ {id:'incl_bb_bench',name:'Incline barbell bench',tier:2},{id:'machine_chest',name:'Machine chest press',tier:2},{id:'dips_weighted',name:'Weighted dips',tier:2},{id:'db_shoulder_press',name:'DB shoulder press',tier:2,perHand:true},{id:'pec_deck',name:'Pec deck',tier:3} ],
   pull:[ {id:'tbar_row',name:'T-bar row',tier:1},{id:'chinup',name:'Chin-ups',tier:1},{id:'seated_row',name:'Seated cable row',tier:2},{id:'db_curl',name:'Incline DB curl',tier:3,perHand:true},{id:'rear_delt_fly',name:'Rear delt fly',tier:3} ],
-  legs:[ {id:'hack_squat',name:'Hack squat',tier:1},{id:'front_squat',name:'Front squat',tier:1},{id:'bulgarian',name:'Bulgarian split squat',tier:2,perHand:true},{id:'good_morning',name:'Good morning',tier:2},{id:'seated_calf',name:'Seated calf raise',tier:3} ],
+  legs:[ {id:'hack_squat',name:'Hack squat',tier:1},{id:'front_squat',name:'Front squat',tier:1},{id:'good_morning',name:'Good morning',tier:2},{id:'seated_calf',name:'Seated calf raise',tier:3},{id:'ab_wheel',name:'Ab wheel rollout',tier:'ab'} ],
+  chest_back:[ {id:'flat_bb_bench',name:'Flat barbell bench',tier:1},{id:'pullover_cb',name:'Cable pullover',tier:2},{id:'pec_deck_cb',name:'Pec deck',tier:3},{id:'straight_arm_pulldown',name:'Straight-arm pulldown',tier:3} ],
+  shoulders_arms:[ {id:'db_lateral_raise',name:'Dumbbell lateral raise',tier:1,perHand:true},{id:'preacher_curl',name:'Preacher curl',tier:2},{id:'skull_crusher',name:'Skull crusher',tier:2},{id:'overhead_tri_ext',name:'Overhead cable triceps extension',tier:3} ],
   rest:[],
 };
 
@@ -654,11 +695,32 @@ function restPanelHTML(title, body, undo){
 }
 function wireRestPanel(){ const u=$('#undoOff'); if(u) u.onclick=()=>{ curDay().off=false; render(); }; }
 
+/* Progression rule (replaces any prior rule): +2.5kg once every logged
+   set that session met or beat the exercise's target reps; if the lift
+   has no load to add to (bodyweight, kg=0 -- a jump isn't practical
+   there), add a rep instead. Only fires on a fully-logged session (every
+   prescribed set present) and only on the today->submitted transition,
+   never on re-lock/undo, so it can't double-apply. */
+function applyProgression(d){
+  d.ex.forEach(e=>{
+    const logged = e.log.filter(s=>s);
+    if(logged.length < e.sets) return;
+    const allHitTarget = logged.every(s=>!s.fail && s.reps>=e.reps);
+    if(!allHitTarget) return;
+    if(e.kg > 0) e.kg = r1(e.kg + 2.5);
+    else e.reps = e.reps + 1;
+  });
+}
 function renderFinish(d){
   const btn=$('#finishBtn'); const t=dayTotals(d);
   if(STATE.submitted){ btn.textContent='re-lock session'; btn.classList.add('locked'); btn.disabled=false; }
   else { btn.textContent='finish session'; btn.classList.remove('locked'); btn.disabled = t.logged===0; }
-  btn.onclick=()=>{ STATE.submitted=!STATE.submitted; renderFinish(d); saveState(); };
+  btn.onclick=()=>{
+    const wasSubmitted = STATE.submitted;
+    STATE.submitted=!STATE.submitted;
+    if(!wasSubmitted && STATE.submitted) applyProgression(d);
+    renderFinish(d); saveState();
+  };
 }
 
 function renderCard(e, day){
