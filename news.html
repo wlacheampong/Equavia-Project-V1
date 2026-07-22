@@ -9,8 +9,8 @@
 <link rel="apple-touch-icon" href="images/apple-touch-icon.png">
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Equavia">
-<title>News — Equavia</title>
+<meta name="apple-mobile-web-app-title" content="Project Equavia">
+<title>News — Project Equavia</title>
 <link rel="stylesheet" href="equavia-core.css">
 <script src="assistant-tools.js"></script>
 <script src="topbar.js" defer></script>
@@ -133,13 +133,15 @@ body { margin: 0; background: var(--bg-deep); color: var(--text-primary); font-f
 
   function pad2(n) { return String(n).padStart(2, '0'); }
   function dateKeyOf(d) { return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); }
-  function weekStartMonday6am(refDate) {
-    const shifted = new Date(refDate.getTime() - 6 * 3600000);
-    const daysSinceMonday = (shifted.getDay() + 6) % 7;
-    const mondayShifted = new Date(shifted.getFullYear(), shifted.getMonth(), shifted.getDate() - daysSinceMonday);
-    return new Date(mondayShifted.getTime() + 6 * 3600000);
+  // Re-walk vs equavia-pre-answers-final.md 4.5: Sunday 7 PM (was Monday
+  // 6am -- see dashboard.html's own weekStartSunday7pm for the full note).
+  function weekStartSunday7pm(refDate) {
+    const shifted = new Date(refDate.getTime() - 19 * 3600000);
+    const daysSinceSunday = shifted.getDay();
+    const sundayShifted = new Date(shifted.getFullYear(), shifted.getMonth(), shifted.getDate() - daysSinceSunday);
+    return new Date(sundayShifted.getTime() + 19 * 3600000);
   }
-  function currentWeekKey() { return dateKeyOf(weekStartMonday6am(new Date())); }
+  function currentWeekKey() { return dateKeyOf(weekStartSunday7pm(new Date())); }
 
   function getSeen() { return storeGet(SEEN_KEY) || {}; }
   function markSeen(url) { const s = getSeen(); s[url] = Date.now(); storeSet(SEEN_KEY, s); }

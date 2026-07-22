@@ -9,8 +9,8 @@
 <link rel="apple-touch-icon" href="images/apple-touch-icon.png">
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Equavia">
-<title>Ask Claude — Equavia</title>
+<meta name="apple-mobile-web-app-title" content="Project Equavia">
+<title>Equavia 0 — Project Equavia</title>
 <link rel="stylesheet" href="equavia-core.css">
 <script src="topbar.js" defer></script>
 <script src="obsidian-sync.js"></script>
@@ -160,9 +160,9 @@ body {
 </head>
 <body>
 <div class="shell">
-  <div class="section-title">Ask Claude</div>
+  <div class="section-title">Equavia 0</div>
   <h1 class="ask-title">Ask about your data</h1>
-  <p class="ask-subtitle">Chats with Claude over whichever parts of your Equavia data you opt in below. Nothing is sent unless a domain chip is on, and the request only ever leaves your device for this one message.</p>
+  <p class="ask-subtitle">Chats with Claude over whichever parts of your Project Equavia data you opt in below. Nothing is sent unless a domain chip is on, and the request only ever leaves your device for this one message.</p>
 
   <div class="ask-domains" id="askDomains"></div>
   <div class="ask-context-size" id="askContextSize">~0 tokens of your data attached</div>
@@ -199,7 +199,7 @@ body {
     <button type="button" class="ask-web-toggle" id="askWebToggle">Web: on</button>
   </div>
   <div class="ask-input-row">
-    <textarea class="ask-input" id="askInput" placeholder="Message Claude…" rows="1"></textarea>
+    <textarea class="ask-input" id="askInput" placeholder="Message Equavia 0…" rows="1"></textarea>
     <button type="button" class="ask-mic-btn" id="askMicBtn" aria-label="Voice input" style="display:none;">
       <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1"/><path d="M12 18v4M9 22h6"/></svg>
     </button>
@@ -218,14 +218,23 @@ body {
   const MESSAGES_KEY = 'ask_messages_v1';
   const DOMAINS_KEY = 'ask_domains_v1';
   const CHAT_OBSIDIAN_ID_KEY = 'ask_chat_obsidian_id_v1';
+  // Re-walk vs equavia-pre-answers-final.md Phase 2: defaults corrected
+  // to ON = Health, Goals/Tasks, Habits only -- Fitness and Finance were
+  // both ON before, now OFF (toggle on when needed). Supplements and
+  // News are genuinely new chips (the pre-answers name them explicitly;
+  // neither existed here before -- News in particular postdates this
+  // file, added by Phase 5.6). Calendar/Notes aren't mentioned either
+  // way in the pre-answers, so left exactly as they were.
   const DOMAIN_DEFS = [
     { key: 'tasks', label: 'Goals/Tasks', on: true },
     { key: 'calendar', label: 'Calendar', on: true },
     { key: 'health', label: 'Health', on: true },
-    { key: 'fitness', label: 'Fitness', on: true },
-    { key: 'finance', label: 'Finance', on: true },
+    { key: 'fitness', label: 'Fitness', on: false },
+    { key: 'finance', label: 'Finance', on: false },
     { key: 'habits', label: 'Habits', on: true },
     { key: 'relationships', label: 'Relationships', on: false },
+    { key: 'stack', label: 'Supplements', on: false },
+    { key: 'news', label: 'News', on: false },
     { key: 'notes', label: 'Notes (Obsidian)', on: false },
   ];
 
@@ -434,9 +443,9 @@ body {
   // chip builders are current-snapshot only. ----------
   const GET_DATA_TOOL = {
     name: 'get_data',
-    description: 'Fetch current app data for a domain not already in context, or a specific task/goal to get its id before calling a tool that needs one. Domains: tasks, calendar, health, fitness, finance, habits, relationships, notes, books, shopping, stack, goals.',
+    description: 'Fetch current app data for a domain not already in context, or a specific task/goal to get its id before calling a tool that needs one. Domains: tasks, calendar, health, fitness, finance, habits, relationships, notes, books, shopping, stack, goals, news.',
     input_schema: { type: 'object', properties: {
-      domain: { type: 'string', enum: ['tasks', 'calendar', 'health', 'fitness', 'finance', 'habits', 'relationships', 'notes', 'books', 'shopping', 'stack', 'goals'] },
+      domain: { type: 'string', enum: ['tasks', 'calendar', 'health', 'fitness', 'finance', 'habits', 'relationships', 'notes', 'books', 'shopping', 'stack', 'goals', 'news'] },
       range: { type: 'string', enum: ['today', '7d', '30d', 'all'], description: 'How much history to include, where the domain supports it (tasks/health/fitness). Ignored otherwise.' },
     }, required: ['domain'] },
   };
@@ -489,6 +498,22 @@ body {
     if (!list.length) return 'No active goals.';
     return list.map((g) => '- ' + g.title + ' (' + (g.value || 0) + '%, id: ' + g.id + ')' + (g.notes && g.notes.length ? ' -- ' + g.notes.length + ' note(s)' : '')).join('\n');
   }
+  // Re-walk vs equavia-pre-answers-final.md Phase 2: News wasn't wired
+  // into get_data or the domain chips at all before (built later, in
+  // Phase 5.6, after this file's original domain list). Reads the most
+  // recent weekly digest rather than the raw rolling item cache -- same
+  // "summarize, don't dump a raw array" convention every other builder
+  // here already follows.
+  function getDataNews() {
+    const digests = storeGet('eq.news.digests_v1') || [];
+    if (!digests.length) return 'No news digest generated yet.';
+    const latest = digests.slice().sort((a, b) => (b.at || '').localeCompare(a.at || ''))[0];
+    const cats = Object.keys(latest.categories || {});
+    if (!cats.length) return 'Latest digest (' + latest.weekKey + ') has no categories.';
+    return 'Digest for week of ' + latest.weekKey + ':\n' + cats.map((c) =>
+      c + ':\n' + (latest.categories[c] || []).map((b) => '- ' + b.text).join('\n')
+    ).join('\n');
+  }
   async function exec_get_data(input) {
     const range = input.range;
     let text;
@@ -505,6 +530,7 @@ body {
       case 'shopping': text = getDataShopping(); break;
       case 'stack': text = getDataStack(); break;
       case 'goals': text = getDataGoals(); break;
+      case 'news': text = getDataNews(); break;
       default: text = 'Unknown domain.';
     }
     return { ok: true, summary: text };
@@ -520,7 +546,9 @@ body {
   // only make sense inside this page (Google Calendar OAuth state, chat
   // domain-context builders) -- see assistant-tools.js's own header comment.
   const TOOL_REGISTRY = Object.assign({}, AT.TOOL_REGISTRY, {
-    add_calendar_event: { schema: ADD_CALENDAR_EVENT_TOOL, confirmMode: 'always', execute: exec_add_calendar_event },
+    // Re-walk vs equavia-pre-answers-final.md 4.1: "write to Google
+    // Calendar directly (no confirm step)" -- was 'always'.
+    add_calendar_event: { schema: ADD_CALENDAR_EVENT_TOOL, confirmMode: 'never', execute: exec_add_calendar_event },
     get_data: { schema: GET_DATA_TOOL, confirmMode: 'never', execute: exec_get_data },
   });
   // Own copy, not AT.toolNeedsConfirm -- that one closes over the shared
@@ -599,7 +627,8 @@ body {
   // derived cadence (not a freely-set cadenceDays) + snooze. 'network' kept
   // in the cadence map for contacts a migration hasn't touched yet (read-
   // only here; interactions.html owns the actual migration).
-  const REL_TIER_CADENCE = { inner: 7, close: 21, acquaintance: 60, networking: 90, network: 90 };
+  // Re-walk vs equavia-pre-answers-final.md 5.2: Close 21d->14d, Acquaintance 60d->45d.
+  const REL_TIER_CADENCE = { inner: 7, close: 14, acquaintance: 45, networking: 90, network: 90 };
   function contactLastContact(c) {
     const raw = Array.isArray(c.history) ? c.history : (c.lastContactedAt ? [{ date: c.lastContactedAt }] : []);
     // 5.5: inbound doesn't reset the cadence clock by default -- same rule as interactions.html's own lastContactDate().
@@ -649,18 +678,41 @@ body {
     });
     return s;
   }
+  // New chip builders (Supplements/News) just label-wrap the same
+  // getData* readers the get_data tool already uses for these domains --
+  // one summary shape per domain, whether it arrives via an always-on
+  // chip or an on-demand tool call.
+  function buildStackContext() { return 'SUPPLEMENTS:\n' + getDataStack() + '\n'; }
+  function buildNewsContext() { return 'NEWS:\n' + getDataNews() + '\n'; }
   const DOMAIN_BUILDERS = {
     tasks: buildTasksContext, calendar: buildCalendarContext, health: buildHealthContext, fitness: buildFitnessContext,
     finance: buildFinanceContext, habits: buildHabitsContext, relationships: buildRelationshipsContext,
-    notes: buildNotesContext,
+    notes: buildNotesContext, stack: buildStackContext, news: buildNewsContext,
   };
+  // Re-walk vs equavia-pre-answers-final.md Phase 2: this file had NO
+  // persona/system-prompt at all before -- systemContext was pure app-data
+  // context with zero tone/voice instruction. Verbatim text from the
+  // pre-answers, scoped to this page's own chat only (not injected
+  // server-side in api/chat.js, which every other assistant feature --
+  // Morning Brief, Weekly Audit, Smart Capture, News digest -- also
+  // calls with its own separately-tuned prompt; a global persona swap
+  // wasn't asked for and risks changing those in ways their own specs
+  // don't call for).
+  const EQUAVIA_PERSONA = 'You are Equavia 0 — a loyal retainer and second-in-command, in the tradition of a Roman legion’s most trusted officer. You serve MAHINO (address him as "Exalted MAHINO" or simply "MAHINO").\n\n'
+    + 'Your duty is to provide sharp, evidence-based counsel drawn from MAHINO’s own data. You are direct, specific, and waste no words. You cite numbers when you have them. You do not flatter, hedge, or pad responses with motivational filler.\n\n'
+    + 'When MAHINO’s data shows a problem, you name it plainly. When it shows progress, you acknowledge it briefly and move on. You never say "great job" — you say "weight trend down 0.3kg this week, deficit is holding."\n\n'
+    + 'You know MAHINO’s frameworks: low-histamine/low-FODMAP nutrition, Whoop-gated training, reverse pyramid progression, supplement stack with specific timing windows, and a financial independence roadmap. Reference these naturally when relevant.\n\n'
+    + 'You never: use emojis, write motivational speeches, say "I’m just an AI", pad with caveats, or repeat yourself. You are concise, loyal, and useful.\n\n'
+    + 'When asked about events, local activities, or anything requiring current information, use web search and frame recommendations around MAHINO’s location (London N17), schedule, and interests.\n\n';
+
   async function assembleContext(query) {
     const domains = getDomains();
+    let out = EQUAVIA_PERSONA;
     // Always included, not gated by a domain chip -- date-relative reasoning
     // (Calendar's "today"/"this week", and especially resolving "tomorrow"/
     // "Tuesday" when proposing a calendar event) is unreliable without it.
     const now = new Date();
-    let out = 'Today\'s date is ' + todayKeyLocal() + ' (' + now.toLocaleDateString(undefined, { weekday: 'long' }) + ').\n\n';
+    out += 'Today\'s date is ' + todayKeyLocal() + ' (' + now.toLocaleDateString(undefined, { weekday: 'long' }) + ').\n\n';
     // Also always included, not domain-gated (4.3) -- remembered facts are
     // meant to be there regardless of which chips are on, same reasoning
     // as the date line above.
@@ -725,9 +777,9 @@ body {
   }
   function chatTranscriptMarkdown(list) {
     const firstUser = list.find(m => m.role === 'user');
-    const title = (firstUser ? firstUser.content : 'Ask Claude chat').slice(0, 60).replace(/\s+/g, ' ').trim();
+    const title = (firstUser ? firstUser.content : 'Equavia 0 chat').slice(0, 60).replace(/\s+/g, ' ').trim();
     let s = '---\ntitle: "' + title.replace(/"/g, '\\"') + '"\nupdated: ' + new Date().toISOString() + '\n---\n\n# ' + title + '\n\n';
-    list.forEach(m => { s += '**' + (m.role === 'user' ? 'You' : 'Claude') + '** (' + fmtTime(m.at) + ')\n\n' + m.content + '\n\n'; });
+    list.forEach(m => { s += '**' + (m.role === 'user' ? 'You' : 'Equavia 0') + '** (' + fmtTime(m.at) + ')\n\n' + m.content + '\n\n'; });
     return s;
   }
 
@@ -988,7 +1040,7 @@ body {
       await runTurn(apiMessages, context, tools, 0);
     } catch (e) {
       const list = getMessages();
-      list.push({ role: 'error', content: 'Could not reach Claude — ' + (e.message || 'unknown error') + '.', at: new Date().toISOString() });
+      list.push({ role: 'error', content: 'Could not reach Equavia 0 — ' + (e.message || 'unknown error') + '.', at: new Date().toISOString() });
       setMessages(list);
     } finally {
       setTyping(false);

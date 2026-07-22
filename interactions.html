@@ -9,8 +9,8 @@
 <link rel="apple-touch-icon" href="images/apple-touch-icon.png">
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Equavia">
-<title>Interactions — Equavia</title>
+<meta name="apple-mobile-web-app-title" content="Project Equavia">
+<title>Interactions — Project Equavia</title>
 <link rel="stylesheet" href="equavia-core.css">
 <script src="assistant-tools.js"></script>
 <script src="topbar.js" defer></script>
@@ -255,7 +255,13 @@ body {
     <button type="button" class="int-zone-tab" id="intZoneInboxBtn">Inbox<span class="int-zone-badge" id="intInboxBadge" style="display:none;"></span></button>
   </div>
 
-  <a class="int-websearch-btn" id="intWeekendBtn" href="ask.html?prompt=What%27s%20on%20near%20me%20this%20weekend%3F">🔎 What's on near me this weekend?</a>
+  <!-- Re-walk vs equavia-pre-answers-final.md 6.7: the underlying prompt
+       now carries the specific scope (3 weeks, ~2h travel of London N17)
+       the pre-answers ask for -- was a bare "this weekend" with no
+       window/radius. Visible label kept as the natural, inviting phrase
+       BUILD_PLAN's own text uses; the richer scope lives in the prompt
+       payload actually sent to the assistant. -->
+  <a class="int-websearch-btn" id="intWeekendBtn" href="ask.html?prompt=What%27s%20on%20near%20me%20within%20the%20next%203%20weeks%2C%20within%20about%202%20hours%20travel%20of%20London%20N17%3F">🔎 What's on near me this weekend?</a>
 
   <div id="intInboxView" style="display:none;">
     <div class="inbox-tier-note" id="inboxPlatformNote"></div>
@@ -433,10 +439,14 @@ body {
   const CONTACTS_KEY = 'contacts_v1';
   // Phase 5.2 tiers/cadences, as answered -- 'close' cadence changed 14->21,
   // 'network' renamed to 'networking' at 30->90, 'acquaintance' is new.
+  // Re-walk vs equavia-pre-answers-final.md 5.2: Close 21d->14d,
+  // Acquaintance 60d->45d (Inner/Networking unchanged). Same values
+  // duplicated in dashboard.html (x2), planner.html, ask.html, and this
+  // file's own TIER_CADENCE below -- all six updated together.
   const TIER_DEFS = [
     { key: 'inner', label: 'Inner', cadenceDays: 7, color: '#E07658' },
-    { key: 'close', label: 'Close', cadenceDays: 21, color: '#6BE3A4' },
-    { key: 'acquaintance', label: 'Acquaintance', cadenceDays: 60, color: '#F2C063' },
+    { key: 'close', label: 'Close', cadenceDays: 14, color: '#6BE3A4' },
+    { key: 'acquaintance', label: 'Acquaintance', cadenceDays: 45, color: '#F2C063' },
     { key: 'networking', label: 'Networking', cadenceDays: 90, color: '#76746E' },
   ];
   const TIER_MAP = {}; TIER_DEFS.forEach((t) => { TIER_MAP[t.key] = t; });
@@ -785,9 +795,10 @@ body {
   }
 
   // ============================================================
-  // 5.4 REPLY HELPER -- Sonnet (answered ASK FIRST, not the spec's own
-  // Haiku suggestion -- relationship nuance from notes/tags weighed higher
-  // than per-generation cost here specifically).
+  // 5.4 REPLY HELPER -- Haiku. Re-walk vs equavia-pre-answers-final.md
+  // 5.4: was Sonnet (a deliberate override of the spec's own Haiku
+  // suggestion, made during the original build); user's explicit call
+  // when asked to resolve the conflict was to switch to Haiku.
   // ============================================================
   const REPLY_MODE_PROMPTS = {
     open: 'Write an open-ended reply to what they said.',
@@ -819,7 +830,7 @@ body {
         body: JSON.stringify({
           messages: [{ role: 'user', content: userMsg }],
           systemContext: 'You help draft replies to a specific contact so they fit the actual relationship. Tier: ' + c.tier + '. Notes: ' + (c.notes || '') + '. Interest tags: ' + (c.tags || []).join(', ') + '. Recent chat notes: ' + lastNotes.join('; ') + '. Reply with ONLY a JSON array of exactly 3 short, ready-to-send message options, nothing else, no markdown fencing.',
-          model: 'claude-sonnet-5',
+          model: 'claude-haiku-4-5-20251001',
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -1185,18 +1196,20 @@ body {
   // contacts actually contacted this week (the core signal), 25% overdue
   // trend vs last week, 20% breadth (distinct people reached, not just
   // clearing the most-overdue few), 20% inbound left unanswered >72h.
-  // Same Monday-6am week boundary as 3.3/4.5 throughout this app.
+  // Same Sunday-7pm week boundary as 3.3/4.5 throughout this app.
   // ============================================================
   const SCORES_KEY = 'eq.interaction_scores_v1';
-  const TIER_CADENCE = { inner: 7, close: 21, acquaintance: 60, networking: 90, network: 90 };
+  const TIER_CADENCE = { inner: 7, close: 14, acquaintance: 45, networking: 90, network: 90 };
 
   function pad2(n) { return String(n).padStart(2, '0'); }
   function dateKeyOf(d) { return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); }
-  function weekStartMonday6am(refDate) {
-    const shifted = new Date(refDate.getTime() - 6 * 3600000);
-    const daysSinceMonday = (shifted.getDay() + 6) % 7;
-    const mondayShifted = new Date(shifted.getFullYear(), shifted.getMonth(), shifted.getDate() - daysSinceMonday);
-    return new Date(mondayShifted.getTime() + 6 * 3600000);
+  // Re-walk vs equavia-pre-answers-final.md 4.5: Sunday 7 PM (was Monday
+  // 6am -- see dashboard.html's own weekStartSunday7pm for the full note).
+  function weekStartSunday7pm(refDate) {
+    const shifted = new Date(refDate.getTime() - 19 * 3600000);
+    const daysSinceSunday = shifted.getDay();
+    const sundayShifted = new Date(shifted.getFullYear(), shifted.getMonth(), shifted.getDate() - daysSinceSunday);
+    return new Date(sundayShifted.getTime() + 19 * 3600000);
   }
   function outboundOnly(c) { return (c.history || []).filter((h) => h.direction !== 'inbound'); }
   function inboundOnly(c) { return (c.history || []).filter((h) => h.direction === 'inbound'); }
@@ -1213,7 +1226,7 @@ body {
 
   function computeInteractionScore() {
     const contacts = getContacts();
-    const weekStart = weekStartMonday6am(new Date());
+    const weekStart = weekStartSunday7pm(new Date());
     const weekStartIso = weekStart.toISOString();
     const nowIso = new Date().toISOString();
 

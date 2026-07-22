@@ -59,6 +59,13 @@ export default async function handler(req, res) {
     'api-key': apiKey,
   });
   if (category === 'local') params.set('q', 'London');
+  // Re-walk vs equavia-pre-answers-final.md 5.6: specific team/sport
+  // feeds within the general Sports section (Tennis ATP/WTA, Tottenham
+  // Hotspur, LA Lakers, Minnesota Timberwolves, Memphis Grizzlies) --
+  // same q-param pattern already used for London above, just OR'd terms
+  // instead of one. Guardian's q search still runs within section=sport,
+  // so this narrows to these interests rather than replacing the section.
+  if (category === 'sport') params.set('q', 'tennis OR ATP OR WTA OR "Tottenham Hotspur" OR "LA Lakers" OR "Minnesota Timberwolves" OR "Memphis Grizzlies"');
 
   try {
     const r = await fetch('https://content.guardianapis.com/search?' + params.toString());

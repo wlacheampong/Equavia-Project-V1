@@ -9,8 +9,8 @@
 <link rel="apple-touch-icon" href="images/apple-touch-icon.png">
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Equavia">
-<title>Equavia</title>
+<meta name="apple-mobile-web-app-title" content="Project Equavia">
+<title>Project Equavia</title>
 <link rel="stylesheet" href="equavia-core.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="sync.js" defer></script>
@@ -697,14 +697,32 @@ body::after {
   .gm-progress-num { font-size: 36px; }
 }
 
-/* ===== Component 6: Dashboard summary cards ===== */
+/* ===== 0.7b: greeting, below the existing day-ring clock ===== */
+.dash-greeting {
+  text-align: center;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin: 2px auto 4px;
+}
+
+/* ===== Component 6: Dashboard summary cards =====
+   Re-walk against equavia-pre-answers-final.md 0.7/0.7b: fixed 6-card
+   set (Health/Weight/Train/Finance/Planner/Habits), responsive grid
+   (2 cols mobile, 3 at tablet+ -- 3 divides 6 evenly, two even rows)
+   instead of the old single-column stack. Calendar/Interactions/News
+   cards retired from this row -- not in the confirmed 6-card list;
+   each still reachable one tap away via its own nav entry/page. */
 .page-wide { max-width: 1280px; }
 .dash-summary-stack {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: 10px;
-  max-width: 640px;
+  max-width: 900px;
   margin: 0 auto;
+}
+@media (min-width: 640px) {
+  .dash-summary-stack { grid-template-columns: repeat(3, 1fr); }
 }
 .dsum-card {
   display: block;
@@ -739,8 +757,20 @@ body::after {
   line-height: 1.4;
 }
 
-/* ===== To-Do Completion Rate Chart ===== */
-.dsum-chart-card { background: rgba(255,255,255,0.04); border-radius: 16px; padding: 16px 18px; }
+/* ===== To-Do Completion Rate Chart (sits below the card grid, full
+   width -- too rich a widget for a grid cell) ===== */
+.dsum-chart-card { background: rgba(255,255,255,0.04); border-radius: 16px; padding: 16px 18px; max-width: 900px; margin: 10px auto 0; }
+
+/* ===== 0.7b: bottom activity feed (reference image 6) ===== */
+.dash-activity { max-width: 900px; margin: 18px auto 0; }
+.dash-activity-title { font-size: 11px; font-weight: 700; letter-spacing: 0.10em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 10px; }
+.dash-activity-empty { font-size: 12.5px; color: var(--text-tertiary); font-style: italic; }
+.dash-activity-list { display: flex; flex-direction: column; gap: 2px; }
+.dash-activity-row { display: flex; align-items: baseline; gap: 10px; padding: 7px 2px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 13px; }
+.dash-activity-row:last-child { border-bottom: none; }
+.dash-activity-text { color: var(--text-primary); flex: 1; }
+.dash-activity-when { color: var(--text-tertiary); font-size: 11px; white-space: nowrap; }
+
 .todo-chart-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
 .todo-chart-range-toggle { display: flex; gap: 4px; }
 .todo-chart-range-btn {
@@ -797,6 +827,24 @@ body::after {
 }
 .brief-btn:hover { background: rgba(255,255,255,0.08); color: var(--text-primary); }
 .brief-btn:disabled { opacity: 0.5; cursor: default; }
+.brief-btn-row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.brief-btn-adv { border-color: rgba(224,118,88,0.35); color: var(--accent); }
+.brief-btn-adv:hover { background: rgba(224,118,88,0.1); color: var(--accent); }
+
+/* ===== 4.4 Advanced Report (second Morning Brief tier) ===== */
+.adv-report { margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.06); }
+.adv-report-text { font-size: 13px; line-height: 1.6; color: var(--text-primary); margin-bottom: 14px; white-space: pre-wrap; }
+.adv-chart-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+@media (min-width: 640px) { .adv-chart-grid { grid-template-columns: 1fr 1fr; } }
+.adv-chart-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 12px; }
+.adv-chart-title { font-size: 9.5px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 8px; }
+.adv-chart-svg { width: 100%; height: 70px; display: block; }
+.adv-chart-card-pie { display: flex; flex-direction: column; align-items: center; }
+.adv-pie-svg { width: 110px; height: 110px; }
+.adv-pie-legend { display: flex; flex-wrap: wrap; gap: 6px 10px; justify-content: center; margin-top: 8px; }
+.adv-pie-legend-item { font-size: 10.5px; color: var(--text-secondary); display: flex; align-items: center; gap: 5px; }
+.adv-pie-legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.adv-chart-empty { font-size: 11px; color: var(--text-tertiary); font-style: italic; text-align: center; padding: 20px 0; }
 .brief-text { font-size: 13.5px; line-height: 1.6; color: var(--text-primary); white-space: pre-wrap; margin-top: 10px; }
 .brief-empty { font-size: 12px; color: var(--text-quaternary); font-style: italic; margin-top: 6px; }
 .brief-meta { font-size: 10.5px; color: var(--text-quaternary); font-family: var(--font-mono); margin-top: 10px; }
@@ -1515,7 +1563,7 @@ body::after {
 <body>
 <div class="page">
 
-  <h1 class="dash-title">Equavia</h1>
+  <h1 class="dash-title">Project Equavia</h1>
 
   <a class="backup-nudge" id="backupNudge" href="settings.html" style="display:none;">
     <span class="backup-nudge-icon">⚠️</span>
@@ -1526,11 +1574,47 @@ body::after {
   <div class="brief-card" id="briefCard">
     <div class="brief-head">
       <span class="brief-title">Morning Brief</span>
-      <button type="button" class="brief-btn" id="briefGenBtn">Generate brief</button>
+      <div class="brief-btn-row">
+        <button type="button" class="brief-btn" id="briefGenBtn">Generate brief</button>
+        <button type="button" class="brief-btn brief-btn-adv" id="advReportBtn" title="Fuller report with charts — uses more tokens">Advanced Report</button>
+      </div>
     </div>
     <div class="brief-text" id="briefText" style="display:none;"></div>
     <div class="brief-empty" id="briefEmpty">Not generated yet today — tap Generate brief.</div>
     <div class="brief-meta" id="briefMeta"></div>
+
+    <!-- Re-walk vs equavia-pre-answers-final.md 4.4: second Morning Brief
+         tier -- a fuller, chart-based report. Charts are rendered
+         client-side from local data (no LLM involved in the numbers
+         themselves); Claude only writes the accompanying analysis text,
+         same systemContext-call pattern as the Simple Brief above. -->
+    <div class="adv-report" id="advReportWrap" style="display:none;">
+      <div class="adv-report-text" id="advReportText"></div>
+      <div class="adv-chart-grid">
+        <div class="adv-chart-card">
+          <div class="adv-chart-title">Sleep trend (14d)</div>
+          <svg class="adv-chart-svg" id="advSleepChart" viewBox="0 0 300 100" preserveAspectRatio="none"></svg>
+        </div>
+        <div class="adv-chart-card">
+          <div class="adv-chart-title">Weight trend (14d)</div>
+          <svg class="adv-chart-svg" id="advWeightChart" viewBox="0 0 300 100" preserveAspectRatio="none"></svg>
+        </div>
+        <div class="adv-chart-card">
+          <div class="adv-chart-title">Task completion % (7d)</div>
+          <svg class="adv-chart-svg" id="advTaskChart" viewBox="0 0 300 100" preserveAspectRatio="none"></svg>
+        </div>
+        <div class="adv-chart-card">
+          <div class="adv-chart-title">Habit adherence % (7d)</div>
+          <svg class="adv-chart-svg" id="advHabitChart" viewBox="0 0 300 100" preserveAspectRatio="none"></svg>
+        </div>
+        <div class="adv-chart-card adv-chart-card-pie">
+          <div class="adv-chart-title">Logged activity by domain (7d)</div>
+          <svg class="adv-chart-svg adv-pie-svg" id="advPieChart" viewBox="0 0 120 120"></svg>
+          <div class="adv-pie-legend" id="advPieLegend"></div>
+        </div>
+      </div>
+    </div>
+    <div class="brief-meta" id="advReportMeta"></div>
   </div>
 
   <div class="mood-chip" id="moodChip" style="display:none;">
@@ -1600,6 +1684,8 @@ body::after {
     </div>
   </div>
 
+  <div class="dash-greeting" id="dashGreeting"></div>
+
   <div class="dr-modal-bg" id="drModalBg">
     <div class="dr-modal">
       <h3>Edit wake / bedtime</h3>
@@ -1647,74 +1733,9 @@ body::after {
     <div class="yd-alert-list" id="ydAlertList"></div>
   </div>
 
+  <!-- 0.7/0.7b: fixed 6-card order per equavia-pre-answers-final.md --
+       Health · Current Weight · Train · Finance · Planner · Habits. -->
   <div class="dash-summary-stack" id="dashSummaryStack">
-    <a class="dsum-card" href="planner.html#tasks" data-card="tasks">
-      <div class="dsum-head">
-        <span class="dsum-icon">✅</span>
-        <span class="dsum-title">Tasks</span>
-        <span class="dsum-arrow">→</span>
-      </div>
-      <div class="dsum-body" id="dsumTasksBody">Loading…</div>
-    </a>
-
-    <div class="dsum-chart-card" id="todoChartCard">
-      <div class="todo-chart-head">
-        <span class="dsum-title">Completion rate</span>
-        <div class="todo-chart-range-toggle">
-          <button type="button" class="todo-chart-range-btn" id="todoRange4">4W</button>
-          <button type="button" class="todo-chart-range-btn is-active" id="todoRange12">12W</button>
-          <button type="button" class="todo-chart-range-btn" id="todoRange52">52W</button>
-        </div>
-      </div>
-      <div class="todo-chart-p1-row">
-        <button type="button" class="todo-chart-p1-btn" id="todoP1Toggle">P1-only view</button>
-      </div>
-      <div class="todo-chart-empty" id="todoChartEmpty">Not enough history yet — check back after a few days.</div>
-      <div class="todo-chart-wrap hidden" id="todoChartWrap">
-        <div class="todo-chart-yaxis">
-          <span>100%</span>
-          <span>50%</span>
-          <span>0%</span>
-        </div>
-        <svg class="todo-chart" viewBox="0 0 320 130" preserveAspectRatio="none">
-          <defs>
-            <linearGradient id="todoFill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="#6BE3A4" stop-opacity="0.25"/>
-              <stop offset="100%" stop-color="#6BE3A4" stop-opacity="0"/>
-            </linearGradient>
-            <filter id="todoGlow"><feGaussianBlur stdDeviation="1.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-          </defs>
-          <line class="todo-grid" x1="0" y1="20" x2="320" y2="20"></line>
-          <line class="todo-grid" x1="0" y1="65" x2="320" y2="65"></line>
-          <line class="todo-grid" x1="0" y1="110" x2="320" y2="110"></line>
-          <g id="todoChartContent"></g>
-        </svg>
-        <div class="todo-chart-meta" id="todoChartMeta">0 days</div>
-      </div>
-      <div class="todo-chart-legend hidden" id="todoChartLegend">
-        <span class="todo-legend-item"><span class="todo-legend-dot"></span>Daily</span>
-        <span class="todo-legend-item"><span class="todo-legend-dot todo-legend-dot-avg"></span>7-day avg</span>
-      </div>
-    </div>
-
-    <a class="dsum-card" href="planner.html#calendar" data-card="calendar">
-      <div class="dsum-head">
-        <span class="dsum-icon">🗓️</span>
-        <span class="dsum-title">Calendar</span>
-        <span class="dsum-arrow">→</span>
-      </div>
-      <div class="dsum-body" id="dsumCalendarBody">Loading…</div>
-    </a>
-
-    <a class="dsum-card" href="planner.html#goals" data-card="goals">
-      <div class="dsum-head">
-        <span class="dsum-icon">🎯</span>
-        <span class="dsum-title">Goals</span>
-        <span class="dsum-arrow">→</span>
-      </div>
-      <div class="dsum-body" id="dsumGoalsBody">Loading…</div>
-    </a>
-
     <a class="dsum-card" href="health.html" data-card="health">
       <div class="dsum-head">
         <span class="dsum-icon">💊</span>
@@ -1724,10 +1745,19 @@ body::after {
       <div class="dsum-body" id="dsumHealthBody">Loading…</div>
     </a>
 
-    <a class="dsum-card" href="gym.html" data-card="fitness">
+    <a class="dsum-card" href="gym.html" data-card="weight">
+      <div class="dsum-head">
+        <span class="dsum-icon">⚖️</span>
+        <span class="dsum-title">Current Weight</span>
+        <span class="dsum-arrow">→</span>
+      </div>
+      <div class="dsum-body" id="dsumWeightBody">Loading…</div>
+    </a>
+
+    <a class="dsum-card" href="gym.html" data-card="train">
       <div class="dsum-head">
         <span class="dsum-icon">💪</span>
-        <span class="dsum-title">Fitness</span>
+        <span class="dsum-title">Train</span>
         <span class="dsum-arrow">→</span>
       </div>
       <div class="dsum-body" id="dsumFitnessBody">Loading…</div>
@@ -1742,23 +1772,63 @@ body::after {
       <div class="dsum-body" id="dsumFinanceBody">Loading…</div>
     </a>
 
-    <a class="dsum-card" href="interactions.html" data-card="interactions">
+    <a class="dsum-card" href="planner.html" data-card="planner">
       <div class="dsum-head">
-        <span class="dsum-icon">👥</span>
-        <span class="dsum-title">Interactions</span>
+        <span class="dsum-icon">📋</span>
+        <span class="dsum-title">Planner</span>
         <span class="dsum-arrow">→</span>
       </div>
-      <div class="dsum-body" id="dsumInteractionsBody">Loading…</div>
+      <div class="dsum-body" id="dsumPlannerBody">Loading…</div>
     </a>
 
-    <a class="dsum-card" href="news.html" data-card="news">
+    <a class="dsum-card" href="ability.html" data-card="habits">
       <div class="dsum-head">
-        <span class="dsum-icon">📰</span>
-        <span class="dsum-title">News</span>
+        <span class="dsum-icon">🔥</span>
+        <span class="dsum-title">Habits</span>
         <span class="dsum-arrow">→</span>
       </div>
-      <div class="dsum-body" id="dsumNewsBody">Loading…</div>
+      <div class="dsum-body" id="dsumHabitsBody">Loading…</div>
     </a>
+  </div>
+
+  <div class="dsum-chart-card" id="todoChartCard">
+    <div class="todo-chart-head">
+      <span class="dsum-title">Completion rate</span>
+      <div class="todo-chart-range-toggle">
+        <button type="button" class="todo-chart-range-btn" id="todoRange4">4W</button>
+        <button type="button" class="todo-chart-range-btn is-active" id="todoRange12">12W</button>
+        <button type="button" class="todo-chart-range-btn" id="todoRange52">52W</button>
+      </div>
+    </div>
+    <div class="todo-chart-p1-row">
+      <button type="button" class="todo-chart-p1-btn" id="todoP1Toggle">P1-only view</button>
+    </div>
+    <div class="todo-chart-empty" id="todoChartEmpty">Not enough history yet — check back after a few days.</div>
+    <div class="todo-chart-wrap hidden" id="todoChartWrap">
+      <div class="todo-chart-yaxis">
+        <span>100%</span>
+        <span>50%</span>
+        <span>0%</span>
+      </div>
+      <svg class="todo-chart" viewBox="0 0 320 130" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="todoFill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#6BE3A4" stop-opacity="0.25"/>
+            <stop offset="100%" stop-color="#6BE3A4" stop-opacity="0"/>
+          </linearGradient>
+          <filter id="todoGlow"><feGaussianBlur stdDeviation="1.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        </defs>
+        <line class="todo-grid" x1="0" y1="20" x2="320" y2="20"></line>
+        <line class="todo-grid" x1="0" y1="65" x2="320" y2="65"></line>
+        <line class="todo-grid" x1="0" y1="110" x2="320" y2="110"></line>
+        <g id="todoChartContent"></g>
+      </svg>
+      <div class="todo-chart-meta" id="todoChartMeta">0 days</div>
+    </div>
+    <div class="todo-chart-legend hidden" id="todoChartLegend">
+      <span class="todo-legend-item"><span class="todo-legend-dot"></span>Daily</span>
+      <span class="todo-legend-item"><span class="todo-legend-dot todo-legend-dot-avg"></span>7-day avg</span>
+    </div>
   </div>
 
   <div class="wkr-card" id="weeklyReportCard" style="display:none;">
@@ -1781,7 +1851,7 @@ body::after {
     </div>
     <div id="auditSections" style="display:none;"></div>
   </div>
-  <div class="wkr-empty" id="weeklyReportEmpty" style="display:none;">No completed week yet — your first Weekly Report appears after this week closes (Monday 6 AM).</div>
+  <div class="wkr-empty" id="weeklyReportEmpty" style="display:none;">No completed week yet — your first Weekly Report appears after this week closes (Sunday 7 PM).</div>
 
   <div class="wkr-card" id="annualReviewCard">
     <div class="wkr-head">
@@ -1798,7 +1868,47 @@ body::after {
       <button type="button" class="wkr-obsidian-btn" id="annualReviewRunBtn">Run annual review</button>
       <span class="wkr-obsidian-status" id="annualReviewStatus"></span>
     </div>
+    <!-- Re-walk vs equavia-pre-answers-final.md 6.10: "styled like a
+         professional business annual report... with charts (line, bar,
+         pie)" -- reuses the same .adv-chart-grid/.adv-chart-card styling
+         4.4's Advanced Report already established. eq.audits.v1 only
+         ever stored Claude's narrative output, not the underlying weekly
+         numbers, so these charts re-derive from the same raw stores
+         4.4 reads, just bucketed monthly across the year instead of
+         daily across two weeks. -->
+    <div class="adv-chart-grid" id="annualChartGrid" style="display:none;margin-bottom:14px;">
+      <div class="adv-chart-card">
+        <div class="adv-chart-title">Sleep, monthly avg</div>
+        <svg class="adv-chart-svg" id="annualSleepChart" viewBox="0 0 300 100" preserveAspectRatio="none"></svg>
+      </div>
+      <div class="adv-chart-card">
+        <div class="adv-chart-title">Weight, monthly avg</div>
+        <svg class="adv-chart-svg" id="annualWeightChart" viewBox="0 0 300 100" preserveAspectRatio="none"></svg>
+      </div>
+      <div class="adv-chart-card">
+        <div class="adv-chart-title">Task completion %, monthly avg</div>
+        <svg class="adv-chart-svg" id="annualTaskChart" viewBox="0 0 300 100" preserveAspectRatio="none"></svg>
+      </div>
+      <div class="adv-chart-card">
+        <div class="adv-chart-title">Habit adherence %, monthly avg</div>
+        <svg class="adv-chart-svg" id="annualHabitChart" viewBox="0 0 300 100" preserveAspectRatio="none"></svg>
+      </div>
+      <div class="adv-chart-card adv-chart-card-pie">
+        <div class="adv-chart-title">Logged activity by domain (year)</div>
+        <svg class="adv-chart-svg adv-pie-svg" id="annualPieChart" viewBox="0 0 120 120"></svg>
+        <div class="adv-pie-legend" id="annualPieLegend"></div>
+      </div>
+    </div>
     <div id="annualReviewSections" style="display:none;"></div>
+  </div>
+
+  <!-- 0.7b: bottom activity feed (reference image 6) -- last 5-10 logged
+       actions across domains, derived from each domain's own timestamped
+       store rather than a new instrumented write-through log. -->
+  <div class="dash-activity">
+    <div class="dash-activity-title">Recent activity</div>
+    <div class="dash-activity-empty" id="dashActivityEmpty">Nothing logged yet — activity from Health, Fitness, Planner, Ability and Interactions will show up here.</div>
+    <div class="dash-activity-list" id="dashActivityList" style="display:none;"></div>
   </div>
 
 <script>
@@ -2460,48 +2570,13 @@ body::after {
     }
   }
 
-  // Phase 5.1: Relationships is Interactions' own card now, not folded into
-  // Tasks' text -- tier-aware (history log + tier cadence, not the old
-  // single lastContactedAt/cadenceDays fields interactions.html replaced).
-  const REL_TIER_CADENCE = { inner: 7, close: 21, acquaintance: 60, networking: 90, network: 90 };
-  function renderInteractionsSummary() {
-    const el = document.getElementById('dsumInteractionsBody');
-    if (!el) return;
-    const contacts = storeGet('contacts_v1') || [];
-    if (!contacts.length) { el.textContent = 'No contacts yet — add one in Interactions.'; return; }
-    const overdueCount = contacts.filter((c) => {
-      if (c.snoozedUntil && new Date(c.snoozedUntil).getTime() > Date.now()) return false;
-      const rawHistory = Array.isArray(c.history) ? c.history : (c.lastContactedAt ? [{ date: c.lastContactedAt }] : []);
-      // 5.5: inbound (they messaged you) doesn't reset the cadence clock by
-      // default -- only outbound counts, same rule as interactions.html's
-      // own lastContactDate().
-      const history = rawHistory.filter((h) => h.direction !== 'inbound');
-      if (!history.length) return true;
-      const last = history.reduce((latest, h) => (!latest || h.date > latest) ? h.date : latest, null);
-      const days = Math.floor((Date.now() - new Date(last).getTime()) / 86400000);
-      return days >= (REL_TIER_CADENCE[c.tier] || 21);
-    }).length;
-    el.textContent = contacts.length + ' contact' + (contacts.length === 1 ? '' : 's') +
-      (overdueCount > 0 ? ' · ' + overdueCount + ' overdue' : ' · up to date');
-  }
-
-  // Same Monday-6am week key convention as news.html itself.
-  function newsWeekKey() {
-    const now = new Date();
-    const shifted = new Date(now.getTime() - 6 * 3600000);
-    const daysSinceMonday = (shifted.getDay() + 6) % 7;
-    const monday = new Date(shifted.getFullYear(), shifted.getMonth(), shifted.getDate() - daysSinceMonday);
-    return monday.getFullYear() + '-' + String(monday.getMonth() + 1).padStart(2, '0') + '-' + String(monday.getDate()).padStart(2, '0');
-  }
-  function renderNewsSummary() {
-    const el = document.getElementById('dsumNewsBody');
-    if (!el) return;
-    const digests = storeGet('eq.news.digests_v1') || [];
-    const d = digests.find((x) => x.weekKey === newsWeekKey());
-    if (!d) { el.textContent = 'No digest yet this week.'; return; }
-    const catCount = Object.keys(d.categories || {}).length;
-    el.textContent = 'This week\'s digest ready — ' + catCount + ' categor' + (catCount === 1 ? 'y' : 'ies') + '.';
-  }
+  // 0.7 re-walk: the Interactions/News dashboard summary cards were
+  // retired (not in the confirmed 6-card list: Health/Weight/Train/
+  // Finance/Planner/Habits) -- renderInteractionsSummary()/
+  // renderNewsSummary() and their #dsumInteractionsBody/#dsumNewsBody
+  // targets removed together; each page is still one tap away via its
+  // own nav entry, same "intentional friction" reasoning already used
+  // for News elsewhere in this file.
 
   // 6.8: a failed integration chips on the dashboard once, dismissible --
   // re-derived from the same shared eq.integrations.health_v1 key Settings'
@@ -2573,56 +2648,64 @@ body::after {
     renderDashboardSummaries();
   });
 
+  // 0.7 re-walk: local habit score/streak, duplicated from ability.html's
+  // own computeHabitScore/computeStreak (same shared habits_v1 shape) --
+  // this file's established pattern for every other cross-page metric
+  // (see the tier-cadence re-derivations, HEALTH_FAIL_LABELS, etc. above)
+  // rather than a cross-page function call this app has no mechanism for.
+  function habDateKey(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  function habStartBoundary(h) {
+    if (h.createdAt) { const t = new Date(h.createdAt); t.setHours(0, 0, 0, 0); return t; }
+    const keys = Object.keys(h.history || {}).sort();
+    if (keys.length) { const p = keys[0].split('-').map(Number); return new Date(p[0], p[1] - 1, p[2]); }
+    const today = new Date(); today.setHours(0, 0, 0, 0); return today;
+  }
+  function habScore(h) {
+    const history = h.history || {};
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    let score = 50;
+    const k = 0.95;
+    for (let cursor = habStartBoundary(h); cursor < today; cursor = new Date(cursor.getTime() + 86400000)) {
+      score = score * k + (history[habDateKey(cursor)] ? 100 : 0) * (1 - k);
+    }
+    if (history[habDateKey(today)]) score = score * k + 100 * (1 - k);
+    return Math.round(score);
+  }
+  function habStreak(h) {
+    const history = h.history || {};
+    let streak = 0, cursor = new Date(); cursor.setHours(0, 0, 0, 0);
+    if (!history[habDateKey(cursor)]) cursor = new Date(cursor.getTime() - 86400000);
+    while (history[habDateKey(cursor)]) { streak++; cursor = new Date(cursor.getTime() - 86400000); }
+    return streak;
+  }
+
   function renderDashboardSummaries() {
-    renderInteractionsSummary();
-    renderNewsSummary();
     renderHealthFailChip();
-    const tasksEl = document.getElementById('dsumTasksBody');
-    if (tasksEl) {
+
+    // Planner: merges the old separate Tasks + Goals cards into the one
+    // "Planner (today's tasks + goals)" card the confirmed 6-card list
+    // asks for. Calendar's own dashboard teaser is dropped (not in that
+    // list; still visible inside Planner itself).
+    const plannerEl = document.getElementById('dsumPlannerBody');
+    if (plannerEl) {
       const todayGoals = getGoals(todayKey());
       const doneCount = todayGoals.filter(g => g.done).length;
       const streak = loadStreak();
-      // 6.6: P1s remaining, per spec's own exact phrasing.
       const p1Remaining = todayGoals.filter(g => (g.priority || 'P2') === 'P1' && !g.done).length;
-      tasksEl.textContent = todayGoals.length === 0
-        ? 'No tasks yet — plan your day in Planner.'
-        : doneCount + ' / ' + todayGoals.length + ' done today' +
-          (p1Remaining > 0 ? ' · P1s remaining: ' + p1Remaining : '') +
-          (streak.count > 0 ? ' · ⚡ ' + streak.count + ' day streak' : '');
-    }
-
-    const goalsEl = document.getElementById('dsumGoalsBody');
-    if (goalsEl) {
+      const taskPart = todayGoals.length === 0
+        ? 'No tasks yet'
+        : doneCount + '/' + todayGoals.length + ' done today' +
+          (p1Remaining > 0 ? ' · P1s left: ' + p1Remaining : '') +
+          (streak.count > 0 ? ' · ⚡' + streak.count + 'd' : '');
       const goals = getLongtermGoals().filter(g => !g.archived);
-      if (goals.length === 0) {
-        goalsEl.textContent = 'No goals yet — set one in Planner.';
-      } else {
+      let goalPart = '';
+      if (goals.length) {
         const withDeadline = goals.filter(g => g.deadline).sort((a, b) => goalDeadlineMs(a) - goalDeadlineMs(b));
-        const top = (withDeadline.length ? withDeadline : goals).slice(0, 2);
-        goalsEl.textContent = top.map(g => {
-          const ms = goalDeadlineMs(g);
-          return g.title + (ms != null ? ' (' + formatCountdown(ms - Date.now()) + ')' : '');
-        }).join(' · ');
+        const top = (withDeadline.length ? withDeadline : goals)[0];
+        const ms = goalDeadlineMs(top);
+        goalPart = top.title + (ms != null ? ' (' + formatCountdown(ms - Date.now()) + ')' : '');
       }
-    }
-
-    const calEl = document.getElementById('dsumCalendarBody');
-    if (calEl) {
-      const todayKeyStr = calDateKey(new Date());
-      const localCount = getLocalCalEvents().filter(e => e.dateKey === todayKeyStr).length;
-      const finish = (gcalCount) => {
-        const total = localCount + gcalCount;
-        calEl.textContent = total === 0 ? 'Nothing on the calendar today.' : total + ' event' + (total === 1 ? '' : 's') + ' today';
-      };
-      const tokens = getGcalTokens();
-      if (tokens && tokens.access_token) {
-        const start = calMidnight(new Date());
-        fetchGcalEvents(start.toISOString(), calAddDays(start, 1).toISOString())
-          .then(events => { if (window.AssistantTools) window.AssistantTools.recordIntegrationHealth('google_calendar', true); finish(Array.isArray(events) ? events.length : 0); })
-          .catch(() => { if (window.AssistantTools) window.AssistantTools.recordIntegrationHealth('google_calendar', false); finish(0); });
-      } else {
-        finish(0);
-      }
+      plannerEl.textContent = goalPart ? (taskPart + ' · ' + goalPart) : taskPart;
     }
 
     const healthEl = document.getElementById('dsumHealthBody');
@@ -2637,20 +2720,29 @@ body::after {
       }
     }
 
-    const fitEl = document.getElementById('dsumFitnessBody');
-    if (fitEl) {
+    // Current Weight: split out of the old combined Fitness card.
+    const weightEl = document.getElementById('dsumWeightBody');
+    if (weightEl) {
       const summary = storeGet('eq.fitness.summary');
       if (!summary || summary.currentWeight == null) {
-        fitEl.textContent = 'Log your first session on Fitness to start tracking.';
+        weightEl.textContent = 'Log a weigh-in on Train to start tracking.';
       } else {
         const units = summary.units || 'kg';
         const parts = [summary.currentWeight + units];
         if (summary.weight7dAvg != null) parts.push(summary.weight7dAvg + units + ' 7d avg');
-        if (summary.lastSessionAt) {
-          const days = Math.floor((Date.now() - new Date(summary.lastSessionAt).getTime()) / 86400000);
-          parts.push(days <= 0 ? 'session today' : days + 'd since last session');
-        }
-        fitEl.textContent = parts.join(' · ');
+        weightEl.textContent = parts.join(' · ');
+      }
+    }
+
+    // Train: last-session-only half of the old combined Fitness card.
+    const trainEl = document.getElementById('dsumFitnessBody');
+    if (trainEl) {
+      const summary = storeGet('eq.fitness.summary');
+      if (!summary || summary.lastSessionAt == null) {
+        trainEl.textContent = 'Log your first session on Train to start tracking.';
+      } else {
+        const days = Math.floor((Date.now() - new Date(summary.lastSessionAt).getTime()) / 86400000);
+        trainEl.textContent = days <= 0 ? 'Session logged today' : days + 'd since last session';
       }
     }
 
@@ -2673,14 +2765,110 @@ body::after {
       }
     }
 
+    const habitsEl = document.getElementById('dsumHabitsBody');
+    if (habitsEl) {
+      const habits = storeGet('habits_v1') || [];
+      if (!habits.length) {
+        habitsEl.textContent = 'No habits yet — add one in Ability.';
+      } else {
+        const todayK = habDateKey(new Date());
+        const doneToday = habits.filter(h => h.history && h.history[todayK]).length;
+        const avgScore = Math.round(habits.reduce((s, h) => s + habScore(h), 0) / habits.length);
+        const bestStreak = habits.reduce((m, h) => Math.max(m, habStreak(h)), 0);
+        habitsEl.textContent = doneToday + '/' + habits.length + ' done today · avg score ' + avgScore +
+          (bestStreak > 0 ? ' · best streak ' + bestStreak + 'd' : '');
+      }
+    }
+
     renderTodoChart();
+    renderActivityFeed();
+  }
+
+  // 0.7b: bottom activity feed -- last N logged actions merged across
+  // domains from each domain's own already-timestamped store, sorted
+  // newest-first. Date-only sources (weight/sleep/habit dateKeys) sort
+  // at local midnight, so same-day ordering among them is approximate;
+  // this is a glance feed, not an audit trail (Settings' Assistant
+  // Activity log is the audited one, and assistant-only).
+  function dashActDateKeyToMs(dk) {
+    const p = String(dk || '').split('-').map(Number);
+    if (p.length !== 3 || p.some(isNaN)) return null;
+    return new Date(p[0], p[1] - 1, p[2]).getTime();
+  }
+  function collectRecentActivity(limit) {
+    const items = [];
+    try {
+      (JSON.parse(localStorage.getItem('po_coach_weights')) || []).forEach((e) => {
+        const ms = dashActDateKeyToMs(e && e.dateKey);
+        if (ms != null && e.weight != null) items.push({ t: ms, text: 'Logged ' + e.weight + 'kg' });
+      });
+    } catch (e) {}
+    try {
+      (JSON.parse(localStorage.getItem('sleep_log_v1')) || []).forEach((e) => {
+        const ms = dashActDateKeyToMs(e && e.dateKey);
+        if (ms != null && e.hours != null) items.push({ t: ms, text: 'Logged ' + e.hours + 'h sleep' });
+      });
+    } catch (e) {}
+    try {
+      (storeGet('habits_v1') || []).forEach((h) => {
+        Object.keys(h.history || {}).forEach((dk) => {
+          if (!h.history[dk]) return;
+          const ms = dashActDateKeyToMs(dk);
+          if (ms != null) items.push({ t: ms, text: 'Habit: ' + h.name + ' ✓' });
+        });
+      });
+    } catch (e) {}
+    try {
+      (storeGet('contacts_v1') || []).forEach((c) => {
+        (c.history || []).forEach((h) => {
+          if (h.direction === 'inbound') return;
+          const t = new Date(h.date).getTime();
+          if (!isNaN(t)) items.push({ t, text: 'Talked to ' + c.name + (h.channel ? ' (' + h.channel + ')' : '') });
+        });
+      });
+    } catch (e) {}
+    try {
+      getGoals(todayKey()).filter((g) => g.done).forEach((g) => {
+        items.push({ t: Date.now(), text: 'Completed: ' + g.title });
+      });
+    } catch (e) {}
+    return items.filter((it) => it.t != null && !isNaN(it.t)).sort((a, b) => b.t - a.t).slice(0, limit || 8);
+  }
+  function dashActRelativeWhen(ms) {
+    const days = Math.floor((Date.now() - ms) / 86400000);
+    if (days <= 0) return 'today';
+    if (days === 1) return 'yesterday';
+    return days + 'd ago';
+  }
+  function renderActivityFeed() {
+    const listEl = document.getElementById('dashActivityList');
+    const emptyEl = document.getElementById('dashActivityEmpty');
+    if (!listEl || !emptyEl) return;
+    const items = collectRecentActivity(8);
+    if (!items.length) { listEl.style.display = 'none'; emptyEl.style.display = ''; return; }
+    emptyEl.style.display = 'none';
+    listEl.style.display = '';
+    listEl.innerHTML = items.map((it) =>
+      '<div class="dash-activity-row"><span class="dash-activity-text">' + escapeHtmlYd(it.text) + '</span>' +
+      '<span class="dash-activity-when">' + dashActRelativeWhen(it.t) + '</span></div>'
+    ).join('');
+  }
+
+  // 0.7b: greeting below the day-ring clock, per time of day.
+  function updateGreeting() {
+    const el = document.getElementById('dashGreeting');
+    if (!el) return;
+    const h = new Date().getHours();
+    const part = h < 12 ? 'morning' : (h < 18 ? 'afternoon' : 'evening');
+    el.textContent = 'Good ' + part + ', MAHINO';
   }
 
   // ---------- Boot ----------
   rollover();
   processStreak();
   updateDayRing();
-  setInterval(updateDayRing, 60 * 1000);
+  updateGreeting();
+  setInterval(() => { updateDayRing(); updateGreeting(); }, 60 * 1000);
   startTicker();
 
   initCalendar();
@@ -2712,14 +2900,20 @@ document.addEventListener('DOMContentLoaded', function () {
   // Same Google Cloud project/OAuth client as Calendar's server-side flow
   // (see GOOGLE_CAL_CLIENT_ID above) -- reused deliberately rather than
   // provisioning a second client, since Google Identity Services supports
-  // requesting a different, smaller scope (gmail.readonly) from the same
-  // client ID. Requires the Gmail API to be enabled for that project in
-  // Google Cloud Console; if it isn't, connecting will fail with a clear
-  // error rather than silently misbehaving.
+  // requesting a different scope from the same client ID. Requires the
+  // Gmail API to be enabled for that project in Google Cloud Console; if
+  // it isn't, connecting will fail with a clear error rather than
+  // silently misbehaving.
+  // Re-walk vs equavia-pre-answers-final.md 1.4: scope upgraded
+  // readonly -> modify (mark-as-read confirmed wanted). Real consequence:
+  // an already-connected user's existing silent re-auth was granted under
+  // the OLD (narrower) scope, so trySilentAuth()'s prompt:'' below will
+  // fail once for them -- they'll see the Connect button again and need
+  // one real consent click; after that, silent re-auth works as before.
   const GMAIL_CLIENT_ID = '83878675540-40tpq4hkpd05jarl8m8nj9i8vhm5rnel.apps.googleusercontent.com';
-  const GMAIL_SCOPE = 'https://www.googleapis.com/auth/gmail.readonly';
+  const GMAIL_SCOPE = 'https://www.googleapis.com/auth/gmail.modify';
   const GMAIL_EVER_GRANTED_KEY = 'eq.gmail.everGranted';
-  const MAX_MESSAGES = 10;
+  const MAX_MESSAGES = 5;
 
   // Deliberately never persisted to localStorage -- kept in memory only
   // for this page's lifetime, per the "no server storage, session-only"
@@ -2947,6 +3141,11 @@ document.addEventListener('DOMContentLoaded', function () {
       openLink.rel = 'noopener';
       openLink.textContent = 'Open in Gmail ↗';
       actions.appendChild(openLink);
+      const readBtn = document.createElement('button');
+      readBtn.type = 'button';
+      readBtn.textContent = 'Mark as read';
+      readBtn.addEventListener('click', () => markAsRead(id, readBtn));
+      actions.appendChild(readBtn);
       if (contact) {
         const logBtn = document.createElement('button');
         logBtn.type = 'button';
@@ -2957,6 +3156,35 @@ document.addEventListener('DOMContentLoaded', function () {
       bodyWrap.appendChild(actions);
     } catch (e) {
       bodyWrap.innerHTML = '<div class="gmail-msg-body-loading">Could not load full message.</div>';
+    }
+  }
+
+  // Re-walk vs equavia-pre-answers-final.md 1.4: mark-as-read, now that
+  // the connect scope covers gmail.modify. Removing the UNREAD label is
+  // the one Gmail-mutating action this page makes -- still never
+  // composes/sends/replies, per BUILD_PLAN's own hard rule for this
+  // feature.
+  async function markAsRead(id, btn) {
+    btn.disabled = true;
+    btn.textContent = 'Marking…';
+    try {
+      const r = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/' + id + '/modify', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ removeLabelIds: ['UNREAD'] }),
+      });
+      if (!r.ok) throw new Error('Gmail ' + r.status);
+      const row = btn.closest('.gmail-msg');
+      if (row) row.remove();
+      const badge = $('gmailUnreadBadge');
+      const next = Math.max(0, (parseInt(badge.textContent, 10) || 0) - 1);
+      badge.textContent = String(next);
+      badge.classList.toggle('zero', next === 0);
+      if (!$('gmailList').children.length) $('gmailEmpty').style.display = '';
+    } catch (e) {
+      btn.disabled = false;
+      btn.textContent = 'Mark as read';
+      showErr('Could not mark as read — try again.');
     }
   }
 
@@ -2994,14 +3222,21 @@ document.addEventListener('DOMContentLoaded', function () {
   function storeSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
 
   function dateKeyOf(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
-  // Same Monday-6am boundary as gym.html's weekStartMonday6am -- kept as
-  // its own copy here rather than shared, matching this app's established
-  // per-file-duplication convention for small date-math helpers.
-  function weekStartMonday6am(refDate) {
-    const shifted = new Date(refDate.getTime() - 6 * 3600000);
-    const daysSinceMonday = (shifted.getDay() + 6) % 7;
-    const mondayShifted = new Date(shifted.getFullYear(), shifted.getMonth(), shifted.getDate() - daysSinceMonday);
-    return new Date(mondayShifted.getTime() + 6 * 3600000);
+  // Re-walk vs equavia-pre-answers-final.md 4.5 (Sunday 7 PM -- the
+  // section that actually absorbed 3.3's own card, which separately
+  // said Sunday 9 PM; user's call when asked to resolve the conflict).
+  // Was Monday 6am, an intentional deviation from an earlier session --
+  // now deliberately reverted to match the new answer. Same boundary as
+  // gym.html/interactions.html/news.html/topbar.js's own copies -- kept
+  // as its own copy here rather than shared, matching this app's
+  // established per-file-duplication convention for small date-math
+  // helpers. Sunday is already JS's native day 0, so no Monday-style
+  // reindexing is needed here.
+  function weekStartSunday7pm(refDate) {
+    const shifted = new Date(refDate.getTime() - 19 * 3600000);
+    const daysSinceSunday = shifted.getDay();
+    const sundayShifted = new Date(shifted.getFullYear(), shifted.getMonth(), shifted.getDate() - daysSinceSunday);
+    return new Date(sundayShifted.getTime() + 19 * 3600000);
   }
   function weekKeyOf(weekStart) { return dateKeyOf(weekStart); }
 
@@ -3032,7 +3267,19 @@ document.addEventListener('DOMContentLoaded', function () {
       ? snapsInWeek.reduce((s, e) => s + (e.completed / e.scheduled * 100), 0) / snapsInWeek.length
       : null;
     const goals = storeGet('longterm_goals_v1') || [];
-    const goalsArchivedThisWeek = goals.filter(g => g.archived && g.archivedAt && g.archivedAt >= weekStart.toISOString() && g.archivedAt < weekEnd.toISOString()).length;
+    // Re-walk vs equavia-pre-answers-final.md 3.3: "goals completed that
+    // week (with names)" -- was count-only before.
+    const goalsCompletedThisWeekTitles = goals.filter(g => g.archived && g.archivedAt && g.archivedAt >= weekStart.toISOString() && g.archivedAt < weekEnd.toISOString()).map(g => g.title);
+    const goalsArchivedThisWeek = goalsCompletedThisWeekTitles.length;
+
+    // Same for "projects completed (with names)" -- projects.html just
+    // gained a completedAt stamp (planner.html's proj-edit-save handler
+    // and the add form) specifically to make this filterable; projects
+    // done before that change has no completedAt and won't appear here
+    // even if genuinely completed earlier -- there's no way to
+    // retroactively know when.
+    const projects = storeGet('projects_v1') || [];
+    const projectsCompletedThisWeekTitles = projects.filter(p => p.status === 'done' && p.completedAt && p.completedAt >= weekStart.toISOString() && p.completedAt < weekEnd.toISOString()).map(p => p.title);
 
     const habits = storeGet('habits_v1') || [];
     let habitDone = 0, habitTracked = 0;
@@ -3062,11 +3309,17 @@ document.addEventListener('DOMContentLoaded', function () {
         sessionsThisWeek: typeof fitSummary.sessionsThisWeek === 'number' ? fitSummary.sessionsThisWeek : null,
         volumeThisWeek: typeof fitSummary.volumeThisWeek === 'number' ? fitSummary.volumeThisWeek : null,
         weight7dAvgChange: typeof fitSummary.weight7dAvgChange === 'number' ? fitSummary.weight7dAvgChange : null,
+        // Re-walk vs equavia-pre-answers-final.md 3.3: per-exercise
+        // progressed/plateaued/regressed vs last week, published by
+        // gym.html alongside its other weekly aggregates.
+        progressionThisWeek: Array.isArray(fitSummary.progressionThisWeek) ? fitSummary.progressionThisWeek : [],
         units: fitSummary.units || 'kg',
       },
       planner: {
         avgTaskCompletion: avgTaskCompletion != null ? Math.round(avgTaskCompletion) : null,
         goalsArchivedThisWeek,
+        goalsCompletedThisWeekTitles,
+        projectsCompletedThisWeekTitles,
       },
       ability: { habitSuccessPct: habitSuccessPct != null ? Math.round(habitSuccessPct) : null },
       finance: { monthlyCashFlow: hasFinanceData ? Math.round(income - expenses) : null },
@@ -3081,7 +3334,7 @@ document.addEventListener('DOMContentLoaded', function () {
   function reportHasAnyData(m) {
     return m.health.avgSleep != null || m.health.avgRecovery != null ||
       m.fitness.sessionsThisWeek != null || m.fitness.volumeThisWeek != null || m.fitness.weight7dAvgChange != null ||
-      m.planner.avgTaskCompletion != null || m.planner.goalsArchivedThisWeek > 0 ||
+      m.planner.avgTaskCompletion != null || m.planner.goalsArchivedThisWeek > 0 || (m.planner.projectsCompletedThisWeekTitles || []).length > 0 ||
       m.ability.habitSuccessPct != null ||
       m.finance.monthlyCashFlow != null;
   }
@@ -3093,7 +3346,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // pre-history.
   function ensureWeeklyReports() {
     const reports = getWeeklyReports();
-    const currentWeekStart = weekStartMonday6am(new Date());
+    const currentWeekStart = weekStartSunday7pm(new Date());
     let cursorStart;
     if (reports.length) {
       const lastStart = new Date(reports[reports.length - 1].weekKey + 'T06:00:00');
@@ -3162,8 +3415,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const sections = [
       { title: 'Health', html: metricLine('Avg sleep', m.health.avgSleep != null ? m.health.avgSleep + 'h' : null) + metricLine('Avg recovery', m.health.avgRecovery != null ? m.health.avgRecovery + '%' : null) },
-      { title: 'Fitness', html: metricLine('Sessions', m.fitness.sessionsThisWeek) + metricLine('Volume', m.fitness.volumeThisWeek != null ? m.fitness.volumeThisWeek.toLocaleString('en-US') : null) + metricLine('Weight trend', m.fitness.weight7dAvgChange != null ? (m.fitness.weight7dAvgChange >= 0 ? '+' : '') + m.fitness.weight7dAvgChange + m.fitness.units : null) },
-      { title: 'Planner', html: metricLine('Task completion', m.planner.avgTaskCompletion != null ? m.planner.avgTaskCompletion + '%' : null) + metricLine('Goals completed', m.planner.goalsArchivedThisWeek) },
+      { title: 'Fitness', html: metricLine('Sessions', m.fitness.sessionsThisWeek) + metricLine('Volume', m.fitness.volumeThisWeek != null ? m.fitness.volumeThisWeek.toLocaleString('en-US') : null) + metricLine('Weight trend', m.fitness.weight7dAvgChange != null ? (m.fitness.weight7dAvgChange >= 0 ? '+' : '') + m.fitness.weight7dAvgChange + m.fitness.units : null) + metricLine('Progression', m.fitness.progressionThisWeek.length ? m.fitness.progressionThisWeek.map(p => p.exercise + ' (' + p.status + ')').join(', ') : null) },
+      { title: 'Planner', html: metricLine('Task completion', m.planner.avgTaskCompletion != null ? m.planner.avgTaskCompletion + '%' : null) + metricLine('Goals completed', (m.planner.goalsCompletedThisWeekTitles || []).length ? m.planner.goalsCompletedThisWeekTitles.join(', ') : m.planner.goalsArchivedThisWeek) + metricLine('Projects completed', (m.planner.projectsCompletedThisWeekTitles || []).length ? m.planner.projectsCompletedThisWeekTitles.join(', ') : null) },
       { title: 'Ability', html: metricLine('Habit success', m.ability.habitSuccessPct != null ? m.ability.habitSuccessPct + '%' : null) },
       { title: 'Finance', html: metricLine('Monthly cash flow', m.finance.monthlyCashFlow != null ? (m.finance.monthlyCashFlow >= 0 ? '+' : '') + 'GBP ' + m.finance.monthlyCashFlow.toLocaleString('en-US') : null) },
     ];
@@ -3191,10 +3444,12 @@ document.addEventListener('DOMContentLoaded', function () {
       '- Sessions: ' + (m.fitness.sessionsThisWeek != null ? m.fitness.sessionsThisWeek : 'no data'),
       '- Volume: ' + (m.fitness.volumeThisWeek != null ? m.fitness.volumeThisWeek.toLocaleString('en-US') : 'no data'),
       '- Weight trend: ' + (m.fitness.weight7dAvgChange != null ? (m.fitness.weight7dAvgChange >= 0 ? '+' : '') + m.fitness.weight7dAvgChange + m.fitness.units : 'no data'),
+      '- Progression: ' + (m.fitness.progressionThisWeek.length ? m.fitness.progressionThisWeek.map(p => p.exercise + ' (' + p.status + ')').join(', ') : 'no data'),
       '',
       '## Planner',
       '- Task completion: ' + (m.planner.avgTaskCompletion != null ? m.planner.avgTaskCompletion + '%' : 'no data'),
-      '- Goals completed: ' + m.planner.goalsArchivedThisWeek,
+      '- Goals completed: ' + ((m.planner.goalsCompletedThisWeekTitles || []).length ? m.planner.goalsCompletedThisWeekTitles.join(', ') : m.planner.goalsArchivedThisWeek),
+      '- Projects completed: ' + ((m.planner.projectsCompletedThisWeekTitles || []).length ? m.planner.projectsCompletedThisWeekTitles.join(', ') : 'none'),
       '',
       '## Ability',
       '- Habit success: ' + (m.ability.habitSuccessPct != null ? m.ability.habitSuccessPct + '%' : 'no data'),
@@ -3258,7 +3513,7 @@ document.addEventListener('DOMContentLoaded', function () {
         what_went_well: { type: 'array', items: { type: 'string' }, description: '3-5 specific, evidence-cited wins, each citing a real number from the data.' },
         what_went_badly: { type: 'array', items: { type: 'string' }, description: 'Specific, evidence-cited misses, each citing a real number. Include any broken commitments from last week\'s audit if given.' },
         what_to_do_better: { type: 'array', items: { type: 'string' }, description: '2-3 highest-leverage fixes for next week, each tied to a specific metric that would prove it worked.' },
-        suggestions: { type: 'array', items: { type: 'string' }, description: '1-3 NEW routine/habit/tracking suggestions, each a short actionable sentence. Do not repeat anything in the "recently declined" list given in context.' },
+        suggestions: { type: 'array', items: { type: 'string' }, description: '3-5 NEW routine/habit/tracking suggestions (re-walk vs equavia-pre-answers-final.md 4.5: was 1-3), each a short actionable sentence. Do not repeat anything in the "recently declined" list given in context.' },
         verdict_word: { type: 'string', description: 'One word summarizing the week, e.g. "Solid", "Slipping", "Strong". Direct, no flattery.' },
         verdict_score: { type: 'number', description: 'A score out of 10 for the week.' },
       },
@@ -3272,7 +3527,8 @@ document.addEventListener('DOMContentLoaded', function () {
     contacts.forEach((c) => {
       (c.history || []).forEach((h) => { if (h.date >= weekStartIso && h.date < weekEndIso) loggedThisWeek++; });
     });
-    const REL_TIER_CADENCE = { inner: 7, close: 21, acquaintance: 60, networking: 90, network: 90 };
+    // Re-walk vs equavia-pre-answers-final.md 5.2: Close 21d->14d, Acquaintance 60d->45d.
+    const REL_TIER_CADENCE = { inner: 7, close: 14, acquaintance: 45, networking: 90, network: 90 };
     const overdueNow = contacts.filter((c) => {
       if (c.snoozedUntil && new Date(c.snoozedUntil).getTime() > Date.now()) return false;
       const rawHistory = Array.isArray(c.history) ? c.history : (c.lastContactedAt ? [{ date: c.lastContactedAt }] : []);
@@ -3315,8 +3571,10 @@ document.addEventListener('DOMContentLoaded', function () {
     s += 'Training sessions: ' + (m.fitness.sessionsThisWeek != null ? m.fitness.sessionsThisWeek : 'no data') + '\n';
     s += 'Training volume: ' + (m.fitness.volumeThisWeek != null ? m.fitness.volumeThisWeek : 'no data') + '\n';
     s += 'Weight 7-day trend: ' + (m.fitness.weight7dAvgChange != null ? (m.fitness.weight7dAvgChange >= 0 ? '+' : '') + m.fitness.weight7dAvgChange + m.fitness.units : 'no data') + '\n';
+    s += 'Lifting progression vs last week: ' + (m.fitness.progressionThisWeek.length ? m.fitness.progressionThisWeek.map(p => p.exercise + ': ' + p.status).join(', ') : 'no data') + '\n';
     s += 'Task completion avg: ' + (m.planner.avgTaskCompletion != null ? m.planner.avgTaskCompletion + '%' : 'no data') + '\n';
-    s += 'Goals completed this week: ' + m.planner.goalsArchivedThisWeek + '\n';
+    s += 'Goals completed this week: ' + ((m.planner.goalsCompletedThisWeekTitles || []).length ? m.planner.goalsCompletedThisWeekTitles.join(', ') : m.planner.goalsArchivedThisWeek) + '\n';
+    s += 'Projects completed this week: ' + ((m.planner.projectsCompletedThisWeekTitles || []).length ? m.planner.projectsCompletedThisWeekTitles.join(', ') : 'none') + '\n';
     s += 'Active goals current standing: ' + (goals.length ? goals.map((g) => g.title + ' (' + (g.value || 0) + '%)').join(', ') : 'none active') + '\n';
     s += 'Habit success rate: ' + (m.ability.habitSuccessPct != null ? m.ability.habitSuccessPct + '%' : 'no data') + '\n';
     s += 'Contacts logged this week: ' + contactStats.loggedThisWeek + '; currently overdue: ' + contactStats.overdueNow + '\n';
@@ -3451,6 +3709,11 @@ document.addEventListener('DOMContentLoaded', function () {
     const a = auditFor(weekKey);
     const wrap = $('auditSections');
     const runBtn = $('auditRunBtn');
+    // Re-walk vs equavia-pre-answers-final.md 4.5: the button now only
+    // appears on Sundays (was always-available) -- gates the button
+    // itself, not which week's already-generated audit you can browse
+    // via the prev/next controls, so past reports stay viewable any day.
+    runBtn.style.display = new Date().getDay() === 0 ? '' : 'none';
     if (!a) { wrap.style.display = 'none'; runBtn.textContent = 'Run audit'; runBtn.disabled = false; return; }
     runBtn.textContent = 'Re-run audit';
     runBtn.disabled = false;
@@ -3674,6 +3937,133 @@ document.addEventListener('DOMContentLoaded', function () {
     return s;
   }
 
+  // ---- 6.10 chart helpers (duplicated from 4.4's Advanced Report block
+  // -- separate script block/IIFE, so its functions aren't in scope here;
+  // same per-block-duplication convention as everywhere else in this file). ----
+  function annualRenderLineChart(svgId, points, color) {
+    const svg = $(svgId);
+    const valid = points.filter((p) => p.v != null);
+    if (valid.length < 2) { svg.innerHTML = '<text x="150" y="50" text-anchor="middle" fill="var(--text-tertiary)" font-size="10">Not enough data yet</text>'; return; }
+    const vals = valid.map((p) => p.v);
+    const min = Math.min.apply(null, vals), max = Math.max.apply(null, vals);
+    const w = 300, h = 70, pad = 4;
+    const stepX = (w - pad * 2) / (points.length - 1);
+    const scaleY = (v) => (max === min) ? h / 2 : (h - pad) - ((v - min) / (max - min)) * (h - pad * 2);
+    const coords = points.map((p, i) => ({ x: pad + i * stepX, y: p.v == null ? null : scaleY(p.v) }));
+    let path = '', started = false;
+    coords.forEach((c) => {
+      if (c.y == null) { started = false; return; }
+      path += (started ? 'L' : 'M') + c.x.toFixed(1) + ',' + c.y.toFixed(1) + ' ';
+      started = true;
+    });
+    const dots = coords.filter((c) => c.y != null).map((c) => '<circle cx="' + c.x.toFixed(1) + '" cy="' + c.y.toFixed(1) + '" r="2" fill="' + color + '"/>').join('');
+    svg.innerHTML = '<path d="' + path.trim() + '" fill="none" stroke="' + color + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' + dots;
+  }
+  function annualRenderBarChart(svgId, values, color) {
+    const svg = $(svgId);
+    if (!values.some((v) => v != null)) { svg.innerHTML = '<text x="150" y="50" text-anchor="middle" fill="var(--text-tertiary)" font-size="10">Not enough data yet</text>'; return; }
+    const w = 300, h = 70, pad = 4, n = values.length;
+    const gap = (w - pad * 2) / n, barW = gap * 0.6;
+    svg.innerHTML = values.map((v, i) => {
+      if (v == null) return '';
+      const bh = Math.max(2, (Math.max(0, Math.min(100, v)) / 100) * (h - pad * 2));
+      const x = pad + i * gap + (gap - barW) / 2;
+      const y = h - pad - bh;
+      return '<rect x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + barW.toFixed(1) + '" height="' + bh.toFixed(1) + '" rx="2" fill="' + color + '"/>';
+    }).join('');
+  }
+  function annualRenderPieChart(svgId, legendId, segments) {
+    const svg = $(svgId), legend = $(legendId);
+    const total = segments.reduce((s, x) => s + x.value, 0);
+    if (!total) { svg.innerHTML = ''; legend.innerHTML = '<div class="adv-chart-empty">No activity logged this year yet.</div>'; return; }
+    const r = 50, cx = 60, cy = 60, C = 2 * Math.PI * r;
+    let offset = 0;
+    const active = segments.filter((s) => s.value > 0);
+    svg.innerHTML = active.map((s) => {
+      const len = (s.value / total) * C;
+      const rotate = (offset / C) * 360 - 90;
+      offset += len;
+      return '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="none" stroke="' + s.color + '" stroke-width="16" stroke-dasharray="' + len.toFixed(2) + ' ' + (C - len).toFixed(2) + '" transform="rotate(' + rotate.toFixed(1) + ' ' + cx + ' ' + cy + ')"/>';
+    }).join('');
+    legend.innerHTML = active.map((s) => '<span class="adv-pie-legend-item"><span class="adv-pie-legend-dot" style="background:' + s.color + '"></span>' + s.label + ' (' + s.value + ')</span>').join('');
+  }
+  // Last 12 calendar months, oldest first -- each {year, month} bucket.
+  function annualLast12Months() {
+    const out = [];
+    const now = new Date();
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      out.push({ y: d.getFullYear(), m: d.getMonth() });
+    }
+    return out;
+  }
+  function annualMonthKey(dateStr) { const d = new Date(dateStr); return d.getFullYear() + '-' + d.getMonth(); }
+  function annualMonthlyAvg(entries, valueField, dateField) {
+    const months = annualLast12Months();
+    const byMonth = {};
+    entries.forEach((e) => {
+      if (e[valueField] == null || !e[dateField]) return;
+      const key = annualMonthKey(e[dateField]);
+      (byMonth[key] = byMonth[key] || []).push(e[valueField]);
+    });
+    return months.map(({ y, m }) => {
+      const vals = byMonth[y + '-' + m];
+      return { v: vals && vals.length ? Number((vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1)) : null };
+    });
+  }
+  function annualHabitAdherenceMonthly() {
+    const habits = storeGet('habits_v1') || [];
+    const months = annualLast12Months();
+    if (!habits.length) return months.map(() => null);
+    return months.map(({ y, m }) => {
+      const daysInMonth = new Date(y, m + 1, 0).getDate();
+      const isFuture = new Date(y, m, 1) > new Date();
+      if (isFuture) return null;
+      let done = 0, tracked = 0;
+      for (let day = 1; day <= daysInMonth; day++) {
+        const d = new Date(y, m, day);
+        if (d > new Date()) break;
+        const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+        habits.forEach((h) => {
+          if (h.createdAt && h.createdAt.slice(0, 10) > key) return;
+          tracked++;
+          if (h.history && h.history[key]) done++;
+        });
+      }
+      return tracked > 0 ? Math.round((done / tracked) * 100) : null;
+    });
+  }
+  function annualDomainActivityYear() {
+    const cutoff = Date.now() - 365 * 86400000;
+    let health = 0, fitness = 0, planner = 0, ability = 0, interactions = 0;
+    (storeGet('sleep_log_v1') || []).forEach((e) => { if (new Date(e.dateKey).getTime() >= cutoff) health++; });
+    (storeGet('po_coach_weights') || []).forEach((e) => { if (new Date(e.dateKey).getTime() >= cutoff) fitness++; });
+    (storeGet('habits_v1') || []).forEach((h) => Object.keys(h.history || {}).forEach((k) => { if (h.history[k] && new Date(k).getTime() >= cutoff) ability++; }));
+    (storeGet('contacts_v1') || []).forEach((c) => (c.history || []).forEach((h) => { if (h.direction !== 'inbound' && new Date(h.date).getTime() >= cutoff) interactions++; }));
+    getAudits().forEach((a) => { planner += (a.whatWentWell || []).length + (a.whatWentBadly || []).length; });
+    return [
+      { label: 'Health', value: health, color: '#6BE3A4' },
+      { label: 'Fitness', value: fitness, color: '#E07658' },
+      { label: 'Planner', value: planner, color: '#6EA8E0' },
+      { label: 'Ability', value: ability, color: '#F2A65A' },
+      { label: 'Interactions', value: interactions, color: '#C48CE0' },
+    ];
+  }
+  function renderAnnualCharts() {
+    const grid = $('annualChartGrid');
+    grid.style.display = '';
+    const sleep = annualMonthlyAvg(storeGet('sleep_log_v1') || [], 'hours', 'dateKey');
+    const weight = annualMonthlyAvg(storeGet('po_coach_weights') || [], 'weight', 'dateKey');
+    const taskSnaps = (storeGet('todo_completion_snapshots_v1') || []).map((s) => ({ pct: s.scheduled > 0 ? (s.completed / s.scheduled) * 100 : null, dateKey: s.dateKey }));
+    const task = annualMonthlyAvg(taskSnaps.filter((s) => s.pct != null), 'pct', 'dateKey').map((p) => p.v);
+    const habit = annualHabitAdherenceMonthly();
+    annualRenderLineChart('annualSleepChart', sleep, '#6BE3A4');
+    annualRenderLineChart('annualWeightChart', weight, '#E07658');
+    annualRenderBarChart('annualTaskChart', task, '#6EA8E0');
+    annualRenderBarChart('annualHabitChart', habit, '#F2A65A');
+    annualRenderPieChart('annualPieChart', 'annualPieLegend', annualDomainActivityYear());
+  }
+
   function renderAnnualReview() {
     const year = annualReviewYear();
     $('annualReviewYear').textContent = String(year);
@@ -3681,10 +4071,11 @@ document.addEventListener('DOMContentLoaded', function () {
     const review = annualReviewFor(year);
     const wrap = $('annualReviewSections');
     const btn = $('annualReviewRunBtn');
-    if (!review) { wrap.style.display = 'none'; wrap.innerHTML = ''; btn.textContent = 'Run annual review'; return; }
+    if (!review) { wrap.style.display = 'none'; wrap.innerHTML = ''; $('annualChartGrid').style.display = 'none'; btn.textContent = 'Run annual review'; return; }
     btn.textContent = 'Run again';
     wrap.style.display = '';
     wrap.innerHTML = '';
+    renderAnnualCharts();
 
     function section(title, items) {
       if (!items || !items.length) return;
@@ -3857,7 +4248,8 @@ document.addEventListener('DOMContentLoaded', function () {
   // renderInteractionsSummary() above (the 5.2 bug fix) -- re-derived here
   // rather than shared since this script block keeps its own small helpers,
   // same convention the rest of this file already uses.
-  const REL_TIER_CADENCE = { inner: 7, close: 21, acquaintance: 60, networking: 90, network: 90 };
+  // Re-walk vs equavia-pre-answers-final.md 5.2: Close 21d->14d, Acquaintance 60d->45d.
+  const REL_TIER_CADENCE = { inner: 7, close: 14, acquaintance: 45, networking: 90, network: 90 };
   function overdueContactNames() {
     const contacts = storeGet('contacts_v1') || [];
     return contacts.filter((c) => {
@@ -3972,9 +4364,10 @@ document.addEventListener('DOMContentLoaded', function () {
   $('briefGenBtn').addEventListener('click', generateBrief);
   renderBrief();
 
-  // ---------- Close the Day (evening variant) -- visible after 8 PM,
-  // through the rest of the still-active day (i.e. also before the 6 AM
-  // reset), per the app's own day-boundary convention. ----------
+  // ---------- Close the Day (evening variant) -- visible after 6 PM
+  // (re-walk vs equavia-pre-answers-final.md 4.4: was 8 PM), through the
+  // rest of the still-active day (i.e. also before the 6 AM reset), per
+  // the app's own day-boundary convention. ----------
   function buildCloseDayContext() {
     const todayKey = AT.activeDateKeyLocal();
     const tasks = storeGet('goals:' + todayKey) || [];
@@ -4016,7 +4409,8 @@ document.addEventListener('DOMContentLoaded', function () {
   }
   function renderCloseDay() {
     const now = new Date();
-    const showCard = now.getHours() >= 20 || now.getHours() < 6;
+    // Re-walk vs equavia-pre-answers-final.md 4.4: 6 PM (was 8 PM).
+    const showCard = now.getHours() >= 18 || now.getHours() < 6;
     $('closeDayCard').style.display = showCard ? '' : 'none';
     if (!showCard) return;
     const todayKey = AT.activeDateKeyLocal();
@@ -4048,6 +4442,194 @@ document.addEventListener('DOMContentLoaded', function () {
   renderCloseDay();
 
   window.addEventListener('storage', () => { renderBrief(); renderCloseDay(); });
+})();
+</script>
+<script>
+// 4.4 ADVANCED REPORT -- second Morning Brief tier, per
+// equavia-pre-answers-final.md ("full styled HTML report... line charts
+// (sleep trend, weight trend), bar charts (task completion, habit
+// adherence), pie charts (time/domain allocation)... futuristic,
+// data-dense"). Own self-contained script block (this file's own
+// per-block-duplication convention -- every feature section here
+// declares its own $/storeGet/date-key helpers rather than assuming
+// another block's scope). Charts are drawn client-side from local data
+// (no LLM involved in the numbers); Claude writes only the accompanying
+// analysis text, same call shape as the Simple Brief.
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  function storeGet(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }
+  function storeSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  function dateKeyOf(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  const ADV_KEY = 'eq.assistant.advanced_report_v1';
+  const AT = window.AssistantTools;
+
+  // ---------- tiny inline-SVG chart helpers (one shared visual style) ----------
+  function renderLineChart(svgId, points, color) {
+    const svg = $(svgId);
+    const valid = points.filter((p) => p.v != null);
+    if (valid.length < 2) { svg.innerHTML = '<text x="150" y="50" text-anchor="middle" fill="var(--text-tertiary)" font-size="10">Not enough data yet</text>'; return; }
+    const vals = valid.map((p) => p.v);
+    const min = Math.min.apply(null, vals), max = Math.max.apply(null, vals);
+    const w = 300, h = 70, pad = 4;
+    const stepX = (w - pad * 2) / (points.length - 1);
+    const scaleY = (v) => (max === min) ? h / 2 : (h - pad) - ((v - min) / (max - min)) * (h - pad * 2);
+    const coords = points.map((p, i) => ({ x: pad + i * stepX, y: p.v == null ? null : scaleY(p.v) }));
+    let path = '', started = false;
+    coords.forEach((c) => {
+      if (c.y == null) { started = false; return; }
+      path += (started ? 'L' : 'M') + c.x.toFixed(1) + ',' + c.y.toFixed(1) + ' ';
+      started = true;
+    });
+    const dots = coords.filter((c) => c.y != null).map((c) => '<circle cx="' + c.x.toFixed(1) + '" cy="' + c.y.toFixed(1) + '" r="2" fill="' + color + '"/>').join('');
+    svg.innerHTML = '<path d="' + path.trim() + '" fill="none" stroke="' + color + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' + dots;
+  }
+  function renderBarChart(svgId, values, color) {
+    const svg = $(svgId);
+    if (!values.some((v) => v != null)) { svg.innerHTML = '<text x="150" y="50" text-anchor="middle" fill="var(--text-tertiary)" font-size="10">Not enough data yet</text>'; return; }
+    const w = 300, h = 70, pad = 4, n = values.length;
+    const gap = (w - pad * 2) / n, barW = gap * 0.6;
+    svg.innerHTML = values.map((v, i) => {
+      if (v == null) return '';
+      const bh = Math.max(2, (Math.max(0, Math.min(100, v)) / 100) * (h - pad * 2));
+      const x = pad + i * gap + (gap - barW) / 2;
+      const y = h - pad - bh;
+      return '<rect x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + barW.toFixed(1) + '" height="' + bh.toFixed(1) + '" rx="2" fill="' + color + '"/>';
+    }).join('');
+  }
+  function renderPieChart(svgId, legendId, segments) {
+    const svg = $(svgId), legend = $(legendId);
+    const total = segments.reduce((s, x) => s + x.value, 0);
+    if (!total) { svg.innerHTML = ''; legend.innerHTML = '<div class="adv-chart-empty">No activity logged this week yet.</div>'; return; }
+    const r = 50, cx = 60, cy = 60, C = 2 * Math.PI * r;
+    let offset = 0;
+    const active = segments.filter((s) => s.value > 0);
+    svg.innerHTML = active.map((s) => {
+      const len = (s.value / total) * C;
+      const rotate = (offset / C) * 360 - 90;
+      offset += len;
+      return '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="none" stroke="' + s.color + '" stroke-width="16" stroke-dasharray="' + len.toFixed(2) + ' ' + (C - len).toFixed(2) + '" transform="rotate(' + rotate.toFixed(1) + ' ' + cx + ' ' + cy + ')"/>';
+    }).join('');
+    legend.innerHTML = active.map((s) => '<span class="adv-pie-legend-item"><span class="adv-pie-legend-dot" style="background:' + s.color + '"></span>' + s.label + ' (' + s.value + ')</span>').join('');
+  }
+
+  // ---------- data gathering (all local, no API cost) ----------
+  function last14Days() { const out = []; for (let i = 13; i >= 0; i--) out.push(dateKeyOf(new Date(Date.now() - i * 86400000))); return out; }
+  function last7Days() { const out = []; for (let i = 6; i >= 0; i--) out.push(dateKeyOf(new Date(Date.now() - i * 86400000))); return out; }
+
+  function sleepSeries14d() {
+    const map = {};
+    (storeGet('sleep_log_v1') || []).forEach((e) => { if (e.hours != null) map[e.dateKey] = e.hours; });
+    return last14Days().map((k) => ({ v: map[k] != null ? map[k] : null }));
+  }
+  function weightSeries14d() {
+    const map = {};
+    (storeGet('po_coach_weights') || []).forEach((e) => { if (e.weight != null) map[e.dateKey] = e.weight; });
+    return last14Days().map((k) => ({ v: map[k] != null ? map[k] : null }));
+  }
+  function taskCompletionSeries7d() {
+    const map = {};
+    (storeGet('todo_completion_snapshots_v1') || []).forEach((s) => { if (s.scheduled > 0) map[s.dateKey] = (s.completed / s.scheduled) * 100; });
+    return last7Days().map((k) => (map[k] != null ? Math.round(map[k]) : null));
+  }
+  function habitAdherenceSeries7d() {
+    const habits = storeGet('habits_v1') || [];
+    if (!habits.length) return last7Days().map(() => null);
+    return last7Days().map((k) => {
+      const tracked = habits.filter((h) => !h.createdAt || h.createdAt.slice(0, 10) <= k);
+      if (!tracked.length) return null;
+      const done = tracked.filter((h) => h.history && h.history[k]).length;
+      return Math.round((done / tracked.length) * 100);
+    });
+  }
+  // "Domain allocation" has no literal time-tracking anywhere in this app
+  // -- approximated as logged-action counts per domain over 7 days, the
+  // same domains the 0.7b dashboard activity feed already reads from.
+  function domainActivityCounts7d() {
+    const cutoff = Date.now() - 7 * 86400000;
+    let health = 0, fitness = 0, planner = 0, ability = 0, interactions = 0;
+    (storeGet('sleep_log_v1') || []).forEach((e) => { if (new Date(e.dateKey).getTime() >= cutoff) health++; });
+    (storeGet('po_coach_weights') || []).forEach((e) => { if (new Date(e.dateKey).getTime() >= cutoff) fitness++; });
+    (storeGet('habits_v1') || []).forEach((h) => Object.keys(h.history || {}).forEach((k) => { if (h.history[k] && new Date(k).getTime() >= cutoff) ability++; }));
+    (storeGet('contacts_v1') || []).forEach((c) => (c.history || []).forEach((h) => { if (h.direction !== 'inbound' && new Date(h.date).getTime() >= cutoff) interactions++; }));
+    last7Days().forEach((k) => { (storeGet('goals:' + k) || []).forEach((g) => { if (g.done) planner++; }); });
+    return [
+      { label: 'Health', value: health, color: '#6BE3A4' },
+      { label: 'Fitness', value: fitness, color: '#E07658' },
+      { label: 'Planner', value: planner, color: '#6EA8E0' },
+      { label: 'Ability', value: ability, color: '#F2A65A' },
+      { label: 'Interactions', value: interactions, color: '#C48CE0' },
+    ];
+  }
+
+  function buildAdvancedReportData() {
+    return {
+      sleep: sleepSeries14d(),
+      weight: weightSeries14d(),
+      taskCompletion: taskCompletionSeries7d(),
+      habitAdherence: habitAdherenceSeries7d(),
+      domainActivity: domainActivityCounts7d(),
+    };
+  }
+  function buildAdvancedReportContext(data) {
+    const y = dateKeyOf(new Date(Date.now() - 86400000));
+    const health = storeGet('eq.health.summary') || {};
+    const fitness = storeGet('eq.fitness.summary') || {};
+    let s = 'Yesterday (' + y + ') and recent trend, for a data-dense analytical report:\n\n';
+    s += 'Sleep last night: ' + (health.sleepHours != null ? health.sleepHours + 'h' : 'no data') + '. 14-day sleep series (oldest to newest): ' + data.sleep.map((p) => p.v != null ? p.v : '-').join(', ') + '\n';
+    s += 'Weight: ' + (fitness.currentWeight != null ? fitness.currentWeight + (fitness.units || 'kg') : 'no data') + '. 14-day weight series: ' + data.weight.map((p) => p.v != null ? p.v : '-').join(', ') + '\n';
+    s += '7-day task completion % series: ' + data.taskCompletion.map((v) => v != null ? v : '-').join(', ') + '\n';
+    s += '7-day habit adherence % series: ' + data.habitAdherence.map((v) => v != null ? v : '-').join(', ') + '\n';
+    s += 'Logged activity by domain this week: ' + data.domainActivity.map((d) => d.label + ' ' + d.value).join(', ') + '\n';
+    return s;
+  }
+
+  async function generateAdvancedReport() {
+    const btn = $('advReportBtn');
+    btn.disabled = true; btn.textContent = 'Generating…';
+    try {
+      const data = buildAdvancedReportData();
+      const context = buildAdvancedReportContext(data);
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, window.EqAuth ? window.EqAuth.header() : {}),
+        body: JSON.stringify({
+          messages: [{ role: 'user', content: 'Write my advanced daily report analysis from the data in context.' }],
+          systemContext: 'You write the analytical text for a data-dense "Advanced Report" in a personal tracking app -- the charts are rendered separately, you only write the narrative that sits above them. Write 3-5 short paragraphs: yesterday\'s numbers in context, what the recent trends (sleep/weight/task completion/habit adherence) actually show, and where attention is and isn\'t going by domain. Direct, specific, cite the actual numbers given. If a series is mostly empty, say so plainly rather than inventing a trend. No filler, no motivational padding.\n\n' + context,
+        }),
+      });
+      const resData = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(resData.error || 'request failed');
+      storeSet(ADV_KEY, { dateKey: AT.activeDateKeyLocal(), text: resData.reply || '', data: data, at: new Date().toISOString() });
+      renderAdvancedReport();
+    } catch (e) {
+      $('advReportMeta').textContent = 'Could not generate — ' + (e.message || 'try again') + '.';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Advanced Report';
+    }
+  }
+
+  function renderAdvancedReport() {
+    const cached = storeGet(ADV_KEY);
+    const todayKey = AT.activeDateKeyLocal();
+    if (!cached || cached.dateKey !== todayKey || !cached.text) {
+      $('advReportWrap').style.display = 'none';
+      $('advReportMeta').textContent = '';
+      return;
+    }
+    $('advReportWrap').style.display = '';
+    $('advReportText').textContent = cached.text;
+    $('advReportMeta').textContent = 'Advanced report generated ' + new Date(cached.at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    renderLineChart('advSleepChart', cached.data.sleep, '#6BE3A4');
+    renderLineChart('advWeightChart', cached.data.weight, '#E07658');
+    renderBarChart('advTaskChart', cached.data.taskCompletion, '#6EA8E0');
+    renderBarChart('advHabitChart', cached.data.habitAdherence, '#F2A65A');
+    renderPieChart('advPieChart', 'advPieLegend', cached.data.domainActivity);
+  }
+
+  $('advReportBtn').addEventListener('click', generateAdvancedReport);
+  renderAdvancedReport();
 })();
 </script>
 <script>
@@ -4131,11 +4713,15 @@ document.addEventListener('DOMContentLoaded', function () {
   // ============================================================
   // 4.6 STANDING RULES ENGINE. Checked locally on app open (dashboard
   // load) -- plain JS conditions against localStorage, no API call at all
-  // for 'flag' rules. Only 'assistant_message' rules (just recovery, per
-  // spec's own "suggest training swap" language for that one specifically
-  // -- every other template says "flag"/"surface", not "suggest") spend a
-  // cheap Haiku call, and only once per day even then (cached, same
-  // pattern as 4.4's brief).
+  // for 'flag' rules. Re-walk vs equavia-pre-answers-final.md 4.6:
+  // recovery_low's action is now a fully specific, deterministic protocol
+  // ("halve caffeine dose, delay first dose 90 min, add 400mg
+  // L-theanine") rather than the original spec's open-ended "suggest a
+  // training swap" -- specific enough to need no Claude phrasing at all,
+  // so it moved from 'assistant_message' to 'flag' like every other rule
+  // here (the assistant_message code path below is left in place as
+  // still-valid generic infrastructure, just with zero current
+  // consumers -- a future rule needing dynamic phrasing could use it).
   //
   // A 6th rule (goals/projects due within 48h below 75% progress) was
   // added at the user's explicit request alongside the 5 spec templates --
@@ -4186,7 +4772,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   const RULE_TEMPLATES = [
     {
-      key: 'recovery_low', label: 'Recovery < 33%', action: 'assistant_message', defaultEnabled: true,
+      key: 'recovery_low', label: 'Recovery < 33%', action: 'flag', defaultEnabled: true,
       check: function () {
         const h = storeGet('eq.health.summary') || {};
         if (typeof h.recovery !== 'number') return null;
@@ -4203,7 +4789,8 @@ document.addEventListener('DOMContentLoaded', function () {
       check: function () { return null; },
     },
     {
-      key: 'weight_swing', label: 'Weight 7-day avg moved > threshold', action: 'flag', defaultEnabled: true, hasThreshold: true, defaultThreshold: 2,
+      // Re-walk vs equavia-pre-answers-final.md 4.6: threshold 0.5kg (was 2).
+      key: 'weight_swing', label: 'Weight 7-day avg moved > threshold', action: 'flag', defaultEnabled: true, hasThreshold: true, defaultThreshold: 0.5,
       check: function (threshold) {
         const f = storeGet('eq.fitness.summary') || {};
         if (typeof f.weight7dAvgChange !== 'number') return null;
@@ -4295,6 +4882,7 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function flagMessage(t, data) {
+    if (t.key === 'recovery_low') return 'Recovery ' + data.recovery + '% — halve caffeine dose, delay first dose by 90 min, add 400mg L-theanine.';
     if (t.key === 'weight_swing') return 'Weight 7-day average moved ' + (data.change >= 0 ? '+' : '') + data.change + 'kg in a week.';
     if (t.key === 'habit_score_low') return 'Habit score dropped below 60: ' + data.names.join(', ') + '.';
     if (t.key === 'sub_renewing_48h') return 'Renewing within 48h: ' + data.names.join(', ') + '.';

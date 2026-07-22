@@ -5,52 +5,49 @@
 //   - Desktop (>=768px): a top row showing all pages, in-flow at
 //     the start of <body> (the former per-page "cat-tabs" row,
 //     now defined once instead of copy-pasted onto every page).
-//   - Mobile (<768px): a fixed bottom tab bar with the 8 core
-//     pages in a horizontally-scrollable strip plus a pinned
+//   - Mobile (<768px): a fixed bottom tab bar with the 5 core
+//     pages plus a pinned
 //     "More" tab (always visible, never scrolls away) that opens
 //     a small sheet for the remaining pages.
-// Skipped entirely inside iframes (e.g. train.html embedded in
-// gym.html's Fitness tile, po-water.html embedded in health.html).
+// Skipped entirely inside iframes (e.g. po-water.html embedded in
+// health.html).
 // =============================================================
 (function () {
   'use strict';
 
   const PAGES = [
+    // Core tabs, re-walk against equavia-pre-answers-final.md 0.4/6.1:
+    // Main / Health / Train / Planner / Finance. Finance moves back to
+    // core from the More sheet; Interactions moves to More; gym.html's
+    // tab label changes Fitness -> Train (train.html itself retired --
+    // a legacy duplicate logger from the old Vitality-tile era, same
+    // lineage as vitals.html/brand.html, both deleted in the same pass).
     { key: 'main',    href: 'dashboard.html', label: 'Main',
       icon: '<path d="M3 11 12 4l9 7"/><path d="M5 10v9a1 1 0 0 0 1 1h3v-6h6v6h3a1 1 0 0 0 1-1v-9"/>' },
     { key: 'health',  href: 'health.html',    label: 'Health',
       icon: '<rect x="3" y="3" width="18" height="18" rx="4"/><path d="M12 8v8M8 12h8"/>' },
-    { key: 'fitness', href: 'gym.html',       label: 'Fitness',
+    { key: 'fitness', href: 'gym.html',       label: 'Train',
       icon: '<path d="M6.5 9v6M17.5 9v6M3 10.5v3M21 10.5v3M6.5 12h11"/>' },
     { key: 'planner', href: 'planner.html',   label: 'Planner',
       icon: '<rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1"/><path d="M9 12l2 2 4-4"/>' },
-    { key: 'interactions', href: 'interactions.html', label: 'Interactions',
-      icon: '<circle cx="9" cy="8" r="3.2"/><path d="M3.5 20a5.5 5.5 0 0 1 11 0"/><circle cx="17.5" cy="7" r="2.4"/><path d="M15 12.5a4.2 4.2 0 0 1 6.5 3.5"/>' },
-    // "More" on mobile only — desktop shows these inline with everything else.
-    // Phase 6.1: core is now Main/Health/Fitness/Planner/Interactions only —
-    // Finance, Ability, and Notes all moved here; Peak was deleted outright
-    // (merged into Health's new Energy section, not just relocated).
-    { key: 'finance', href: 'finance.html',   label: 'Finance', more: true,
+    { key: 'finance', href: 'finance.html',   label: 'Finance',
       icon: '<path d="M3 7a2 2 0 0 1 2-2h13a1 1 0 0 1 1 1v3"/><path d="M3 7v10a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1H6a2 2 0 0 1-2-2"/><circle cx="17" cy="13" r="1.4"/>' },
+    // "More" on mobile only — desktop shows these inline with everything else.
+    { key: 'ask',      href: 'ask.html',       label: 'Equavia 0', more: true,
+      icon: '<path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>' },
+    { key: 'interactions', href: 'interactions.html', label: 'Interactions', more: true,
+      icon: '<circle cx="9" cy="8" r="3.2"/><path d="M3.5 20a5.5 5.5 0 0 1 11 0"/><circle cx="17.5" cy="7" r="2.4"/><path d="M15 12.5a4.2 4.2 0 0 1 6.5 3.5"/>' },
     { key: 'ability', href: 'ability.html',   label: 'Ability', more: true,
       icon: '<path d="M12 2c1 4-4 5-4 9a4 4 0 0 0 8 0c0-2-1-3-1-3s2 1 2 5a6 6 0 0 1-12 0c0-6 5-6 7-11Z"/>' },
-    { key: 'notes',   href: 'notes.html',     label: 'Notes',   more: true,
-      icon: '<path d="M7 3h7l5 5v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h6"/>' },
-    // Phase 5.6: More sheet, per spec -- deliberately not a core tab, so
-    // reaching the news feed always costs one extra tap (the friction is
-    // intentional, same reasoning Interactions' Inbox zone already applies).
+    // Phase 5.6: deliberately not a core tab, so reaching the news feed
+    // always costs one extra tap (the friction is intentional, same
+    // reasoning Interactions' Inbox zone already applies).
     { key: 'news',    href: 'news.html',      label: 'News',    more: true,
       icon: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 4v5M8 13h8M8 17h5"/>' },
-    { key: 'train',   href: 'train.html',     label: 'Train',  more: true,
-      icon: '<circle cx="12" cy="13" r="8"/><path d="M12 13V9M9 2h6M12 2v3"/>' },
-    { key: 'vitals',  href: 'vitals.html',    label: 'Vitals', more: true,
-      icon: '<path d="M2 12h4l2-7 4 14 3-9 2 5h5"/>' },
-    { key: 'brand',   href: 'brand.html',     label: 'Brand',  more: true,
-      icon: '<path d="M3 17 9 11l4 4 8-8"/><path d="M15 7h6v6"/>' },
+    { key: 'notes',   href: 'notes.html',     label: 'Notes',   more: true,
+      icon: '<path d="M7 3h7l5 5v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h6"/>' },
     { key: 'settings', href: 'settings.html',  label: 'Settings', more: true,
-      icon: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1-1.55 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.55-1 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34h.09a1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55h.09a1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87v.09a1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.55 1z"/>' },
-    { key: 'ask',      href: 'ask.html',       label: 'Ask',      more: true,
-      icon: '<path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>' }
+      icon: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1-1.55 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.55-1 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34h.09a1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55h.09a1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87v.09a1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.55 1z"/>' }
   ];
   const CORE_PAGES = PAGES.filter((p) => !p.more);
   const MORE_PAGES = PAGES.filter((p) => p.more);
@@ -812,7 +809,7 @@ body.topbar-modal-open { overflow: hidden; touch-action: none; }
 
   // ============================================================
   // 6.9 WEEKLY AUTO-BACKUP -- a silent, whole-localStorage export written
-  // into the vault once per week, keeping the last 8. Same Monday-6am week
+  // into the vault once per week, keeping the last 8. Same Sunday-7pm week
   // boundary this app already uses everywhere else (weekly reports, news
   // digests). Deliberately localStorage-only, same scope as Settings'
   // regular Export button (not the separate "full export with photos") --
@@ -821,11 +818,15 @@ body.topbar-modal-open { overflow: hidden; touch-action: none; }
   // ============================================================
   const BACKUP_LAST_WEEK_KEY = 'eq.backup.lastAutoBackupWeek';
   const BACKUP_KEEP = 8;
+  // Re-walk vs equavia-pre-answers-final.md 4.5: Sunday 7 PM (was Monday
+  // 6am -- see dashboard.html's own weekStartSunday7pm for the full
+  // note). Kept in step with the Report/Audit's own week boundary so
+  // backups land on the same weekly cycle those features reference.
   function backupWeekKey(refDate) {
-    const shifted = new Date(refDate.getTime() - 6 * 3600000);
-    const daysSinceMonday = (shifted.getDay() + 6) % 7;
-    const monday = new Date(shifted.getFullYear(), shifted.getMonth(), shifted.getDate() - daysSinceMonday);
-    return monday.getFullYear() + '-' + String(monday.getMonth() + 1).padStart(2, '0') + '-' + String(monday.getDate()).padStart(2, '0');
+    const shifted = new Date(refDate.getTime() - 19 * 3600000);
+    const daysSinceSunday = shifted.getDay();
+    const sunday = new Date(shifted.getFullYear(), shifted.getMonth(), shifted.getDate() - daysSinceSunday);
+    return sunday.getFullYear() + '-' + String(sunday.getMonth() + 1).padStart(2, '0') + '-' + String(sunday.getDate()).padStart(2, '0');
   }
   async function runWeeklyAutoBackup() {
     if (isEmbedded() || !window.ObsidianSync) return;

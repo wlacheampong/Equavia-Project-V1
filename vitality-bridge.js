@@ -1,5 +1,5 @@
 // =============================================================
-// Bridge for the "sealed" Vitality tiles (train/notes/vitals/brand.html).
+// Bridge for the "sealed" Vitality tiles (train/notes.html).
 // (Phase 6.1: peak.html used to be one of these -- deleted and merged into
 // health.html's Energy section, which uses sync.js/initCloudSync instead,
 // not this bridge.)

@@ -10,8 +10,8 @@
 <link rel="apple-touch-icon" href="images/apple-touch-icon.png">
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Equavia">
-<title>Daily Stack — Equavia</title>
+<meta name="apple-mobile-web-app-title" content="Project Equavia">
+<title>Daily Stack — Project Equavia</title>
 <link rel="stylesheet" href="equavia-core.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="sync.js" defer></script>
@@ -2568,6 +2568,28 @@ main {
     function corrWeightUnit() {
       try { return (JSON.parse(localStorage.getItem('eq.fitness.summary')) || {}).units || 'kg'; } catch (e) { return 'kg'; }
     }
+    // Re-walk vs equavia-pre-answers-final.md 3.5: "recovery % x training
+    // volume" is a default pair, but training volume didn't exist as a
+    // selectable correlation metric at all -- reads gym.html's raw
+    // po_coach_v1.logs directly (not via corrGet, which forces an array
+    // shape -- this store is a keyed object of per-exercise log arrays),
+    // same weight*reps formula gym.html's own weekly aggregate uses.
+    function corrTrainingVolumeSeries() {
+      const map = {};
+      let state;
+      try { state = JSON.parse(localStorage.getItem('po_coach_v1')); } catch (e) { state = null; }
+      if (!state || !state.logs) return map;
+      Object.keys(state.logs).forEach((exId) => {
+        (state.logs[exId] || []).forEach((l) => {
+          if (!l.date) return;
+          const d = new Date(l.date);
+          if (isNaN(d.getTime())) return;
+          const key = corrDateKeyOf(d);
+          map[key] = (map[key] || 0) + (l.weight || 0) * (l.reps || 0);
+        });
+      });
+      return map;
+    }
     // 6.2: mood is a per-day series (eq.mood.log_v1), so it drops straight
     // into this window the same way sleep/recovery do. "Mood x training
     // done" and "mood x interaction score" from the spec weren't added as
@@ -2610,11 +2632,15 @@ main {
       mood: { label: 'Mood (1-10)', unit: '', series: corrMoodSeries },
       symptomSeverity: { label: 'Symptom severity (avg/5)', unit: '', series: corrSymptomSeveritySeries },
       symptomFrequency: { label: 'Symptom frequency (count)', unit: '', series: corrSymptomFrequencySeries },
+      trainingVolume: { label: 'Training volume', unit: '', series: corrTrainingVolumeSeries },
     };
+    // Re-walk vs equavia-pre-answers-final.md 3.5: confirmed default pairs
+    // are sleep x mood, sleep x task completion, recovery x training
+    // volume -- was Recovery x Task, Weight x Task, Sleep x Recovery.
     const CORR_PRESETS = [
-      { label: 'Recovery × Task', a: 'recovery', b: 'taskCompletion' },
-      { label: 'Weight × Task', a: 'weightTrend', b: 'taskCompletion' },
-      { label: 'Sleep × Recovery', a: 'sleep', b: 'recovery' },
+      { label: 'Sleep × Mood', a: 'sleep', b: 'mood' },
+      { label: 'Sleep × Task', a: 'sleep', b: 'taskCompletion' },
+      { label: 'Recovery × Volume', a: 'recovery', b: 'trainingVolume' },
     ];
 
     function pearsonR(pairs) {

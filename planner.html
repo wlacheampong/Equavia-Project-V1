@@ -9,8 +9,8 @@
 <link rel="apple-touch-icon" href="images/apple-touch-icon.png">
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Equavia">
-<title>Planner — Equavia</title>
+<meta name="apple-mobile-web-app-title" content="Project Equavia">
+<title>Planner — Project Equavia</title>
 <link rel="stylesheet" href="equavia-core.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="sync.js" defer></script>
@@ -1700,8 +1700,8 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
           <button type="button" class="proj-view-btn" data-view="all">All Projects</button>
         </div>
         <div class="proj-tools">
-          <button type="button" class="proj-tool-btn" id="projFilterBtn" disabled title="Filter — coming soon">⏷</button>
-          <button type="button" class="proj-tool-btn" id="projSortBtn" disabled title="Sort — coming soon">⇅</button>
+          <button type="button" class="proj-tool-btn" id="projFilterBtn" disabled title="Filter — coming soon" hidden>⏷</button>
+          <button type="button" class="proj-tool-btn" id="projSortBtn" disabled title="Sort — coming soon" hidden>⇅</button>
           <button type="button" class="proj-tool-btn" id="projSearchBtn" title="Search projects">🔍</button>
           <input type="text" class="proj-search" id="projSearchInput" placeholder="Search…">
         </div>
@@ -2811,15 +2811,46 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
     row.innerHTML =
       '<span class="proj-history-title"></span>' +
       '<span class="goal-history-date"></span>' +
-      '<span class="goal-history-count"></span>';
+      '<span class="goal-history-count"></span>' +
+      '<button type="button" class="proj-history-unarchive">Unarchive</button>';
     row.querySelector('.proj-history-title').textContent = g.title;
     row.querySelector('.goal-history-date').textContent = dateTxt;
     row.querySelector('.goal-history-count').textContent = linkedCount + (linkedCount === 1 ? ' project' : ' projects');
+    const unarchiveBtn = row.querySelector('.proj-history-unarchive');
+    unarchiveBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      unarchiveGoal(g.id);
+    });
     return row;
   }
 
-  // No un-archive here, by design -- goal archiving is permanent (confirmed
-  // in Phase 1 planning), unlike Projects' own independent archive/unarchive.
+  // Re-walk vs equavia-pre-answers-final.md 1.7: un-archiving is now
+  // possible (was permanent-by-design in the original Phase 1 build --
+  // that was a real, direct answer swap, not an oversight). Mirrors
+  // buildProjHistoryRow's own reversible Unarchive button above. The
+  // Obsidian note stays wherever archiveGoal() moved it (Archive/<title>)
+  // -- the original pre-archive path was never recorded, so there's
+  // nothing to restore it to; only the in-app archived state reverses.
+  function unarchiveGoal(goalId) {
+    const goals = getLongtermGoals();
+    const idx = goals.findIndex(g => g.id === goalId);
+    if (idx === -1) return;
+    goals[idx] = Object.assign({}, goals[idx], { archived: false });
+    setLongtermGoals(goals);
+
+    let projects = getProjects();
+    let restored = 0;
+    projects = projects.map(p => {
+      if (p.goalId === goalId && p.archivedViaGoal) { restored++; return Object.assign({}, p, { archived: false, archivedViaGoal: false }); }
+      return p;
+    });
+    setProjectsList(projects);
+
+    renderLongtermGoals();
+    renderProjects();
+    showGoalArchiveStatus('Unarchived' + (restored ? ' — ' + restored + ' linked project(s) restored.' : '.') + ' Its Obsidian note stays in the Archive folder — move it back manually if wanted.', false);
+  }
+
   function renderGoalHistory() {
     const wrap = document.getElementById('goalHistoryList');
     const countEl = document.getElementById('goalHistoryCount');
@@ -2840,17 +2871,19 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
       .forEach(g => wrap.appendChild(buildGoalHistoryRow(g)));
   }
 
-  // Archiving a goal is permanent and cascades to every project linked to
-  // it (a project only ever belongs to one goal via p.goalId, so there's
-  // no "shared between two goals" case to reconcile). Obsidian page moves
-  // are attempted best-effort after the local archive already committed --
+  // Archiving a goal cascades to every project linked to it (a project
+  // only ever belongs to one goal via p.goalId, so there's no "shared
+  // between two goals" case to reconcile). Obsidian page moves are
+  // attempted best-effort after the local archive already committed --
   // a slow/unreachable Obsidian must never leave the goal half-archived.
+  // Reversible via unarchiveGoal() above (re-walk vs 1.7: no longer
+  // permanent-by-design).
   async function archiveGoal(goalId) {
     const goals = getLongtermGoals();
     const goal = goals.find(g => g.id === goalId);
     if (!goal) return;
     const linked = getProjects().filter(p => p.goalId === goalId);
-    const confirmMsg = 'Archive "' + goal.title + '"? This is permanent and can\'t be undone.' +
+    const confirmMsg = 'Archive "' + goal.title + '"? You can unarchive it later from Goal History.' +
       (linked.length ? ' ' + linked.length + ' linked project' + (linked.length === 1 ? '' : 's') + ' will be archived too.' : '');
     if (!window.confirm(confirmMsg)) return;
 
@@ -4091,7 +4124,14 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
       const cur = getProjects();
       const idx = cur.findIndex(x => x.id === p.id);
       if (idx !== -1) {
-        cur[idx] = Object.assign({}, cur[idx], { title, status, priority, goalId });
+        // Re-walk vs equavia-pre-answers-final.md 3.3: "projects completed
+        // (with names)" needs a completion timestamp, which never existed
+        // before (status='done' had no record of when). Stamped only on
+        // the not-done -> done transition; cleared if moved back off done.
+        const wasDone = cur[idx].status === 'done';
+        const nowDone = status === 'done';
+        const completedAt = nowDone ? (wasDone ? cur[idx].completedAt : new Date().toISOString()) : null;
+        cur[idx] = Object.assign({}, cur[idx], { title, status, priority, goalId, completedAt });
         setProjectsList(cur);
       }
       projEditingId = null;
@@ -4326,7 +4366,7 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
       const goalId = document.getElementById('projGoalInput').value || null;
       const list = getProjects();
       const id = uniqueIdFromTitle(title, new Set(list.map(x => x.id)), 'project-');
-      list.push({ id, title, status, priority, value: status === 'done' ? 100 : 0, goalId, archived: false, obsidian: null });
+      list.push({ id, title, status, priority, value: status === 'done' ? 100 : 0, goalId, archived: false, obsidian: null, completedAt: status === 'done' ? new Date().toISOString() : null });
       setProjectsList(list);
       titleEl.value = '';
       addForm.style.display = 'none';
@@ -4381,7 +4421,8 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
   // lastContactedAt) are interactions.html's source of truth now; kept in
   // sync here only via that same read, never written back from Planner.
   const CONTACTS_KEY = 'contacts_v1';
-  const TIER_CADENCE = { inner: 7, close: 21, acquaintance: 60, networking: 90 };
+  // Re-walk vs equavia-pre-answers-final.md 5.2: Close 21d->14d, Acquaintance 60d->45d.
+  const TIER_CADENCE = { inner: 7, close: 14, acquaintance: 45, networking: 90 };
   function getContacts() { const v = storeGet(CONTACTS_KEY); return Array.isArray(v) ? v : []; }
   function contactIsOverdue(c) {
     if (c.snoozedUntil && new Date(c.snoozedUntil).getTime() > Date.now()) return false;

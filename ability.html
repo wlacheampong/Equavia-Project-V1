@@ -9,8 +9,8 @@
 <link rel="apple-touch-icon" href="images/apple-touch-icon.png">
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Equavia">
-<title>Ability — Equavia</title>
+<meta name="apple-mobile-web-app-title" content="Project Equavia">
+<title>Ability — Project Equavia</title>
 <link rel="stylesheet" href="equavia-core.css">
 <script src="assistant-tools.js"></script>
 <script src="topbar.js" defer></script>
@@ -302,10 +302,6 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
 .learn-item-del { background: none; border: none; color: var(--text-quaternary); cursor: pointer; font-size: 14px; padding: 0 4px; }
 .learn-deadline-soon { color: var(--warning); font-weight: 700; }
 .learn-hours-total { font-size: 12px; color: var(--text-secondary); margin-bottom: 8px; }
-.learn-export-btn {
-  margin-top: 8px; background: none; border: 1px dashed rgba(255,255,255,0.16); border-radius: 8px;
-  padding: 7px 12px; font-family: inherit; font-size: 11px; font-weight: 600; color: var(--text-secondary); cursor: pointer;
-}
 .learn-deck-row { padding: 9px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
 .learn-deck-row:last-child { border-bottom: none; }
 .learn-deck-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
@@ -633,7 +629,6 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
     </div>
     <div class="learn-hours-total" id="learnHoursTotal"></div>
     <div id="learnHoursList"></div>
-    <button type="button" class="learn-export-btn" id="learnHoursExportBtn">Export CSV</button>
 
     <div class="learn-subsection-title">Flashcard decks</div>
     <div class="learn-deck-add-row">
@@ -1133,12 +1128,21 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
   function getBooks() { const v = storeGet(BOOKS_KEY); return Array.isArray(v) ? v : []; }
   function setBooks(list) { storeSet(BOOKS_KEY, list); }
 
+  // Re-walk vs equavia-pre-answers-final.md 1.1: yearly "books finished"
+  // target, Goodreads-challenge style -- wasn't tracked at all before,
+  // just a bare count. Stored (not hardcoded) so it can be adjusted the
+  // same way sleep_target_hours_v1 is, without another code change.
+  const BOOKS_TARGET_KEY = 'books_yearly_target_v1';
+  const DEFAULT_BOOKS_TARGET = 6;
+  function getBooksTarget() { const v = storeGet(BOOKS_TARGET_KEY); return (typeof v === 'number' && v > 0) ? v : DEFAULT_BOOKS_TARGET; }
+
   function renderBookYearStat() {
     const el = document.getElementById('bookYearStat');
     if (!el) return;
     const year = new Date().getFullYear();
     const count = getBooks().filter(b => b.status === 'read' && b.finishedAt && new Date(b.finishedAt).getFullYear() === year).length;
-    el.innerHTML = '<b>' + count + '</b> book' + (count === 1 ? '' : 's') + ' finished in ' + year;
+    const target = getBooksTarget();
+    el.innerHTML = '<b>' + count + '</b> / ' + target + ' book' + (target === 1 ? '' : 's') + ' finished in ' + year;
   }
 
   function buildBookRow(book) {
@@ -1303,7 +1307,23 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
   const DECKS_KEY = 'eq.learn.decks_v1';
   const LOG_KEY = 'eq.learn.log_v1';
 
-  function getTracks() { return storeGet(TRACKS_KEY) || []; }
+  // Re-walk vs equavia-pre-answers-final.md 6.3: seed tracks on first
+  // load, same "seed on first empty read" pattern as gym.html's stack
+  // items -- only fires when the key has never been written at all
+  // (storeGet returns null), never re-seeds after a real, deliberate
+  // empty state (e.g. the user deleted every track).
+  function getTracks() {
+    const stored = storeGet(TRACKS_KEY);
+    if (stored === null) {
+      const seeded = [
+        { id: genId('lt'), name: 'Adult Nursing BSc', status: 'active', endDate: null, createdAt: new Date().toISOString() },
+        { id: genId('lt'), name: 'Property Investing', status: 'active', endDate: null, createdAt: new Date().toISOString() },
+      ];
+      setTracks(seeded);
+      return seeded;
+    }
+    return Array.isArray(stored) ? stored : [];
+  }
   function setTracks(v) { storeSet(TRACKS_KEY, v); }
   function getDeadlines() { return storeGet(DEADLINES_KEY) || []; }
   function setDeadlines(v) { storeSet(DEADLINES_KEY, v); }
@@ -1445,20 +1465,8 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
     $('learnHoursInput').value = ''; $('learnHoursNote').value = '';
     renderHoursLog();
   });
-  // CSV, per the answered ASK FIRST question -- date/hours/note columns,
-  // opens cleanly anywhere; reformatting into a specific placement
-  // template is left to the user rather than guessing that template's
-  // exact layout.
-  $('learnHoursExportBtn').addEventListener('click', () => {
-    const entries = getHours().filter((h) => h.trackId === activeTrackId).sort((a, b) => a.at.localeCompare(b.at));
-    const rows = [['Date', 'Hours', 'Note']].concat(entries.map((h) => [new Date(h.at).toISOString().slice(0, 10), (h.minutes / 60).toFixed(2), (h.note || '').replace(/"/g, '""')]));
-    const csv = rows.map((r) => r.map((c) => '"' + c + '"').join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = trackName(activeTrackId).replace(/[^a-z0-9]+/gi, '-') + '-hours.csv';
-    a.click();
-  });
+  // Re-walk vs equavia-pre-answers-final.md 6.3: hours-export removed
+  // ("not needed") -- was a CSV button here (date/hours/note columns).
 
   // ---- Flashcard decks (SM-2) ----
   function sm2Update(card, quality) {

@@ -32,9 +32,9 @@
   };
 
   // Never gate content embedded in an iframe (e.g. po-water.html inside
-  // health.html, train.html inside gym.html) -- same rule landing-guard.js
-  // already follows, for the same reason: the parent page is already
-  // gated, and an iframe has no sensible place to show a lock screen.
+  // health.html) -- same rule landing-guard.js already follows, for the
+  // same reason: the parent page is already gated, and an iframe has no
+  // sensible place to show a lock screen.
   try { if (window.self !== window.top) return; } catch (e) { return; }
 
   // Never gate the lock screen itself.

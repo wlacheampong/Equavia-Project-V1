@@ -9,8 +9,8 @@
 <link rel="apple-touch-icon" href="images/apple-touch-icon.png">
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Equavia">
-<title>Progressive Overload Coach — Equavia</title>
+<meta name="apple-mobile-web-app-title" content="Project Equavia">
+<title>Progressive Overload Coach — Project Equavia</title>
 <script src="assistant-tools.js"></script>
 <script src="topbar.js" defer></script>
 <script src="obsidian-sync.js"></script>
@@ -2790,16 +2790,13 @@ img, video, canvas, svg { max-width: 100%; }
 
   // Published for the dashboard's compact Fitness summary card -- read-only
   // there, this (plus the logBtn handler below) is what keeps it current.
-  // Monday 6am boundary, matching the app's existing daily 6am rollover
-  // convention (a "day" -- and now a "week" -- runs 6am to 6am, not
-  // midnight to midnight). Shifting the reference time back 6h before
-  // finding the week-start turns the true 6am boundary into a plain
-  // midnight boundary the rest of the math can work with normally.
-  function weekStartMonday6am(refDate) {
-    const shifted = new Date(refDate.getTime() - 6 * 3600000);
-    const daysSinceMonday = (shifted.getDay() + 6) % 7; // Mon=0 ... Sun=6
-    const mondayShifted = new Date(shifted.getFullYear(), shifted.getMonth(), shifted.getDate() - daysSinceMonday);
-    return new Date(mondayShifted.getTime() + 6 * 3600000);
+  // Re-walk vs equavia-pre-answers-final.md 4.5: Sunday 7 PM (was Monday
+  // 6am -- see dashboard.html's own weekStartSunday7pm for the full note).
+  function weekStartSunday7pm(refDate) {
+    const shifted = new Date(refDate.getTime() - 19 * 3600000);
+    const daysSinceSunday = shifted.getDay();
+    const sundayShifted = new Date(shifted.getFullYear(), shifted.getMonth(), shifted.getDate() - daysSinceSunday);
+    return new Date(sundayShifted.getTime() + 19 * 3600000);
   }
 
   function publishFitnessSummary() {
@@ -2834,7 +2831,7 @@ img, video, canvas, svg { max-width: 100%; }
       // Weekly aggregates, feeds the Weekly Report widget (3.3) -- computed
       // here (not read raw from dashboard.html) since state.logs has already
       // been through normalize() by this point in the page's lifecycle.
-      const weekStart = weekStartMonday6am(new Date());
+      const weekStart = weekStartSunday7pm(new Date());
       const sessionDates = new Set();
       let volumeThisWeek = 0;
       Object.keys(state.logs || {}).forEach((exId) => {
@@ -2847,6 +2844,32 @@ img, video, canvas, svg { max-width: 100%; }
         });
       });
 
+      // Re-walk vs equavia-pre-answers-final.md 3.3: "lifting progression
+      // status (progressed/plateaued/regressed per exercise vs previous
+      // week)" -- didn't exist at all before (getRx() prescribes the next
+      // session's numbers but never classifies past performance). Compares
+      // each exercise's best set this week vs last week using the exact
+      // same scoreForLog() the sparkline's own top-set filter already uses
+      // (e1RM for weighted exercises, reps for bodyweight ones) -- one
+      // shared definition of "best set," not a second one invented here.
+      // Exercises with no logged set in one of the two weeks are skipped
+      // entirely (no data to compare -- never inferred either way).
+      const lastWeekStart = new Date(weekStart.getTime() - 7 * 86400000);
+      const progressionThisWeek = [];
+      state.exercises.forEach((ex) => {
+        const logs = state.logs[ex.id] || [];
+        let thisWeekTop = null, lastWeekTop = null;
+        logs.forEach((l) => {
+          const d = new Date(l.date);
+          const score = scoreForLog(ex, l);
+          if (d >= weekStart) { if (thisWeekTop == null || score > thisWeekTop) thisWeekTop = score; }
+          else if (d >= lastWeekStart) { if (lastWeekTop == null || score > lastWeekTop) lastWeekTop = score; }
+        });
+        if (thisWeekTop == null || lastWeekTop == null) return;
+        const status = thisWeekTop > lastWeekTop ? 'progressed' : thisWeekTop < lastWeekTop ? 'regressed' : 'plateaued';
+        progressionThisWeek.push({ exercise: ex.name, status });
+      });
+
       localStorage.setItem('eq.fitness.summary', JSON.stringify({
         currentWeight: current ? current.weight : null,
         weight7dAvg: avg7 != null ? Number(avg7.toFixed(1)) : null,
@@ -2856,6 +2879,7 @@ img, video, canvas, svg { max-width: 100%; }
         lastSessionDay: lastSessionDay,
         sessionsThisWeek: sessionDates.size,
         volumeThisWeek: Math.round(volumeThisWeek),
+        progressionThisWeek: progressionThisWeek,
         at: new Date().toISOString()
       }));
     } catch (e) {}
@@ -3851,6 +3875,48 @@ img, video, canvas, svg { max-width: 100%; }
   function trainSnapshotCurrent() {
     return { days: state.days, exercises: state.exercises, splitRotation: state.splitRotation, splitAnchor: state.splitAnchor };
   }
+  // Re-walk vs equavia-pre-answers-final.md 6.4: the user's real current
+  // 5-day program, seeded as this program's exercise data (per the
+  // user's own explicit choice: seed into the existing flexible builder
+  // rather than rebuild it). repMin/repMax/step/startWeight are the only
+  // per-exercise fields this schema has (see CONFIG.defaultExercises'
+  // own header comment) -- there is no target-sets-count field anywhere
+  // in this app (the UI only ever counts sets actually logged that
+  // session, e1RM-chart code included), so the prescribed set count from
+  // the spec is encoded in each name parenthetically rather than
+  // silently dropped or requiring a schema change beyond "seed the
+  // data." Superset pairings (A1/A2, B1/B2) are likewise name-only, same
+  // reason. startWeight/step are reasonable placeholders in the same
+  // spirit as CONFIG.defaultExercises' own generic seed numbers -- the
+  // user adjusts through normal logging, same as any other exercise here.
+  const SPLIT5_SEED_EXERCISES = [
+    { name: 'Incline press (3 sets)', gym: 'comm', day: 'upper-a', repMin: 8, repMax: 12, step: 2.5, startWeight: 40 },
+    { name: 'Row (3 sets)', gym: 'comm', day: 'upper-a', repMin: 8, repMax: 12, step: 2.5, startWeight: 40 },
+    { name: 'Dip or chest fly (2-3 sets)', gym: 'comm', day: 'upper-a', repMin: 8, repMax: 12, step: 2.5, startWeight: 20 },
+    { name: 'Lateral raise (3 sets)', gym: 'comm', day: 'upper-a', repMin: 12, repMax: 15, step: 1.25, startWeight: 8 },
+    { name: 'A1 Shrug (2 sets, superset)', gym: 'comm', day: 'upper-a', repMin: 10, repMax: 15, step: 2.5, startWeight: 30 },
+    { name: 'A2 Curl (2 sets, superset)', gym: 'comm', day: 'upper-a', repMin: 10, repMax: 15, step: 1.25, startWeight: 12 },
+    { name: 'Hack squat (3 sets)', gym: 'comm', day: 'lower-a', repMin: 8, repMax: 12, step: 5, startWeight: 60 },
+    { name: 'Romanian deadlift (3 sets)', gym: 'comm', day: 'lower-a', repMin: 6, repMax: 10, step: 5, startWeight: 60 },
+    { name: 'Leg extension (2 sets)', gym: 'comm', day: 'lower-a', repMin: 12, repMax: 15, step: 2.5, startWeight: 30 },
+    { name: 'Calf raise (3 sets)', gym: 'comm', day: 'lower-a', repMin: 12, repMax: 15, step: 2.5, startWeight: 40 },
+    { name: 'Hanging leg raise (3 sets)', gym: 'comm', day: 'lower-a', repMin: 10, repMax: 15, step: 1, startWeight: 0, bw: true },
+    { name: 'A1 Lateral raise (3 sets, superset)', gym: 'comm', day: 'arms-shoulders', repMin: 12, repMax: 15, step: 1.25, startWeight: 8 },
+    { name: 'A2 Rear delt fly (3 sets, superset)', gym: 'comm', day: 'arms-shoulders', repMin: 12, repMax: 15, step: 1.25, startWeight: 8 },
+    { name: 'B1 Curl, incline or preacher (3 sets, superset)', gym: 'comm', day: 'arms-shoulders', repMin: 10, repMax: 15, step: 1.25, startWeight: 10 },
+    { name: 'B2 Tricep extension or dip (3 sets, superset)', gym: 'comm', day: 'arms-shoulders', repMin: 10, repMax: 15, step: 1.25, startWeight: 15 },
+    { name: 'Pull-up or lat pulldown (3 sets)', gym: 'both', day: 'upper-b', repMin: 6, repMax: 10, step: 1, startWeight: 0, bw: true },
+    { name: 'Chest-supported row (3 sets)', gym: 'comm', day: 'upper-b', repMin: 8, repMax: 12, step: 2.5, startWeight: 30 },
+    { name: 'Overhead press (3 sets)', gym: 'comm', day: 'upper-b', repMin: 8, repMax: 12, step: 2.5, startWeight: 30 },
+    { name: 'A1 Face pull (2 sets, superset)', gym: 'comm', day: 'upper-b', repMin: 12, repMax: 15, step: 2.5, startWeight: 15 },
+    { name: 'A2 Tricep extension (2 sets, superset)', gym: 'comm', day: 'upper-b', repMin: 10, repMax: 15, step: 1.25, startWeight: 15 },
+    { name: 'Leg press (3 sets)', gym: 'comm', day: 'lower-b', repMin: 10, repMax: 15, step: 5, startWeight: 80 },
+    { name: 'Bulgarian split squat, each leg (2 sets)', gym: 'comm', day: 'lower-b', repMin: 8, repMax: 12, step: 2.5, startWeight: 12 },
+    { name: 'Nordic or sliding leg curl (3 sets)', gym: 'comm', day: 'lower-b', repMin: 8, repMax: 12, step: 1, startWeight: 0, bw: true },
+    { name: 'Calf raise (3 sets)', gym: 'comm', day: 'lower-b', repMin: 12, repMax: 15, step: 2.5, startWeight: 40 },
+    { name: 'Ab wheel or dead bug (3 sets)', gym: 'comm', day: 'lower-b', repMin: 8, repMax: 12, step: 1, startWeight: 0, bw: true },
+  ];
+
   // First run: the user's REAL existing split/exercises become "Current
   // split" (preserved, not discarded) rather than being silently
   // overwritten by the two newly-requested named programs.
@@ -3863,7 +3929,8 @@ img, video, canvas, svg { max-width: 100%; }
       {
         id: 'split5', name: '5-Day Split',
         days: ['Upper A', 'Lower A', 'Arms & Shoulders', 'Upper B', 'Lower B'].map((n) => ({ id: trainSlug(n), name: n })),
-        exercises: [], splitRotation: ['Upper A', 'Lower A', 'Arms & Shoulders', 'Upper B', 'Lower B'], splitAnchor: { date: today, index: 0 },
+        exercises: SPLIT5_SEED_EXERCISES.map((e, i) => Object.assign({ id: 'split5_' + i + '_' + Date.now() }, e)),
+        splitRotation: ['Upper A', 'Lower A', 'Arms & Shoulders', 'Upper B', 'Lower B'], splitAnchor: { date: today, index: 0 },
       },
       {
         id: 'split3', name: '3-Day Split',
