@@ -13,6 +13,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Equavia">
 <title>Train — Equavia</title>
+<link rel="stylesheet" href="equavia-core.css">
 <script src="assistant-tools.js"></script>
 <script src="topbar.js" defer></script>
 
@@ -26,19 +27,19 @@
      ================================================================= */
   :root {
     /* Vitality tokens — reskin of the Patron logger */
-    --bg:#050506; --surface:#0e0e11; --border:#1d1d22; --mint:#6EE7B7; --muted:#84848c; --fg:#ededf0;
+    --bg:var(--eq-bg-primary); --surface:var(--eq-bg-card); --border:var(--eq-border); --mint:#6EE7B7; --muted:var(--eq-text-muted); --fg:var(--eq-text-primary);
     /* semantic accents kept (other sealed tiles keep --neg the same way) — gold flags a PR, fail a miss */
-    --gold:#f59e0b; --fail:#e06a6c; --ink:#04140d;
+    --gold:#f59e0b; --fail:var(--eq-danger); --ink:#04140d;
     /* logger-internal aliases mapped onto the Vitality tokens */
-    --card:#0e0e11; --row:#141419; --line:#1d1d22; --hair:#2a2a31; --border-strong:#2a2a31;
-    --mint-ic:#6EE7B7; --text:#ededf0; --muted-strong:#a8a8b0;
+    --card:var(--eq-bg-card); --row:#141419; --line:var(--eq-border); --hair:#2a2a31; --border-strong:var(--eq-border-strong);
+    --mint-ic:#6EE7B7; --text:var(--eq-text-primary); --muted-strong:var(--eq-text-secondary);
     /* system font stack only — no external fonts + a system serif for the italic display */
-    --font-display:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,sans-serif;
-    --font-mono:ui-monospace,SFMono-Regular,Menlo,"JetBrains Mono",monospace;
+    --font-display:var(--eq-font-family);
+    --font-mono:var(--eq-font-mono);
     --vt-sans:var(--font-display); --vt-mono:var(--font-mono); --vt-serif:Georgia,"Times New Roman",serif;
     --font-serif:Georgia,"Times New Roman",serif; --serif:Georgia,"Times New Roman",serif; --sans:var(--font-display);
     --spring: cubic-bezier(.34,1.56,.64,1); --ease: cubic-bezier(.2,.8,.2,1);
-    --radius-lg:12px; --radius-pill:999px;
+    --radius-lg:var(--eq-card-radius); --radius-pill:999px;
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   ::selection { background: var(--mint); color: var(--ink); }
@@ -143,6 +144,10 @@
   .deloadTag { color: var(--muted-strong); border:1px solid var(--hair); border-radius:4px; padding:1px 6px; font-size:9px; letter-spacing:.12em; }
 
   .exActions { display:flex; align-items:center; flex-wrap:wrap; gap:7px; padding-left:29px; margin-top:14px; }
+  @media (max-width: 920px) {
+    /* .shell has no side margin below 920px, so reserve room for the fixed Quick Capture FAB (52px + offset) in the bottom-right corner */
+    .exActions { padding-right: 76px; }
+  }
   .actionPill { display:inline-flex; align-items:center; gap:6px; padding:6px 12px; font-size:12px; color: var(--mint); background: rgba(110,231,183,.04); border:1px solid rgba(110,231,183,.25); border-radius: var(--radius-pill); cursor:pointer; white-space:nowrap; box-shadow: 0 0 16px rgba(110,231,183,.10); transition: color .15s, border-color .15s, background .15s, box-shadow .48s var(--ease), transform .15s var(--spring); }
   .actionPill:hover { color: #fff; border-color: var(--mint); background: rgba(110,231,183,.12); box-shadow: 0 0 22px rgba(110,231,183,.20); transform: translateY(-1px); }
   .actionPill:active { transform: scale(.96); }
@@ -165,8 +170,8 @@
   .pillInput:focus { color: var(--mint); border-bottom-color: var(--mint); }
   .pillSpacer { flex:1; }
   .pillActions { display:inline-flex; align-items:center; gap:9px; }
-  .pillHit { background:none; border:none; font-family: var(--serif); font-style:italic; font-size:14px; color: var(--mint); cursor:pointer; white-space:nowrap; padding:2px; transition: color .15s; }
-  .pillMiss { background:none; border:none; font-family: var(--serif); font-style:italic; font-size:14px; color: var(--muted); cursor:pointer; padding:2px; transition: color .15s; }
+  .pillHit { background:none; border:none; font-family: var(--serif); font-style:italic; font-size:14px; color: var(--mint); cursor:pointer; white-space:nowrap; padding:2px; transition: color .15s; min-height:44px; min-width:44px; display:inline-flex; align-items:center; justify-content:center; }
+  .pillMiss { background:none; border:none; font-family: var(--serif); font-style:italic; font-size:14px; color: var(--muted); cursor:pointer; padding:2px; transition: color .15s; min-height:44px; min-width:44px; display:inline-flex; align-items:center; justify-content:center; }
   .pillMiss:hover { color: var(--fail); }
   .pillStatus { font-family: var(--serif); font-style:italic; font-size:14px; cursor:default; }
   .pillPr { font-style:italic; color: var(--gold); }

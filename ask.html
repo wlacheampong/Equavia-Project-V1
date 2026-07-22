@@ -11,24 +11,25 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Equavia">
 <title>Ask Claude — Equavia</title>
+<link rel="stylesheet" href="equavia-core.css">
 <script src="topbar.js" defer></script>
 <script src="obsidian-sync.js"></script>
 <script src="assistant-tools.js"></script>
 <style>
 :root {
-  --bg: #0A0A0B;
-  --bg-deep: #050506;
-  --bg-card: rgba(255, 255, 255, 0.04);
-  --text-primary: #FAFAFA;
-  --text-secondary: #B8B6B0;
-  --text-tertiary: #76746E;
-  --text-quaternary: #4D4B47;
-  --accent: #E07658;
-  --success: #6BE3A4;
-  --warning: #F2C063;
-  --danger: #FF6B6B;
-  --font: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --bg: var(--eq-bg-primary);
+  --bg-deep: var(--eq-bg-primary);
+  --bg-card: var(--eq-bg-card);
+  --text-primary: var(--eq-text-primary);
+  --text-secondary: var(--eq-text-secondary);
+  --text-tertiary: var(--eq-text-muted);
+  --text-quaternary: var(--eq-text-muted); /* was #4D4B47 (~2.4:1, failed AA) */
+  --accent: var(--eq-accent);
+  --success: var(--eq-success);
+  --warning: var(--eq-warning);
+  --danger: var(--eq-danger);
+  --font: var(--eq-font-family);
+  --font-mono: var(--eq-font-mono);
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
@@ -47,6 +48,7 @@ body {
   padding: 5px 12px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.1);
   background: rgba(255,255,255,0.03); color: var(--text-tertiary);
   font-family: inherit; font-size: 11px; font-weight: 600; cursor: pointer;
+  min-height: 44px; display: inline-flex; align-items: center; justify-content: center; /* was ~23px tall */
 }
 .ask-domain-chip.is-on { background: rgba(224,118,88,0.14); border-color: rgba(224,118,88,0.4); color: var(--accent); }
 .ask-context-size { font-size: 10.5px; color: var(--text-quaternary); font-family: var(--font-mono); margin-bottom: 18px; }
@@ -121,13 +123,13 @@ body {
 }
 .ask-input::placeholder { color: var(--text-tertiary); }
 .ask-send-btn {
-  flex-shrink: 0; width: 38px; height: 38px; border-radius: 12px; border: none;
+  flex-shrink: 0; width: 44px; height: 44px; border-radius: 12px; border: none; /* was 38px */
   background: var(--accent); color: #1a0f0a; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
 }
 .ask-send-btn:disabled { opacity: 0.4; cursor: default; }
 .ask-mic-btn {
-  flex-shrink: 0; width: 38px; height: 38px; border-radius: 12px; border: none;
+  flex-shrink: 0; width: 44px; height: 44px; border-radius: 12px; border: none; /* was 38px */
   background: rgba(255,255,255,0.06); color: var(--text-secondary); cursor: pointer;
   display: flex; align-items: center; justify-content: center;
 }

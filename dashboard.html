@@ -11,6 +11,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Equavia">
 <title>Equavia</title>
+<link rel="stylesheet" href="equavia-core.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="sync.js" defer></script>
 <script src="assistant-tools.js"></script>
@@ -18,20 +19,23 @@
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
 :root {
-  --text-primary: #FAFAFA;
-  --text-secondary: #B8B6B0;
-  --text-tertiary: #76746E;
-  --success: #6BE3A4;
-  --warning: #F2C063;
-  --danger: #FF6B6B;
-  --font: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --text-primary: var(--eq-text-primary);
+  --text-secondary: var(--eq-text-secondary);
+  --text-tertiary: var(--eq-text-muted);
+  --text-quaternary: var(--eq-text-muted); /* was referenced but never defined -- silently broke several empty-state/accent rules */
+  --accent: var(--eq-accent); /* was referenced but never defined */
+  --border-strong: var(--eq-border-strong); /* was referenced but never defined */
+  --success: var(--eq-success);
+  --warning: var(--eq-warning);
+  --danger: var(--eq-danger);
+  --font: var(--eq-font-family);
+  --font-mono: var(--eq-font-mono);
 }
 
 * { box-sizing: border-box; }
 html, body {
   margin: 0; padding: 0;
-  background: #050506;
+  background: var(--eq-bg-primary);
   color: var(--text-secondary);
   font-family: var(--font);
   -webkit-font-smoothing: antialiased;
@@ -743,6 +747,11 @@ body::after {
   background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
   color: var(--text-tertiary); font-family: var(--font-mono); font-size: 10px;
   font-weight: 700; letter-spacing: 0.04em; padding: 4px 9px; border-radius: 6px; cursor: pointer;
+  position: relative;
+}
+.todo-chart-range-btn::before {
+  /* invisible tap-target expansion: 4px gap between buttons caps the horizontal reach */
+  content: ''; position: absolute; top: -14px; bottom: -14px; left: -2px; right: -2px;
 }
 .todo-chart-range-btn.is-active { background: var(--success); border-color: var(--success); color: #0a0a0b; }
 /* 6.6: "did the must-dos happen" optional P1-only view on this chart. */
@@ -751,6 +760,10 @@ body::after {
   background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
   color: var(--text-tertiary); font-family: var(--font-mono); font-size: 10px;
   font-weight: 700; letter-spacing: 0.04em; padding: 4px 9px; border-radius: 6px; cursor: pointer;
+  position: relative;
+}
+.todo-chart-p1-btn::before {
+  content: ''; position: absolute; inset: -12px;
 }
 .todo-chart-p1-btn.is-active { background: #FF8A8A; border-color: #FF8A8A; color: #0a0a0b; }
 .todo-chart-empty { font-size: 12px; color: var(--text-tertiary); text-align: center; padding: 14px 4px; }
@@ -816,6 +829,7 @@ body::after {
   padding: 8px 14px; border-radius: 9px; border: 1px solid rgba(255,255,255,0.1);
   background: rgba(255,255,255,0.04); color: var(--text-secondary);
   font-family: inherit; font-size: 11.5px; font-weight: 600; cursor: pointer;
+  min-height: var(--eq-touch-min); /* was ~36px tall */
 }
 .wkr-obsidian-btn:hover { background: rgba(255,255,255,0.08); color: var(--text-primary); }
 .wkr-obsidian-status { font-size: 11px; color: var(--text-tertiary); }
@@ -834,10 +848,16 @@ body::after {
 /* ===== Mood + journal (6.2) ===== */
 .mood-chip { max-width: 640px; margin: 0 auto 18px; background: rgba(255,255,255,0.04); border-radius: 14px; padding: 14px 16px; }
 .mood-chip-head { font-size: 12.5px; font-weight: 700; color: var(--text-secondary); margin-bottom: 10px; }
-.mood-scale { display: flex; gap: 5px; flex-wrap: wrap; }
+.mood-scale { display: flex; gap: 5px; flex-wrap: wrap; } /* kept at 5px -- 8px broke the single-row fit for all 10 buttons at mobile widths (verified); the invisible tap-target expansion below covers the reduced-gap trade-off instead */
 .mood-num-btn {
-  flex: 1; min-width: 26px; height: 32px; border-radius: 8px; border: 1px solid var(--border-strong);
+  flex: 1; min-width: 26px; height: 36px; border-radius: 8px; border: 1px solid var(--border-strong);
   background: rgba(255,255,255,0.04); color: var(--text-secondary); font-family: inherit; font-size: 12px; font-weight: 700; cursor: pointer;
+  position: relative;
+}
+.mood-num-btn::before {
+  /* invisible tap-target expansion, capped by the 5px gap between buttons -- a full 44px box would force
+     the 10-button row to wrap on most phone widths, which the audit confirmed currently fits on one line */
+  content: ''; position: absolute; top: -6px; bottom: -6px; left: -2px; right: -2px;
 }
 .mood-num-btn.is-selected { background: var(--accent); border-color: transparent; color: #1a0f0a; }
 .mood-note-input {
@@ -1445,6 +1465,7 @@ body::after {
 .gmail-connect-btn {
   padding: 9px 18px; border-radius: 10px; font-size: 12.5px; font-weight: 700;
   background: linear-gradient(180deg, #ffffff 0%, #e8e5dd 100%); color: #0a0a0b;
+  min-height: var(--eq-touch-min); width: 100%; /* was ~36px tall and auto-width */
 }
 .gmail-head { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
 .gmail-unread-badge {

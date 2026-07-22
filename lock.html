@@ -10,19 +10,20 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Equavia">
 <title>Sign in — Equavia</title>
+<link rel="stylesheet" href="equavia-core.css">
 <style>
 :root {
-  --bg: #050506;
-  --bg-card: rgba(255, 255, 255, 0.04);
-  --bg-input: rgba(0, 0, 0, 0.28);
-  --border: rgba(255, 255, 255, 0.08);
-  --border-strong: rgba(255, 255, 255, 0.14);
-  --text-primary: #FAFAFA;
-  --text-secondary: #B8B6B0;
-  --text-tertiary: #76746E;
-  --accent: #E07658;
-  --danger: #FF6B6B;
-  --font: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --bg: var(--eq-bg-primary);
+  --bg-card: var(--eq-bg-card);
+  --bg-input: var(--eq-bg-input);
+  --border: var(--eq-border);
+  --border-strong: var(--eq-border-strong);
+  --text-primary: var(--eq-text-primary);
+  --text-secondary: var(--eq-text-secondary);
+  --text-tertiary: var(--eq-text-muted); /* was #76746E (~4.36:1, marginally failed AA) */
+  --accent: var(--eq-accent);
+  --danger: var(--eq-danger);
+  --font: var(--eq-font-family);
 }
 * { box-sizing: border-box; }
 html, body {

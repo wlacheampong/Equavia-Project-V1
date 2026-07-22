@@ -1,0 +1,362 @@
+EQUAVIA — UI & MOBILE AUDIT + DESIGN-TOKEN CLEANUP
+Session date: 2026-07-22
+Scope: all 18 pages (dashboard, health, gym, planner, interactions, finance,
+ability, notes, train, vitals, brand, settings, ask, news, po-water, lock,
+privacy, index)
+
+====================================================================
+STEP 1 — FULL UI AUDIT
+====================================================================
+
+Method: 8 parallel background agents audited all 18 pages at 380 / 428 /
+768 / 1280px via headless Chrome screenshots + source inspection. Full
+report published as an Artifact (grouped by page and severity).
+
+Result: 111 real findings — 24 high, 45 medium, 42 low.
+
+METHODOLOGY GOTCHA FOUND MID-AUDIT
+This machine's headless Chrome silently floors any --window-size request
+below ~552px to an actual rendered width of ~526px, regardless of the
+value requested (confirmed: 1px, 200px, 380px, 428px, 500px all produced
+window.innerWidth === 526). The saved screenshot PNG is still cropped to
+the literally-requested canvas size, so real content sitting past the
+crop edge looked exactly like a horizontal-overflow bug (clipped mid-
+word, no ellipsis) when the page had actually laid out fine at 526px.
+6 of 8 audit passes caught this themselves and switched to DOM/CSS-based
+verification. 2 didn't, and reported 6 "high severity" overflow bugs
+(dashboard's mood-scale/backup-banner/morning-brief-header/goals-ticker;
+brand.html's connect-button grid; vitals.html's feel-picker row) that
+were re-verified via a true Chrome DevTools Protocol viewport override
+and confirmed to be FALSE POSITIVES — not real bugs. 768px and 1280px
+renders were never affected by this floor.
+
+TOP 5 REPEATED ROOT CAUSES (from the audit)
+1. Touch targets under 44x44px — nearly universal across all 18 pages,
+   dozens of instances (delete/x buttons, segmented pills, icon buttons).
+2. --text-tertiary (#76746E) and --text-quaternary (#4D4B47) failing
+   WCAG AA nearly everywhere used — the same two hex values copy-pasted
+   into almost every page's own :root block.
+3. No shared CSS file — every page hand-copied its own design-token
+   block (confirmed: zero internal stylesheet links existed anywhere in
+   the repo before this session). At least 3 incompatible color
+   "dialects" had drifted apart across pages.
+4. outline:none set with no replacement :focus style — found on
+   planner/interactions/ability/health/news.
+5. Destructive delete controls pairing a sub-24px hit area with no
+   confirm() dialog — found on ~8 pages.
+
+====================================================================
+STEP 2 — FIXES APPLIED
+====================================================================
+
+--------------------------------------------------------------------
+PHASE A — ALL 24 HIGH-SEVERITY ITEMS (individual patches, done first)
+--------------------------------------------------------------------
+
+health.html
+  - --text-quaternary contrast fail (~2.3:1) on Energy subline + chart
+    axis labels -> literal passing color (#8C8C8C, ~6.2:1) at the 3
+    specific call sites.
+
+gym.html
+  - Exercise-bar icon buttons shrank to 38x38px on mobile -> 44x44px.
+  - GYM/DAY segmented pills + training-program pills under 44px tall ->
+    min-height 44px on both.
+  - --text-4 token (rgba(255,255,255,.25), ~2.1:1) used on actionable
+    delete/label text -> rgba(255,255,255,.5) (~5.7:1) at each call site
+    (also bundled the matching medium touch-target fix on the same
+    delete buttons while already there).
+
+planner.html
+  - Checklist checkbox (16x16px) -> invisible ::before hit-area
+    expansion to ~42x44px; widened row spacing (2px->8px gap, 5px->10px
+    padding) so the expansion doesn't overlap adjacent rows.
+  - Task checkbox (22x22px) -> same technique, full 44x44px (row
+    spacing already had enough clearance).
+  - Priority badge (P1/P2/P3 cycle) -> hit-area expansion; P3 label
+    color changed from var(--text-quaternary) (~2.3:1) to #8C8C8C
+    (~6:1).
+  - Drag handle: was opacity:0 by default, only shown on :hover
+    (invisible on touch) -> defaults to opacity:0.35 (visible-but-
+    subtle); the original hide-until-hover behavior preserved only
+    inside @media (hover:hover) for mouse/trackpad users.
+  - 7 text inputs under 16px causing iOS Safari zoom-on-focus
+    (.gm-input, .shop-input, .dr-field input/textarea, .chk-item-input,
+    .chk-add-input, .dgt-add-form input, .proj-add-form input) -> all
+    bumped to 16px.
+  - --text-tertiary token itself changed from #76746E (~4.2:1, failed)
+    to #7C7A74 (~4.9:1, passes) -- fixes every usage across the file.
+
+interactions.html
+  - outline:none on .ct-field inputs (whole contact-edit form) with no
+    replacement -> added a :focus box-shadow style.
+  - Interest-tag remove (x) pills (~13x13px, 6px gaps) -> invisible
+    hit-area expansion capped at ~24px (WCAG minimum, not 44px --
+    pill row only has 6px gaps between items).
+
+finance.html
+  - New-order date field: "dd/mm/yyyy" placeholder truncated to
+    "dd/mm/y" -> widened the date column (grid-template-columns
+    rebalanced) and tightened .date-field's internal padding/gap to
+    reclaim space.
+  - Net-worth allocation flip-card close (x) button (22x22px) ->
+    invisible hit-area expansion to 44x44px.
+
+ability.html
+  - Flashcard grading buttons (~34px tall, most-tapped control in the
+    review flow) -> min-height 44px.
+  - .hab-input/.skill-input: outline:none with no replacement -> added
+    a :focus box-shadow; also bumped font-size 14px->16px (iOS zoom).
+
+notes.html + vitals.html + brand.html (same root cause, same fix x3)
+  - body{display:flex} was missing flex-direction:column, so the
+    injected desktop top-nav became a flex SIBLING of the page content
+    instead of stacking above it (nav and content rendered side-by-
+    side at >=768px). Fixed on all three pages: added
+    flex-direction:column + align-items:center to each page's body
+    rule.
+
+train.html
+  - .pillHit/.pillMiss set-logging buttons (~20px tall, the single
+    most-used control on the page) -> real box growth to 44x44px
+    (the parent .pill has overflow:hidden, so the invisible-pseudo-
+    element trick would have been clipped; grew the real button
+    instead, which safely grows the parent row via normal flow).
+  - Quick Capture FAB overlapped exercise action pills at exactly
+    768px width -> (1) topbar.js: extended the FAB's mobile bottom-
+    offset media query from max-width:767px to max-width:768px,
+    closing the boundary gap; (2) train.html: added
+    @media(max-width:920px){.exActions{padding-right:76px}} to
+    reserve corner clearance where .shell has no side margin.
+
+settings.html
+  - Memory-fact delete + allocation-bucket delete buttons (~32px, no
+    confirm()) -> added confirm() dialogs to both handlers; bumped
+    both buttons' inline style to min-width/height:44px.
+
+po-water.html
+  - Substance-remove button (~27px, no confirm(), state.substances.
+    splice fired immediately) -> added a confirm() dialog; grew the
+    button to 44x44px; also fixed its --text-4 contrast issue
+    (rgba(255,255,255,.5) instead of .25) while touching the rule.
+
+index.html
+  - Mobile splash logo: box was sized 50vw x 50vh (matching the
+    VIEWPORT's aspect ratio) with object-fit:cover on a landscape
+    1920x1200 source image -- on any portrait phone this cropped away
+    most of the image's width, hiding the logo's "wings." Fixed by
+    sizing the box to the IMAGE's own aspect-ratio instead
+    (aspect-ratio:1920/1200, width:70% capped at max-width:420px) so
+    the full mark is always visible regardless of viewport shape.
+    Verified via screenshot: before showed only a thin center sliver,
+    after shows the complete V-shaped mark with both wings.
+
+--------------------------------------------------------------------
+PHASE B — DESIGN-TOKEN MIGRATION
+--------------------------------------------------------------------
+
+Created equavia-core.css (new file, repo root) defining the shared
+token system:
+  Colors: --eq-bg-primary (#050506), --eq-bg-card (rgba(255,255,255,.04)),
+    --eq-bg-input, --eq-bg-elevated, --eq-border, --eq-border-strong,
+    --eq-text-primary (#FAFAFA), --eq-text-secondary (#B8B6B0),
+    --eq-text-muted/--eq-text-placeholder (#8C8A91, passes AA -- replaces
+    every page's own failing --text-tertiary), --eq-accent (#E07658,
+    orange -- the more consistently-named accent across pages),
+    --eq-danger (#FF6B6B), --eq-success (#6BE3A4, folded the mint
+    "second accent" family into this semantic role), --eq-warning
+    (#F2C063).
+  Typography: --eq-font-family, --eq-font-mono, a --eq-font-xs..2xl
+    scale (12/13/14/16/18/22/28px), 16px minimum for inputs (iOS zoom).
+  Spacing: --eq-space-xs..3xl (4/8/12/16/20/28/40px).
+  Layout: --eq-card-radius (12px), --eq-card-radius-lg (16px, added
+    mid-migration once the single "large" tier was needed),
+    --eq-input-radius (8px), --eq-btn-radius (10px), --eq-touch-min
+    (44px), --eq-touch-gap (8px).
+  Safe areas: --eq-safe-top/--eq-safe-bottom.
+  Base resets: box-sizing, body defaults, .tappable opt-in touch-target
+    utility (deliberately NOT a blanket rule on every button/a/select --
+    would have conflicted with the invisible-hit-area checkbox fixes
+    above and resized hundreds of compact pills/links unexpectedly),
+    input/textarea/select defaults, .eq-card/.eq-page-content/
+    .eq-chart-wrap utility classes, a global :focus-visible rule
+    (fixes the "outline:none, no replacement" pattern site-wide via
+    CSS specificity, no per-page edits needed for most cases).
+
+Migrated all 18 pages: added <link rel="stylesheet" href="equavia-
+core.css"> before each page's own <style> block, then changed each
+page's own :root color-token DEFINITIONS to alias to the shared
+--eq-* tokens (e.g. --text-tertiary: var(--eq-text-muted)) rather than
+rewriting every individual CSS declaration across the file. This was a
+deliberate scope decision: ~28,000 total lines of embedded CSS across
+18 files made a literal token-for-token rewrite far riskier than
+indirection through variables the pages already reference everywhere.
+
+Distinct page-brand accent colors were kept page-specific (NOT forced
+to the shared orange): health.html's teal (#1D9E75, Energy-section
+theme), gym.html's monochrome white accent, the mint family used by
+notes/brand/vitals/train (#6EE7B7). Only genuinely-duplicated system
+grays and semantic status colors (danger/success/warning) were unified
+app-wide, since those are meant to mean the same thing everywhere.
+
+Two dialects needed special handling:
+  - gym.html/po-water.html's opacity-based --text-3/--text-4 scale:
+    both bumped from failing values (0.4 and 0.25) to a single passing
+    0.55 opacity, since a "dimmer-but-still-AA-passing" third tier
+    isn't achievable against this near-black background.
+  - Several pages' --text-quaternary was aliased to the same
+    --eq-text-muted as --text-tertiary (no separate "even dimmer" tier
+    kept, since the original quaternary value failed contrast
+    everywhere it was used as real text).
+
+Per-file diff sizes (lines changed): ability +57/-, ask +32, brand +18,
+dashboard +43, finance +59, gym +50, health +39, index +22,
+interactions +51, lock +23, news +15, notes +23, planner +111,
+po-water +35, privacy +17, settings +67, topbar.js +2, train +23,
+vitals +13. Total: 19 files, +427/-273 lines, plus the new
+equavia-core.css file.
+
+--------------------------------------------------------------------
+PHASE C — REMAINING MEDIUM-SEVERITY ITEMS
+--------------------------------------------------------------------
+
+Most contrast-related medium findings were resolved automatically by
+the token migration (every page's --text-tertiary/--text-quaternary
+now points at a passing shared value). Remaining items fixed directly:
+
+dashboard.html: mood-scale touch target (height 32->36px + capped
+  invisible expansion, gap kept at 5px -- see regression note below);
+  completion-chart range/P1 toggle buttons (invisible expansion,
+  capped by 4px gap); Gmail "Connect" button (36px -> 44px + full
+  width); "Write to Obsidian"/"Run audit"/"Run annual review" buttons
+  (36px -> 44px, not full-width since they share a row with status text).
+
+health.html: WHOOP refresh button (32px -> 44px); Correlation scatter
+  chart CSS height (180px) didn't match its own viewBox height (220px,
+  unlike the two other charts on the page) -> fixed to 220px.
+
+gym.html: settings gear icon (38px -> 44px); "back" circle button
+  (40px -> 44px); progress-photo <img> alt="" on 4 dynamically-
+  rendered images -> real alt text built from date + weight ("Progress
+  photo, Jul 22, 82.5kg").
+
+finance.html: Budget/Income name-field placeholder truncation ("Expense
+  (e.g. Re...") -> gave the name input a bigger flex-grow share (1.8
+  vs 1) than the amount field; all .quick-add inputs bumped to 16px
+  font (iOS zoom); net-worth row delete (x) -> capped invisible
+  expansion (~4px, rows only have 5px padding between them); "+"
+  quick-add buttons across all rows -> min-height 44px via the shared
+  .quick-add-btn rule.
+
+ability.html: habit streak grid cells (a GitHub-contribution-style
+  heatmap) -> gap widened 4px->6px, small invisible expansion added,
+  mobile shrink softened from 13px to 14px (full 44px not attempted --
+  would destroy the grid's density); book star-rating buttons -> gap
+  widened 2px->6px + invisible expansion.
+
+interactions.html: contact delete/action/channel/tier-chip buttons all
+  bumped to min-height 44px (their containers all use flex-wrap,
+  confirmed safe); thread-delete (x) -> capped expansion (6px padding
+  available between rows).
+
+planner.html: hover-only-visible delete button (.proj-card-del,
+  opacity:0 by default) -> same @media(hover:hover) progressive-
+  enhancement pattern used for the drag handle earlier; calendar-week-
+  grid and shopping-list horizontal scroll containers had zero visible
+  cue they scroll (a page-wide rule hides ALL scrollbars) -> scoped
+  override restores a thin visible scrollbar on just these two
+  containers; primary action buttons (.gm-add, .gm-polish,
+  .cal-quickadd-btn) -> min-height 44px, plus .cal-quickadd-input
+  bumped to 16px font; remaining outline:none inputs -> covered by the
+  new global :focus-visible rule in equavia-core.css; a stray
+  body{padding:...} rule inside a @media(max-width:480px) block was
+  double-stacking with .shell's own padding -> removed; .task-cols'
+  own column-collapse breakpoint (780px) was out of step with
+  topbar.js's nav-mode switch (768px) -> aligned to 768px.
+
+settings.html (bundled while fixing the high-severity delete buttons):
+  .btn base class -> min-height 44px (affects ~15 reused instances);
+  .seg toggle buttons -> min-height 44px; the static "Enable sync"
+  checkbox row was restructured from a <div><input><label for=></div>
+  pattern to a single wrapping <label> so the WHOLE row (not just the
+  ~13px checkbox glyph) is clickable, with the checkbox itself scaled
+  up via transform; the dynamically-generated Standing Rules toggle
+  checkboxes got wrapped in a 44x44px clickable <label> in JS; the
+  allocation-bucket row (no responsive handling at all) -> added
+  flex-wrap + a min-width on the name/desc block so it reflows instead
+  of squeezing on narrow screens.
+
+ask.html: send/mic buttons (38px -> 44px); domain toggle chips (~23px
+  -> min-height 44px, container already flex-wrap).
+
+news.html: digest button, category tabs, "mark seen," "load more" (all
+  23-30px) -> min-height 44px on all four.
+
+--------------------------------------------------------------------
+DEPRIORITIZED PER EXPLICIT INSTRUCTION (left alone)
+--------------------------------------------------------------------
+- Sub-14px decorative labels (section eyebrows, captions) across
+  every page -- confirmed intentional dense-UI styling, not touched.
+- gym.html's 720px desktop max-width (leaves unused space on wide
+  screens) -- confirmed intentional mobile-first design choice.
+- topbar.js's shared top-nav wrapping to 2 rows at exactly 768px --
+  confirmed a shared-component issue affecting every page equally,
+  left as-is per instruction.
+
+--------------------------------------------------------------------
+VERIFICATION PASS
+--------------------------------------------------------------------
+Re-screenshotted a representative sample of the highest-risk changes
+at true widths (an iframe-wrapper technique was used for 380px checks
+-- more reliable in this environment than the window-size CLI flag,
+which floors below ~552px, or the Chrome DevTools Protocol route,
+which proved flaky on retry):
+
+- dashboard.html @ 380px: confirmed clean -- banner wraps properly,
+  morning-brief header fits, all 10 mood-scale buttons render on one
+  line, Gmail button now full-width, no regressions.
+- notes.html / brand.html / vitals.html @ 1280px: confirmed the
+  flex-direction fix -- top nav now renders as a proper full-width bar
+  above the page content on all three (previously squeezed into a
+  side-by-side row).
+- index.html @ 380px: confirmed the logo crop fix -- both "wings" of
+  the mark are now visible (previously only a thin center sliver
+  showed).
+- gym.html @ 380px: confirmed icon buttons and segmented pills render
+  at their corrected, comfortable sizes with no overflow.
+
+One real regression was caught and fixed during this pass: an earlier
+touch-target fix widened the mood-scale row's gap from 5px to 8px,
+which broke the single-line fit for all 10 buttons (the 10th wrapped
+to its own row). Reverted the gap to 5px, kept the height increase and
+the invisible hit-area expansion (rebalanced to fit the smaller gap).
+
+--------------------------------------------------------------------
+NOT FULLY DONE / KNOWN GAPS
+--------------------------------------------------------------------
+- The acceptance criterion "no hardcoded color, spacing, or font-size
+  values remain in page-specific CSS (all use tokens)" is met for
+  COLOR only. Spacing and font-size values across the ~28,000 lines of
+  page-specific CSS were NOT exhaustively rewritten to reference
+  --eq-space-*/--eq-font-* tokens -- only the specific declarations
+  touched during the high/medium fix passes use the new tokens
+  directly. A full literal rewrite of every remaining hardcoded
+  spacing/font-size value was judged out of scope for this session
+  given the size and regression risk; flagging rather than claiming
+  it's done.
+- .eq-card / .eq-page-content / .eq-chart-wrap utility classes exist
+  in equavia-core.css but were not retroactively applied to existing
+  working card/chart markup across the 18 pages (low value for
+  already-correct elements; reserved for new markup going forward).
+- Nothing in this session has been committed to git yet. 19 files
+  modified (+427/-273 lines) plus the new equavia-core.css file.
+
+====================================================================
+FILES TOUCHED
+====================================================================
+New:      equavia-core.css
+Modified: ability.html, ask.html, brand.html, dashboard.html,
+          finance.html, gym.html, health.html, index.html,
+          interactions.html, lock.html, news.html, notes.html,
+          planner.html, po-water.html, privacy.html, settings.html,
+          topbar.js, train.html, vitals.html

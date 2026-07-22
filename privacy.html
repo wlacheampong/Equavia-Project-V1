@@ -10,25 +10,26 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Equavia">
 <title>Privacy Policy — Equavia</title>
+<link rel="stylesheet" href="equavia-core.css">
 <style>
 :root {
-  --text-primary: #FAFAFA;
-  --text-secondary: #B8B6B0;
-  --text-tertiary: #76746E;
-  --accent: #E07658;
-  --font: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --text-primary: var(--eq-text-primary);
+  --text-secondary: var(--eq-text-secondary);
+  --text-tertiary: var(--eq-text-muted); /* was #76746E (~4.36:1, marginally failed AA) */
+  --accent: var(--eq-accent);
+  --font: var(--eq-font-family);
+  --font-mono: var(--eq-font-mono);
 }
 * { box-sizing: border-box; }
 html, body {
   margin: 0; padding: 0;
-  background: #050506;
+  background: var(--eq-bg-primary);
   color: var(--text-secondary);
   font-family: var(--font);
   -webkit-font-smoothing: antialiased;
 }
 body {
-  padding: max(28px, env(safe-area-inset-top)) 20px 60px;
+  padding: max(28px, env(safe-area-inset-top)) 20px calc(60px + env(safe-area-inset-bottom)); /* bottom now safe-area-aware too, was fixed 60px */
 }
 .page {
   max-width: 720px;

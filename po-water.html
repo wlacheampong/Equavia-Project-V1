@@ -24,6 +24,7 @@ Contact: rowan.wisere@gmail.com
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Equavia">
 <title>Water Coach — Equavia</title>
+<link rel="stylesheet" href="equavia-core.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="sync.js" defer></script>
 <script src="assistant-tools.js"></script>
@@ -67,20 +68,20 @@ const CONFIG = {
 
 <style>
 :root {
-  --bg: #0a0a0b;
+  --bg: var(--eq-bg-primary);
   --bg-card: #111113;
-  --text-1: #ffffff;
+  --text-1: var(--eq-text-primary);
   --text-2: rgba(255,255,255,0.6);
-  --text-3: rgba(255,255,255,0.4);
-  --text-4: rgba(255,255,255,0.25);
-  --border: rgba(255,255,255,0.06);
-  --border-strong: rgba(255,255,255,0.14);
-  --good: #6ee7b7;
-  --warn: #fbbf24;
-  --bad: #ff8a8a;
+  --text-3: rgba(255,255,255,0.55); /* was 0.4 (~3.8:1, failed AA) */
+  --text-4: rgba(255,255,255,0.55); /* was 0.25 (~2.1:1, failed AA) */
+  --border: var(--eq-border);
+  --border-strong: var(--eq-border-strong);
+  --good: var(--eq-success);
+  --warn: var(--eq-warning);
+  --bad: var(--eq-danger);
   --info: #7DD3FC;
-  --font: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
-  --font-mono: ui-monospace, SF Mono, Menlo, Consolas, monospace;
+  --font: var(--eq-font-family);
+  --font-mono: var(--eq-font-mono);
 }
 * { box-sizing: border-box; }
 html, body {
@@ -114,7 +115,7 @@ html, body {
 }
 .title { font-size: 22px; font-weight: 700; letter-spacing: -0.015em; margin: 0; }
 .icon-btn {
-  width: 38px; height: 38px;
+  width: 44px; height: 44px; /* was 38px */
   display: flex; align-items: center; justify-content: center;
   background: rgba(255,255,255,0.04);
   border: 1px solid var(--border);
@@ -350,6 +351,7 @@ html, body {
   color: var(--text-3); border-radius: 7px;
   font-family: inherit; font-size: 12px; font-weight: 600; cursor: pointer;
   -webkit-tap-highlight-color: transparent;
+  min-height: 44px; /* was ~32px tall */
 }
 .seg button.active {
   background: linear-gradient(180deg, #ffffff 0%, #e8e5dd 100%);
@@ -427,8 +429,10 @@ html, body {
   white-space: nowrap;
 }
 .sub-row-del {
-  background: transparent; border: none; color: var(--text-4);
+  background: transparent; border: none; color: rgba(255,255,255,0.5); /* was --text-4, ~2.1:1 fails AA */
   font-size: 16px; cursor: pointer; padding: 4px 8px;
+  min-width: 44px; min-height: 44px;
+  display: inline-flex; align-items: center; justify-content: center;
   -webkit-tap-highlight-color: transparent;
 }
 .sub-row-del:hover { color: var(--bad); }
@@ -1012,7 +1016,10 @@ html, body {
     });
     list.querySelectorAll('.sub-row-del').forEach(b => {
       b.addEventListener('click', () => {
-        state.substances.splice(parseInt(b.dataset.i, 10), 1);
+        const i = parseInt(b.dataset.i, 10);
+        const sub = state.substances[i];
+        if (!confirm('Remove "' + (sub && sub.name ? sub.name : 'this substance') + '" from your tracked substances?')) return;
+        state.substances.splice(i, 1);
         saveState(); renderSubsList(); renderWater();
       });
     });

@@ -11,6 +11,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Equavia">
 <title>Planner — Equavia</title>
+<link rel="stylesheet" href="equavia-core.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="sync.js" defer></script>
 <script src="obsidian-sync.js"></script>
@@ -18,32 +19,32 @@
 <script src="topbar.js" defer></script>
 <style>
 :root {
-  --bg: #0A0A0B;
-  --bg-deep: #050506;
-  --bg-card: rgba(255, 255, 255, 0.04);
+  --bg: var(--eq-bg-primary);
+  --bg-deep: var(--eq-bg-primary);
+  --bg-card: var(--eq-bg-card);
   --bg-secondary: rgba(255, 255, 255, 0.035);
-  --glass-bg: rgba(255, 255, 255, 0.04);
+  --glass-bg: var(--eq-bg-card);
   --glass-border: transparent;
   --glass-border-strong: transparent;
   --glass-shadow:
     0 1px 0 0 rgba(255, 255, 255, 0.06) inset,
     0 12px 40px rgba(0, 0, 0, 0.45),
     0 1px 2px rgba(0, 0, 0, 0.25);
-  --text-primary: #FAFAFA;
-  --text-secondary: #B8B6B0;
-  --text-tertiary: #76746E;
-  --text-quaternary: #4D4B47;
+  --text-primary: var(--eq-text-primary);
+  --text-secondary: var(--eq-text-secondary);
+  --text-tertiary: var(--eq-text-muted);
+  --text-quaternary: var(--eq-text-muted); /* was #4D4B47 (~2.3:1, failed AA) */
   --border: transparent;
   --border-soft: transparent;
-  --accent: #E07658;
-  --success: #6BE3A4;
-  --warning: #F2C063;
-  --danger: #FF6B6B;
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --font: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --accent: var(--eq-accent);
+  --success: var(--eq-success);
+  --warning: var(--eq-warning);
+  --danger: var(--eq-danger);
+  --radius-sm: var(--eq-input-radius);
+  --radius-md: var(--eq-card-radius);
+  --radius-lg: var(--eq-card-radius-lg);
+  --font: var(--eq-font-family);
+  --font-mono: var(--eq-font-mono);
   color-scheme: dark;
 }
 
@@ -89,6 +90,20 @@ body::after {
 /* Hide scrollbars everywhere */
 html, body { scrollbar-width: none; -ms-overflow-style: none; }
 *::-webkit-scrollbar { width: 0 !important; height: 0 !important; display: none !important; }
+
+/* ...except the calendar week grid and shopping list, which scroll
+   horizontally with no other visual cue that they do -- give these two a
+   deliberately thin, visible scrollbar instead of inheriting the global hide. */
+.cal-week-grid, .shop-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.25) transparent;
+}
+.cal-week-grid::-webkit-scrollbar, .shop-scroll::-webkit-scrollbar {
+  width: 6px !important; height: 6px !important; display: block !important;
+}
+.cal-week-grid::-webkit-scrollbar-thumb, .shop-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.25); border-radius: 999px;
+}
 
 /* Section title */
 .section { margin-bottom: 18px; scroll-margin-top: 18px; }
@@ -190,7 +205,7 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
   color: var(--text-primary);
   padding: 9px 10px;
   font-family: inherit;
-  font-size: 13px;
+  font-size: 16px; /* was 13px; iOS Safari zooms the page on focus for any input under 16px */
   min-width: 0;
   -moz-appearance: textfield;
 }
@@ -296,10 +311,10 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
   border: 1px solid rgba(255,255,255,0.12);
   background: rgba(0,0,0,0.28);
   color: var(--text-primary);
-  font-family: inherit; font-size: 15px;
+  font-family: inherit; font-size: 16px; /* was 15px; iOS Safari zooms the page on focus for any input under 16px */
   color-scheme: dark;
 }
-.dr-field textarea { font-size: 13px; resize: vertical; }
+.dr-field textarea { font-size: 16px; resize: vertical; } /* was 13px */
 .dr-field input:focus,
 .dr-field textarea:focus {
   outline: none; border-color: rgba(255,255,255,0.40);
@@ -494,13 +509,17 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
 .gm-row.gm-row-p1 { box-shadow: inset 3px 0 0 0 #FF8A8A; }
 .gm-row.gm-row-p1 .gm-text { font-weight: 700; }
 .gm-priority-badge {
-  border: 0; flex-shrink: 0; cursor: pointer;
+  border: 0; flex-shrink: 0; cursor: pointer; position: relative;
   font-family: var(--font-mono, inherit); font-size: 10px; font-weight: 700;
   padding: 3px 7px; border-radius: 999px; letter-spacing: 0.02em;
 }
+.gm-priority-badge::before {
+  /* invisible tap-target expansion: keeps the compact pill, gives it a real 44x44px hit area */
+  content: ''; position: absolute; top: -13px; bottom: -13px; left: -6px; right: -6px;
+}
 .gm-priority-badge.gm-priority-p1 { background: rgba(255,138,138,0.18); color: #FF8A8A; }
 .gm-priority-badge.gm-priority-p2 { background: rgba(255,255,255,0.08); color: var(--text-tertiary); }
-.gm-priority-badge.gm-priority-p3 { background: rgba(255,255,255,0.04); color: var(--text-quaternary); }
+.gm-priority-badge.gm-priority-p3 { background: rgba(255,255,255,0.04); color: #8C8C8C; } /* was --text-quaternary (~2.3:1, fails AA) */
 .gm-priority-badge:disabled { cursor: not-allowed; opacity: 0.5; }
 .ss-p1-hint { font-size: 12px; color: #F2C063; margin: -4px 0 10px; }
 @keyframes gm-queue-flash {
@@ -515,11 +534,14 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
   font-weight: 700; font-size: 14px;
   letter-spacing: -2px;
   cursor: grab;
-  opacity: 0;
+  opacity: 0.35; /* visible-but-subtle by default so touch devices (no :hover) can see it exists */
   transition: opacity 0.2s;
   user-select: none;
 }
-.gm-row:hover .gm-handle { opacity: 1; }
+@media (hover: hover) {
+  .gm-handle { opacity: 0; }
+  .gm-row:hover .gm-handle { opacity: 1; }
+}
 .gm-handle:active { cursor: grabbing; }
 
 .gm-check {
@@ -532,6 +554,10 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
   position: relative;
   cursor: pointer;
   transition: background 0.2s, border-color 0.2s, box-shadow 0.25s;
+}
+.gm-check::before {
+  /* invisible tap-target expansion: keeps the 22px visual box, gives it a real 44x44px hit area */
+  content: ''; position: absolute; inset: -11px;
 }
 .gm-check:checked {
   background: #6BE3A4;
@@ -661,7 +687,7 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
   border-radius: 12px;
   background: rgba(0,0,0,0.28);
   color: var(--text-primary);
-  font-family: inherit; font-size: 14px;
+  font-family: inherit; font-size: 16px; /* was 14px; iOS Safari zooms the page on focus for any input under 16px */
   outline: none;
   transition: border-color 0.2s, background 0.2s;
 }
@@ -670,6 +696,7 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
 
 .gm-add {
   padding: 11px 20px;
+  min-height: var(--eq-touch-min); /* was ~38px tall */
   border: 0; border-radius: 12px;
   background: linear-gradient(180deg, #FFFFFF 0%, #E8E5DD 100%);
   color: #0A0A0B;
@@ -686,6 +713,7 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
 
 .gm-polish {
   padding: 11px 18px;
+  min-height: var(--eq-touch-min); /* was ~38px tall */
   border: 1px solid rgba(255,255,255,0.10);
   border-radius: 12px;
   background: rgba(255,255,255,0.04);
@@ -709,7 +737,9 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
 .gm-status.gm-status-error { color: var(--danger); }
 
 @media (max-width: 480px) {
-  body { padding: max(20px, env(safe-area-inset-top)) 14px 50px; }
+  /* the stray `body{padding:...}` rule that used to live here was removed --
+     .shell already owns the page's real padding (24px 16px 60px); this one
+     stacked on top of it at narrow widths instead of replacing it. */
   .gm-card { padding: 16px; }
   .gm-progress-num { font-size: 36px; }
 }
@@ -724,7 +754,7 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
   border-radius: 8px;
   background: rgba(0,0,0,0.28);
   color: var(--text-primary);
-  font-family: inherit; font-size: 12px;
+  font-family: inherit; font-size: 16px; /* was 12px; iOS Safari zoom-on-focus */
   outline: none;
 }
 .dgt-add-form button {
@@ -903,9 +933,12 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
 .proj-card-del {
   position: absolute; top: 8px; right: 8px;
   border: 0; background: transparent; color: var(--text-tertiary);
-  font-size: 15px; cursor: pointer; opacity: 0; transition: opacity 0.2s;
+  font-size: 15px; cursor: pointer; opacity: 0.4; transition: opacity 0.2s; /* was opacity:0 -- invisible on touch devices, which have no :hover */
 }
-.proj-card:hover .proj-card-del { opacity: 0.7; }
+@media (hover: hover) {
+  .proj-card-del { opacity: 0; }
+  .proj-card:hover .proj-card-del { opacity: 0.7; }
+}
 .proj-card-del:hover { color: var(--danger); opacity: 1; }
 .proj-col-empty { font-size: 11.5px; font-style: italic; color: var(--text-tertiary); }
 
@@ -928,7 +961,7 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
 .proj-add-form input, .proj-add-form select {
   padding: 9px 11px; border: 1px solid rgba(255,255,255,0.08); border-radius: 10px;
   background: rgba(0,0,0,0.28); color: var(--text-primary);
-  font-family: inherit; font-size: 12.5px; outline: none;
+  font-family: inherit; font-size: 16px; outline: none; /* was 12.5px; iOS Safari zoom-on-focus */
 }
 .proj-add-form input[type="text"] { flex: 1; min-width: 140px; }
 .proj-add-form button {
@@ -951,10 +984,10 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
 .chk-edit-toggle:hover { background: rgba(255,255,255,0.06); color: var(--text-primary); }
 .chk-edit-toggle.active { color: #7CD9A8; }
 
-.chk-items { display: flex; flex-direction: column; gap: 2px; }
+.chk-items { display: flex; flex-direction: column; gap: 8px; } /* was 2px; widened so the checkbox's expanded tap target below has room */
 .chk-empty { font-size: 11.5px; color: var(--text-tertiary); padding: 4px 0 2px; }
 
-.chk-item-row { display: flex; align-items: flex-start; gap: 9px; padding: 5px 4px; border-radius: 8px; }
+.chk-item-row { display: flex; align-items: flex-start; gap: 9px; padding: 10px 4px; border-radius: 8px; } /* was 5px 4px */
 .chk-item-row:hover { background: rgba(255,255,255,0.03); }
 
 .chk-checkbox {
@@ -962,6 +995,10 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
   border-radius: 5px; border: 1.5px solid rgba(255,255,255,0.25);
   background: transparent; cursor: pointer; padding: 0;
   transition: background 0.15s, border-color 0.15s;
+}
+.chk-checkbox::before {
+  /* invisible tap-target expansion: keeps the 16px visual box, gives it a ~42x44px hit area without overlapping the row above/below or the label to the right */
+  content: ''; position: absolute; top: -13px; bottom: -13px; left: -13px; right: -6px;
 }
 .chk-checkbox:hover { border-color: rgba(255,255,255,0.45); }
 .chk-checkbox.checked { background: linear-gradient(180deg, #FFFFFF 0%, #E8E5DD 100%); border-color: transparent; }
@@ -985,7 +1022,7 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
 .chk-item-input {
   flex: 1; min-width: 0; padding: 6px 9px; border-radius: 8px;
   border: 1px solid rgba(255,255,255,0.08); background: rgba(0,0,0,0.28);
-  color: var(--text-primary); font-family: inherit; font-size: 12px; outline: none;
+  color: var(--text-primary); font-family: inherit; font-size: 16px; outline: none; /* was 12px; iOS Safari zoom-on-focus */
 }
 .chk-item-del {
   flex: 0 0 auto; border: 0; background: transparent; cursor: pointer;
@@ -997,7 +1034,7 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
 .chk-add-input {
   flex: 1; min-width: 0; padding: 8px 10px; border-radius: 10px;
   border: 1px solid rgba(255,255,255,0.08); background: rgba(0,0,0,0.28);
-  color: var(--text-primary); font-family: inherit; font-size: 12px; outline: none;
+  color: var(--text-primary); font-family: inherit; font-size: 16px; outline: none; /* was 12px; iOS Safari zoom-on-focus */
 }
 .chk-add-btn {
   padding: 8px 14px; border: 0; border-radius: 10px;
@@ -1075,11 +1112,11 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
 }
 .cal-quickadd-input {
   flex: 1; min-width: 0; background: transparent; border: none; outline: none;
-  color: var(--text-primary); padding: 9px 10px; font-family: inherit; font-size: 13px;
+  color: var(--text-primary); padding: 9px 10px; font-family: inherit; font-size: 16px; /* was 13px; iOS Safari zoom-on-focus */
 }
 .cal-quickadd-input::placeholder { color: var(--text-tertiary); }
 .cal-quickadd-btn {
-  padding: 0 16px; background: rgba(255,255,255,0.06); border: none; color: var(--text-secondary);
+  padding: 0 16px; min-height: var(--eq-touch-min); background: rgba(255,255,255,0.06); border: none; color: var(--text-secondary);
   font-family: inherit; font-size: 12px; font-weight: 600; border-radius: 9px; cursor: pointer;
 }
 .cal-quickadd-btn:hover { background: var(--accent); color: #fff; }
@@ -1271,7 +1308,7 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
 .shell.shell-wide { max-width: 1240px; }
 
 .task-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
-@media (max-width: 780px) { .task-cols { grid-template-columns: 1fr; } }
+@media (max-width: 768px) { .task-cols { grid-template-columns: 1fr; } } /* was 780px, out of step with topbar.js's own 768px nav-mode switch */
 
 .dgt-goals-wide { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; align-items: start; }
 

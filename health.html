@@ -12,37 +12,38 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Equavia">
 <title>Daily Stack — Equavia</title>
+<link rel="stylesheet" href="equavia-core.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="sync.js" defer></script>
 <script src="assistant-tools.js"></script>
 <script src="topbar.js" defer></script>
 <style>
 :root {
-  --bg: #050506;
-  --bg-card: rgba(255, 255, 255, 0.04);
+  --bg: var(--eq-bg-primary);
+  --bg-card: var(--eq-bg-card);
   --bg-secondary: rgba(255, 255, 255, 0.035);
-  --bg-input: rgba(0, 0, 0, 0.28);
+  --bg-input: var(--eq-bg-input);
   --bg-input-focus: rgba(0, 0, 0, 0.36);
-  --bg-dropdown: rgba(15, 15, 18, 0.96);
+  --bg-dropdown: var(--eq-bg-elevated);
 
-  --border: rgba(255, 255, 255, 0.06);
+  --border: var(--eq-border);
   --border-soft: rgba(255, 255, 255, 0.04);
-  --border-strong: rgba(255, 255, 255, 0.12);
+  --border-strong: var(--eq-border-strong);
 
-  --text-primary: #FAFAFA;
-  --text-secondary: #B8B6B0;
-  --text-tertiary: #76746E;
-  --text-quaternary: #4D4B47;
+  --text-primary: var(--eq-text-primary);
+  --text-secondary: var(--eq-text-secondary);
+  --text-tertiary: var(--eq-text-muted);
+  --text-quaternary: var(--eq-text-muted); /* was #4D4B47 (~2.3:1, failed AA) -- see the two literal-color fixes still in place on the Energy chart labels below, now redundant with this but left as-is */
 
-  --accent: #1D9E75;
+  --accent: #1D9E75; /* page-specific: this page's own Energy-section teal, kept distinct from the shared orange brand accent */
   --accent-glow: rgba(29, 158, 117, 0.35);
-  --warning: #FF8A4D;
+  --warning: var(--eq-warning);
   --warning-bg: rgba(163, 45, 45, 0.10);
   --tag-stack: #D8AB30;
   --tag-stack-bg: rgba(216, 171, 48, 0.15);
 
-  --font: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --font: var(--eq-font-family);
+  --font-mono: var(--eq-font-mono);
 }
 
 * { box-sizing: border-box; }
@@ -518,7 +519,7 @@ main {
     @keyframes wh-pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.85)} }
     .wh-head-right { display:flex; align-items:center; gap:10px; }
     .wh-updated { font-size:11px; color:var(--text-tertiary); font-family:var(--font-mono); }
-    .wh-refresh { width:32px; height:32px; border-radius:50%; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.06); color:var(--text-secondary); cursor:pointer; display:flex; align-items:center; justify-content:center; transition:transform 0.4s, background 0.18s, color 0.18s; }
+    .wh-refresh { width:44px; height:44px; border-radius:50%; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.06); color:var(--text-secondary); cursor:pointer; display:flex; align-items:center; justify-content:center; transition:transform 0.4s, background 0.18s, color 0.18s; } /* was 32px */
     .wh-refresh:hover { background:rgba(255,255,255,0.10); color:var(--text-primary); }
     .wh-refresh.spin { transform:rotate(360deg); }
     /* Ring */
@@ -643,7 +644,7 @@ main {
     .en-now { display:flex; align-items:baseline; gap:10px; }
     .en-now-num { font-size:38px; font-weight:700; color:var(--text-primary); font-variant-numeric:tabular-nums; line-height:1; }
     .en-now-tier { font-size:13px; color:var(--text-secondary); font-weight:600; }
-    .en-now-sub { font-size:10.5px; color:var(--text-quaternary); margin-top:2px; }
+    .en-now-sub { font-size:10.5px; color:#8C8C8C; margin-top:2px; } /* was --text-quaternary (~2.3:1, fails AA); this value passes ~6.2:1 on this bg */
     .en-chart-wrap { position:relative; margin:4px 0 8px; }
     .en-chart { width:100%; height:130px; display:block; }
     .en-grid { stroke:rgba(255,255,255,0.06); stroke-width:1; }
@@ -653,7 +654,7 @@ main {
     .en-chart-xaxis { position:relative; height:14px; margin-top:2px; }
     .en-chart-xaxis-label {
       position:absolute; top:0; transform:translateX(-50%);
-      font-size:9.5px; color:var(--text-quaternary); font-family:var(--font-mono);
+      font-size:9.5px; color:#8C8C8C; font-family:var(--font-mono); /* was --text-quaternary, failed AA */
       white-space:nowrap; line-height:1;
     }
     .en-chart-xaxis-label.is-rotated { transform:translateX(-50%) rotate(-45deg); transform-origin:top center; }
@@ -664,7 +665,7 @@ main {
       display:none; z-index:5; box-shadow:0 2px 8px rgba(0,0,0,0.3);
     }
     .en-chart-tooltip.is-visible { display:block; }
-    .en-chart-meta { font-size:10.5px; color:var(--text-quaternary); text-align:right; margin-top:4px; }
+    .en-chart-meta { font-size:10.5px; color:#8C8C8C; text-align:right; margin-top:4px; } /* was --text-quaternary, failed AA */
     .en-stack-head { font-size:10.5px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; color:var(--text-tertiary); margin:18px 0 10px; }
     /* 6.9 follow-up: presets replaced with typed amount+time -- source stays
        a selectable pill row (kept per the request, "keep whatever
@@ -832,7 +833,7 @@ main {
     .corr-x { color:var(--text-tertiary); font-size:13px; flex-shrink:0; }
     .corr-empty { font-size:12.5px; color:var(--text-tertiary); text-align:center; padding:18px 8px; }
     .corr-body.hidden { display:none; }
-    .corr-scatter { width:100%; height:180px; display:block; }
+    .corr-scatter { width:100%; height:220px; display:block; } /* was 180px, didn't match the viewBox's 220 height (unlike the Energy/Sleep charts, whose CSS height and viewBox height already matched) -- caused the plot to render compressed ~18% vs its own coordinate space */
     .corr-grid { stroke:rgba(255,255,255,0.06); stroke-width:1; }
     .corr-dot { fill:var(--accent); opacity:0.7; }
     .corr-r-row { display:flex; align-items:baseline; gap:8px; margin-top:12px; }

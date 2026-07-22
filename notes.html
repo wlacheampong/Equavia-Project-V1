@@ -8,7 +8,7 @@
 <script src="obsidian-sync.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/easymde/dist/easymde.min.css">
 <script src="https://unpkg.com/easymde/dist/easymde.min.js"></script>
-<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
 <meta name="theme-color" content="#050506">
 <link rel="icon" type="image/webp" href="images/Index Landing Page.webp">
 <link rel="apple-touch-icon" href="images/apple-touch-icon.png">
@@ -16,6 +16,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Equavia">
 <title>Notes — Equavia</title>
+<link rel="stylesheet" href="equavia-core.css">
 <script src="assistant-tools.js"></script>
 <script src="topbar.js" defer></script>
 <style>
@@ -24,17 +25,17 @@
      (title/body/images) with a Markdown body so it maps 1:1 onto Obsidian
      .md files via the Local REST API bridge (obsidian-sync.js). */
   :root{
-    --bg:#050506;--surface:#0e0e11;--border:#1d1d22;--brand:#6EE7B7;
+    --bg:var(--eq-bg-primary);--surface:var(--eq-bg-card);--border:var(--eq-border);--brand:#6EE7B7;
     --brand-soft:rgba(110,231,183,.08);--brand-line:rgba(110,231,183,.35);
-    --muted:#84848c;--muted-strong:#a8a8b0;--fg:#ededf0;--neg:#ff6b6b;--neg-line:rgba(255,107,107,.4);
-    --track:#17171b;--radius-md:12px;--radius-pill:999px;
-    --font-display:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,sans-serif;
-    --font-mono:ui-monospace,SFMono-Regular,Menlo,"JetBrains Mono",monospace;
+    --muted:var(--eq-text-muted);--muted-strong:var(--eq-text-secondary);--fg:var(--eq-text-primary);--neg:var(--eq-danger);--neg-line:rgba(255,107,107,.4);
+    --track:#17171b;--radius-md:var(--eq-card-radius);--radius-pill:999px;
+    --font-display:var(--eq-font-family);
+    --font-mono:var(--eq-font-mono);
     --duration:.2s;
   }
   *{box-sizing:border-box}
   html,body{margin:0;height:100%}
-  body{background:var(--bg);color:var(--fg);font:15px/1.5 var(--font-display);display:flex;justify-content:center;padding:40px 20px}
+  body{background:var(--bg);color:var(--fg);font:15px/1.5 var(--font-display);display:flex;flex-direction:column;align-items:center;padding:40px 20px}
   .shell{width:100%;max-width:620px;display:flex;flex-direction:column}
   .header{display:flex;align-items:center;gap:14px;margin-bottom:22px}
   .orb{width:44px;height:44px;flex-shrink:0;border-radius:50%;
@@ -45,12 +46,12 @@
   .headerText{flex:1;min-width:0}
   .title{font-size:24px;font-weight:600;letter-spacing:-.01em;margin:0}
   .subtitle{color:var(--muted);font-family:var(--font-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;margin:5px 0 0}
-  .gearBtn{background:transparent;border:1px solid var(--border);color:var(--muted-strong);width:38px;height:38px;border-radius:50%;cursor:pointer;font-size:16px;flex-shrink:0}
+  .gearBtn{background:transparent;border:1px solid var(--border);color:var(--muted-strong);width:44px;height:44px;border-radius:50%;cursor:pointer;font-size:16px;flex-shrink:0}
   .gearBtn:hover{border-color:var(--brand);color:var(--fg)}
   .searchWrap{margin-bottom:16px}
   .searchInput{width:100%;background:var(--surface);border:1px solid var(--border);color:var(--fg);border-radius:var(--radius-pill);padding:11px 16px;font:inherit}
   .searchInput:focus{outline:none;border-color:var(--brand)}
-  .searchInput::placeholder{color:#55555c}
+  .searchInput::placeholder{color:var(--eq-text-placeholder)}
   .list{display:flex;flex-direction:column;gap:8px;order:1}
   .empty{color:var(--muted);font-size:13px;padding:24px 0;text-align:center}
   .noteRow{display:flex;align-items:flex-start;gap:12px;padding:14px 15px;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--surface);cursor:pointer;transition:border-color var(--duration)}
@@ -82,7 +83,7 @@
   .editor-overlay{position:fixed;inset:0;background:var(--bg);z-index:60;display:none;flex-direction:column;padding:20px 20px calc(20px + env(safe-area-inset-bottom))}
   .editor-overlay.show{display:flex}
   .editor-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
-  .ic-btn{background:transparent;border:1px solid var(--border);color:var(--muted-strong);width:38px;height:38px;border-radius:50%;cursor:pointer;font-size:16px}
+  .ic-btn{background:transparent;border:1px solid var(--border);color:var(--muted-strong);width:44px;height:44px;border-radius:50%;cursor:pointer;font-size:16px}
   .ic-btn:hover{border-color:var(--brand);color:var(--fg)}
   .ic-btn .pinGlyph{filter:grayscale(100%) brightness(1.6);opacity:.35}
   .ic-btn.is-active{border-color:var(--brand-line)}
@@ -90,7 +91,7 @@
   .editor-head-actions{display:flex;gap:8px}
   .editor-title{width:100%;background:transparent;border:none;color:var(--fg);font-size:22px;font-weight:600;padding:6px 2px;margin-bottom:4px}
   .editor-title:focus{outline:none}
-  .editor-title::placeholder{color:#55555c}
+  .editor-title::placeholder{color:var(--eq-text-placeholder)}
   .editor-sync-status{font-family:var(--font-mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
   .editor-body-wrap{flex:1;min-height:0;display:flex;flex-direction:column}
 

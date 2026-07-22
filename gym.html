@@ -104,22 +104,23 @@ const CONFIG = {
 };
 </script>
 
+<link rel="stylesheet" href="equavia-core.css">
 <style>
 :root {
-  --bg: #0a0a0b;
+  --bg: var(--eq-bg-primary);
   --bg-card: #111113;
-  --text-1: #ffffff;
+  --text-1: var(--eq-text-primary);
   --text-2: rgba(255,255,255,0.6);
-  --text-3: rgba(255,255,255,0.4);
-  --text-4: rgba(255,255,255,0.25);
-  --border: rgba(255,255,255,0.06);
-  --border-strong: rgba(255,255,255,0.14);
-  --accent: #ffffff;
-  --good: #6ee7b7;
-  --warn: #fbbf24;
-  --bad: #ff8a8a;
-  --font: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
-  --font-mono: ui-monospace, SF Mono, Menlo, Consolas, monospace;
+  --text-3: rgba(255,255,255,0.55); /* was 0.4 (~3.7:1, failed AA) */
+  --text-4: rgba(255,255,255,0.55); /* was 0.25 (~2.1:1, failed AA); same value as --text-3 since a dimmer *and* AA-passing third tier isn't achievable on this background */
+  --border: var(--eq-border);
+  --border-strong: var(--eq-border-strong);
+  --accent: #ffffff; /* page-specific: gym.html's own monochrome accent, kept distinct from the shared orange brand accent */
+  --good: var(--eq-success);
+  --warn: var(--eq-warning);
+  --bad: var(--eq-danger);
+  --font: var(--eq-font-family);
+  --font-mono: var(--eq-font-mono);
 }
 * { box-sizing: border-box; }
 html, body {
@@ -235,6 +236,7 @@ img, video, canvas, svg { max-width: 100%; }
 .train-program-btn {
   padding: 6px 12px; border-radius: 999px; border: 1px solid var(--border);
   background: rgba(255,255,255,0.03); color: var(--text-3); font-family: inherit; font-size: 11px; font-weight: 700; cursor: pointer;
+  min-height: 44px; display: inline-flex; align-items: center; justify-content: center; /* was ~25px tall, under the touch-target minimum */
 }
 .train-program-btn.is-active { background: rgba(255,255,255,0.1); border-color: var(--border-strong); color: var(--text-1); }
 .train-recovery-banner {
@@ -267,7 +269,7 @@ img, video, canvas, svg { max-width: 100%; }
   margin: 0;
 }
 .po-icon-btn {
-  width: 38px; height: 38px;
+  width: 44px; height: 44px; /* was 38px */
   display: flex; align-items: center; justify-content: center;
   background: rgba(255,255,255,0.04);
   border: 1px solid var(--border);
@@ -309,6 +311,7 @@ img, video, canvas, svg { max-width: 100%; }
   font-family: inherit; font-size: 12.5px; font-weight: 600;
   cursor: pointer; transition: background 0.15s, color 0.15s;
   -webkit-tap-highlight-color: transparent;
+  min-height: 44px; display: flex; align-items: center; justify-content: center; /* was ~36px tall, under the touch-target minimum */
 }
 .po-seg-btn:hover { color: var(--text-2); background: rgba(255,255,255,0.04); }
 .po-seg-btn.active {
@@ -575,8 +578,10 @@ img, video, canvas, svg { max-width: 100%; }
 .po-hist-date { font-size: 11px; color: var(--text-3); font-family: var(--font-mono); }
 .po-hist-set { font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; }
 .po-hist-del {
-  background: transparent; border: none; color: var(--text-4);
+  background: transparent; border: none; color: rgba(255,255,255,0.5); /* was --text-4 (~2.1:1, fails AA) */
   font-size: 16px; cursor: pointer; padding: 4px 8px;
+  min-width: 44px; min-height: 44px;
+  display: inline-flex; align-items: center; justify-content: center;
   -webkit-tap-highlight-color: transparent;
 }
 .po-hist-del:hover { color: var(--bad); }
@@ -653,8 +658,10 @@ img, video, canvas, svg { max-width: 100%; }
   padding: 4px 0;
 }
 .po-set-row .po-mini-btn {
-  background: transparent; border: none; color: var(--text-4);
+  background: transparent; border: none; color: rgba(255,255,255,0.5); /* was --text-4 (~2.1:1, fails AA) */
   font-size: 14px; cursor: pointer; padding: 4px 8px;
+  min-width: 44px; min-height: 44px;
+  display: inline-flex; align-items: center; justify-content: center;
   -webkit-tap-highlight-color: transparent;
 }
 .po-set-row .po-mini-btn:hover { color: var(--bad); }
@@ -740,7 +747,7 @@ img, video, canvas, svg { max-width: 100%; }
   /* Exercise picker */
   .po-exercise-bar { gap: 6px; }
   .po-ex-select { padding: 11px 10px; padding-right: 30px; font-size: 13px; }
-  .po-btn-icon { width: 38px; height: 38px; min-width: 38px; }
+  .po-btn-icon { width: 44px; height: 44px; min-width: 44px; } /* was 38px, under the 44px touch-target minimum */
 
   /* Stack weight + reps vertically so every rep button fits the screen */
   .po-log-grid { grid-template-columns: 1fr; gap: 14px; }
@@ -958,7 +965,7 @@ img, video, canvas, svg { max-width: 100%; }
   padding: 4px 0;
 }
 .wt-chart-yaxis span {
-  font-size: 10px; color: var(--text-4);
+  font-size: 10px; color: rgba(255,255,255,0.5); /* was --text-4 (~2.1:1, fails AA) */
   font-family: var(--font-mono);
 }
 .wt-chart {
@@ -1007,7 +1014,7 @@ img, video, canvas, svg { max-width: 100%; }
   text-transform: uppercase; color: var(--text-3);
 }
 .wt-comp-window {
-  font-size: 10px; color: var(--text-4);
+  font-size: 10px; color: rgba(255,255,255,0.5); /* was --text-4 (~2.1:1, fails AA) */
   font-family: var(--font-mono);
 }
 .wt-comp-headline {
@@ -1147,7 +1154,7 @@ img, video, canvas, svg { max-width: 100%; }
   margin-bottom: 22px;
 }
 .wt-back {
-  width: 40px; height: 40px;
+  width: 44px; height: 44px; /* was 40px */
   background: rgba(255,255,255,0.04);
   border: 1px solid var(--border);
   border-radius: 50%;
@@ -3352,7 +3359,7 @@ img, video, canvas, svg { max-width: 100%; }
     } else {
       grid.innerHTML = photos.map(p =>
         '<button class="wt-photo-card" data-id="' + p.id + '" type="button">' +
-          '<img src="' + p.dataUrl + '" alt="">' +
+          '<img src="' + p.dataUrl + '" alt="Progress photo, ' + photoFmtDate(p.dateKey) + (p.weight ? (', ' + p.weight) : '') + '">' +
           '<div class="wt-photo-overlay"></div>' +
           '<div class="wt-photo-meta">' +
             '<span class="wt-photo-date">' + photoFmtDate(p.dateKey) + '</span>' +
@@ -3476,6 +3483,7 @@ img, video, canvas, svg { max-width: 100%; }
     if (!p) return;
     activePhotoId = id;
     $('wtViewerImg').src = p.dataUrl;
+    $('wtViewerImg').alt = 'Progress photo, ' + photoFmtDate(p.dateKey) + (p.weight ? (', ' + p.weight) : '');
     $('wtViewerDate').textContent = photoFmtDate(p.dateKey).toUpperCase();
     $('wtViewerWeight').textContent = p.weight || '—';
     $('wtViewer').dataset.mode = 'single';
@@ -3527,6 +3535,8 @@ img, video, canvas, svg { max-width: 100%; }
     comparePhotoId = otherId;
     $('wtCmpImgA').src = A.dataUrl;
     $('wtCmpImgB').src = B.dataUrl;
+    $('wtCmpImgA').alt = 'Progress photo, ' + photoFmtDate(A.dateKey) + (A.weight ? (', ' + A.weight) : '');
+    $('wtCmpImgB').alt = 'Progress photo, ' + photoFmtDate(B.dateKey) + (B.weight ? (', ' + B.weight) : '');
     $('wtCmpMetaA').textContent = photoFmtDate(A.dateKey) + ' · ' + (A.weight || '—');
     $('wtCmpMetaB').textContent = photoFmtDate(B.dateKey) + ' · ' + (B.weight || '—');
     // Headline — date arrow + weight delta

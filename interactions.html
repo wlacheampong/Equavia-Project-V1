@@ -11,26 +11,27 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Equavia">
 <title>Interactions — Equavia</title>
+<link rel="stylesheet" href="equavia-core.css">
 <script src="assistant-tools.js"></script>
 <script src="topbar.js" defer></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
 :root {
-  --bg-deep: #050506;
-  --bg-card: rgba(255, 255, 255, 0.04);
-  --bg-input: rgba(0, 0, 0, 0.28);
-  --border: rgba(255, 255, 255, 0.08);
-  --border-strong: rgba(255, 255, 255, 0.14);
-  --text-primary: #FAFAFA;
-  --text-secondary: #B8B6B0;
-  --text-tertiary: #76746E;
-  --text-quaternary: #4D4B47;
-  --accent: #E07658;
-  --success: #6BE3A4;
-  --warning: #F2C063;
-  --danger: #FF6B6B;
-  --font: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --bg-deep: var(--eq-bg-primary);
+  --bg-card: var(--eq-bg-card);
+  --bg-input: var(--eq-bg-input);
+  --border: var(--eq-border);
+  --border-strong: var(--eq-border-strong);
+  --text-primary: var(--eq-text-primary);
+  --text-secondary: var(--eq-text-secondary);
+  --text-tertiary: var(--eq-text-muted);
+  --text-quaternary: var(--eq-text-muted); /* was #4D4B47 (~2.3:1, failed AA) */
+  --accent: var(--eq-accent);
+  --success: var(--eq-success);
+  --warning: var(--eq-warning);
+  --danger: var(--eq-danger);
+  --font: var(--eq-font-family);
+  --font-mono: var(--eq-font-mono);
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
@@ -101,6 +102,7 @@ body {
   padding: 5px 12px; border-radius: 999px; border: 1px solid var(--border-strong);
   background: rgba(255,255,255,0.03); color: var(--text-tertiary);
   font-family: inherit; font-size: 11px; font-weight: 600; cursor: pointer;
+  min-height: 44px; /* was ~23px tall */
 }
 .int-chip.is-on { background: rgba(224,118,88,0.14); border-color: rgba(224,118,88,0.4); color: var(--accent); }
 
@@ -128,7 +130,8 @@ body {
 }
 .ct-profile-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 4px; }
 .ct-profile-name { font-size: 20px; font-weight: 700; }
-.ct-del-btn { background: none; border: none; color: var(--text-quaternary); font-size: 20px; cursor: pointer; padding: 0 4px; line-height: 1; }
+.ct-del-btn { background: none; border: none; color: var(--text-quaternary); font-size: 20px; cursor: pointer; padding: 0 4px; line-height: 1; position: relative; }
+.ct-del-btn::before { content: ''; position: absolute; inset: -12px; } /* invisible tap-target expansion to ~44x44px */
 .ct-del-btn:hover { color: var(--danger); }
 .ct-profile-status { font-size: 12.5px; color: var(--text-tertiary); margin-bottom: 16px; }
 .ct-profile-status.is-overdue { color: #FF8A8A; }
@@ -137,6 +140,7 @@ body {
 .ct-action-btn {
   background: rgba(255,255,255,0.06); color: var(--text-primary); border: 1px solid var(--border-strong);
   border-radius: 10px; padding: 8px 14px; font-family: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer;
+  min-height: 44px; /* was ~31px tall */
 }
 .ct-action-btn.is-primary { background: var(--accent); color: #1a0f0a; border-color: transparent; }
 /* ===== 6.7: web-search quick prompt, fueling social plans ===== */
@@ -151,14 +155,21 @@ body {
 .ct-field label { display: block; font-size: 10.5px; font-weight: 700; color: var(--text-tertiary); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.05em; }
 .ct-field input[type="text"], .ct-field input[type="date"], .ct-field select, .ct-field textarea {
   width: 100%; background: var(--bg-input); border: 1px solid var(--border-strong); border-radius: 8px;
-  padding: 8px 10px; font-size: 13px; font-family: inherit; color: var(--text-primary); outline: none;
+  padding: 8px 10px; font-size: 16px; font-family: inherit; color: var(--text-primary); outline: none; /* font-size was 13px, also fixes iOS zoom-on-focus */
+}
+.ct-field input[type="text"]:focus, .ct-field input[type="date"]:focus, .ct-field select:focus, .ct-field textarea:focus {
+  border-color: var(--text-primary); box-shadow: 0 0 0 2px rgba(255,255,255,0.12); /* was outline:none with no replacement focus state */
 }
 .ct-field textarea { resize: vertical; min-height: 44px; }
 .ct-field-row { display: flex; gap: 10px; }
 .ct-field-row .ct-field { flex: 1; }
 .ct-tags-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
 .ct-tag-pill { background: rgba(255,255,255,0.06); border: 1px solid var(--border-strong); border-radius: 999px; padding: 4px 10px 4px 12px; font-size: 11.5px; display: flex; align-items: center; gap: 6px; }
-.ct-tag-pill button { background: none; border: none; color: var(--text-quaternary); cursor: pointer; padding: 0; font-size: 13px; line-height: 1; }
+.ct-tag-pill button { background: none; border: none; color: var(--text-quaternary); cursor: pointer; padding: 0; font-size: 13px; line-height: 1; position: relative; }
+.ct-tag-pill button::before {
+  /* invisible tap-target expansion: pill row only has 6px gaps, so this is capped at the WCAG 24px minimum rather than the full 44px guideline */
+  content: ''; position: absolute; inset: -5px;
+}
 
 /* ===== Talking Topics + Reply Helper (5.3/5.4) ===== */
 .ct-topics-block, .ct-reply-block { margin-bottom: 8px; }
@@ -167,7 +178,8 @@ body {
 .ct-thread-row { display: flex; align-items: center; gap: 8px; padding: 6px 0; }
 .ct-thread-row.is-done .ct-thread-text { text-decoration: line-through; color: var(--text-quaternary); }
 .ct-thread-text { flex: 1; font-size: 13px; }
-.ct-thread-del { background: none; border: none; color: var(--text-quaternary); cursor: pointer; font-size: 14px; padding: 0 4px; }
+.ct-thread-del { background: none; border: none; color: var(--text-quaternary); cursor: pointer; font-size: 14px; padding: 0 4px; position: relative; }
+.ct-thread-del::before { content: ''; position: absolute; inset: -6px; } /* modest expansion; rows are only 6px padding apart */
 .ct-thread-add-row { display: flex; gap: 8px; margin-top: 8px; }
 .ct-thread-add-row input { flex: 1; }
 .ct-topic-card {
@@ -217,6 +229,7 @@ body {
 .ct-channel-btn {
   flex: 1; min-width: 80px; background: rgba(255,255,255,0.06); border: 1px solid var(--border-strong); border-radius: 10px;
   padding: 12px 8px; font-family: inherit; font-size: 12.5px; font-weight: 600; color: var(--text-primary); cursor: pointer; text-align: center;
+  min-height: 44px;
 }
 .ct-channel-btn:hover { border-color: var(--accent); }
 .int-sheet-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 6px; }

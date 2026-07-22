@@ -1,0 +1,157 @@
+/* ==========================================================================
+   Equavia core design tokens + shared resets.
+   Every page links this BEFORE its own <style> block. Page-specific layout
+   stays in the page's own CSS -- this file only owns tokens, base resets,
+   and the handful of shared utility classes (.eq-card, .eq-page-content,
+   .eq-chart-wrap, .eq-desktop-only/.eq-mobile-only).
+
+   Token values below were reconciled from what was actually in use across
+   all 18 pages (see the 2026-07-22 UI audit): before this file existed,
+   every page hand-copied its own :root block, and at least three
+   incompatible color "dialects" had drifted apart (an orange-accent set on
+   planner/finance/ability/interactions/news/ask/settings/lock/privacy, a
+   mint-accent set on notes/brand/vitals, and a rgba-opacity-based set on
+   gym/po-water/train). This file keeps the orange as the one shared
+   --eq-accent (it was the more common "primary accent" naming) and folds
+   mint in as the semantic --eq-success color instead of a second accent.
+   ========================================================================== */
+
+:root {
+  /* ---- Colors ---- */
+  --eq-bg-primary:        #050506; /* near-black page background */
+  --eq-bg-card:           rgba(255, 255, 255, 0.04); /* card/section background -- this exact value was already near-universal */
+  --eq-bg-input:          rgba(0, 0, 0, 0.28);
+  --eq-bg-elevated:       #131316; /* modals, popovers, dropdowns */
+
+  --eq-border:            rgba(255, 255, 255, 0.06);
+  --eq-border-strong:     rgba(255, 255, 255, 0.14);
+
+  --eq-text-primary:      #FAFAFA;
+  --eq-text-secondary:    #B8B6B0;
+  --eq-text-muted:        #8C8A91; /* replaces every page's own --text-tertiary; ~5.6:1 on --eq-bg-primary, passes AA (the old values across pages ranged #76746E/#84848c, several of which failed) */
+  --eq-text-placeholder:  #8C8A91; /* same value as muted -- confirmed >4.5:1 on --eq-bg-input too */
+
+  --eq-accent:            #E07658; /* the more consistently-named "accent" across pages (planner/finance/ability/interactions/news/ask/settings/lock/privacy) */
+  --eq-danger:            #FF6B6B;
+  --eq-success:           #6BE3A4; /* was a second "accent" on notes/brand/vitals/gym/health/po-water/train -- folded in here as the semantic success color instead */
+  --eq-warning:           #F2C063;
+
+  /* ---- Typography ---- */
+  --eq-font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --eq-font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --eq-font-xs:   12px;
+  --eq-font-sm:   13px;
+  --eq-font-base: 14px;  /* minimum for mobile body/interactive text */
+  --eq-font-md:   16px;  /* also the minimum that avoids iOS Safari zoom-on-focus on inputs */
+  --eq-font-lg:   18px;
+  --eq-font-xl:   22px;
+  --eq-font-2xl:  28px;
+
+  /* ---- Spacing scale ---- */
+  --eq-space-xs:   4px;
+  --eq-space-sm:   8px;
+  --eq-space-md:   12px;
+  --eq-space-lg:   16px;
+  --eq-space-xl:   20px;
+  --eq-space-2xl:  28px;
+  --eq-space-3xl:  40px;
+
+  /* ---- Layout ---- */
+  --eq-card-radius:      12px;
+  --eq-card-radius-lg:   16px; /* larger cards/hero sections across several pages already used 16-18px */
+  --eq-input-radius:     8px;
+  --eq-btn-radius:       10px;
+  --eq-card-padding:  var(--eq-space-lg);
+  --eq-page-padding:  var(--eq-space-lg);
+  --eq-touch-min:     44px;  /* minimum touch target */
+  --eq-touch-gap:     8px;   /* minimum gap between adjacent touch targets */
+
+  /* Breakpoints (for reference in media queries -- custom properties can't
+     be used inside a @media query condition itself):
+       380px: small phone     428px: standard phone
+       768px: tablet          1024px: desktop */
+
+  /* ---- Safe areas (PWA / notch) ---- */
+  --eq-safe-top:    env(safe-area-inset-top, 0px);
+  --eq-safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Box model */
+*, *::before, *::after { box-sizing: border-box; }
+
+/* Body */
+body {
+  margin: 0;
+  font-family: var(--eq-font-family);
+  font-size: var(--eq-font-base);
+  color: var(--eq-text-primary);
+  background: var(--eq-bg-primary);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Touch targets -- deliberately opt-in via .tappable, NOT a blanket rule on
+   every <button>/<a>/<select>. The 2026-07-22 audit's own fixes rely on
+   checkboxes and compact pills staying visually small while an invisible
+   ::before pseudo-element expands their real hit area (see planner.html's
+   .chk-checkbox/.gm-check, gym.html's .po-hist-del, etc.) -- a global
+   min-height:44px on every native control would balloon exactly the
+   elements those fixes were designed to keep compact, and would silently
+   resize hundreds of inline links/icon buttons/pills across 18 pages the
+   moment this file is linked. Apply .tappable explicitly per element
+   instead of relying on this file to do it for you. */
+.tappable {
+  min-height: var(--eq-touch-min);
+  min-width: var(--eq-touch-min);
+}
+
+/* Inputs */
+input, textarea, select {
+  font-size: var(--eq-font-md);  /* prevents iOS zoom on focus */
+  background: var(--eq-bg-input);
+  color: var(--eq-text-primary);
+  border: 1px solid var(--eq-border);
+  border-radius: var(--eq-input-radius);
+  padding: var(--eq-space-md);
+}
+input::placeholder, textarea::placeholder { color: var(--eq-text-placeholder); }
+
+/* Keyboard focus visibility -- many pages set a bare `outline: none` on
+   inputs/buttons with no replacement (found on planner/interactions/
+   ability/health/news during the 2026-07-22 audit). `:focus-visible` has
+   higher specificity than a plain element or class selector, so this wins
+   the cascade over those declarations without needing to touch each one. */
+input:focus-visible, textarea:focus-visible, select:focus-visible,
+button:focus-visible, a:focus-visible, [tabindex]:focus-visible {
+  outline: 2px solid var(--eq-accent);
+  outline-offset: 2px;
+}
+
+/* Cards -- shared pattern */
+.eq-card {
+  background: var(--eq-bg-card);
+  border: 1px solid var(--eq-border);
+  border-radius: var(--eq-card-radius);
+  padding: var(--eq-card-padding);
+}
+
+/* Page content padding -- accounts for the fixed bottom nav */
+.eq-page-content {
+  padding: var(--eq-page-padding);
+  padding-top: calc(var(--eq-page-padding) + var(--eq-safe-top));
+  padding-bottom: calc(var(--eq-space-3xl) + var(--eq-safe-bottom) + 60px); /* 60px = nav height */
+}
+
+/* Responsive chart container */
+.eq-chart-wrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Hide on mobile / desktop utilities */
+@media (max-width: 767px) {
+  .eq-desktop-only { display: none !important; }
+}
+@media (min-width: 768px) {
+  .eq-mobile-only { display: none !important; }
+}

@@ -218,7 +218,7 @@ body.topbar-modal-open { overflow: hidden; touch-action: none; }
   box-shadow: 0 4px 16px rgba(0,0,0,0.4);
   display: flex; align-items: center; justify-content: center; cursor: pointer;
 }
-@media (max-width: ${BREAKPOINT - 1}px) {
+@media (max-width: ${BREAKPOINT}px) {
   .eq-qc-fab { bottom: calc(64px + 14px + env(safe-area-inset-bottom)); }
 }
 .eq-qc-fab svg { width: 24px; height: 24px; }
