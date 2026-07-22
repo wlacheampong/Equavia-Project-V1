@@ -17,16 +17,17 @@
 
   const PAGES = [
     // Core tabs, re-walk against equavia-pre-answers-final.md 0.4/6.1:
-    // Main / Health / Train / Planner / Finance. Finance moves back to
-    // core from the More sheet; Interactions moves to More; gym.html's
-    // tab label changes Fitness -> Train (train.html itself retired --
-    // a legacy duplicate logger from the old Vitality-tile era, same
-    // lineage as vitals.html/brand.html, both deleted in the same pass).
+    // Main / Health / Fitness / Planner / Finance. Finance moves back to
+    // core from the More sheet; Interactions moves to More. User later
+    // asked to bring back both the "Fitness" label on gym.html (reverting
+    // the Train relabel) and train.html itself (reverting its retirement)
+    // -- train.html is back in the More sheet below, distinct from
+    // gym.html's own "Fitness" tab.
     { key: 'main',    href: 'dashboard.html', label: 'Main',
       icon: '<path d="M3 11 12 4l9 7"/><path d="M5 10v9a1 1 0 0 0 1 1h3v-6h6v6h3a1 1 0 0 0 1-1v-9"/>' },
     { key: 'health',  href: 'health.html',    label: 'Health',
       icon: '<rect x="3" y="3" width="18" height="18" rx="4"/><path d="M12 8v8M8 12h8"/>' },
-    { key: 'fitness', href: 'gym.html',       label: 'Train',
+    { key: 'fitness', href: 'gym.html',       label: 'Fitness',
       icon: '<path d="M6.5 9v6M17.5 9v6M3 10.5v3M21 10.5v3M6.5 12h11"/>' },
     { key: 'planner', href: 'planner.html',   label: 'Planner',
       icon: '<rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1"/><path d="M9 12l2 2 4-4"/>' },
@@ -39,6 +40,8 @@
       icon: '<circle cx="9" cy="8" r="3.2"/><path d="M3.5 20a5.5 5.5 0 0 1 11 0"/><circle cx="17.5" cy="7" r="2.4"/><path d="M15 12.5a4.2 4.2 0 0 1 6.5 3.5"/>' },
     { key: 'ability', href: 'ability.html',   label: 'Ability', more: true,
       icon: '<path d="M12 2c1 4-4 5-4 9a4 4 0 0 0 8 0c0-2-1-3-1-3s2 1 2 5a6 6 0 0 1-12 0c0-6 5-6 7-11Z"/>' },
+    { key: 'train',   href: 'train.html',     label: 'Train',   more: true,
+      icon: '<circle cx="12" cy="13" r="8"/><path d="M12 13V9M9 2h6M12 2v3"/>' },
     // Phase 5.6: deliberately not a core tab, so reaching the news feed
     // always costs one extra tap (the friction is intentional, same
     // reasoning Interactions' Inbox zone already applies).
