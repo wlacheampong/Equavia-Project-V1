@@ -12,6 +12,8 @@
 <meta name="apple-mobile-web-app-title" content="Project Equavia">
 <title>Ability — Project Equavia</title>
 <link rel="stylesheet" href="equavia-core.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="sync.js" defer></script>
 <script src="assistant-tools.js"></script>
 <script src="topbar.js" defer></script>
 <script src="obsidian-sync.js"></script>
@@ -1619,6 +1621,18 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
   renderDueChip();
   window.addEventListener('storage', () => { renderTracks(); renderDueChip(); });
 })();
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  if (typeof initCloudSync !== 'function') return;
+  // Same shared pattern as finance.html/health.html's sync -- habits had no
+  // cloud presence at all until now, purely per-device localStorage.
+  initCloudSync({
+    appKey: 'habits',
+    syncedKeys: ['habits_v1'],
+    onApplied: function () { window.dispatchEvent(new Event('storage')); }
+  });
+});
 </script>
 
 </body>

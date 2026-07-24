@@ -3,3 +3,7 @@
 .vscode/
 .idea/
 *.swp
+
+# npm (added for the MCP server's @modelcontextprotocol/sdk dependency --
+# package-lock.json IS committed for reproducible installs, node_modules is not)
+node_modules/
