@@ -1032,7 +1032,16 @@ body {
 
     const context = await assembleContext(text);
     renderNotesSearchStatus();
-    const apiMessages = messages.filter(m => m.role === 'user' || m.role === 'assistant').map(m => ({ role: m.role, content: m.content }));
+    // Persisted assistant/user entries should only ever hold a plain string
+    // (data.reply / typed text) -- raw tool_use content-block arrays only
+    // ever live in-memory, passed straight into runTurn, never saved here.
+    // A non-string content value means a stale/legacy entry snuck into
+    // storage at some point; replaying it verbatim is what produces
+    // Anthropic's "tool_use without a following tool_result" 400 on every
+    // future send, so it's dropped here rather than sent through.
+    const apiMessages = messages
+      .filter(m => (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string')
+      .map(m => ({ role: m.role, content: m.content }));
     const tools = buildToolsArray();
 
     $('askSendBtn').disabled = true;
