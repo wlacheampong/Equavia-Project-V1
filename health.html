@@ -37,7 +37,7 @@
   --text-tertiary: var(--eq-text-muted);
   --text-quaternary: var(--eq-text-muted); /* was #4D4B47 (~2.3:1, failed AA) -- see the two literal-color fixes still in place on the Energy chart labels below, now redundant with this but left as-is */
 
-  --accent: #1D9E75; /* page-specific: this page's own Energy-section teal, kept distinct from the shared orange brand accent */
+  --accent: var(--eq-accent);
   --accent-glow: rgba(29, 158, 117, 0.35);
   --warning: var(--eq-warning);
   --warning-bg: rgba(163, 45, 45, 0.10);
@@ -84,15 +84,6 @@ main {
   padding-top: max(56px, env(safe-area-inset-top, 56px));
 }
 
-.section-title {
-  font-family: var(--font-mono);
-  font-size: 11px; font-weight: 600;
-  letter-spacing: 0.18em; text-transform: uppercase;
-  color: var(--text-tertiary);
-  margin: 0 4px 14px;
-  display: flex; align-items: center; gap: 12px;
-}
-.section-title::before { content: '≡'; font-size: 14px; opacity: 0.5; }
 .water-embed { margin-top: 56px; }
 .water-iframe {
   display: block;

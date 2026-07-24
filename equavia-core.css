@@ -141,6 +141,71 @@ button:focus-visible, a:focus-visible, [tabindex]:focus-visible {
   padding-bottom: calc(var(--eq-space-3xl) + var(--eq-safe-bottom) + 60px); /* 60px = nav height */
 }
 
+/* Section header -- promoted from dashboard.html/settings.html's identical
+   local definitions (2026-07-24 consolidation pass). Previously every page
+   hand-rolled its own version, with real drift: ask.html/interactions.html/
+   news.html were missing the divider lines, health.html used a mono-font
+   icon-only variant instead, gym.html used an unrelated class (.wt-divider)
+   for the same visual job. A page that wants an icon prefix (e.g.
+   finance.html's "⚡") wraps the label in <span class="section-title-text">
+   and adds its own tiny .section-title-text::before override locally --
+   everything else about the header is shared here. */
+.section-title {
+  font-size: var(--eq-font-xs);
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--eq-text-muted);
+  margin-bottom: var(--eq-space-md);
+  display: flex;
+  align-items: center;
+  gap: var(--eq-space-md);
+}
+.section-title::before {
+  content: '';
+  width: 18px;
+  height: 1px;
+  background: var(--eq-text-muted);
+  opacity: 0.6;
+}
+.section-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.08), transparent);
+}
+.section-title-text { display: inline-flex; align-items: center; gap: 8px; }
+
+/* Buttons -- promoted from settings.html's local definitions (gym.html's
+   .po-btn-primary was already pixel-identical to .btn-primary, independently
+   hand-rolled -- this removes that duplication rather than picking a side). */
+.btn {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--eq-text-primary);
+  border: 1px solid var(--eq-border-strong);
+  border-radius: var(--eq-btn-radius);
+  padding: 9px 16px;
+  min-height: var(--eq-touch-min);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--eq-font-sm);
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn:hover { background: rgba(255, 255, 255, 0.10); }
+.btn-primary {
+  background: linear-gradient(180deg, #FFFFFF 0%, #E8E5DD 100%);
+  color: #0A0A0B;
+  border: 0;
+}
+.btn-primary:hover { filter: brightness(1.05); }
+.btn-danger-outline { border-color: rgba(239, 68, 68, 0.4); color: #FF9B9B; }
+
 /* Responsive chart container */
 .eq-chart-wrap {
   width: 100%;
