@@ -1558,12 +1558,82 @@ body::after {
 .gmail-disconnect-link { display: block; margin: 12px auto 0; padding: 4px; background: transparent; border: none; color: var(--text-tertiary); font-family: inherit; font-size: 10.5px; text-align: center; cursor: pointer; }
 .gmail-disconnect-link:hover { color: var(--text-secondary); text-decoration: underline; }
 .gmail-err { background: rgba(255,107,107,0.08); border: 1px solid rgba(255,107,107,0.28); color: #FF8A8A; padding: 8px 10px; border-radius: 8px; font-size: 11px; margin-bottom: 10px; }
+
+/* ---- Live domain summary row: one honest number per domain, tapping
+   through to that domain's full page. Read-only here -- each page below
+   remains the actual editor. ---- */
+.eq-summary-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--eq-space-md);
+  margin: 0 0 var(--eq-space-xl);
+}
+@media (max-width: 767px) {
+  .eq-summary-row { grid-template-columns: repeat(2, 1fr); }
+}
+.eq-summary-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: var(--eq-bg-card);
+  border: 1px solid var(--eq-border);
+  border-radius: var(--eq-card-radius);
+  padding: var(--eq-space-md);
+  min-height: var(--eq-touch-min);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 120ms ease;
+}
+.eq-summary-card:active { border-color: var(--eq-border-strong); }
+.eq-summary-label {
+  font-family: var(--eq-font-mono);
+  font-size: 10px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--eq-text-muted);
+}
+.eq-summary-value {
+  font-size: var(--eq-font-xl);
+  font-weight: 700;
+  color: var(--eq-text-primary);
+  line-height: 1.15;
+}
+.eq-summary-value.good { color: var(--eq-success); }
+.eq-summary-value.warn { color: var(--eq-warning); }
+.eq-summary-value.bad  { color: var(--eq-danger); }
+.eq-summary-sub {
+  font-size: 11px;
+  color: var(--eq-text-secondary);
+}
 </style>
 </head>
 <body>
 <div class="page">
 
   <h1 class="dash-title">Project Equavia</h1>
+
+  <div class="eq-summary-row" id="eqSummaryRow">
+    <a class="eq-summary-card" href="finance.html">
+      <span class="eq-summary-label">Finance</span>
+      <span class="eq-summary-value" id="eqSumFinance">—</span>
+      <span class="eq-summary-sub">Net worth</span>
+    </a>
+    <a class="eq-summary-card" href="train.html">
+      <span class="eq-summary-label">Train</span>
+      <span class="eq-summary-value" id="eqSumTrain">—</span>
+      <span class="eq-summary-sub">Today's split</span>
+    </a>
+    <a class="eq-summary-card" href="gym.html">
+      <span class="eq-summary-label">Gym</span>
+      <span class="eq-summary-value" id="eqSumGym">—</span>
+      <span class="eq-summary-sub">Current weight</span>
+    </a>
+    <a class="eq-summary-card" href="health.html">
+      <span class="eq-summary-label">Health</span>
+      <span class="eq-summary-value" id="eqSumHealth">—</span>
+      <span class="eq-summary-sub">WHOOP recovery</span>
+    </a>
+  </div>
 
   <a class="backup-nudge" id="backupNudge" href="settings.html" style="display:none;">
     <span class="backup-nudge-icon">⚠️</span>
@@ -4900,6 +4970,128 @@ document.addEventListener('DOMContentLoaded', function () {
   evaluateRules();
   window.addEventListener('storage', evaluateRules);
 })();
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  // Same Supabase project every other page hardcodes its own client against
+  // (finance/train/gym/health all read/write the shared app_state table
+  // under their own key). A separate client instance here matches that
+  // existing per-file convention rather than reaching into sync.js's
+  // private closure.
+  const SUPABASE_URL = 'https://ubhjdibldkknviezrjys.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InViaGpkaWJsZGtrbnZpZXpyanlzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3NzAyNjEsImV4cCI6MjA5OTM0NjI2MX0.ODgzRHVYLEaDCUBXmmSd3oENXlSlarRYVERagHbVCK0';
+  let summarySupa = null;
+  function summaryClient() {
+    if (!summarySupa && window.supabase) summarySupa = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    return summarySupa;
+  }
+  function localJSON(key) {
+    try { return JSON.parse(localStorage.getItem(key)); } catch (e) { return null; }
+  }
+  // Local-first: this device's own cache (same origin, no bridge needed)
+  // renders instantly; only falls back to a network read on a fresh device
+  // that hasn't opened the domain page here yet.
+  async function remoteAppState(key) {
+    const c = summaryClient();
+    if (!c) return null;
+    try {
+      const { data, error } = await c.from('app_state').select('data').eq('key', key).maybeSingle();
+      if (error || !data) return null;
+      return data.data || null;
+    } catch (e) { return null; }
+  }
+  function fmtGBP(n) {
+    if (n == null || !isFinite(n)) return null;
+    return '£' + Math.round(n).toLocaleString('en-GB');
+  }
+
+  // ---- Finance: net worth (nw:history's last snapshot) ----
+  (async function () {
+    const el = document.getElementById('eqSumFinance');
+    if (!el) return;
+    let hist = localJSON('nw:history');
+    if (!Array.isArray(hist) || !hist.length) {
+      const remote = await remoteAppState('finance');
+      hist = remote && Array.isArray(remote['nw:history']) ? remote['nw:history'] : null;
+    }
+    const last = Array.isArray(hist) && hist.length ? hist[hist.length - 1] : null;
+    el.textContent = fmtGBP(last ? last.v : null) || 'No data';
+  })();
+
+  // ---- Train: active split day's name ----
+  (async function () {
+    const el = document.getElementById('eqSumTrain');
+    if (!el) return;
+    let state = localJSON('vitality_bridge:vitality_train');
+    if (!state) state = await remoteAppState('vitality_train');
+    const name = state && state.days && state.active && state.days[state.active] ? state.days[state.active].name : null;
+    el.textContent = name || 'No data';
+  })();
+
+  // ---- Gym: current weight (po_coach_weights' last entry) ----
+  (async function () {
+    const el = document.getElementById('eqSumGym');
+    if (!el) return;
+    let arr = localJSON('po_coach_weights');
+    if (!Array.isArray(arr) || !arr.length) {
+      const remote = await remoteAppState('po-coach');
+      arr = remote && Array.isArray(remote['po_coach_weights']) ? remote['po_coach_weights'] : null;
+    }
+    const last = Array.isArray(arr) && arr.length ? arr[arr.length - 1] : null;
+    el.textContent = (last && last.weight != null) ? (Math.round(last.weight * 10) / 10 + ' kg') : 'No data';
+  })();
+
+  // ---- Health: WHOOP recovery score ----
+  // whoop_tokens_v1 is never synced cross-device (same as health.html) --
+  // this only works on a device that has connected WHOOP itself.
+  (async function () {
+    const el = document.getElementById('eqSumHealth');
+    if (!el) return;
+    let t = localJSON('whoop_tokens_v1');
+    if (!t) { el.textContent = 'Not connected'; return; }
+
+    async function refreshTok(tok) {
+      if (!tok.refresh) return null;
+      try {
+        const r = await fetch('/api/whoop-refresh', {
+          method: 'POST',
+          headers: Object.assign({ 'Content-Type': 'application/json' }, window.EqAuth ? window.EqAuth.header() : {}),
+          body: JSON.stringify({ refresh_token: tok.refresh })
+        });
+        const j = await r.json();
+        if (j.access_token) {
+          const next = { access: j.access_token, refresh: j.refresh_token || tok.refresh, expires: Date.now() + (j.expires_in || 3500) * 1000 };
+          try { localStorage.setItem('whoop_tokens_v1', JSON.stringify(next)); } catch (e) {}
+          return next;
+        }
+      } catch (e) {}
+      return null;
+    }
+    async function whFetch(path, tok) {
+      const [p, qs] = path.split('?');
+      const params = new URLSearchParams(qs || ''); params.set('path', p);
+      const r = await fetch('/api/whoop-data?' + params.toString(), {
+        headers: Object.assign({ 'Authorization': 'Bearer ' + tok.access, 'Accept': 'application/json' }, window.EqAuth ? window.EqAuth.header() : {})
+      });
+      if (r.status === 401) { const n = await refreshTok(tok); if (n) return whFetch(path, n); throw new Error('unauthorized'); }
+      if (!r.ok) throw new Error('whoop ' + r.status);
+      return await r.json();
+    }
+
+    try {
+      if (t.expires && Date.now() > t.expires - 60000) { const n = await refreshTok(t); if (n) t = n; }
+      const rec = await whFetch('/recovery?limit=1', t);
+      const r0 = rec && rec.records && rec.records[0];
+      const score = r0 && r0.score && r0.score.recovery_score != null ? Math.round(r0.score.recovery_score) : null;
+      if (score == null) { el.textContent = 'No data'; return; }
+      el.textContent = score + '%';
+      el.classList.remove('good', 'warn', 'bad');
+      el.classList.add(score >= 67 ? 'good' : score >= 34 ? 'warn' : 'bad');
+    } catch (e) {
+      el.textContent = 'No data';
+    }
+  })();
+});
 </script>
 </body>
 </html>

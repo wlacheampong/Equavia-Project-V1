@@ -12,6 +12,8 @@
 <meta name="apple-mobile-web-app-title" content="Project Equavia">
 <title>Finances — Project Equavia</title>
 <link rel="stylesheet" href="equavia-core.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="sync.js" defer></script>
 <script src="assistant-tools.js"></script>
 <script src="topbar.js" defer></script>
 <style>
@@ -3748,6 +3750,22 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   setInterval(safeRenderTicker, 1500);
 
 })();
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  if (typeof initCloudSync !== 'function') return;
+  // Same shared pattern as health.html's sync: mirrors this device's finance
+  // localStorage up to the app_state table (key 'finance') so net worth,
+  // subscriptions, budgets, and wishlist go cross-device like health/goals
+  // already do. nw:history's last entry is the one live net-worth number the
+  // dashboard's summary card reads.
+  initCloudSync({
+    appKey: 'finance',
+    syncedKeys: ['subs', 'wishlist', 'incoming_orders'],
+    syncedPrefixes: ['nw:', 'budget:'],
+    onApplied: function () { window.dispatchEvent(new Event('storage')); }
+  });
+});
 </script>
 
 </body>
