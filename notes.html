@@ -445,7 +445,18 @@ async function syncNowAll(silent){
   if(!window.ObsidianSync)return;
   const cfg=ObsidianSync.getConfig();
   if(!cfg.enabled){if(!silent)alert('Enable Obsidian sync in Settings first.');return;}
-  const reachable=await ObsidianSync.testConnection();
+  let reachable=await ObsidianSync.testConnection();
+  if(!reachable&&silent){
+    // Cold-start race: testConnection() only waits 1.5s, and the very
+    // first attempt right at page load can miss that window even when
+    // Obsidian's plugin is genuinely up (confirmed 2026-07-25 -- a boot
+    // sync failed silently, then a manual edit's push succeeded moments
+    // later with no other change). One retry after a short pause covers
+    // this without making a manual "sync now" click feel sluggish on a
+    // real failure, which is why this only applies to the silent path.
+    await new Promise(r=>setTimeout(r,2000));
+    reachable=await ObsidianSync.testConnection();
+  }
   if(!reachable){if(!silent)alert('Could not reach Obsidian. Make sure Obsidian is open on this device with the Local REST API plugin running.');return;}
   for(const note of notes){
     const dirty=!note.obsidian||!note.obsidian.lastSyncedAt||new Date(note.updatedAt)>new Date(note.obsidian.lastSyncedAt);
