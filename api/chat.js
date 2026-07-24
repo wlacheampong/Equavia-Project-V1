@@ -101,9 +101,19 @@ export default async function handler(req, res) {
   // sections can render as separate cards with real Implement/Ignore
   // buttons on the suggestions. Only honored alongside a matching tools
   // array -- Anthropic's API is the real validator either way.
+  // ask.html's client-side tool loop (runTurn) resolves exactly one
+  // tool_use per assistant turn -- a confirm-gated tool pauses the whole
+  // turn on a single pending proposal, and the next request only ever
+  // supplies one matching tool_result. If Claude were allowed to emit two
+  // tool_use blocks in the same turn (the API's default, "parallel tool
+  // use"), the second id would never get a paired tool_result, and
+  // Anthropic would reject every request afterward with "tool_use ids
+  // were found without tool_result blocks". disable_parallel_tool_use caps
+  // Claude at one tool call per turn, matching what the client can
+  // actually handle.
   const toolChoice = (body && body.toolChoice && typeof body.toolChoice.name === 'string' && tools)
     ? { type: 'tool', name: body.toolChoice.name }
-    : undefined;
+    : (tools && tools.length ? { type: 'auto', disable_parallel_tool_use: true } : undefined);
 
   try {
     const r = await fetch('https://api.anthropic.com/v1/messages', {

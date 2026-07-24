@@ -112,6 +112,13 @@ body {
   padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
   display: flex; justify-content: center;
 }
+/* topbar.js's mobile bottom tab bar is also fixed to the true viewport
+   bottom (64px tall, plus the safe-area inset) -- without this the input
+   bar sits underneath it instead of above it. Matches topbar.js's own
+   767px breakpoint and its body.has-bottombar padding convention. */
+@media (max-width: 767px) {
+  body.has-bottombar .ask-input-bar { bottom: calc(64px + env(safe-area-inset-bottom)); }
+}
 .ask-input-row {
   width: 100%; max-width: 688px; display: flex; gap: 8px; align-items: flex-end;
   background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
