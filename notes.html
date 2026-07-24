@@ -441,12 +441,12 @@ function scheduleSyncPush(note){
     }
   },2000);
 }
-async function syncNowAll(){
+async function syncNowAll(silent){
   if(!window.ObsidianSync)return;
   const cfg=ObsidianSync.getConfig();
-  if(!cfg.enabled){alert('Enable Obsidian sync in Settings first.');return;}
+  if(!cfg.enabled){if(!silent)alert('Enable Obsidian sync in Settings first.');return;}
   const reachable=await ObsidianSync.testConnection();
-  if(!reachable){alert('Could not reach Obsidian. Make sure Obsidian is open on this device with the Local REST API plugin running.');return;}
+  if(!reachable){if(!silent)alert('Could not reach Obsidian. Make sure Obsidian is open on this device with the Local REST API plugin running.');return;}
   for(const note of notes){
     const dirty=!note.obsidian||!note.obsidian.lastSyncedAt||new Date(note.updatedAt)>new Date(note.obsidian.lastSyncedAt);
     if(!dirty)continue;
@@ -500,17 +500,13 @@ $('edImageFile').addEventListener('change',e=>{
   notes=Array.isArray(d)?d:[];
   await migrateFromVee();
   renderApp();
-  // Opportunistic, silent pull on load if sync is already enabled+reachable.
-  if(window.ObsidianSync){
-    const cfg=ObsidianSync.getConfig();
-    if(cfg.enabled){
-      const reachable=await ObsidianSync.testConnection();
-      if(reachable){
-        const pullRes=await ObsidianSync.pullAll(notes);
-        if(pullRes.ok){notes=pullRes.notes;persist();renderApp();}
-      }
-    }
-  }
+  // Opportunistic, silent full sync on load if sync is already
+  // enabled+reachable -- pushes any not-yet-synced notes (e.g. ones added
+  // via the MCP server, which never go through the local editor's
+  // scheduleSyncPush) in addition to pulling remote changes. syncNowAll()
+  // already does both correctly; this boot step just needed to actually
+  // call it instead of only pulling.
+  await syncNowAll(true);
 })();
 </script>
 </body>
