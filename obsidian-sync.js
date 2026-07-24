@@ -139,6 +139,26 @@
     } catch (e) { return { ok: false, reason: 'network' }; }
   }
 
+  // Create-once write for the About Me template (settings.html) -- checks
+  // the path first so a second click (or the button being pressed again
+  // months later) never clobbers what the user has since hand-edited in
+  // Obsidian. A failed existence check (plugin unreachable) is treated as
+  // "go ahead and try the write," which then fails on its own network
+  // error rather than silently no-opping.
+  async function pushIfAbsent(relPath, content) {
+    const cfg = getConfig();
+    if (!cfg.enabled) return { ok: false, reason: 'disabled' };
+    try {
+      const existing = await apiFetch(vaultPath(cfg, relPath), { timeoutMs: 4000 });
+      if (existing.ok) return { ok: false, reason: 'exists', path: relPath };
+    } catch (e) { /* fall through to write */ }
+    try {
+      const res = await apiFetch(vaultPath(cfg, relPath), { method: 'PUT', body: content, headers: { 'Content-Type': 'text/markdown' } });
+      if (!res.ok) return { ok: false, reason: 'http_' + res.status };
+      return { ok: true, path: relPath };
+    } catch (e) { return { ok: false, reason: 'network' }; }
+  }
+
   async function deleteNote(note) {
     const cfg = getConfig();
     if (!cfg.enabled || !note.obsidian || !note.obsidian.path) return { ok: false };
@@ -424,5 +444,5 @@
     catch (e) { return { ok: false }; }
   }
 
-  window.ObsidianSync = { getConfig, setConfig, testConnection, pushNote, deleteNote, pullAll, pushProjectPage, moveProjectPageToFolder, pushWeeklyReport, searchNotes, pushChatTranscript, pushDailyNote, pullSyncFile, pushSyncFile, pushBinary, pushBackupFile, listBackupFiles, deleteBackupFile };
+  window.ObsidianSync = { getConfig, setConfig, testConnection, pushNote, pushIfAbsent, deleteNote, pullAll, pushProjectPage, moveProjectPageToFolder, pushWeeklyReport, searchNotes, pushChatTranscript, pushDailyNote, pullSyncFile, pushSyncFile, pushBinary, pushBackupFile, listBackupFiles, deleteBackupFile };
 })();

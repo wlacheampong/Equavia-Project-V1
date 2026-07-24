@@ -15,6 +15,7 @@
 <script src="assistant-tools.js"></script>
 <script src="topbar.js" defer></script>
 <script src="obsidian-sync.js"></script>
+<script src="daily-report.js" defer></script>
 <script src="dexie.min.js"></script>
 <style>
 :root {
@@ -279,6 +280,11 @@ input:focus, select:focus { border-color: rgba(255,255,255,0.3); }
         <button class="btn btn-primary" id="obsSave">Save</button>
         <span class="status-line" id="obsStatus" style="margin:0;"></span>
       </div>
+      <div class="actions-row">
+        <button class="btn" id="obsPushAboutMe">Push "About Me" template to Obsidian</button>
+        <span class="status-line" id="obsAboutMeStatus" style="margin:0;"></span>
+      </div>
+      <p class="help-text">One-off: writes a starter file with sections for your stats and writing style, seeded with what the app already knows (goal weight, remembered facts). Never overwritten automatically after that — edit it directly in Obsidian.</p>
     </div>
   </div>
 
@@ -681,6 +687,58 @@ input:focus, select:focus { border-color: rgba(255,255,255,0.3); }
         showStatus($('obsStatus'), ok ? '✅ Connected' : '❌ Not reachable', ok ? 'ok' : 'err');
       });
     });
+    $('obsPushAboutMe').addEventListener('click', () => {
+      const cfg = ObsidianSync.getConfig();
+      if (!cfg.enabled) { showStatus($('obsAboutMeStatus'), 'Enable and save sync first.', 'err'); return; }
+      showStatus($('obsAboutMeStatus'), 'Pushing…', null);
+      ObsidianSync.pushIfAbsent(cfg.folder + '/About Me.md', buildAboutMeTemplate()).then((res) => {
+        if (res.ok) showStatus($('obsAboutMeStatus'), '✅ Created ' + res.path + ' — edit it in Obsidian.', 'ok');
+        else if (res.reason === 'exists') showStatus($('obsAboutMeStatus'), 'Already exists — edit it directly in Obsidian, this only creates it once.', null);
+        else showStatus($('obsAboutMeStatus'), '❌ Could not push (' + res.reason + ')', 'err');
+      });
+    });
+  }
+
+  // Seeded starter for a durable "About Me" file -- everything the app
+  // already knows goes in automatically; the rest is left blank for the
+  // user to fill in by hand in Obsidian, since there's no structured
+  // profile anywhere in the app to pull stats/writing-style from yet.
+  function buildAboutMeTemplate() {
+    const goalRaw = localStorage.getItem('po_coach_goal_weight');
+    const goal = goalRaw != null ? parseFloat(goalRaw) : null;
+    let memList = [];
+    try { memList = JSON.parse(localStorage.getItem('eq.assistant.memory')) || []; } catch (e) {}
+    const memLines = memList.length ? memList.map((m) => '- ' + m.fact).join('\n') : '- (none remembered yet)';
+    return [
+      '# About Me',
+      '',
+      '*Durable context for Claude — not day-to-day data (see the Daily/ notes for that). This file is only ever created once by the app; edit it directly here from now on.*',
+      '',
+      '## Stats',
+      '- Name: ',
+      '- Age / DOB: ',
+      '- Height: ',
+      '- Goal weight: ' + (goal != null ? goal : ''),
+      '',
+      '## Training',
+      '- Split: ',
+      '- Notes: ',
+      '',
+      '## Diet / nutrition',
+      '- ',
+      '',
+      '## Life goals',
+      '- ',
+      '',
+      '## Writing style for Claude',
+      '- Tone: ',
+      '- Directness: ',
+      '- Formatting preferences: ',
+      '',
+      '## Remembered facts (seeded from the in-app assistant memory)',
+      memLines,
+      '',
+    ].join('\n');
   }
 
   // ---------- Standing Rules (Phase 4.6) -- just enable/threshold state

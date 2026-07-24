@@ -16,6 +16,8 @@
 <script src="sync.js" defer></script>
 <script src="assistant-tools.js"></script>
 <script src="topbar.js" defer></script>
+<script src="obsidian-sync.js"></script>
+<script src="daily-report.js" defer></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
 :root {
@@ -4723,15 +4725,12 @@ document.addEventListener('DOMContentLoaded', function () {
   function setMoodLog(list) { storeSet(MOOD_KEY, list); }
   function moodToday() { return getMoodLog().find((m) => m.dateKey === AT.activeDateKeyLocal()) || null; }
 
+  // Delegates to daily-report.js's shared builder (mood + close-the-day are
+  // just two of the sections it assembles now) so there's one writer of
+  // <folder>/Daily/<dateKey>.md, not two stepping on the same file.
   async function writeDailyNote(dateKey) {
-    if (!window.ObsidianSync || !ObsidianSync.getConfig().enabled) return;
-    const mood = getMoodLog().find((m) => m.dateKey === dateKey);
-    const close = storeGet('eq.assistant.close_day_v1');
-    let md = '# ' + dateKey + '\n\n';
-    if (mood) md += '## Mood\n' + mood.mood + '/10' + (mood.note ? ' — ' + mood.note : '') + '\n\n';
-    if (close && close.dateKey === dateKey && close.text) md += '## Close the day\n\n' + close.text + '\n\n';
-    if (md.trim() === '# ' + dateKey) return; // nothing to write yet
-    try { await ObsidianSync.pushDailyNote(dateKey, md); } catch (e) {}
+    if (!window.EqDailyReport) return;
+    try { await EqDailyReport.run(dateKey); } catch (e) {}
   }
   window.EqDailyNote = writeDailyNote;
 
