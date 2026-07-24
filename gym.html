@@ -1441,6 +1441,18 @@ img, video, canvas, svg { max-width: 100%; }
       <div class="wt-goal-summary hidden" id="wtGoalSummary"></div>
     </div>
 
+    <div class="wt-goal-card">
+      <div class="wt-goal-head">
+        <span class="wt-goal-label">CALORIES TODAY</span>
+      </div>
+      <div class="wt-goal-input-row">
+        <input type="number" step="1" class="wt-input" id="calInput" placeholder="e.g. 2400" inputmode="numeric" aria-label="Today's calories">
+        <span class="wt-unit-static">kcal</span>
+        <button class="wt-save-btn" id="calSaveBtn">Save</button>
+      </div>
+      <div class="wt-goal-summary hidden" id="calSummary"></div>
+    </div>
+
     <button class="wt-progress-link" id="wtProgressLink" type="button" aria-label="Open progress photos">
       <div>
         <div class="wt-progress-label">PROGRESS PHOTOS</div>
@@ -2746,6 +2758,11 @@ img, video, canvas, svg { max-width: 100%; }
   const WT_KEY = 'po_coach_weights';
   const PHOTO_KEY = 'po_coach_photos';
   const GOAL_KEY = 'po_coach_goal_weight';
+  // Daily calorie intake -- same shape/convention as WT_KEY (plain
+  // calendar-day dateKey via wtDateKey, not AssistantTools' 6am-boundary
+  // "active date"), kept alongside weight since this is the same
+  // "one number a day" pattern.
+  const CAL_KEY = 'calorie_log_v1';
 
   function wtLoad() {
     try {
@@ -2787,6 +2804,39 @@ img, video, canvas, svg { max-width: 100%; }
     wtSave(wtEntries);
     wtRender();
     publishFitnessSummary();
+  }
+
+  function calLoad() {
+    try {
+      const raw = localStorage.getItem(CAL_KEY);
+      const arr = raw ? JSON.parse(raw) : [];
+      return Array.isArray(arr) ? arr.sort((a,b) => a.dateKey.localeCompare(b.dateKey)) : [];
+    } catch (e) { return []; }
+  }
+  function calSave(arr) {
+    try { localStorage.setItem(CAL_KEY, JSON.stringify(arr)); } catch (e) {}
+  }
+  let calEntries = calLoad();
+  function calSaveEntry(kcal) {
+    const key = wtDateKey(new Date());
+    const existing = calEntries.find(e => e.dateKey === key);
+    if (existing) existing.kcal = kcal;
+    else { calEntries.push({ dateKey: key, kcal }); calEntries.sort((a,b) => a.dateKey.localeCompare(b.dateKey)); }
+    calSave(calEntries);
+    calRender();
+  }
+  function calRender() {
+    const todayKey = wtDateKey(new Date());
+    const today = calEntries.find(e => e.dateKey === todayKey);
+    if (today) $('calInput').value = today.kcal;
+    const cutoffKey = wtDateKey(new Date(Date.now() - 7 * 86400000));
+    const recent = calEntries.filter(e => e.dateKey >= cutoffKey);
+    const summary = $('calSummary');
+    if (!today && !recent.length) { summary.classList.add('hidden'); summary.textContent = ''; return; }
+    const avg7 = recent.length ? Math.round(recent.reduce((s, e) => s + e.kcal, 0) / recent.length) : null;
+    summary.classList.remove('hidden');
+    summary.textContent = (today ? 'Logged: ' + today.kcal + ' kcal today' : 'Not logged today')
+      + (avg7 != null ? ' · 7-day avg: ' + avg7 + ' kcal' : '');
   }
 
   // Published for the dashboard's compact Fitness summary card -- read-only
@@ -3270,6 +3320,17 @@ img, video, canvas, svg { max-width: 100%; }
   });
   $('wtGoalInput').addEventListener('keydown', (e) => {
     if (e.key === 'Enter') $('wtGoalSaveBtn').click();
+  });
+
+  // Wire calories UI
+  calRender();
+  $('calSaveBtn').addEventListener('click', () => {
+    const v = parseInt($('calInput').value, 10);
+    if (isNaN(v) || v <= 0) return;
+    calSaveEntry(v);
+  });
+  $('calInput').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') $('calSaveBtn').click();
   });
 
   // ============================================================

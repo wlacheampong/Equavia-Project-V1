@@ -57,6 +57,14 @@
     return '## Weight\n' + lines.map((l) => '- ' + l).join('\n') + '\n\n';
   }
 
+  // ---------- Calories (gym.html: calorie_log_v1) ----------
+  function sectionCalories(dateKey) {
+    const entries = storeGet('calorie_log_v1') || [];
+    const today = entries.find((e) => e.dateKey === dateKey);
+    if (!today) return '';
+    return '## Calories\n- ' + today.kcal + ' kcal\n\n';
+  }
+
   // ---------- WHOOP + steps (health.html: eq.health.summary) ----------
   function sectionHealth(dateKey) {
     const h = storeGet('eq.health.summary');
@@ -186,6 +194,7 @@
   function buildMarkdown(dateKey) {
     let md = '# ' + dateKey + '\n\n';
     md += safe(() => sectionWeight(dateKey));
+    md += safe(() => sectionCalories(dateKey));
     md += safe(() => sectionHealth(dateKey));
     md += safe(() => sectionStack(dateKey));
     md += safe(() => sectionTasks(dateKey));
