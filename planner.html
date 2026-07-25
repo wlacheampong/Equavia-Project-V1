@@ -18,6 +18,11 @@
 <script src="daily-report.js" defer></script>
 <script src="assistant-tools.js"></script>
 <script src="topbar.js" defer></script>
+<!-- Google Identity Services -- needed for the Inbox (Gmail) card's
+     client-side popup consent flow, moved here from dashboard.html. The
+     page's own Calendar feature uses a separate server-side redirect flow
+     and doesn't need this script, but Gmail's flow does. -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
 :root {
   --bg: var(--eq-bg-primary);
@@ -222,6 +227,117 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
   border-radius: 10px;
   margin-bottom: 6px;
 }
+/* ===== Mood + journal (moved from dashboard.html, Phase 6.2) ===== */
+.mood-chip-head { font-size: 12.5px; font-weight: 700; color: var(--text-secondary); margin-bottom: 10px; }
+.mood-scale { display: flex; gap: 5px; flex-wrap: wrap; }
+.mood-num-btn {
+  flex: 1; min-width: 26px; height: 36px; border-radius: 8px; border: 1px solid var(--eq-border-strong);
+  background: rgba(255,255,255,0.04); color: var(--text-secondary); font-family: inherit; font-size: 12px; font-weight: 700; cursor: pointer;
+  position: relative;
+}
+.mood-num-btn::before { content: ''; position: absolute; top: -6px; bottom: -6px; left: -2px; right: -2px; }
+.mood-num-btn.is-selected { background: var(--accent); border-color: transparent; color: #1a0f0a; }
+.mood-note-input {
+  width: 100%; box-sizing: border-box; margin-top: 10px; background: rgba(0,0,0,0.28);
+  border: 1px solid var(--eq-border-strong); border-radius: 8px; color: var(--text-primary);
+  font-family: inherit; font-size: 12.5px; padding: 8px 10px;
+}
+
+/* ===== Annual Review (moved from dashboard.html, Phase 6.10) ===== */
+.wkr-card { background: rgba(255,255,255,0.04); border-radius: 16px; padding: 18px; max-width: 640px; margin: 0 auto 18px; }
+.wkr-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.wkr-head-center { text-align: center; display: flex; flex-direction: column; gap: 3px; }
+.wkr-range { font-family: var(--font-mono); font-size: 11px; color: var(--text-secondary); font-weight: 600; }
+.wkr-footer { display: flex; align-items: center; gap: 10px; margin-top: 16px; }
+.wkr-obsidian-btn {
+  padding: 8px 14px; border-radius: 9px; border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.04); color: var(--text-secondary);
+  font-family: inherit; font-size: 11.5px; font-weight: 600; cursor: pointer;
+}
+.wkr-obsidian-btn:hover { background: rgba(255,255,255,0.08); color: var(--text-primary); }
+.wkr-obsidian-status { font-size: 11px; color: var(--text-tertiary); }
+.wkr-obsidian-status.is-error { color: var(--danger); }
+.adv-chart-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+.adv-chart-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 12px; }
+.adv-chart-title { font-size: 9.5px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 8px; }
+.adv-chart-svg { width: 100%; height: 70px; display: block; }
+.adv-chart-card-pie { display: flex; flex-direction: column; align-items: center; }
+.adv-pie-svg { width: 110px; height: 110px; }
+.adv-pie-legend { display: flex; flex-wrap: wrap; gap: 6px 10px; justify-content: center; margin-top: 8px; }
+.adv-pie-legend-item { font-size: 10.5px; color: var(--text-secondary); display: flex; align-items: center; gap: 5px; }
+.adv-pie-legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.adv-chart-empty { font-size: 11px; color: var(--text-tertiary); font-style: italic; text-align: center; padding: 20px 0; }
+.alert-row {
+  display: flex; align-items: flex-start; gap: 10px;
+  background: rgba(242,192,99,0.08); border: 1px solid rgba(242,192,99,0.25);
+  border-radius: 12px; padding: 12px 14px;
+}
+.alert-icon { font-size: 15px; line-height: 1.3; flex-shrink: 0; }
+.alert-text { font-size: 12.5px; color: var(--text-primary); line-height: 1.5; }
+.audit-section { margin-top: 16px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.06); }
+.audit-section-title { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 8px; }
+.audit-list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.audit-list li { font-size: 12.5px; color: var(--text-primary); line-height: 1.5; padding-left: 14px; position: relative; }
+.audit-list li::before { content: '—'; position: absolute; left: 0; color: var(--text-quaternary); }
+.audit-suggestion { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; background: rgba(255,255,255,0.025); border-radius: 10px; margin-bottom: 8px; }
+.audit-suggestion-text { font-size: 12.5px; color: var(--text-primary); line-height: 1.5; }
+.audit-suggestion-actions { display: flex; gap: 8px; }
+.audit-sugg-btn { border: none; border-radius: 8px; padding: 6px 12px; font-family: inherit; font-size: 11.5px; font-weight: 600; cursor: pointer; }
+.audit-sugg-implement { background: var(--accent); color: #1a0f0a; }
+.audit-sugg-ignore { background: rgba(255,255,255,0.08); color: var(--text-secondary); }
+.audit-sugg-status { font-size: 11px; color: var(--text-tertiary); font-style: italic; }
+
+/* ===== Gmail Notification Hub (moved from dashboard.html, Phase 1.4) ===== */
+.gmail-card { background: rgba(255,255,255,0.04); border-radius: 16px; padding: 16px 18px; }
+.gmail-disc-text { font-size: 12.5px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 12px; }
+.gmail-connect-btn, .gmail-refresh-btn {
+  border: none; border-radius: 9px; cursor: pointer; font-family: inherit;
+}
+.gmail-connect-btn {
+  width: 100%; padding: 12px; background: linear-gradient(180deg, #ffffff 0%, #e8e5dd 100%);
+  color: #0a0a0b; font-size: 13px; font-weight: 700;
+}
+.gmail-head { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.gmail-unread-badge {
+  background: var(--accent); color: #1a0f0a; font-size: 11px; font-weight: 700;
+  border-radius: 999px; padding: 2px 9px; font-family: var(--font-mono);
+}
+.gmail-unread-badge.zero { background: rgba(255,255,255,0.08); color: var(--text-tertiary); }
+.gmail-head-label { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-tertiary); font-weight: 700; flex: 1; }
+.gmail-refresh-btn {
+  width: 28px; height: 28px; background: rgba(255,255,255,0.06); color: var(--text-secondary);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.gmail-refresh-btn.is-loading { animation: gmailSpin 0.8s linear infinite; }
+@keyframes gmailSpin { to { transform: rotate(360deg); } }
+.gmail-list { display: flex; flex-direction: column; gap: 2px; }
+.gmail-msg { padding: 10px 4px; border-top: 1px solid rgba(255,255,255,0.05); cursor: pointer; }
+.gmail-msg:first-child { border-top: none; }
+.gmail-msg-row { display: flex; align-items: baseline; gap: 8px; }
+.gmail-msg-sender { font-size: 13px; font-weight: 700; color: var(--text-primary); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gmail-msg-time { font-size: 10.5px; color: var(--text-tertiary); font-family: var(--font-mono); white-space: nowrap; }
+.gmail-msg-subject { font-size: 12.5px; color: var(--text-secondary); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gmail-msg-snippet { font-size: 11.5px; color: var(--text-tertiary); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gmail-msg-tag {
+  display: inline-block; margin-top: 6px; font-size: 10px; font-weight: 700; letter-spacing: 0.04em;
+  color: var(--accent); background: rgba(224,118,88,0.12); border-radius: 999px; padding: 2px 8px;
+}
+.gmail-msg-body { margin-top: 10px; padding-top: 10px; border-top: 1px dashed rgba(255,255,255,0.08); }
+.gmail-msg-body-text { font-size: 12.5px; color: var(--text-secondary); line-height: 1.5; white-space: pre-wrap; max-height: 220px; overflow-y: auto; }
+.gmail-msg-body-loading { font-size: 11.5px; color: var(--text-tertiary); font-style: italic; }
+.gmail-msg-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.gmail-msg-actions a, .gmail-msg-actions button {
+  border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.04); color: var(--text-secondary);
+  border-radius: 8px; padding: 6px 10px; font-family: inherit; font-size: 11px; font-weight: 600;
+  cursor: pointer; text-decoration: none;
+}
+.gmail-msg-actions a:hover, .gmail-msg-actions button:hover { color: var(--text-primary); border-color: rgba(255,255,255,0.2); }
+.gmail-msg-actions button.is-done { color: var(--success); border-color: rgba(107,227,164,0.3); }
+.gmail-empty { font-size: 12px; color: var(--text-tertiary); text-align: center; padding: 12px 4px; }
+.gmail-disconnect-link { display: block; margin: 12px auto 0; padding: 4px; background: transparent; border: none; color: var(--text-tertiary); font-family: inherit; font-size: 10.5px; text-align: center; cursor: pointer; }
+.gmail-disconnect-link:hover { color: var(--text-secondary); text-decoration: underline; }
+.gmail-err { background: rgba(255,107,107,0.08); border: 1px solid rgba(255,107,107,0.28); color: #FF8A8A; padding: 8px 10px; border-radius: 8px; font-size: 11px; margin-bottom: 10px; }
+
 .shop-row:hover { background: rgba(255,255,255,0.045); }
 .shop-cell {
   font-size: 13px; color: var(--text-secondary);
@@ -1471,6 +1587,42 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
 <body>
 <div class="shell shell-wide">
 
+<!-- ===== MOOD (moved from dashboard.html) ===== -->
+<div class="section" data-section="mood" id="mood">
+  <div class="section-title">
+    <span class="section-title-text">MOOD</span>
+  </div>
+  <div class="card mood-chip" id="moodChip">
+    <div class="mood-chip-head" id="moodChipHead">How's today?</div>
+    <div class="mood-scale" id="moodScale"></div>
+    <input type="text" class="mood-note-input" id="moodNoteInput" placeholder="One line, optional…">
+  </div>
+</div>
+
+<!-- ===== INBOX (moved from dashboard.html) ===== -->
+<div class="section" data-section="inbox" id="inbox">
+  <div class="section-title">
+    <span class="section-title-text">INBOX</span>
+  </div>
+  <div class="card gmail-card" id="gmailCard">
+    <div id="gmailErr" class="gmail-err" style="display:none"></div>
+    <div id="gmailDisc">
+      <div class="gmail-disc-text">Connect Gmail to see unread mail here, without opening the Gmail app — read-only, nothing is ever sent or modified from this app.</div>
+      <button id="gmailConnectBtn" class="gmail-connect-btn" type="button">Connect Gmail</button>
+    </div>
+    <div id="gmailConn" style="display:none">
+      <div class="gmail-head">
+        <span class="gmail-unread-badge zero" id="gmailUnreadBadge">0</span>
+        <span class="gmail-head-label">unread</span>
+        <button id="gmailRefreshBtn" class="gmail-refresh-btn" type="button" aria-label="Refresh"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M20.49 15A9 9 0 1 1 5.64 5.64L23 10"/></svg></button>
+      </div>
+      <div id="gmailList" class="gmail-list"></div>
+      <div id="gmailEmpty" class="gmail-empty" style="display:none">No unread mail.</div>
+      <button id="gmailDisconnectBtn" class="gmail-disconnect-link" type="button">Disconnect</button>
+    </div>
+  </div>
+</div>
+
 <!-- ===== TASKS ===== -->
 <div class="section" data-section="tasks" id="tasks">
   <div class="section-title">
@@ -1781,6 +1933,53 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
       <span style="color:var(--text-tertiary); font-size:18px;">&rsaquo;</span>
     </div>
   </a>
+</div>
+
+<!-- ===== ANNUAL REVIEW (moved from dashboard.html, Phase 6.10) ===== -->
+<div class="section" data-section="annual-review" id="annual-review">
+  <div class="section-title">
+    <span class="section-title-text">ANNUAL REVIEW</span>
+  </div>
+  <div class="wkr-card" id="annualReviewCard">
+    <div class="wkr-head">
+      <div class="wkr-head-center">
+        <span class="section-title" style="margin:0;">Annual Review</span>
+        <span class="wkr-range" id="annualReviewYear">—</span>
+      </div>
+    </div>
+    <div class="alert-row" id="annualDecemberNudge" style="display:none;margin-bottom:12px;">
+      <span class="alert-icon">🗓️</span>
+      <span class="alert-text">It's December — a good time to run this year's Annual Review.</span>
+    </div>
+    <div class="wkr-footer">
+      <button type="button" class="wkr-obsidian-btn" id="annualReviewRunBtn">Run annual review</button>
+      <span class="wkr-obsidian-status" id="annualReviewStatus"></span>
+    </div>
+    <div class="adv-chart-grid" id="annualChartGrid" style="display:none;margin-bottom:14px;">
+      <div class="adv-chart-card">
+        <div class="adv-chart-title">Sleep, monthly avg</div>
+        <svg class="adv-chart-svg" id="annualSleepChart" viewBox="0 0 300 100" preserveAspectRatio="none"></svg>
+      </div>
+      <div class="adv-chart-card">
+        <div class="adv-chart-title">Weight, monthly avg</div>
+        <svg class="adv-chart-svg" id="annualWeightChart" viewBox="0 0 300 100" preserveAspectRatio="none"></svg>
+      </div>
+      <div class="adv-chart-card">
+        <div class="adv-chart-title">Task completion %, monthly avg</div>
+        <svg class="adv-chart-svg" id="annualTaskChart" viewBox="0 0 300 100" preserveAspectRatio="none"></svg>
+      </div>
+      <div class="adv-chart-card">
+        <div class="adv-chart-title">Habit adherence %, monthly avg</div>
+        <svg class="adv-chart-svg" id="annualHabitChart" viewBox="0 0 300 100" preserveAspectRatio="none"></svg>
+      </div>
+      <div class="adv-chart-card adv-chart-card-pie">
+        <div class="adv-chart-title">Logged activity by domain (year)</div>
+        <svg class="adv-chart-svg adv-pie-svg" id="annualPieChart" viewBox="0 0 120 120"></svg>
+        <div class="adv-pie-legend" id="annualPieLegend"></div>
+      </div>
+    </div>
+    <div id="annualReviewSections" style="display:none;"></div>
+  </div>
 </div>
 
 </div>
@@ -4471,6 +4670,704 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 });
+</script>
+<script>
+// ============================================================
+// MOOD + ONE-LINE JOURNAL (moved from dashboard.html, Phase 6.2).
+// 1-10 scale, purely observational. Idempotent per day: tapping a new
+// number after already logging today just updates the same entry.
+// ============================================================
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  function storeGet(key) { try { return JSON.parse(localStorage.getItem(key)); } catch (e) { return null; } }
+  function storeSet(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) {} }
+  const AT = window.AssistantTools;
+
+  const MOOD_KEY = 'eq.mood.log_v1';
+  function getMoodLog() { const v = storeGet(MOOD_KEY); return Array.isArray(v) ? v : []; }
+  function setMoodLog(list) { storeSet(MOOD_KEY, list); }
+  function activeDateKey() { return AT ? AT.activeDateKeyLocal() : new Date().toISOString().slice(0, 10); }
+  function moodToday() { return getMoodLog().find((m) => m.dateKey === activeDateKey()) || null; }
+
+  // Delegates to daily-report.js's shared builder (mood + close-the-day are
+  // just two of the sections it assembles) so there's one writer of
+  // <folder>/Daily/<dateKey>.md, not two stepping on the same file.
+  async function writeDailyNote(dateKey) {
+    if (!window.EqDailyReport) return;
+    try { await window.EqDailyReport.run(dateKey); } catch (e) {}
+  }
+
+  function renderMoodChip() {
+    const chip = $('moodChip');
+    if (!chip) return;
+    const today = moodToday();
+    const scale = $('moodScale');
+    scale.innerHTML = '';
+    for (let i = 1; i <= 10; i++) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'mood-num-btn' + (today && today.mood === i ? ' is-selected' : '');
+      btn.textContent = String(i);
+      btn.addEventListener('click', () => saveMood(i));
+      scale.appendChild(btn);
+    }
+    $('moodChipHead').textContent = today ? 'Today: ' + today.mood + '/10' : 'How\'s today?';
+    $('moodNoteInput').value = today ? (today.note || '') : '';
+  }
+  async function saveMood(value) {
+    const dateKey = activeDateKey();
+    const list = getMoodLog();
+    const idx = list.findIndex((m) => m.dateKey === dateKey);
+    const note = $('moodNoteInput').value.trim();
+    const entry = { dateKey, mood: value, note, at: new Date().toISOString() };
+    if (idx !== -1) list[idx] = entry; else list.push(entry);
+    setMoodLog(list.slice(-120));
+    renderMoodChip();
+    await writeDailyNote(dateKey);
+  }
+  $('moodNoteInput').addEventListener('change', () => { const today = moodToday(); if (today) saveMood(today.mood); });
+
+  renderMoodChip();
+  window.addEventListener('storage', renderMoodChip);
+})();
+</script>
+<script>
+// ============================================================
+// ANNUAL REVIEW (moved from dashboard.html, Phase 6.10). Reuses the same
+// forced-tool-call structured-output pattern and Implement/Ignore
+// suggestion-card styling as the dashboard's own Weekly Audit -- assembled
+// from the year's own weekly audits (eq.audits.v1) rather than re-deriving
+// 12 months of raw per-feature data from scratch. Cached per year, "Run
+// again" re-generates. Chart helpers are duplicated (not shared) from the
+// dashboard's own copy -- same per-block-duplication convention this whole
+// codebase already uses, and the two pages don't share a JS scope anyway.
+// `getAudits()`/adopted-theme reading also stay duplicated on dashboard.html
+// itself (read-only there, feeds Weekly Audit's own context) -- both copies
+// read/write the same eq.annual_reviews_v1 / eq.audits.v1 keys, data-only
+// sharing, no function-level dependency between the two pages.
+// ============================================================
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  function storeGet(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }
+  function storeSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+
+  const AUDITS_KEY = 'eq.audits.v1';
+  function getAudits() { const v = storeGet(AUDITS_KEY); return Array.isArray(v) ? v : []; }
+
+  const ANNUAL_REVIEWS_KEY = 'eq.annual_reviews_v1';
+  function getAnnualReviews() { const v = storeGet(ANNUAL_REVIEWS_KEY); return Array.isArray(v) ? v : []; }
+  function setAnnualReviews(list) { storeSet(ANNUAL_REVIEWS_KEY, list); }
+  function annualReviewYear() { return new Date().getFullYear(); }
+  function annualReviewFor(year) { return getAnnualReviews().find((r) => r.year === year) || null; }
+
+  const SUBMIT_ANNUAL_REVIEW_TOOL = {
+    name: 'submit_annual_review',
+    description: 'Submit the completed annual review in structured form. Every claim must cite something real from the weekly audits given -- never invent a number or event. If a domain has too little data across the year, say so plainly rather than inventing a trajectory for it.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        trajectory: { type: 'array', items: { type: 'object', properties: { domain: { type: 'string' }, text: { type: 'string' } }, required: ['domain', 'text'] } },
+        kept_commitments: { type: 'array', items: { type: 'string' } },
+        broken_commitments: { type: 'array', items: { type: 'string' } },
+        top_wins: { type: 'array', items: { type: 'string' } },
+        top_costs: { type: 'array', items: { type: 'string' } },
+        themes: { type: 'array', items: { type: 'string' } },
+        verdict_word: { type: 'string' },
+        verdict_score: { type: 'number' },
+      },
+      required: ['trajectory', 'kept_commitments', 'broken_commitments', 'top_wins', 'top_costs', 'themes', 'verdict_word', 'verdict_score'],
+    },
+  };
+
+  function buildAnnualReviewContext(year) {
+    const audits = getAudits().filter((a) => a.weekKey.slice(0, 4) === String(year)).sort((a, b) => a.weekKey.localeCompare(b.weekKey));
+    let s = 'ANNUAL REVIEW FOR ' + year + '\n' + audits.length + ' weekly audit(s) recorded this year.\n\n';
+    if (!audits.length) { s += 'No weekly audits exist for this year yet -- say so plainly rather than inventing a year in review.\n'; return s; }
+    audits.forEach((a) => {
+      s += 'WEEK ' + a.weekKey + ': verdict ' + (a.verdictWord || '—') + ' (' + (a.verdictScore != null ? a.verdictScore : '—') + '/10)\n';
+      if (a.whatWentWell && a.whatWentWell.length) s += '  Wins: ' + a.whatWentWell.join('; ') + '\n';
+      if (a.whatWentBadly && a.whatWentBadly.length) s += '  Misses: ' + a.whatWentBadly.join('; ') + '\n';
+      if (a.whatToDoBetter && a.whatToDoBetter.length) s += '  To do better: ' + a.whatToDoBetter.join('; ') + '\n';
+      if (a.suggestions && a.suggestions.length) s += '  Suggestions: ' + a.suggestions.map((sg) => sg.text + ' [' + sg.status + ']').join('; ') + '\n';
+    });
+    const scored = audits.filter((a) => typeof a.verdictScore === 'number');
+    if (scored.length >= 2) {
+      const mid = Math.floor(scored.length / 2);
+      const firstHalf = scored.slice(0, mid).reduce((sum, a) => sum + a.verdictScore, 0) / mid;
+      const secondHalf = scored.slice(mid).reduce((sum, a) => sum + a.verdictScore, 0) / (scored.length - mid);
+      s += '\nVerdict-score trend: first half of the year averaged ' + firstHalf.toFixed(1) + '/10, second half averaged ' + secondHalf.toFixed(1) + '/10.\n';
+    }
+    return s;
+  }
+
+  function annualRenderLineChart(svgId, points, color) {
+    const svg = $(svgId);
+    const valid = points.filter((p) => p.v != null);
+    if (valid.length < 2) { svg.innerHTML = '<text x="150" y="50" text-anchor="middle" fill="var(--text-tertiary)" font-size="10">Not enough data yet</text>'; return; }
+    const vals = valid.map((p) => p.v);
+    const min = Math.min.apply(null, vals), max = Math.max.apply(null, vals);
+    const w = 300, h = 70, pad = 4;
+    const stepX = (w - pad * 2) / (points.length - 1);
+    const scaleY = (v) => (max === min) ? h / 2 : (h - pad) - ((v - min) / (max - min)) * (h - pad * 2);
+    const coords = points.map((p, i) => ({ x: pad + i * stepX, y: p.v == null ? null : scaleY(p.v) }));
+    let path = '', started = false;
+    coords.forEach((c) => {
+      if (c.y == null) { started = false; return; }
+      path += (started ? 'L' : 'M') + c.x.toFixed(1) + ',' + c.y.toFixed(1) + ' ';
+      started = true;
+    });
+    const dots = coords.filter((c) => c.y != null).map((c) => '<circle cx="' + c.x.toFixed(1) + '" cy="' + c.y.toFixed(1) + '" r="2" fill="' + color + '"/>').join('');
+    svg.innerHTML = '<path d="' + path.trim() + '" fill="none" stroke="' + color + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' + dots;
+  }
+  function annualRenderBarChart(svgId, values, color) {
+    const svg = $(svgId);
+    if (!values.some((v) => v != null)) { svg.innerHTML = '<text x="150" y="50" text-anchor="middle" fill="var(--text-tertiary)" font-size="10">Not enough data yet</text>'; return; }
+    const w = 300, h = 70, pad = 4, n = values.length;
+    const gap = (w - pad * 2) / n, barW = gap * 0.6;
+    svg.innerHTML = values.map((v, i) => {
+      if (v == null) return '';
+      const bh = Math.max(2, (Math.max(0, Math.min(100, v)) / 100) * (h - pad * 2));
+      const x = pad + i * gap + (gap - barW) / 2;
+      const y = h - pad - bh;
+      return '<rect x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + barW.toFixed(1) + '" height="' + bh.toFixed(1) + '" rx="2" fill="' + color + '"/>';
+    }).join('');
+  }
+  function annualRenderPieChart(svgId, legendId, segments) {
+    const svg = $(svgId), legend = $(legendId);
+    const total = segments.reduce((s, x) => s + x.value, 0);
+    if (!total) { svg.innerHTML = ''; legend.innerHTML = '<div class="adv-chart-empty">No activity logged this year yet.</div>'; return; }
+    const r = 50, cx = 60, cy = 60, C = 2 * Math.PI * r;
+    let offset = 0;
+    const active = segments.filter((s) => s.value > 0);
+    svg.innerHTML = active.map((s) => {
+      const len = (s.value / total) * C;
+      const rotate = (offset / C) * 360 - 90;
+      offset += len;
+      return '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="none" stroke="' + s.color + '" stroke-width="16" stroke-dasharray="' + len.toFixed(2) + ' ' + (C - len).toFixed(2) + '" transform="rotate(' + rotate.toFixed(1) + ' ' + cx + ' ' + cy + ')"/>';
+    }).join('');
+    legend.innerHTML = active.map((s) => '<span class="adv-pie-legend-item"><span class="adv-pie-legend-dot" style="background:' + s.color + '"></span>' + s.label + ' (' + s.value + ')</span>').join('');
+  }
+  function annualLast12Months() {
+    const out = [];
+    const now = new Date();
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      out.push({ y: d.getFullYear(), m: d.getMonth() });
+    }
+    return out;
+  }
+  function annualMonthKey(dateStr) { const d = new Date(dateStr); return d.getFullYear() + '-' + d.getMonth(); }
+  function annualMonthlyAvg(entries, valueField, dateField) {
+    const months = annualLast12Months();
+    const byMonth = {};
+    entries.forEach((e) => {
+      if (e[valueField] == null || !e[dateField]) return;
+      const key = annualMonthKey(e[dateField]);
+      (byMonth[key] = byMonth[key] || []).push(e[valueField]);
+    });
+    return months.map(({ y, m }) => {
+      const vals = byMonth[y + '-' + m];
+      return { v: vals && vals.length ? Number((vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1)) : null };
+    });
+  }
+  function annualHabitAdherenceMonthly() {
+    const habits = storeGet('habits_v1') || [];
+    const months = annualLast12Months();
+    if (!habits.length) return months.map(() => null);
+    return months.map(({ y, m }) => {
+      const daysInMonth = new Date(y, m + 1, 0).getDate();
+      const isFuture = new Date(y, m, 1) > new Date();
+      if (isFuture) return null;
+      let done = 0, tracked = 0;
+      for (let day = 1; day <= daysInMonth; day++) {
+        const d = new Date(y, m, day);
+        if (d > new Date()) break;
+        const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+        habits.forEach((h) => {
+          if (h.createdAt && h.createdAt.slice(0, 10) > key) return;
+          tracked++;
+          if (h.history && h.history[key]) done++;
+        });
+      }
+      return tracked > 0 ? Math.round((done / tracked) * 100) : null;
+    });
+  }
+  function annualDomainActivityYear() {
+    const cutoff = Date.now() - 365 * 86400000;
+    let health = 0, fitness = 0, planner = 0, ability = 0, interactions = 0;
+    (storeGet('sleep_log_v1') || []).forEach((e) => { if (new Date(e.dateKey).getTime() >= cutoff) health++; });
+    (storeGet('po_coach_weights') || []).forEach((e) => { if (new Date(e.dateKey).getTime() >= cutoff) fitness++; });
+    (storeGet('habits_v1') || []).forEach((h) => Object.keys(h.history || {}).forEach((k) => { if (h.history[k] && new Date(k).getTime() >= cutoff) ability++; }));
+    (storeGet('contacts_v1') || []).forEach((c) => (c.history || []).forEach((h) => { if (h.direction !== 'inbound' && new Date(h.date).getTime() >= cutoff) interactions++; }));
+    getAudits().forEach((a) => { planner += (a.whatWentWell || []).length + (a.whatWentBadly || []).length; });
+    return [
+      { label: 'Health', value: health, color: '#6BE3A4' },
+      { label: 'Fitness', value: fitness, color: '#E07658' },
+      { label: 'Planner', value: planner, color: '#6EA8E0' },
+      { label: 'Ability', value: ability, color: '#F2A65A' },
+      { label: 'Interactions', value: interactions, color: '#C48CE0' },
+    ];
+  }
+  function renderAnnualCharts() {
+    const grid = $('annualChartGrid');
+    grid.style.display = '';
+    const sleep = annualMonthlyAvg(storeGet('sleep_log_v1') || [], 'hours', 'dateKey');
+    const weight = annualMonthlyAvg(storeGet('po_coach_weights') || [], 'weight', 'dateKey');
+    const taskSnaps = (storeGet('todo_completion_snapshots_v1') || []).map((s) => ({ pct: s.scheduled > 0 ? (s.completed / s.scheduled) * 100 : null, dateKey: s.dateKey }));
+    const task = annualMonthlyAvg(taskSnaps.filter((s) => s.pct != null), 'pct', 'dateKey').map((p) => p.v);
+    const habit = annualHabitAdherenceMonthly();
+    annualRenderLineChart('annualSleepChart', sleep, '#6BE3A4');
+    annualRenderLineChart('annualWeightChart', weight, '#E07658');
+    annualRenderBarChart('annualTaskChart', task, '#6EA8E0');
+    annualRenderBarChart('annualHabitChart', habit, '#F2A65A');
+    annualRenderPieChart('annualPieChart', 'annualPieLegend', annualDomainActivityYear());
+  }
+
+  function renderAnnualReview() {
+    const year = annualReviewYear();
+    $('annualReviewYear').textContent = String(year);
+    $('annualDecemberNudge').style.display = (new Date().getMonth() === 11) ? '' : 'none';
+    const review = annualReviewFor(year);
+    const wrap = $('annualReviewSections');
+    const btn = $('annualReviewRunBtn');
+    if (!review) { wrap.style.display = 'none'; wrap.innerHTML = ''; $('annualChartGrid').style.display = 'none'; btn.textContent = 'Run annual review'; return; }
+    btn.textContent = 'Run again';
+    wrap.style.display = '';
+    wrap.innerHTML = '';
+    renderAnnualCharts();
+
+    function section(title, items) {
+      if (!items || !items.length) return;
+      const sec = document.createElement('div');
+      sec.className = 'audit-section';
+      sec.innerHTML = '<div class="audit-section-title">' + title + '</div>';
+      const list = document.createElement('ul');
+      list.className = 'audit-list';
+      items.forEach((t) => { const li = document.createElement('li'); li.textContent = t; list.appendChild(li); });
+      sec.appendChild(list);
+      wrap.appendChild(sec);
+    }
+
+    const verdictSec = document.createElement('div');
+    verdictSec.className = 'audit-section';
+    verdictSec.innerHTML = '<div class="audit-section-title">Verdict</div><div class="audit-list" style="font-size:14px;font-weight:700;">' + (review.verdictWord || '—') + ' (' + (review.verdictScore != null ? review.verdictScore : '—') + '/10)</div>';
+    wrap.appendChild(verdictSec);
+
+    if (review.trajectory && review.trajectory.length) {
+      section('Trajectory by domain', review.trajectory.map((t) => t.domain + ': ' + t.text));
+    }
+    section('Kept commitments', review.keptCommitments);
+    section('Broken commitments', review.brokenCommitments);
+    section('Top 5 wins', review.topWins);
+    section('Top 5 costs', review.topCosts);
+
+    if (review.themes && review.themes.length) {
+      const themeSec = document.createElement('div');
+      themeSec.className = 'audit-section';
+      themeSec.innerHTML = '<div class="audit-section-title">Proposed themes for next year</div>';
+      review.themes.forEach((theme, idx) => { themeSec.appendChild(renderThemeCard(year, theme, idx)); });
+      wrap.appendChild(themeSec);
+    }
+  }
+
+  function renderThemeCard(year, theme, idx) {
+    const wrap = document.createElement('div');
+    wrap.className = 'audit-suggestion';
+    const text = document.createElement('div');
+    text.className = 'audit-suggestion-text';
+    text.textContent = theme.text;
+    wrap.appendChild(text);
+    if (theme.status === 'pending') {
+      const actions = document.createElement('div');
+      actions.className = 'audit-suggestion-actions';
+      const implBtn = document.createElement('button');
+      implBtn.type = 'button'; implBtn.className = 'audit-sugg-btn audit-sugg-implement'; implBtn.textContent = 'Adopt';
+      const ignBtn = document.createElement('button');
+      ignBtn.type = 'button'; ignBtn.className = 'audit-sugg-btn audit-sugg-ignore'; ignBtn.textContent = 'Ignore';
+      implBtn.addEventListener('click', () => { setThemeStatus(year, idx, 'adopted'); });
+      ignBtn.addEventListener('click', () => { setThemeStatus(year, idx, 'ignored'); });
+      actions.appendChild(implBtn); actions.appendChild(ignBtn);
+      wrap.appendChild(actions);
+    } else {
+      const status = document.createElement('div');
+      status.className = 'audit-sugg-status';
+      status.textContent = theme.status === 'adopted' ? '✓ Adopted as a standing focus for ' + year : 'Ignored';
+      wrap.appendChild(status);
+    }
+    return wrap;
+  }
+  function setThemeStatus(year, idx, status) {
+    const reviews = getAnnualReviews();
+    const r = reviews.find((x) => x.year === year);
+    if (!r || !r.themes[idx]) return;
+    r.themes[idx].status = status;
+    setAnnualReviews(reviews);
+    renderAnnualReview();
+  }
+
+  async function runAnnualReview() {
+    const year = annualReviewYear();
+    const btn = $('annualReviewRunBtn');
+    btn.disabled = true; btn.textContent = 'Running…';
+    $('annualReviewStatus').textContent = '';
+    try {
+      const context = buildAnnualReviewContext(year);
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, window.EqAuth ? window.EqAuth.header() : {}),
+        body: JSON.stringify({
+          messages: [{ role: 'user', content: 'Run my annual review from the data in context.' }],
+          systemContext: 'You are a direct, specific, zero-flattery annual reviewer for a personal tracking app, synthesizing a full year of weekly audits into one year-in-review. Every claim must cite something real from the weekly data below -- never invent a number or event, and say "not enough data" plainly where a domain has too little to say something real. Call submit_annual_review with your findings.\n\n' + context,
+          tools: [SUBMIT_ANNUAL_REVIEW_TOOL],
+          toolChoice: { name: 'submit_annual_review' },
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'request failed');
+      if (!data.toolUse || data.toolUse.name !== 'submit_annual_review') throw new Error('unexpected response shape');
+      const out = data.toolUse.input || {};
+      const reviews = getAnnualReviews().filter((r) => r.year !== year);
+      reviews.push({
+        year,
+        trajectory: out.trajectory || [],
+        keptCommitments: out.kept_commitments || [],
+        brokenCommitments: out.broken_commitments || [],
+        topWins: out.top_wins || [],
+        topCosts: out.top_costs || [],
+        themes: (out.themes || []).map((text) => ({ text, status: 'pending' })),
+        verdictWord: out.verdict_word || '—',
+        verdictScore: typeof out.verdict_score === 'number' ? out.verdict_score : null,
+        at: new Date().toISOString(),
+      });
+      setAnnualReviews(reviews);
+      renderAnnualReview();
+
+      if (window.ObsidianSync && ObsidianSync.getConfig().enabled) {
+        const md = '# Annual Review — ' + year + '\n\n' +
+          '## Verdict\n' + (out.verdict_word || '—') + ' (' + out.verdict_score + '/10)\n\n' +
+          '## Trajectory by domain\n' + (out.trajectory || []).map((t) => '- **' + t.domain + '**: ' + t.text).join('\n') + '\n\n' +
+          '## Kept commitments\n' + (out.kept_commitments || []).map((t) => '- ' + t).join('\n') + '\n\n' +
+          '## Broken commitments\n' + (out.broken_commitments || []).map((t) => '- ' + t).join('\n') + '\n\n' +
+          '## Top 5 wins\n' + (out.top_wins || []).map((t) => '- ' + t).join('\n') + '\n\n' +
+          '## Top 5 costs\n' + (out.top_costs || []).map((t) => '- ' + t).join('\n') + '\n\n' +
+          '## Proposed themes for next year\n' + (out.themes || []).map((t) => '- ' + t).join('\n') + '\n';
+        await ObsidianSync.pushWeeklyReport('Reviews/' + year, md);
+      }
+    } catch (e) {
+      $('annualReviewStatus').textContent = 'Could not run annual review — ' + (e.message || 'try again') + '.';
+    } finally {
+      btn.disabled = false;
+    }
+  }
+  $('annualReviewRunBtn').addEventListener('click', runAnnualReview);
+
+  renderAnnualReview();
+  window.addEventListener('storage', renderAnnualReview);
+})();
+</script>
+<script>
+// ============================================================
+// INBOX / GMAIL NOTIFICATION HUB (moved from dashboard.html, Phase 1.4).
+// Read-only, never composes/sends/replies -- the one Gmail-mutating action
+// is "Mark as read" (removes the UNREAD label). Access token is kept in
+// memory only for this page's lifetime, never persisted; a reload always
+// re-derives it via silent re-auth if access was granted before.
+// ============================================================
+(function () {
+  const $ = (id) => document.getElementById(id);
+  // Same Google Cloud project/OAuth client as this page's own Calendar
+  // feature (see GOOGLE_CAL_CLIENT_ID above) -- reused deliberately rather
+  // than provisioning a second client, since Google Identity Services
+  // supports requesting a different scope from the same client ID. Uses
+  // the client-side popup consent flow (google.accounts.oauth2), unlike
+  // Calendar's own server-side redirect flow, so this block needs the
+  // accounts.google.com/gsi/client script tag added to <head> above.
+  const GMAIL_CLIENT_ID = '83878675540-40tpq4hkpd05jarl8m8nj9i8vhm5rnel.apps.googleusercontent.com';
+  const GMAIL_SCOPE = 'https://www.googleapis.com/auth/gmail.modify';
+  const GMAIL_EVER_GRANTED_KEY = 'eq.gmail.everGranted';
+  const MAX_MESSAGES = 5;
+
+  let accessToken = null;
+  let tokenClient = null;
+  let retrying401 = false;
+
+  function showErr(msg) {
+    const el = $('gmailErr');
+    el.textContent = msg || '';
+    el.style.display = msg ? '' : 'none';
+  }
+  function setConnectedUI(connected) {
+    $('gmailDisc').style.display = connected ? 'none' : '';
+    $('gmailConn').style.display = connected ? '' : 'none';
+  }
+  function ensureTokenClient() {
+    if (tokenClient || !window.google || !google.accounts || !google.accounts.oauth2) return tokenClient;
+    tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: GMAIL_CLIENT_ID,
+      scope: GMAIL_SCOPE,
+      callback: (resp) => {
+        if (!resp || resp.error) {
+          showErr(resp && resp.error === 'access_denied' ? 'Gmail access was not granted.' : 'Gmail connect failed.');
+          return;
+        }
+        accessToken = resp.access_token;
+        localStorage.setItem(GMAIL_EVER_GRANTED_KEY, '1');
+        showErr('');
+        setConnectedUI(true);
+        fetchMessages();
+      },
+    });
+    return tokenClient;
+  }
+
+  function parseFrom(headerValue) {
+    if (!headerValue) return { name: 'Unknown', email: '' };
+    const m = headerValue.match(/^\s*"?([^"<]*)"?\s*(?:<([^>]+)>)?\s*$/);
+    if (!m) return { name: headerValue, email: '' };
+    const name = (m[1] || '').trim();
+    const email = (m[2] || '').trim();
+    return { name: name || email || 'Unknown', email };
+  }
+  function headerVal(headers, name) {
+    const h = (headers || []).find(x => x.name === name);
+    return h ? h.value : '';
+  }
+  function fmtTime(dateStr) {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return '';
+    const sameDay = d.toDateString() === new Date().toDateString();
+    return sameDay
+      ? d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
+      : d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  }
+  // Cross-link with the Relationship Tracker (interactions.html) -- matched
+  // by exact display-name text, since contacts don't carry an email field.
+  function matchContact(name) {
+    if (!name) return null;
+    let contacts;
+    try { contacts = JSON.parse(localStorage.getItem('contacts_v1')); } catch (e) { contacts = null; }
+    if (!Array.isArray(contacts)) return null;
+    const needle = name.trim().toLowerCase();
+    return contacts.find(c => c.name && c.name.trim().toLowerCase() === needle) || null;
+  }
+  function logContact(contactId, btn) {
+    let contacts;
+    try { contacts = JSON.parse(localStorage.getItem('contacts_v1')); } catch (e) { contacts = null; }
+    if (!Array.isArray(contacts)) return;
+    const idx = contacts.findIndex(c => c.id === contactId);
+    if (idx === -1) return;
+    const c = contacts[idx];
+    c.history = Array.isArray(c.history) ? c.history : [];
+    c.history.push({ date: new Date().toISOString(), channel: 'other', note: 'Emailed', direction: 'inbound' });
+    localStorage.setItem('contacts_v1', JSON.stringify(contacts));
+    btn.textContent = 'Logged ✓';
+    btn.classList.add('is-done');
+    btn.disabled = true;
+  }
+
+  async function gmailFetch(url) {
+    const r = await fetch(url, { headers: { Authorization: 'Bearer ' + accessToken } });
+    if (!r.ok) { const err = new Error('Gmail ' + r.status); err.status = r.status; throw err; }
+    return r.json();
+  }
+
+  async function fetchMessages() {
+    if (!accessToken) return;
+    const refreshBtn = $('gmailRefreshBtn');
+    refreshBtn.classList.add('is-loading');
+    showErr('');
+    try {
+      const list = await gmailFetch('https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=' + MAX_MESSAGES + '&q=' + encodeURIComponent('is:unread in:inbox'));
+      const ids = (list.messages || []).map(m => m.id);
+      const details = await Promise.all(ids.map(id =>
+        gmailFetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/' + id + '?format=metadata&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=Date')
+      ));
+      retrying401 = false;
+      renderMessages(details, list.resultSizeEstimate != null ? list.resultSizeEstimate : details.length);
+    } catch (e) {
+      if (e.status === 401 && !retrying401 && ensureTokenClient()) {
+        retrying401 = true;
+        tokenClient.requestAccessToken({ prompt: '' });
+        return;
+      }
+      retrying401 = false;
+      if (e.status === 401) { showErr('Gmail session expired — reconnect below.'); accessToken = null; setConnectedUI(false); }
+      else showErr('Could not load Gmail — ' + e.message);
+    } finally {
+      refreshBtn.classList.remove('is-loading');
+    }
+  }
+
+  function renderMessages(details, unreadCount) {
+    const badge = $('gmailUnreadBadge');
+    badge.textContent = String(unreadCount);
+    badge.classList.toggle('zero', unreadCount === 0);
+
+    const listEl = $('gmailList');
+    listEl.innerHTML = '';
+    $('gmailEmpty').style.display = details.length ? 'none' : '';
+
+    details.forEach((msg) => {
+      const headers = msg.payload ? msg.payload.headers : [];
+      const from = parseFrom(headerVal(headers, 'From'));
+      const subject = headerVal(headers, 'Subject') || '(no subject)';
+      const contact = matchContact(from.name);
+
+      const row = document.createElement('div');
+      row.className = 'gmail-msg';
+      row.dataset.id = msg.id;
+
+      const top = document.createElement('div');
+      top.className = 'gmail-msg-row';
+      const senderEl = document.createElement('span');
+      senderEl.className = 'gmail-msg-sender';
+      senderEl.textContent = from.name;
+      const timeEl = document.createElement('span');
+      timeEl.className = 'gmail-msg-time';
+      timeEl.textContent = fmtTime(headerVal(headers, 'Date'));
+      top.appendChild(senderEl); top.appendChild(timeEl);
+      row.appendChild(top);
+
+      const subjEl = document.createElement('div');
+      subjEl.className = 'gmail-msg-subject';
+      subjEl.textContent = subject;
+      row.appendChild(subjEl);
+
+      const snipEl = document.createElement('div');
+      snipEl.className = 'gmail-msg-snippet';
+      snipEl.textContent = msg.snippet || '';
+      row.appendChild(snipEl);
+
+      if (contact) {
+        const tag = document.createElement('span');
+        tag.className = 'gmail-msg-tag';
+        tag.textContent = 'tracked contact';
+        row.appendChild(tag);
+      }
+
+      const bodyWrap = document.createElement('div');
+      bodyWrap.className = 'gmail-msg-body';
+      bodyWrap.style.display = 'none';
+      row.appendChild(bodyWrap);
+
+      row.addEventListener('click', (ev) => {
+        if (ev.target.closest('button') || ev.target.closest('a')) return;
+        const isOpen = bodyWrap.style.display !== 'none';
+        bodyWrap.style.display = isOpen ? 'none' : '';
+        if (!isOpen && !bodyWrap.dataset.loaded) loadBody(msg.id, bodyWrap, contact);
+      });
+
+      listEl.appendChild(row);
+    });
+  }
+
+  function decodeBase64Url(data) {
+    if (!data) return '';
+    const b64 = data.replace(/-/g, '+').replace(/_/g, '/');
+    try { return decodeURIComponent(escape(atob(b64))); } catch (e) { try { return atob(b64); } catch (e2) { return ''; } }
+  }
+  function findPart(payload, mimeType) {
+    if (!payload) return null;
+    if (payload.mimeType === mimeType && payload.body && payload.body.data) return payload.body.data;
+    if (payload.parts) { for (const p of payload.parts) { const found = findPart(p, mimeType); if (found) return found; } }
+    return null;
+  }
+
+  async function loadBody(id, bodyWrap, contact) {
+    bodyWrap.dataset.loaded = '1';
+    bodyWrap.innerHTML = '<div class="gmail-msg-body-loading">Loading…</div>';
+    try {
+      const full = await gmailFetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/' + id + '?format=full');
+      let text = decodeBase64Url(findPart(full.payload, 'text/plain'));
+      if (!text) {
+        const html = decodeBase64Url(findPart(full.payload, 'text/html'));
+        // Parsed via DOMParser (never attached to the live document, so
+        // nothing in the email HTML executes) purely to recover plain text.
+        if (html) text = new DOMParser().parseFromString(html, 'text/html').body.textContent || '';
+      }
+      text = (text || full.snippet || '').trim();
+
+      bodyWrap.innerHTML = '';
+      const textEl = document.createElement('div');
+      textEl.className = 'gmail-msg-body-text';
+      textEl.textContent = text || '(no readable body)';
+      bodyWrap.appendChild(textEl);
+
+      const actions = document.createElement('div');
+      actions.className = 'gmail-msg-actions';
+      const openLink = document.createElement('a');
+      openLink.href = 'https://mail.google.com/mail/u/0/#inbox/' + id;
+      openLink.target = '_blank';
+      openLink.rel = 'noopener';
+      openLink.textContent = 'Open in Gmail ↗';
+      actions.appendChild(openLink);
+      const readBtn = document.createElement('button');
+      readBtn.type = 'button';
+      readBtn.textContent = 'Mark as read';
+      readBtn.addEventListener('click', () => markAsRead(id, readBtn));
+      actions.appendChild(readBtn);
+      if (contact) {
+        const logBtn = document.createElement('button');
+        logBtn.type = 'button';
+        logBtn.textContent = 'Log contact';
+        logBtn.addEventListener('click', () => logContact(contact.id, logBtn));
+        actions.appendChild(logBtn);
+      }
+      bodyWrap.appendChild(actions);
+    } catch (e) {
+      bodyWrap.innerHTML = '<div class="gmail-msg-body-loading">Could not load full message.</div>';
+    }
+  }
+
+  async function markAsRead(id, btn) {
+    btn.disabled = true;
+    btn.textContent = 'Marking…';
+    try {
+      const r = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/' + id + '/modify', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ removeLabelIds: ['UNREAD'] }),
+      });
+      if (!r.ok) throw new Error('Gmail ' + r.status);
+      const row = btn.closest('.gmail-msg');
+      if (row) row.remove();
+      const badge = $('gmailUnreadBadge');
+      const next = Math.max(0, (parseInt(badge.textContent, 10) || 0) - 1);
+      badge.textContent = String(next);
+      badge.classList.toggle('zero', next === 0);
+      if (!$('gmailList').children.length) $('gmailEmpty').style.display = '';
+    } catch (e) {
+      btn.disabled = false;
+      btn.textContent = 'Mark as read';
+      showErr('Could not mark as read — try again.');
+    }
+  }
+
+  $('gmailConnectBtn').addEventListener('click', () => {
+    const client = ensureTokenClient();
+    if (!client) { showErr('Google sign-in is still loading — try again in a moment.'); return; }
+    client.requestAccessToken({ prompt: 'consent' });
+  });
+  $('gmailRefreshBtn').addEventListener('click', () => { if (accessToken) fetchMessages(); });
+  $('gmailDisconnectBtn').addEventListener('click', () => {
+    if (accessToken && window.google && google.accounts && google.accounts.oauth2) {
+      google.accounts.oauth2.revoke(accessToken, () => {});
+    }
+    accessToken = null;
+    localStorage.removeItem(GMAIL_EVER_GRANTED_KEY);
+    setConnectedUI(false);
+  });
+
+  function trySilentAuth(attemptsLeft) {
+    if (localStorage.getItem(GMAIL_EVER_GRANTED_KEY) !== '1') return;
+    const client = ensureTokenClient();
+    if (!client) { if (attemptsLeft > 0) setTimeout(() => trySilentAuth(attemptsLeft - 1), 300); return; }
+    client.requestAccessToken({ prompt: '' });
+  }
+  trySilentAuth(20);
+})();
 </script>
 </body>
 </html>

@@ -199,88 +199,75 @@ body::after {
   .goal-ticker-meta { font-size: 10px; padding: 2px 7px; }
 }
 
-/* ===== Component 3: Day Ring ===== */
-.day-ring-wrap {
+/* ===== Component 3: Day Window (compact strip, collapse/expand vs bedtime) ===== */
+.dw-card {
   position: relative;
-  display: flex; flex-wrap: wrap;
-  align-items: center; justify-content: center;
-  gap: 26px;
-  padding: 22px;
-  margin-bottom: 22px;
+  cursor: pointer;
+  padding: 14px 16px;
+  margin-bottom: 14px;
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.04);
   backdrop-filter: blur(24px) saturate(1.2);
   -webkit-backdrop-filter: blur(24px) saturate(1.2);
-  box-shadow: 0 12px 40px rgba(0,0,0,0.45);
+  -webkit-tap-highlight-color: transparent;
 }
-.day-ring-edit-btn {
-  position: absolute; top: 12px; right: 12px;
-  width: 30px; height: 30px;
+.dw-edit-btn {
+  position: absolute; top: 10px; right: 10px;
+  width: 26px; height: 26px;
   display: flex; align-items: center; justify-content: center;
   background: rgba(255,255,255,0.06);
   border: 1px solid rgba(255,255,255,0.10);
-  border-radius: 8px;
+  border-radius: 7px;
   color: var(--text-secondary);
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
   -webkit-tap-highlight-color: transparent;
 }
-.day-ring-edit-btn:hover { background: rgba(255,255,255,0.12); color: var(--text-primary); }
-.day-ring {
-  position: relative;
-  width: 168px; height: 168px;
-  flex-shrink: 0;
-}
-.day-ring svg { width: 100%; height: 100%; display: block; }
-.day-ring-track { fill: none; stroke: rgba(255,255,255,0.06); stroke-width: 8; }
-.day-ring-fill {
-  fill: none;
-  stroke-width: 8;
-  stroke-linecap: round;
-  transform: rotate(-90deg);
-  transform-origin: 60px 60px;
-  transition: stroke 0.7s cubic-bezier(0.22, 1, 0.36, 1),
-              stroke-dashoffset 0.7s cubic-bezier(0.22, 1, 0.36, 1);
-}
-.day-ring-overlay {
-  position: absolute; inset: 0;
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  pointer-events: none;
-}
-.day-ring-percent {
-  font-size: 40px; font-weight: 800;
+.dw-edit-btn:hover { background: rgba(255,255,255,0.12); color: var(--text-primary); }
+.dw-date-row { display: flex; align-items: baseline; gap: 8px; padding-right: 34px; margin-bottom: 6px; }
+.dw-date { font-size: 13px; font-weight: 700; color: var(--text-primary); }
+.dw-weekday { font-size: 12px; color: var(--text-tertiary); }
+.dw-remaining {
+  font-size: 22px; font-weight: 800;
   font-variant-numeric: tabular-nums;
-  letter-spacing: -0.04em;
+  letter-spacing: -0.02em;
   color: var(--text-primary);
-  line-height: 1;
+  line-height: 1.15;
 }
-.day-ring-phase {
-  margin-top: 5px;
-  font-family: var(--font-mono);
-  font-size: 9.5px; font-weight: 800;
-  letter-spacing: 0.16em; text-transform: uppercase;
-  color: var(--text-tertiary);
+.dw-sub { font-family: var(--font-mono); font-size: 11.5px; color: var(--text-tertiary); margin-top: 2px; }
+.dw-expanded {
+  max-height: 0; overflow: hidden; opacity: 0;
+  transition: max-height 0.25s ease, opacity 0.2s ease, margin-top 0.25s ease;
 }
-.day-ring-clock {
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  color: var(--text-tertiary);
-  margin-top: 2px;
+.dw-card.is-expanded .dw-expanded { max-height: 120px; opacity: 1; margin-top: 12px; }
+.dw-percent-row {
+  display: flex; justify-content: space-between; align-items: baseline;
+  font-size: 12px; color: var(--text-tertiary);
+  padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.06);
 }
-.day-ring-text {
-  display: flex; flex-direction: column;
-  gap: 6px;
-  max-width: 280px;
+.dw-percent { font-family: var(--font-mono); font-weight: 700; color: var(--text-secondary); }
+.dw-times-row { display: flex; gap: 16px; margin-top: 8px; font-size: 12px; color: var(--text-tertiary); font-family: var(--font-mono); }
+.dw-times-row b { color: var(--text-secondary); font-weight: 700; }
+
+/* ===== Greeting card + sleep log (item 2) ===== */
+.greet-card {
+  padding: 16px 18px;
+  margin-bottom: 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(24px) saturate(1.2);
+  -webkit-backdrop-filter: blur(24px) saturate(1.2);
 }
-.day-ring-status { font-size: 14px; font-weight: 700; color: var(--text-primary); }
-.day-ring-remaining { font-family: var(--font-mono); font-size: 12px; color: var(--text-secondary); }
-.day-ring-hours { font-family: var(--font-mono); font-size: 11px; color: var(--text-tertiary); }
-@media (max-width: 480px) {
-  .day-ring { width: 144px; height: 144px; }
-  .day-ring-percent { font-size: 32px; }
-  .day-ring-status { font-size: 13px; }
+.greet-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.greet-text { font-size: 15px; font-weight: 600; color: var(--text-secondary); }
+.greet-clock {
+  font-family: var(--font-mono); font-size: 11px; color: var(--text-tertiary);
+  background: rgba(255,255,255,0.06); border-radius: 999px; padding: 4px 10px; white-space: nowrap;
 }
+.greet-chart-wrap { margin-top: 14px; }
+.greet-chart { width: 100%; height: 64px; display: block; }
+.greet-bar { fill: var(--accent); opacity: 0.85; }
+.greet-target-line { stroke: var(--warning); stroke-width: 1.5; stroke-dasharray: 3 3; opacity: 0.7; }
 
 /* ===== Wake/bedtime edit modal ===== */
 .dr-modal-bg {
@@ -342,6 +329,49 @@ body::after {
   text-decoration: underline;
 }
 .dr-reset-link:hover { color: var(--text-secondary); }
+
+/* ===== Shortcuts card (item 6) ===== */
+.sc-card { cursor: default; }
+.sc-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 8px; }
+.sc-tile {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+  padding: 12px 6px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.03); color: var(--text-secondary);
+  font-family: inherit; cursor: pointer; transition: background 0.15s, color 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.sc-tile:hover { background: rgba(255,255,255,0.08); color: var(--text-primary); }
+.sc-tile-icon { font-size: 17px; line-height: 1; }
+.sc-tile-label { font-size: 11px; font-weight: 600; }
+.sc-modal { max-width: 400px; max-height: 78vh; overflow-y: auto; }
+.sc-brief-row { display: flex; flex-direction: column; gap: 8px; }
+.sc-brief-btn {
+  padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.04); color: var(--text-primary);
+  font-family: inherit; font-size: 13px; font-weight: 600; text-align: left; cursor: pointer;
+}
+.sc-brief-btn:hover { background: rgba(255,255,255,0.08); }
+.sc-it-section { margin-bottom: 16px; }
+.sc-it-section:last-child { margin-bottom: 0; }
+.sc-it-title {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--text-tertiary); margin-bottom: 8px;
+}
+.sc-it-row { font-size: 13px; color: var(--text-primary); padding: 6px 0; border-top: 1px solid rgba(255,255,255,0.05); }
+.sc-it-row:first-child { border-top: none; }
+.sc-it-done { color: var(--text-tertiary); text-decoration: line-through; }
+.sc-it-empty { font-size: 12.5px; color: var(--text-tertiary); }
+.sc-cl-group { margin-bottom: 10px; }
+.sc-cl-head {
+  width: 100%; display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 0; background: none; border: none; border-top: 1px solid rgba(255,255,255,0.06);
+  color: var(--text-primary); font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer;
+}
+.sc-cl-count { font-family: var(--font-mono); font-size: 11px; color: var(--text-tertiary); font-weight: 400; }
+.sc-cl-body { padding: 4px 0 8px; }
+.sc-cl-body.hidden { display: none; }
+.sc-cl-item { font-size: 13px; color: var(--text-primary); padding: 4px 0; }
+.sc-cl-item-done { color: var(--text-tertiary); text-decoration: line-through; }
 
 /* ===== Component 4: section + To Do List ===== */
 .section { margin-top: 8px; }
@@ -683,15 +713,6 @@ body::after {
   .gm-progress-num { font-size: 36px; }
 }
 
-/* ===== 0.7b: greeting, below the existing day-ring clock ===== */
-.dash-greeting {
-  text-align: center;
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--text-secondary);
-  margin: 2px auto 4px;
-}
-
 /* ===== Component 6: Dashboard summary cards =====
    Re-walk against equavia-pre-answers-final.md 0.7/0.7b: fixed 6-card
    set (Health/Weight/Train/Finance/Planner/Habits), responsive grid
@@ -703,12 +724,24 @@ body::after {
 .dash-summary-stack {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
+  align-items: start;
   gap: 10px;
   max-width: 900px;
   margin: 0 auto;
 }
+/* Greeting/Day Window came from standalone stacked cards -- full-width on
+   mobile (span both columns) so they read exactly as they did before
+   joining this grid; only stretch/shrink relative to each other at desktop. */
+.dash-summary-stack .greet-card,
+.dash-summary-stack .dw-card {
+  grid-column: 1 / -1;
+  margin-bottom: 0;
+}
 @media (min-width: 640px) {
   .dash-summary-stack { grid-template-columns: repeat(3, 1fr); }
+  .dash-summary-stack .greet-card { grid-column: span 2; }
+  .dash-summary-stack .dw-card { grid-column: span 1; }
+  .dash-summary-stack .sc-card { grid-column: span 2; }
 }
 .dsum-card {
   display: block;
@@ -743,19 +776,31 @@ body::after {
   line-height: 1.4;
 }
 
+/* ===== Weight card mini chart (item 3: solid = logged, dashed = goal) ===== */
+.dsum-chart-mini { margin-top: 10px; display: none; }
+.dsum-chart-mini-svg { width: 100%; height: 42px; display: block; }
+.dsum-chart-line { fill: none; stroke: var(--accent); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.dsum-chart-goal-line { stroke: var(--warning); stroke-width: 1.5; stroke-dasharray: 3 3; opacity: 0.75; }
+
+/* ===== Finance card ring (item 5: play-money % of net worth) ===== */
+.dsum-fin-row { display: flex; align-items: center; gap: 14px; }
+.dsum-fin-ring-wrap { position: relative; width: 48px; height: 48px; flex-shrink: 0; display: none; }
+.dsum-fin-ring { width: 100%; height: 100%; display: block; }
+.dsum-fin-ring-track { fill: none; stroke: rgba(255,255,255,0.08); stroke-width: 5; }
+.dsum-fin-ring-fill {
+  fill: none; stroke: #B794F4; stroke-width: 5; stroke-linecap: round;
+  transform: rotate(-90deg); transform-origin: 24px 24px;
+}
+.dsum-fin-ring-label {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono); font-size: 10px; font-weight: 700; color: var(--text-secondary);
+}
+
 /* ===== To-Do Completion Rate Chart (sits below the card grid, full
    width -- too rich a widget for a grid cell) ===== */
 .dsum-chart-card { background: rgba(255,255,255,0.04); border-radius: 16px; padding: 16px 18px; max-width: 900px; margin: 10px auto 0; }
 
 /* ===== 0.7b: bottom activity feed (reference image 6) ===== */
-.dash-activity { max-width: 900px; margin: 18px auto 0; }
-.dash-activity-title { font-size: 11px; font-weight: 700; letter-spacing: 0.10em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 10px; }
-.dash-activity-empty { font-size: 12.5px; color: var(--text-tertiary); font-style: italic; }
-.dash-activity-list { display: flex; flex-direction: column; gap: 2px; }
-.dash-activity-row { display: flex; align-items: baseline; gap: 10px; padding: 7px 2px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 13px; }
-.dash-activity-row:last-child { border-bottom: none; }
-.dash-activity-text { color: var(--text-primary); flex: 1; }
-.dash-activity-when { color: var(--text-tertiary); font-size: 11px; white-space: nowrap; }
 
 .todo-chart-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
 .todo-chart-range-toggle { display: flex; gap: 4px; }
@@ -878,27 +923,6 @@ body::after {
   font-family: inherit; font-size: 13px; padding: 9px 11px;
 }
 .audit-review-done { font-size: 12px; color: var(--text-tertiary); font-style: italic; }
-
-/* ===== Mood + journal (6.2) ===== */
-.mood-chip { max-width: 640px; margin: 0 auto 18px; background: rgba(255,255,255,0.04); border-radius: 14px; padding: 14px 16px; }
-.mood-chip-head { font-size: 12.5px; font-weight: 700; color: var(--text-secondary); margin-bottom: 10px; }
-.mood-scale { display: flex; gap: 5px; flex-wrap: wrap; } /* kept at 5px -- 8px broke the single-row fit for all 10 buttons at mobile widths (verified); the invisible tap-target expansion below covers the reduced-gap trade-off instead */
-.mood-num-btn {
-  flex: 1; min-width: 26px; height: 36px; border-radius: 8px; border: 1px solid var(--border-strong);
-  background: rgba(255,255,255,0.04); color: var(--text-secondary); font-family: inherit; font-size: 12px; font-weight: 700; cursor: pointer;
-  position: relative;
-}
-.mood-num-btn::before {
-  /* invisible tap-target expansion, capped by the 5px gap between buttons -- a full 44px box would force
-     the 10-button row to wrap on most phone widths, which the audit confirmed currently fits on one line */
-  content: ''; position: absolute; top: -6px; bottom: -6px; left: -2px; right: -2px;
-}
-.mood-num-btn.is-selected { background: var(--accent); border-color: transparent; color: #1a0f0a; }
-.mood-note-input {
-  width: 100%; box-sizing: border-box; margin-top: 10px; background: rgba(0,0,0,0.28);
-  border: 1px solid var(--border-strong); border-radius: 8px; color: var(--text-primary);
-  font-family: inherit; font-size: 12.5px; padding: 8px 10px;
-}
 
 /* ===== Standing Rules / Alerts (4.6) ===== */
 .alerts-wrap { max-width: 640px; margin: 0 auto 18px; display: flex; flex-direction: column; gap: 8px; }
@@ -1490,60 +1514,6 @@ body::after {
   .cal-month-more { display: block; }
 }
 
-/* ===== Gmail Notification Hub ===== */
-.gmail-card { background: rgba(255,255,255,0.04); border-radius: 16px; padding: 16px 18px; max-width: 640px; margin: 0 auto 18px; }
-.gmail-disc-text { font-size: 12.5px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 12px; }
-.gmail-connect-btn, .gmail-refresh-btn {
-  border: none; cursor: pointer; font-family: inherit;
-}
-.gmail-connect-btn {
-  padding: 9px 18px; border-radius: 10px; font-size: 12.5px; font-weight: 700;
-  background: linear-gradient(180deg, #ffffff 0%, #e8e5dd 100%); color: #0a0a0b;
-  min-height: var(--eq-touch-min); width: 100%; /* was ~36px tall and auto-width */
-}
-.gmail-head { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
-.gmail-unread-badge {
-  min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px;
-  background: var(--danger); color: #fff; font-size: 11px; font-weight: 700;
-  display: inline-flex; align-items: center; justify-content: center;
-}
-.gmail-unread-badge.zero { background: rgba(255,255,255,0.08); color: var(--text-tertiary); }
-.gmail-head-label { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-tertiary); font-weight: 700; flex: 1; }
-.gmail-refresh-btn {
-  width: 30px; height: 30px; border-radius: 50%; background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.06); color: var(--text-secondary);
-  display: flex; align-items: center; justify-content: center; transition: transform 0.4s;
-}
-.gmail-refresh-btn.is-loading { animation: gmailSpin 0.8s linear infinite; }
-@keyframes gmailSpin { to { transform: rotate(360deg); } }
-.gmail-list { display: flex; flex-direction: column; gap: 2px; }
-.gmail-msg { padding: 10px 4px; border-top: 1px solid rgba(255,255,255,0.05); cursor: pointer; }
-.gmail-msg:first-child { border-top: none; }
-.gmail-msg-row { display: flex; align-items: baseline; gap: 8px; }
-.gmail-msg-sender { font-size: 13px; font-weight: 700; color: var(--text-primary); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.gmail-msg-time { font-size: 10.5px; color: var(--text-tertiary); font-family: var(--font-mono); white-space: nowrap; }
-.gmail-msg-subject { font-size: 12.5px; color: var(--text-secondary); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.gmail-msg-snippet { font-size: 11.5px; color: var(--text-tertiary); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.gmail-msg-tag {
-  display: inline-block; margin-top: 5px; font-size: 9.5px; font-weight: 700; letter-spacing: 0.06em;
-  text-transform: uppercase; color: var(--success); background: rgba(107,227,164,0.10);
-  border: 1px solid rgba(107,227,164,0.25); border-radius: 999px; padding: 2px 8px;
-}
-.gmail-msg-body { margin-top: 10px; padding-top: 10px; border-top: 1px dashed rgba(255,255,255,0.08); }
-.gmail-msg-body-text { font-size: 12.5px; color: var(--text-secondary); line-height: 1.5; white-space: pre-wrap; max-height: 220px; overflow-y: auto; }
-.gmail-msg-body-loading { font-size: 11.5px; color: var(--text-tertiary); font-style: italic; }
-.gmail-msg-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
-.gmail-msg-actions a, .gmail-msg-actions button {
-  font-family: inherit; font-size: 11px; font-weight: 600; padding: 6px 12px; border-radius: 8px;
-  text-decoration: none; cursor: pointer; border: 1px solid rgba(255,255,255,0.1);
-  background: rgba(255,255,255,0.04); color: var(--text-secondary);
-}
-.gmail-msg-actions a:hover, .gmail-msg-actions button:hover { color: var(--text-primary); border-color: rgba(255,255,255,0.2); }
-.gmail-msg-actions button.is-done { color: var(--success); border-color: rgba(107,227,164,0.3); }
-.gmail-empty { font-size: 12px; color: var(--text-tertiary); text-align: center; padding: 12px 4px; }
-.gmail-disconnect-link { display: block; margin: 12px auto 0; padding: 4px; background: transparent; border: none; color: var(--text-tertiary); font-family: inherit; font-size: 10.5px; text-align: center; cursor: pointer; }
-.gmail-disconnect-link:hover { color: var(--text-secondary); text-decoration: underline; }
-.gmail-err { background: rgba(255,107,107,0.08); border: 1px solid rgba(255,107,107,0.28); color: #FF8A8A; padding: 8px 10px; border-radius: 8px; font-size: 11px; margin-bottom: 10px; }
 
 /* ---- Live domain summary row: one honest number per domain, tapping
    through to that domain's full page. Read-only here -- each page below
@@ -1673,12 +1643,6 @@ body::after {
     <div class="brief-meta" id="advReportMeta"></div>
   </div>
 
-  <div class="mood-chip" id="moodChip" style="display:none;">
-    <div class="mood-chip-head" id="moodChipHead">How's today?</div>
-    <div class="mood-scale" id="moodScale"></div>
-    <input type="text" class="mood-note-input" id="moodNoteInput" placeholder="One line, optional…" style="display:none;">
-  </div>
-
   <div class="alerts-wrap" id="alertsWrap" style="display:none;"></div>
   <div class="alerts-wrap" id="healthFailWrap" style="display:none;"></div>
 
@@ -1712,36 +1676,6 @@ body::after {
     </div>
   </div>
 
-  <div class="day-ring-wrap">
-    <button class="day-ring-edit-btn" id="dayRingEditBtn" type="button" aria-label="Edit wake-up and bedtime">
-      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
-    </button>
-    <div class="day-ring">
-      <svg viewBox="0 0 120 120">
-        <defs>
-          <filter id="dayRingGlow" x="-20%" y="-20%" width="140%" height="140%">
-            <feGaussianBlur stdDeviation="2.4" result="b" />
-            <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
-          </filter>
-        </defs>
-        <circle class="day-ring-track" cx="60" cy="60" r="52" />
-        <circle class="day-ring-fill"  cx="60" cy="60" r="52" id="dayRingFill" filter="url(#dayRingGlow)" />
-      </svg>
-      <div class="day-ring-overlay">
-        <div class="day-ring-percent" id="dayRingPercent">—</div>
-        <div class="day-ring-phase"   id="dayRingPhase">—</div>
-        <div class="day-ring-clock"   id="dayRingClock">—</div>
-      </div>
-    </div>
-    <div class="day-ring-text">
-      <div class="day-ring-status"    id="dayRingStatus">Loading…</div>
-      <div class="day-ring-remaining" id="dayRingRemaining">—</div>
-      <div class="day-ring-hours" id="dayRingHours">8:00 AM – 12:00 AM</div>
-    </div>
-  </div>
-
-  <div class="dash-greeting" id="dashGreeting"></div>
-
   <div class="dr-modal-bg" id="drModalBg">
     <div class="dr-modal">
       <h3>Edit wake / bedtime</h3>
@@ -1765,25 +1699,6 @@ body::after {
 
 <div class="page page-wide">
 
-  <div class="section-title" style="max-width:640px;margin:0 auto 10px;">Inbox</div>
-  <div class="gmail-card" id="gmailCard">
-    <div id="gmailErr" class="gmail-err" style="display:none"></div>
-    <div id="gmailDisc">
-      <div class="gmail-disc-text">Connect Gmail to see unread mail here, without opening the Gmail app — read-only, nothing is ever sent or modified from this app.</div>
-      <button id="gmailConnectBtn" class="gmail-connect-btn" type="button">Connect Gmail</button>
-    </div>
-    <div id="gmailConn" style="display:none">
-      <div class="gmail-head">
-        <span class="gmail-unread-badge zero" id="gmailUnreadBadge">0</span>
-        <span class="gmail-head-label">unread</span>
-        <button id="gmailRefreshBtn" class="gmail-refresh-btn" type="button" aria-label="Refresh"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M20.49 15A9 9 0 1 1 5.64 5.64L23 10"/></svg></button>
-      </div>
-      <div id="gmailList" class="gmail-list"></div>
-      <div id="gmailEmpty" class="gmail-empty" style="display:none">No unread mail.</div>
-      <button id="gmailDisconnectBtn" class="gmail-disconnect-link" type="button">Disconnect</button>
-    </div>
-  </div>
-
   <div class="yd-alert-wrap" id="ydAlertWrap" style="display:none;">
     <div class="yd-alert-head">Yesterday — <span id="ydAlertCount">0</span> unfinished</div>
     <div class="yd-alert-list" id="ydAlertList"></div>
@@ -1792,6 +1707,41 @@ body::after {
   <!-- 0.7/0.7b: fixed 6-card order per equavia-pre-answers-final.md --
        Health · Current Weight · Train · Finance · Planner · Habits. -->
   <div class="dash-summary-stack" id="dashSummaryStack">
+    <div class="greet-card" id="greetCard">
+      <div class="greet-head">
+        <div class="greet-text" id="dashGreeting">—</div>
+        <span class="greet-clock" id="greetClock">—</span>
+      </div>
+      <div class="greet-chart-wrap" id="greetChartWrap">
+        <svg class="greet-chart" viewBox="0 0 280 70" preserveAspectRatio="none" aria-hidden="true">
+          <line class="greet-target-line" id="greetTargetLine" x1="6" y1="35" x2="274" y2="35"></line>
+          <g id="greetChartBars"></g>
+        </svg>
+      </div>
+    </div>
+
+    <div class="dw-card" id="dwCard" role="button" tabindex="0" aria-expanded="false" aria-label="Day window, tap to expand">
+      <button class="dw-edit-btn" id="dayRingEditBtn" type="button" aria-label="Edit wake-up and bedtime">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
+      </button>
+      <div class="dw-date-row">
+        <span class="dw-date" id="dwDate">—</span>
+        <span class="dw-weekday" id="dwWeekday">—</span>
+      </div>
+      <div class="dw-remaining" id="dwRemaining">—</div>
+      <div class="dw-sub" id="dwSub">—</div>
+      <div class="dw-expanded" id="dwExpanded">
+        <div class="dw-percent-row">
+          <span>Day elapsed</span>
+          <span class="dw-percent" id="dwPercent">—</span>
+        </div>
+        <div class="dw-times-row">
+          <span>Wake <b id="dwWakeTime">—</b></span>
+          <span>Bed <b id="dwBedTime">—</b></span>
+        </div>
+      </div>
+    </div>
+
     <a class="dsum-card" href="health.html" data-card="health">
       <div class="dsum-head">
         <span class="dsum-icon">💊</span>
@@ -1808,6 +1758,12 @@ body::after {
         <span class="dsum-arrow">→</span>
       </div>
       <div class="dsum-body" id="dsumWeightBody">Loading…</div>
+      <div class="dsum-chart-mini" id="dsumWeightChartWrap">
+        <svg class="dsum-chart-mini-svg" viewBox="0 0 240 54" preserveAspectRatio="none" aria-hidden="true">
+          <line class="dsum-chart-goal-line" id="dsumWeightGoalLine" x1="4" y1="27" x2="236" y2="27"></line>
+          <path class="dsum-chart-line" id="dsumWeightLinePath" d=""></path>
+        </svg>
+      </div>
     </a>
 
     <a class="dsum-card" href="gym.html" data-card="train">
@@ -1825,7 +1781,16 @@ body::after {
         <span class="dsum-title">Finance</span>
         <span class="dsum-arrow">→</span>
       </div>
-      <div class="dsum-body" id="dsumFinanceBody">Loading…</div>
+      <div class="dsum-fin-row">
+        <div class="dsum-fin-ring-wrap" id="dsumFinRingWrap">
+          <svg class="dsum-fin-ring" viewBox="0 0 48 48" aria-hidden="true">
+            <circle class="dsum-fin-ring-track" cx="24" cy="24" r="19" />
+            <circle class="dsum-fin-ring-fill" id="dsumFinRingFill" cx="24" cy="24" r="19" />
+          </svg>
+          <span class="dsum-fin-ring-label" id="dsumFinRingLabel">—</span>
+        </div>
+        <div class="dsum-body" id="dsumFinanceBody">Loading…</div>
+      </div>
     </a>
 
     <a class="dsum-card" href="planner.html" data-card="planner">
@@ -1845,6 +1810,41 @@ body::after {
       </div>
       <div class="dsum-body" id="dsumHabitsBody">Loading…</div>
     </a>
+
+    <div class="dsum-card sc-card" data-card="shortcuts">
+      <div class="dsum-head">
+        <span class="dsum-icon">⚡</span>
+        <span class="dsum-title">Shortcuts</span>
+      </div>
+      <div class="sc-grid">
+        <button class="sc-tile" id="scNotesBtn" type="button">
+          <span class="sc-tile-icon">📝</span>
+          <span class="sc-tile-label">Notes</span>
+        </button>
+        <button class="sc-tile" id="scBriefBtn" type="button">
+          <span class="sc-tile-icon">☀️</span>
+          <span class="sc-tile-label">Brief</span>
+        </button>
+        <button class="sc-tile" id="scItineraryBtn" type="button">
+          <span class="sc-tile-icon">🗓️</span>
+          <span class="sc-tile-label">Itinerary</span>
+        </button>
+        <button class="sc-tile" id="scChecklistsBtn" type="button">
+          <span class="sc-tile-icon">✅</span>
+          <span class="sc-tile-label">Checklists</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="dr-modal-bg" id="scPanelBg">
+    <div class="dr-modal sc-modal">
+      <h3 id="scPanelTitle">—</h3>
+      <div id="scPanelBody"></div>
+      <div class="dr-modal-actions">
+        <button type="button" class="dr-btn-cancel" id="scPanelCloseBtn" style="flex:1;">Close</button>
+      </div>
+    </div>
   </div>
 
   <div class="dsum-chart-card" id="todoChartCard">
@@ -1908,64 +1908,6 @@ body::after {
     <div id="auditSections" style="display:none;"></div>
   </div>
   <div class="wkr-empty" id="weeklyReportEmpty" style="display:none;">No completed week yet — your first Weekly Report appears after this week closes (Sunday 7 PM).</div>
-
-  <div class="wkr-card" id="annualReviewCard">
-    <div class="wkr-head">
-      <div class="wkr-head-center">
-        <span class="section-title" style="margin:0;">Annual Review</span>
-        <span class="wkr-range" id="annualReviewYear">—</span>
-      </div>
-    </div>
-    <div class="alert-row" id="annualDecemberNudge" style="display:none;margin-bottom:12px;">
-      <span class="alert-icon">🗓️</span>
-      <span class="alert-text">It's December — a good time to run this year's Annual Review.</span>
-    </div>
-    <div class="wkr-footer">
-      <button type="button" class="wkr-obsidian-btn" id="annualReviewRunBtn">Run annual review</button>
-      <span class="wkr-obsidian-status" id="annualReviewStatus"></span>
-    </div>
-    <!-- Re-walk vs equavia-pre-answers-final.md 6.10: "styled like a
-         professional business annual report... with charts (line, bar,
-         pie)" -- reuses the same .adv-chart-grid/.adv-chart-card styling
-         4.4's Advanced Report already established. eq.audits.v1 only
-         ever stored Claude's narrative output, not the underlying weekly
-         numbers, so these charts re-derive from the same raw stores
-         4.4 reads, just bucketed monthly across the year instead of
-         daily across two weeks. -->
-    <div class="adv-chart-grid" id="annualChartGrid" style="display:none;margin-bottom:14px;">
-      <div class="adv-chart-card">
-        <div class="adv-chart-title">Sleep, monthly avg</div>
-        <svg class="adv-chart-svg" id="annualSleepChart" viewBox="0 0 300 100" preserveAspectRatio="none"></svg>
-      </div>
-      <div class="adv-chart-card">
-        <div class="adv-chart-title">Weight, monthly avg</div>
-        <svg class="adv-chart-svg" id="annualWeightChart" viewBox="0 0 300 100" preserveAspectRatio="none"></svg>
-      </div>
-      <div class="adv-chart-card">
-        <div class="adv-chart-title">Task completion %, monthly avg</div>
-        <svg class="adv-chart-svg" id="annualTaskChart" viewBox="0 0 300 100" preserveAspectRatio="none"></svg>
-      </div>
-      <div class="adv-chart-card">
-        <div class="adv-chart-title">Habit adherence %, monthly avg</div>
-        <svg class="adv-chart-svg" id="annualHabitChart" viewBox="0 0 300 100" preserveAspectRatio="none"></svg>
-      </div>
-      <div class="adv-chart-card adv-chart-card-pie">
-        <div class="adv-chart-title">Logged activity by domain (year)</div>
-        <svg class="adv-chart-svg adv-pie-svg" id="annualPieChart" viewBox="0 0 120 120"></svg>
-        <div class="adv-pie-legend" id="annualPieLegend"></div>
-      </div>
-    </div>
-    <div id="annualReviewSections" style="display:none;"></div>
-  </div>
-
-  <!-- 0.7b: bottom activity feed (reference image 6) -- last 5-10 logged
-       actions across domains, derived from each domain's own timestamped
-       store rather than a new instrumented write-through log. -->
-  <div class="dash-activity">
-    <div class="dash-activity-title">Recent activity</div>
-    <div class="dash-activity-empty" id="dashActivityEmpty">Nothing logged yet — activity from Health, Fitness, Planner, Ability and Interactions will show up here.</div>
-    <div class="dash-activity-list" id="dashActivityList" style="display:none;"></div>
-  </div>
 
 <script>
 (function () {
@@ -2178,34 +2120,7 @@ body::after {
     tick();
   });
 
-  // ---------- Day Ring ----------
-  const PALETTE = [
-    [0,    [255, 216, 158]],
-    [12.5, [255, 205, 121]],
-    [25,   [255, 227, 143]],
-    [37.5, [255, 183, 106]],
-    [50,   [255, 149,  89]],
-    [62.5, [243, 111,  79]],
-    [75,   [226,  93, 122]],
-    [87.5, [123,  91, 176]],
-    [100,  [ 47,  58, 102]]
-  ];
-  function lerp(a, b, t) { return a + (b - a) * t; }
-  function paletteAt(p) {
-    if (p <= PALETTE[0][0]) return PALETTE[0][1];
-    if (p >= PALETTE[PALETTE.length - 1][0]) return PALETTE[PALETTE.length - 1][1];
-    for (let i = 0; i < PALETTE.length - 1; i++) {
-      const [p0, c0] = PALETTE[i];
-      const [p1, c1] = PALETTE[i + 1];
-      if (p >= p0 && p <= p1) {
-        const t = (p - p0) / (p1 - p0);
-        return [lerp(c0[0], c1[0], t), lerp(c0[1], c1[1], t), lerp(c0[2], c1[2], t)];
-      }
-    }
-    return [255,255,255];
-  }
-  function rgb(c) { return 'rgb(' + Math.round(c[0]) + ',' + Math.round(c[1]) + ',' + Math.round(c[2]) + ')'; }
-
+  // ---------- Day Window ----------
   function formatClock(d) {
     let h = d.getHours();
     const m = d.getMinutes();
@@ -2220,10 +2135,7 @@ body::after {
     return h + 'h ' + m + 'm';
   }
 
-  const C = 2 * Math.PI * 52;
-  const fillEl = document.getElementById('dayRingFill');
-  fillEl.setAttribute('stroke-dasharray', C);
-  fillEl.setAttribute('stroke-dashoffset', C);
+  const DW_EXPANDED_KEY = 'eq.dashboard.dayWindowExpanded';
 
   function updateDayRing() {
     const now = new Date();
@@ -2234,55 +2146,60 @@ body::after {
     // yesterday's waking window (e.g. it's 12:30 AM and bedtime is 1:00 AM) —
     // otherwise this would be mistaken for "still sleeping" before wake-up.
     if (SLEEP_HOUR > 24 && hours < SLEEP_HOUR - 24) hours += 24;
-    const percentEl   = document.getElementById('dayRingPercent');
-    const phaseEl     = document.getElementById('dayRingPhase');
-    const clockEl     = document.getElementById('dayRingClock');
-    const statusEl    = document.getElementById('dayRingStatus');
-    const remainingEl = document.getElementById('dayRingRemaining');
-    const hoursEl     = document.getElementById('dayRingHours');
+    const dateEl      = document.getElementById('dwDate');
+    const weekdayEl   = document.getElementById('dwWeekday');
+    const remainingEl = document.getElementById('dwRemaining');
+    const subEl       = document.getElementById('dwSub');
+    const percentEl   = document.getElementById('dwPercent');
+    const wakeEl      = document.getElementById('dwWakeTime');
+    const bedEl       = document.getElementById('dwBedTime');
 
-    clockEl.textContent = formatClock(now);
-    hoursEl.textContent = formatHourLabel(WAKE_HOUR) + ' – ' + formatHourLabel(SLEEP_HOUR);
+    dateEl.textContent = now.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' });
+    weekdayEl.textContent = now.toLocaleDateString(undefined, { weekday: 'long' });
+    wakeEl.textContent = formatHourLabel(WAKE_HOUR);
+    bedEl.textContent  = formatHourLabel(SLEEP_HOUR);
 
     if (hours < WAKE_HOUR) {
-      fillEl.setAttribute('stroke-dashoffset', C);
-      fillEl.style.stroke = '#4D4B47';
-      percentEl.textContent = '—';
-      phaseEl.textContent   = 'SLEEPING';
-      statusEl.textContent  = '😴 Still sleeping';
       const minsUntil = (WAKE_HOUR - hours) * 60;
-      remainingEl.textContent = formatRemaining(minsUntil) + ' until wake-up';
+      remainingEl.textContent = formatRemaining(minsUntil);
+      subEl.textContent = 'until wake-up';
+      percentEl.textContent = '—';
       return;
     }
 
     if (hours >= SLEEP_HOUR) {
-      fillEl.setAttribute('stroke-dashoffset', 0);
-      fillEl.style.stroke = '#E25D7A';
+      remainingEl.textContent = 'Past bedtime';
+      subEl.textContent = '';
       percentEl.textContent = '100%';
-      phaseEl.textContent   = 'PAST BEDTIME';
-      statusEl.textContent  = '⚠️ Past bedtime';
-      remainingEl.textContent = 'Sleep!';
       return;
     }
 
     const span = SLEEP_HOUR - WAKE_HOUR;
     const percent = (hours - WAKE_HOUR) / span * 100;
-    fillEl.setAttribute('stroke-dashoffset', C * (1 - percent / 100));
-    fillEl.style.stroke = rgb(paletteAt(percent));
     percentEl.textContent = Math.floor(percent) + '%';
 
-    let phase, status;
-    if (percent < 25)      { phase = 'MORNING';   status = '☀️ Morning — fresh start'; }
-    else if (percent < 50) { phase = 'MIDDAY';    status = '⚡ Midday — keep moving'; }
-    else if (percent < 75) { phase = 'AFTERNOON'; status = '🔥 Afternoon — push it'; }
-    else if (percent < 90) { phase = 'EVENING';   status = '⏳ Evening — wrap up'; }
-    else                   { phase = 'BEDTIME';   status = '🌙 Bedtime soon'; }
-    phaseEl.textContent  = phase;
-    statusEl.textContent = status;
-
     const minsLeft = (SLEEP_HOUR - hours) * 60;
-    remainingEl.textContent = formatRemaining(minsLeft) + ' awake time left';
+    remainingEl.textContent = formatRemaining(minsLeft) + ' left';
+    subEl.textContent = 'until ' + formatHourLabel(SLEEP_HOUR);
   }
+
+  function setDayWindowExpanded(expanded) {
+    const card = document.getElementById('dwCard');
+    card.classList.toggle('is-expanded', expanded);
+    card.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+    sessionStorage.setItem(DW_EXPANDED_KEY, expanded ? '1' : '0');
+  }
+  document.getElementById('dwCard').addEventListener('click', (e) => {
+    if (e.target.closest('#dayRingEditBtn')) return;
+    setDayWindowExpanded(!document.getElementById('dwCard').classList.contains('is-expanded'));
+  });
+  document.getElementById('dwCard').addEventListener('keydown', (e) => {
+    if ((e.key === 'Enter' || e.key === ' ') && !e.target.closest('#dayRingEditBtn')) {
+      e.preventDefault();
+      setDayWindowExpanded(!document.getElementById('dwCard').classList.contains('is-expanded'));
+    }
+  });
+  setDayWindowExpanded(sessionStorage.getItem(DW_EXPANDED_KEY) === '1');
 
   // ---------- Longterm goals (data only -- Planner owns the editable UI) ----------
   function getLongtermGoals() { const g = storeGet('longterm_goals_v1'); return Array.isArray(g) ? g : []; }
@@ -2435,7 +2352,7 @@ body::after {
   function closeDayRingModal() {
     document.getElementById('drModalBg').classList.remove('show');
   }
-  document.getElementById('dayRingEditBtn').addEventListener('click', openDayRingModal);
+  document.getElementById('dayRingEditBtn').addEventListener('click', (e) => { e.stopPropagation(); openDayRingModal(); });
   document.getElementById('drCancelBtn').addEventListener('click', closeDayRingModal);
   document.getElementById('drModalBg').addEventListener('click', (e) => {
     if (e.target === e.currentTarget) closeDayRingModal();
@@ -2735,6 +2652,78 @@ body::after {
     return streak;
   }
 
+  // ---------- Weight card mini chart (item 3) ----------
+  function renderWeightChart() {
+    const wrapEl = document.getElementById('dsumWeightChartWrap');
+    if (!wrapEl) return;
+    const entries = (storeGet('po_coach_weights') || [])
+      .filter((e) => e && e.dateKey && e.weight != null)
+      .slice()
+      .sort((a, b) => a.dateKey.localeCompare(b.dateKey));
+    if (!entries.length) { wrapEl.style.display = 'none'; return; }
+
+    const recent = entries.slice(-30);
+    const goalRaw = Number(storeGet('po_coach_goal_weight'));
+    const hasGoal = goalRaw > 0;
+    const vals = recent.map((e) => e.weight).concat(hasGoal ? [goalRaw] : []);
+    const min = Math.min.apply(null, vals), max = Math.max.apply(null, vals);
+    const pad = Math.max((max - min) * 0.15, 0.5);
+    const yMin = min - pad, yMax = max + pad;
+    const xLeft = 4, xRight = 236, yTop = 4, yBot = 50;
+    const xFor = (i) => recent.length === 1 ? xRight : xLeft + (i / (recent.length - 1)) * (xRight - xLeft);
+    const yFor = (w) => yBot - ((w - yMin) / (yMax - yMin)) * (yBot - yTop);
+
+    let d = '';
+    recent.forEach((e, i) => {
+      const x = xFor(i).toFixed(1), y = yFor(e.weight).toFixed(1);
+      d += (i === 0 ? 'M ' : ' L ') + x + ' ' + y;
+    });
+    document.getElementById('dsumWeightLinePath').setAttribute('d', d);
+
+    const goalLine = document.getElementById('dsumWeightGoalLine');
+    if (hasGoal) {
+      const gy = yFor(goalRaw).toFixed(1);
+      goalLine.setAttribute('y1', gy);
+      goalLine.setAttribute('y2', gy);
+      goalLine.style.display = '';
+    } else {
+      goalLine.style.display = 'none';
+    }
+    wrapEl.style.display = 'block';
+  }
+
+  // ---------- Finance card ring (item 5: play-money bucket % of net worth) ----------
+  const FIN_ALLOC_KEY = 'eq.finance.allocation.buckets';
+  const FIN_ALLOC_DEFAULTS = [
+    { id: 'investment', name: 'Investment', pct: 50 },
+    { id: 'operations', name: 'Operations', pct: 30 },
+    { id: 'tax',        name: 'Tax',        pct: 15 },
+    { id: 'play',       name: 'Play money', pct: 5 }
+  ];
+  function getFinAllocBuckets() {
+    const saved = storeGet(FIN_ALLOC_KEY);
+    return (Array.isArray(saved) && saved.length) ? saved : FIN_ALLOC_DEFAULTS;
+  }
+  const FIN_RING_C = 2 * Math.PI * 19;
+  function renderFinanceRing(grandGBP) {
+    const wrapEl = document.getElementById('dsumFinRingWrap');
+    const fillEl = document.getElementById('dsumFinRingFill');
+    const labelEl = document.getElementById('dsumFinRingLabel');
+    if (!wrapEl) return;
+    if (!(grandGBP > 0)) { wrapEl.style.display = 'none'; return; }
+
+    const buckets = getFinAllocBuckets();
+    const playBucket = buckets.find((b) => b.id === 'play')
+      || buckets.find((b) => (b.name || '').toLowerCase().indexOf('play') !== -1);
+    if (!playBucket) { wrapEl.style.display = 'none'; return; }
+
+    const pct = Math.max(0, Math.min(100, Number(playBucket.pct) || 0));
+    fillEl.setAttribute('stroke-dasharray', FIN_RING_C);
+    fillEl.setAttribute('stroke-dashoffset', FIN_RING_C * (1 - pct / 100));
+    labelEl.textContent = Math.round(pct) + '%';
+    wrapEl.style.display = 'block';
+  }
+
   function renderDashboardSummaries() {
     renderHealthFailChip();
 
@@ -2789,6 +2778,7 @@ body::after {
         weightEl.textContent = parts.join(' · ');
       }
     }
+    renderWeightChart();
 
     // Train: last-session-only half of the old combined Fitness card.
     const trainEl = document.getElementById('dsumFitnessBody');
@@ -2819,6 +2809,7 @@ body::after {
         finEl.textContent = 'GBP ' + Math.round(netWorth).toLocaleString('en-US') + ' net worth' +
           ((income || expenses) ? ' · ' + (net >= 0 ? '+' : '') + 'GBP ' + Math.round(net).toLocaleString('en-US') + '/mo' : '');
       }
+      renderFinanceRing(hasAny ? netWorth : 0);
     }
 
     const habitsEl = document.getElementById('dsumHabitsBody');
@@ -2837,93 +2828,174 @@ body::after {
     }
 
     renderTodoChart();
-    renderActivityFeed();
   }
 
-  // 0.7b: bottom activity feed -- last N logged actions merged across
-  // domains from each domain's own already-timestamped store, sorted
-  // newest-first. Date-only sources (weight/sleep/habit dateKeys) sort
-  // at local midnight, so same-day ordering among them is approximate;
-  // this is a glance feed, not an audit trail (Settings' Assistant
-  // Activity log is the audited one, and assistant-only).
-  function dashActDateKeyToMs(dk) {
-    const p = String(dk || '').split('-').map(Number);
-    if (p.length !== 3 || p.some(isNaN)) return null;
-    return new Date(p[0], p[1] - 1, p[2]).getTime();
-  }
-  function collectRecentActivity(limit) {
-    const items = [];
-    try {
-      (JSON.parse(localStorage.getItem('po_coach_weights')) || []).forEach((e) => {
-        const ms = dashActDateKeyToMs(e && e.dateKey);
-        if (ms != null && e.weight != null) items.push({ t: ms, text: 'Logged ' + e.weight + 'kg' });
-      });
-    } catch (e) {}
-    try {
-      (JSON.parse(localStorage.getItem('sleep_log_v1')) || []).forEach((e) => {
-        const ms = dashActDateKeyToMs(e && e.dateKey);
-        if (ms != null && e.hours != null) items.push({ t: ms, text: 'Logged ' + e.hours + 'h sleep' });
-      });
-    } catch (e) {}
-    try {
-      (storeGet('habits_v1') || []).forEach((h) => {
-        Object.keys(h.history || {}).forEach((dk) => {
-          if (!h.history[dk]) return;
-          const ms = dashActDateKeyToMs(dk);
-          if (ms != null) items.push({ t: ms, text: 'Habit: ' + h.name + ' ✓' });
-        });
-      });
-    } catch (e) {}
-    try {
-      (storeGet('contacts_v1') || []).forEach((c) => {
-        (c.history || []).forEach((h) => {
-          if (h.direction === 'inbound') return;
-          const t = new Date(h.date).getTime();
-          if (!isNaN(t)) items.push({ t, text: 'Talked to ' + c.name + (h.channel ? ' (' + h.channel + ')' : '') });
-        });
-      });
-    } catch (e) {}
-    try {
-      getGoals(todayKey()).filter((g) => g.done).forEach((g) => {
-        items.push({ t: Date.now(), text: 'Completed: ' + g.title });
-      });
-    } catch (e) {}
-    return items.filter((it) => it.t != null && !isNaN(it.t)).sort((a, b) => b.t - a.t).slice(0, limit || 8);
-  }
-  function dashActRelativeWhen(ms) {
-    const days = Math.floor((Date.now() - ms) / 86400000);
-    if (days <= 0) return 'today';
-    if (days === 1) return 'yesterday';
-    return days + 'd ago';
-  }
-  function renderActivityFeed() {
-    const listEl = document.getElementById('dashActivityList');
-    const emptyEl = document.getElementById('dashActivityEmpty');
-    if (!listEl || !emptyEl) return;
-    const items = collectRecentActivity(8);
-    if (!items.length) { listEl.style.display = 'none'; emptyEl.style.display = ''; return; }
-    emptyEl.style.display = 'none';
-    listEl.style.display = '';
-    listEl.innerHTML = items.map((it) =>
-      '<div class="dash-activity-row"><span class="dash-activity-text">' + escapeHtmlYd(it.text) + '</span>' +
-      '<span class="dash-activity-when">' + dashActRelativeWhen(it.t) + '</span></div>'
-    ).join('');
-  }
-
-  // 0.7b: greeting below the day-ring clock, per time of day.
+  // 0.7b: greeting card text + clock pill, per time of day.
   function updateGreeting() {
     const el = document.getElementById('dashGreeting');
     if (!el) return;
-    const h = new Date().getHours();
+    const now = new Date();
+    const h = now.getHours();
     const part = h < 12 ? 'morning' : (h < 18 ? 'afternoon' : 'evening');
     el.textContent = 'Good ' + part + ', MAHINO';
+    const clockEl = document.getElementById('greetClock');
+    if (clockEl) clockEl.textContent = formatClock(now);
   }
+
+  // ---------- Greeting sleep log (item 2: 7 nights, WHOOP-sourced, no numeric labels) ----------
+  const SLEEP_LOG_KEY = 'sleep_log_v1';
+  const SLEEP_TARGET_KEY = 'sleep_target_hours_v1';
+  function greetDateKeyOf(d) {
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  function renderSleepChart() {
+    const entries = storeGet(SLEEP_LOG_KEY);
+    const list = Array.isArray(entries) ? entries : [];
+    const byKey = {};
+    list.forEach((e) => { if (e && e.dateKey) byKey[e.dateKey] = e; });
+    const today = new Date();
+    const nights = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - i);
+      nights.push(byKey[greetDateKeyOf(d)] || null);
+    }
+    const targetRaw = Number(storeGet(SLEEP_TARGET_KEY));
+    const target = targetRaw > 0 ? targetRaw : 7;
+
+    const wrapEl = document.getElementById('greetChartWrap');
+    const barsEl = document.getElementById('greetChartBars');
+    const lineEl = document.getElementById('greetTargetLine');
+    if (!nights.some(Boolean)) { wrapEl.style.display = 'none'; return; }
+    wrapEl.style.display = '';
+
+    const vals = nights.filter(Boolean).map((e) => e.hours).concat([target]);
+    const min = Math.min.apply(null, vals), max = Math.max.apply(null, vals);
+    const pad = Math.max((max - min) * 0.15, 0.4);
+    const yMin = min - pad, yMax = max + pad;
+    const xLeft = 6, xRight = 274, yTop = 6, yBot = 64;
+    const slotW = (xRight - xLeft) / nights.length;
+    const barW = Math.min(22, slotW * 0.5);
+    const yFor = (h) => yBot - ((h - yMin) / (yMax - yMin)) * (yBot - yTop);
+
+    let html = '';
+    nights.forEach((e, i) => {
+      if (!e) return;
+      const cx = xLeft + slotW * (i + 0.5);
+      const y = yFor(e.hours);
+      html += '<rect class="greet-bar" x="' + (cx - barW / 2).toFixed(1) + '" y="' + y.toFixed(1) +
+        '" width="' + barW.toFixed(1) + '" height="' + (yBot - y).toFixed(1) + '" rx="3"></rect>';
+    });
+    barsEl.innerHTML = html;
+    const targetY = yFor(target).toFixed(2);
+    lineEl.setAttribute('y1', targetY);
+    lineEl.setAttribute('y2', targetY);
+  }
+
+  // ---------- Shortcuts card (item 6) ----------
+  function openScPanel(title, builder) {
+    document.getElementById('scPanelTitle').textContent = title;
+    builder();
+    document.getElementById('scPanelBg').classList.add('show');
+  }
+  function closeScPanel() {
+    document.getElementById('scPanelBg').classList.remove('show');
+  }
+  document.getElementById('scPanelCloseBtn').addEventListener('click', closeScPanel);
+  document.getElementById('scPanelBg').addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) closeScPanel();
+  });
+
+  document.getElementById('scNotesBtn').addEventListener('click', () => { location.href = 'notes.html'; });
+
+  document.getElementById('scBriefBtn').addEventListener('click', () => {
+    openScPanel('Brief', () => {
+      document.getElementById('scPanelBody').innerHTML =
+        '<div class="sc-brief-row">' +
+          '<button type="button" class="sc-brief-btn" data-target="briefGenBtn">Morning brief</button>' +
+          '<button type="button" class="sc-brief-btn" data-target="advReportBtn">Advanced report</button>' +
+          '<button type="button" class="sc-brief-btn" data-target="closeDayBtn">Evening (Close the Day)</button>' +
+        '</div>';
+      document.querySelectorAll('.sc-brief-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const targetId = btn.getAttribute('data-target');
+          closeScPanel();
+          const targetBtn = document.getElementById(targetId);
+          if (targetBtn) targetBtn.click();
+        });
+      });
+    });
+  });
+
+  function renderItineraryPanel() {
+    const activeDate = getActiveDateString();
+    const tasks = getGoals('goals:' + activeDate);
+    const events = (storeGet('local_cal_events_v1') || [])
+      .filter((e) => e && e.dateKey === activeDate)
+      .sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+    const goals = getLongtermGoals().filter((g) => !g.archived);
+    const projects = (storeGet('projects_v1') || []).filter((p) => p && !p.archived && !p.done);
+
+    function section(title, items, renderItem) {
+      return '<div class="sc-it-section"><div class="sc-it-title">' + title + '</div>' +
+        (items.length ? items.map(renderItem).join('') : '<div class="sc-it-empty">Nothing here today.</div>') +
+        '</div>';
+    }
+    let html = '';
+    html += section('Tasks', tasks, (t) =>
+      '<div class="sc-it-row' + (t.done ? ' sc-it-done' : '') + '">' + (t.done ? '✓ ' : '○ ') + escapeHtmlYd(t.text || '') + '</div>');
+    html += section('Events', events, (e) =>
+      '<div class="sc-it-row">' + escapeHtmlYd((e.time ? e.time + ' — ' : '') + (e.title || 'Untitled')) + '</div>');
+    html += section('Goals', goals, (g) => '<div class="sc-it-row">' + escapeHtmlYd(g.title || '') + '</div>');
+    html += section('Active projects', projects, (p) => '<div class="sc-it-row">' + escapeHtmlYd(p.title || p.name || '') + '</div>');
+    document.getElementById('scPanelBody').innerHTML = html;
+  }
+  document.getElementById('scItineraryBtn').addEventListener('click', () => openScPanel('Itinerary', renderItineraryPanel));
+
+  const SC_CHECKLIST_OPEN_KEY = 'eq.dashboard.checklistOpen';
+  const SC_CHECKLISTS = [{ id: 'morning', label: 'Morning' }, { id: 'midday', label: 'Midday' }, { id: 'evening', label: 'Evening' }];
+  function renderChecklistsPanel() {
+    const dateK = getActiveDateString();
+    const openMap = storeGet(SC_CHECKLIST_OPEN_KEY) || {};
+    let html = '';
+    SC_CHECKLISTS.forEach((c) => {
+      const items = storeGet('checklist:items:' + c.id) || [];
+      const doneMap = storeGet('checklist:done:' + c.id + ':' + dateK) || {};
+      const doneCount = items.filter((it) => doneMap[it.id]).length;
+      const isOpen = !!openMap[c.id];
+      html += '<div class="sc-cl-group">' +
+        '<button type="button" class="sc-cl-head" data-cl="' + c.id + '">' +
+          '<span>' + c.label + '</span>' +
+          '<span class="sc-cl-count">' + doneCount + '/' + items.length + '</span>' +
+        '</button>' +
+        '<div class="sc-cl-body' + (isOpen ? '' : ' hidden') + '" id="scClBody_' + c.id + '">' +
+          (items.length
+            ? items.map((it) => '<div class="sc-cl-item' + (doneMap[it.id] ? ' sc-cl-item-done' : '') + '">' + (doneMap[it.id] ? '✓ ' : '○ ') + escapeHtmlYd(it.text || '') + '</div>').join('')
+            : '<div class="sc-it-empty">No items yet — add some on Planner.</div>') +
+        '</div>' +
+      '</div>';
+    });
+    document.getElementById('scPanelBody').innerHTML = html;
+    document.querySelectorAll('.sc-cl-head').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-cl');
+        const bodyEl = document.getElementById('scClBody_' + id);
+        const nowOpen = bodyEl.classList.contains('hidden');
+        bodyEl.classList.toggle('hidden');
+        const om = storeGet(SC_CHECKLIST_OPEN_KEY) || {};
+        om[id] = nowOpen;
+        storeSet(SC_CHECKLIST_OPEN_KEY, om);
+      });
+    });
+  }
+  document.getElementById('scChecklistsBtn').addEventListener('click', () => openScPanel('Checklists', renderChecklistsPanel));
 
   // ---------- Boot ----------
   rollover();
   processStreak();
   updateDayRing();
   updateGreeting();
+  renderSleepChart();
   setInterval(() => { updateDayRing(); updateGreeting(); }, 60 * 1000);
   startTicker();
 
@@ -2933,7 +3005,7 @@ body::after {
   renderYesterdayAlert();
 
   // Re-render when storage changes from another tab (or our bridged parent).
-  window.addEventListener('storage', () => { renderDashboardSummaries(); renderYesterdayAlert(); });
+  window.addEventListener('storage', () => { renderDashboardSummaries(); renderYesterdayAlert(); renderSleepChart(); });
 })();
 </script>
 <script>
@@ -2949,327 +3021,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 });
-</script>
-<script>
-(function () {
-  const $ = (id) => document.getElementById(id);
-  // Same Google Cloud project/OAuth client as Calendar's server-side flow
-  // (see GOOGLE_CAL_CLIENT_ID above) -- reused deliberately rather than
-  // provisioning a second client, since Google Identity Services supports
-  // requesting a different scope from the same client ID. Requires the
-  // Gmail API to be enabled for that project in Google Cloud Console; if
-  // it isn't, connecting will fail with a clear error rather than
-  // silently misbehaving.
-  // Re-walk vs equavia-pre-answers-final.md 1.4: scope upgraded
-  // readonly -> modify (mark-as-read confirmed wanted). Real consequence:
-  // an already-connected user's existing silent re-auth was granted under
-  // the OLD (narrower) scope, so trySilentAuth()'s prompt:'' below will
-  // fail once for them -- they'll see the Connect button again and need
-  // one real consent click; after that, silent re-auth works as before.
-  const GMAIL_CLIENT_ID = '83878675540-40tpq4hkpd05jarl8m8nj9i8vhm5rnel.apps.googleusercontent.com';
-  const GMAIL_SCOPE = 'https://www.googleapis.com/auth/gmail.modify';
-  const GMAIL_EVER_GRANTED_KEY = 'eq.gmail.everGranted';
-  const MAX_MESSAGES = 5;
-
-  // Deliberately never persisted to localStorage -- kept in memory only
-  // for this page's lifetime, per the "no server storage, session-only"
-  // requirement. A reload always re-derives it via silent re-auth below.
-  let accessToken = null;
-  let tokenClient = null;
-  let retrying401 = false;
-
-  function showErr(msg) {
-    const el = $('gmailErr');
-    el.textContent = msg || '';
-    el.style.display = msg ? '' : 'none';
-  }
-  function setConnectedUI(connected) {
-    $('gmailDisc').style.display = connected ? 'none' : '';
-    $('gmailConn').style.display = connected ? '' : 'none';
-  }
-  function ensureTokenClient() {
-    if (tokenClient || !window.google || !google.accounts || !google.accounts.oauth2) return tokenClient;
-    tokenClient = google.accounts.oauth2.initTokenClient({
-      client_id: GMAIL_CLIENT_ID,
-      scope: GMAIL_SCOPE,
-      callback: (resp) => {
-        if (!resp || resp.error) {
-          showErr(resp && resp.error === 'access_denied' ? 'Gmail access was not granted.' : 'Gmail connect failed.');
-          return;
-        }
-        accessToken = resp.access_token;
-        localStorage.setItem(GMAIL_EVER_GRANTED_KEY, '1');
-        showErr('');
-        setConnectedUI(true);
-        fetchMessages();
-      },
-    });
-    return tokenClient;
-  }
-
-  function parseFrom(headerValue) {
-    if (!headerValue) return { name: 'Unknown', email: '' };
-    const m = headerValue.match(/^\s*"?([^"<]*)"?\s*(?:<([^>]+)>)?\s*$/);
-    if (!m) return { name: headerValue, email: '' };
-    const name = (m[1] || '').trim();
-    const email = (m[2] || '').trim();
-    return { name: name || email || 'Unknown', email };
-  }
-  function headerVal(headers, name) {
-    const h = (headers || []).find(x => x.name === name);
-    return h ? h.value : '';
-  }
-  function fmtTime(dateStr) {
-    const d = new Date(dateStr);
-    if (isNaN(d.getTime())) return '';
-    const sameDay = d.toDateString() === new Date().toDateString();
-    return sameDay
-      ? d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
-      : d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-  }
-  // Cross-link with the Relationship Tracker (planner.html) -- matched by
-  // exact display-name text, since contacts don't carry an email field.
-  function matchContact(name) {
-    if (!name) return null;
-    let contacts;
-    try { contacts = JSON.parse(localStorage.getItem('contacts_v1')); } catch (e) { contacts = null; }
-    if (!Array.isArray(contacts)) return null;
-    const needle = name.trim().toLowerCase();
-    return contacts.find(c => c.name && c.name.trim().toLowerCase() === needle) || null;
-  }
-  // Real bug fixed while building 5.5: this used to write a bare
-  // `lastContactedAt` field, which Interactions' Phase 5.2 schema migration
-  // only ever reads once (as a one-time seed into `history` for contacts
-  // still on the old shape) -- on any contact already migrated to __v2
-  // (i.e. every contact, after its first load post-5.2), that write was a
-  // silent no-op: the button showed "Logged" but never actually touched
-  // overdue status. Pushes a real history entry now, same shape
-  // interactions.html's own "Log a chat" uses. Receiving an email is
-  // inbound, not outbound -- tagged accordingly (5.5/5.7 read this).
-  function logContact(contactId, btn) {
-    let contacts;
-    try { contacts = JSON.parse(localStorage.getItem('contacts_v1')); } catch (e) { contacts = null; }
-    if (!Array.isArray(contacts)) return;
-    const idx = contacts.findIndex(c => c.id === contactId);
-    if (idx === -1) return;
-    const c = contacts[idx];
-    c.history = Array.isArray(c.history) ? c.history : [];
-    c.history.push({ date: new Date().toISOString(), channel: 'other', note: 'Emailed', direction: 'inbound' });
-    localStorage.setItem('contacts_v1', JSON.stringify(contacts));
-    btn.textContent = 'Logged ✓';
-    btn.classList.add('is-done');
-    btn.disabled = true;
-  }
-
-  async function gmailFetch(url) {
-    const r = await fetch(url, { headers: { Authorization: 'Bearer ' + accessToken } });
-    if (!r.ok) { const err = new Error('Gmail ' + r.status); err.status = r.status; throw err; }
-    return r.json();
-  }
-
-  async function fetchMessages() {
-    if (!accessToken) return;
-    const refreshBtn = $('gmailRefreshBtn');
-    refreshBtn.classList.add('is-loading');
-    showErr('');
-    try {
-      const list = await gmailFetch('https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=' + MAX_MESSAGES + '&q=' + encodeURIComponent('is:unread in:inbox'));
-      const ids = (list.messages || []).map(m => m.id);
-      const details = await Promise.all(ids.map(id =>
-        gmailFetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/' + id + '?format=metadata&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=Date')
-      ));
-      retrying401 = false;
-      renderMessages(details, list.resultSizeEstimate != null ? list.resultSizeEstimate : details.length);
-    } catch (e) {
-      if (e.status === 401 && !retrying401 && ensureTokenClient()) {
-        retrying401 = true;
-        tokenClient.requestAccessToken({ prompt: '' });
-        return;
-      }
-      retrying401 = false;
-      if (e.status === 401) { showErr('Gmail session expired — reconnect below.'); accessToken = null; setConnectedUI(false); }
-      else showErr('Could not load Gmail — ' + e.message);
-    } finally {
-      refreshBtn.classList.remove('is-loading');
-    }
-  }
-
-  function renderMessages(details, unreadCount) {
-    const badge = $('gmailUnreadBadge');
-    badge.textContent = String(unreadCount);
-    badge.classList.toggle('zero', unreadCount === 0);
-
-    const listEl = $('gmailList');
-    listEl.innerHTML = '';
-    $('gmailEmpty').style.display = details.length ? 'none' : '';
-
-    details.forEach((msg) => {
-      const headers = msg.payload ? msg.payload.headers : [];
-      const from = parseFrom(headerVal(headers, 'From'));
-      const subject = headerVal(headers, 'Subject') || '(no subject)';
-      const contact = matchContact(from.name);
-
-      const row = document.createElement('div');
-      row.className = 'gmail-msg';
-      row.dataset.id = msg.id;
-
-      const top = document.createElement('div');
-      top.className = 'gmail-msg-row';
-      const senderEl = document.createElement('span');
-      senderEl.className = 'gmail-msg-sender';
-      senderEl.textContent = from.name;
-      const timeEl = document.createElement('span');
-      timeEl.className = 'gmail-msg-time';
-      timeEl.textContent = fmtTime(headerVal(headers, 'Date'));
-      top.appendChild(senderEl); top.appendChild(timeEl);
-      row.appendChild(top);
-
-      const subjEl = document.createElement('div');
-      subjEl.className = 'gmail-msg-subject';
-      subjEl.textContent = subject;
-      row.appendChild(subjEl);
-
-      const snipEl = document.createElement('div');
-      snipEl.className = 'gmail-msg-snippet';
-      snipEl.textContent = msg.snippet || '';
-      row.appendChild(snipEl);
-
-      if (contact) {
-        const tag = document.createElement('span');
-        tag.className = 'gmail-msg-tag';
-        tag.textContent = 'tracked contact';
-        row.appendChild(tag);
-      }
-
-      const bodyWrap = document.createElement('div');
-      bodyWrap.className = 'gmail-msg-body';
-      bodyWrap.style.display = 'none';
-      row.appendChild(bodyWrap);
-
-      row.addEventListener('click', (ev) => {
-        if (ev.target.closest('button') || ev.target.closest('a')) return;
-        const isOpen = bodyWrap.style.display !== 'none';
-        bodyWrap.style.display = isOpen ? 'none' : '';
-        if (!isOpen && !bodyWrap.dataset.loaded) loadBody(msg.id, bodyWrap, contact);
-      });
-
-      listEl.appendChild(row);
-    });
-  }
-
-  function decodeBase64Url(data) {
-    if (!data) return '';
-    const b64 = data.replace(/-/g, '+').replace(/_/g, '/');
-    try { return decodeURIComponent(escape(atob(b64))); } catch (e) { try { return atob(b64); } catch (e2) { return ''; } }
-  }
-  function findPart(payload, mimeType) {
-    if (!payload) return null;
-    if (payload.mimeType === mimeType && payload.body && payload.body.data) return payload.body.data;
-    if (payload.parts) { for (const p of payload.parts) { const found = findPart(p, mimeType); if (found) return found; } }
-    return null;
-  }
-
-  async function loadBody(id, bodyWrap, contact) {
-    bodyWrap.dataset.loaded = '1';
-    bodyWrap.innerHTML = '<div class="gmail-msg-body-loading">Loading…</div>';
-    try {
-      const full = await gmailFetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/' + id + '?format=full');
-      let text = decodeBase64Url(findPart(full.payload, 'text/plain'));
-      if (!text) {
-        const html = decodeBase64Url(findPart(full.payload, 'text/html'));
-        // Parsed via DOMParser (never attached to the live document, so
-        // nothing in the email HTML executes) purely to recover plain text.
-        if (html) text = new DOMParser().parseFromString(html, 'text/html').body.textContent || '';
-      }
-      text = (text || full.snippet || '').trim();
-
-      bodyWrap.innerHTML = '';
-      const textEl = document.createElement('div');
-      textEl.className = 'gmail-msg-body-text';
-      textEl.textContent = text || '(no readable body)';
-      bodyWrap.appendChild(textEl);
-
-      const actions = document.createElement('div');
-      actions.className = 'gmail-msg-actions';
-      const openLink = document.createElement('a');
-      openLink.href = 'https://mail.google.com/mail/u/0/#inbox/' + id;
-      openLink.target = '_blank';
-      openLink.rel = 'noopener';
-      openLink.textContent = 'Open in Gmail ↗';
-      actions.appendChild(openLink);
-      const readBtn = document.createElement('button');
-      readBtn.type = 'button';
-      readBtn.textContent = 'Mark as read';
-      readBtn.addEventListener('click', () => markAsRead(id, readBtn));
-      actions.appendChild(readBtn);
-      if (contact) {
-        const logBtn = document.createElement('button');
-        logBtn.type = 'button';
-        logBtn.textContent = 'Log contact';
-        logBtn.addEventListener('click', () => logContact(contact.id, logBtn));
-        actions.appendChild(logBtn);
-      }
-      bodyWrap.appendChild(actions);
-    } catch (e) {
-      bodyWrap.innerHTML = '<div class="gmail-msg-body-loading">Could not load full message.</div>';
-    }
-  }
-
-  // Re-walk vs equavia-pre-answers-final.md 1.4: mark-as-read, now that
-  // the connect scope covers gmail.modify. Removing the UNREAD label is
-  // the one Gmail-mutating action this page makes -- still never
-  // composes/sends/replies, per BUILD_PLAN's own hard rule for this
-  // feature.
-  async function markAsRead(id, btn) {
-    btn.disabled = true;
-    btn.textContent = 'Marking…';
-    try {
-      const r = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/' + id + '/modify', {
-        method: 'POST',
-        headers: { Authorization: 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ removeLabelIds: ['UNREAD'] }),
-      });
-      if (!r.ok) throw new Error('Gmail ' + r.status);
-      const row = btn.closest('.gmail-msg');
-      if (row) row.remove();
-      const badge = $('gmailUnreadBadge');
-      const next = Math.max(0, (parseInt(badge.textContent, 10) || 0) - 1);
-      badge.textContent = String(next);
-      badge.classList.toggle('zero', next === 0);
-      if (!$('gmailList').children.length) $('gmailEmpty').style.display = '';
-    } catch (e) {
-      btn.disabled = false;
-      btn.textContent = 'Mark as read';
-      showErr('Could not mark as read — try again.');
-    }
-  }
-
-  $('gmailConnectBtn').addEventListener('click', () => {
-    const client = ensureTokenClient();
-    if (!client) { showErr('Google sign-in is still loading — try again in a moment.'); return; }
-    client.requestAccessToken({ prompt: 'consent' });
-  });
-  $('gmailRefreshBtn').addEventListener('click', () => { if (accessToken) fetchMessages(); });
-  $('gmailDisconnectBtn').addEventListener('click', () => {
-    if (accessToken && window.google && google.accounts && google.accounts.oauth2) {
-      google.accounts.oauth2.revoke(accessToken, () => {});
-    }
-    accessToken = null;
-    localStorage.removeItem(GMAIL_EVER_GRANTED_KEY);
-    setConnectedUI(false);
-  });
-
-  // Silent re-auth on load if we've been granted access before -- keeps
-  // the token itself unpersisted while avoiding a repeat consent screen.
-  // GIS's script tag loads async, so poll briefly until it's ready.
-  function trySilentAuth(attemptsLeft) {
-    if (localStorage.getItem(GMAIL_EVER_GRANTED_KEY) !== '1') return;
-    const client = ensureTokenClient();
-    if (!client) { if (attemptsLeft > 0) setTimeout(() => trySilentAuth(attemptsLeft - 1), 300); return; }
-    client.requestAccessToken({ prompt: '' });
-  }
-  trySilentAuth(20);
-})();
 </script>
 <script>
 (function () {
@@ -3928,283 +3679,16 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   // ============================================================
-  // 6.10 ANNUAL REVIEW -- reuses 4.5's audit machinery per spec: same
-  // forced-tool-call structured-output pattern, same Implement/Ignore
-  // suggestion-card styling, same manual-only trigger bias as every other
-  // assistant-generated section in this build. Assembled from the year's
-  // own weekly audits (eq.audits.v1) rather than re-deriving 12 months of
-  // raw per-feature data from scratch -- those audits already are the
-  // condensed weekly synthesis of that raw data, so re-summarizing THEM is
-  // both cheaper and avoids inventing a second, parallel data-assembly path
-  // that could drift from what the weekly audits themselves say happened.
-  // Cached per year, "Run again" re-generates -- same as the weekly audit.
-  // ============================================================
+  // Annual Review's own UI/generation moved to planner.html (Phase 6.10
+  // relocation) -- this key is still read here, read-only, because Weekly
+  // Audit's buildAuditContext() (above) surfaces this year's adopted
+  // themes in its own context. Both pages read/write the same
+  // eq.annual_reviews_v1 key; no function-level dependency between them.
   const ANNUAL_REVIEWS_KEY = 'eq.annual_reviews_v1';
   function getAnnualReviews() { const v = storeGet(ANNUAL_REVIEWS_KEY); return Array.isArray(v) ? v : []; }
-  function setAnnualReviews(list) { storeSet(ANNUAL_REVIEWS_KEY, list); }
   function annualReviewYear() { return new Date().getFullYear(); }
   function annualReviewFor(year) { return getAnnualReviews().find((r) => r.year === year) || null; }
 
-  const SUBMIT_ANNUAL_REVIEW_TOOL = {
-    name: 'submit_annual_review',
-    description: 'Submit the completed annual review in structured form. Every claim must cite something real from the weekly audits given -- never invent a number or event. If a domain has too little data across the year, say so plainly rather than inventing a trajectory for it.',
-    input_schema: {
-      type: 'object',
-      properties: {
-        trajectory: {
-          type: 'array',
-          items: { type: 'object', properties: { domain: { type: 'string' }, text: { type: 'string' } }, required: ['domain', 'text'] },
-          description: 'One entry per domain that actually appears in the weekly audits (e.g. health, fitness, finance, planner/tasks, ability/habits, interactions) describing how it trended across the year.',
-        },
-        kept_commitments: { type: 'array', items: { type: 'string' }, description: 'Things repeatedly named in "what to do better" or suggestions across the year that the LATER weeks show actually changed.' },
-        broken_commitments: { type: 'array', items: { type: 'string' }, description: 'Things repeatedly flagged across the year\'s audits that never actually changed by year end.' },
-        top_wins: { type: 'array', items: { type: 'string' }, description: 'Top 5 wins of the year, each citing something real from a specific week.' },
-        top_costs: { type: 'array', items: { type: 'string' }, description: 'Top 5 costs/regrets of the year, each citing something real from a specific week.' },
-        themes: { type: 'array', items: { type: 'string' }, description: 'Exactly 3 proposed themes/areas of focus for next year, each a short actionable sentence.' },
-        verdict_word: { type: 'string', description: 'One word summarizing the year overall.' },
-        verdict_score: { type: 'number', description: 'A score out of 10 for the year overall.' },
-      },
-      required: ['trajectory', 'kept_commitments', 'broken_commitments', 'top_wins', 'top_costs', 'themes', 'verdict_word', 'verdict_score'],
-    },
-  };
-
-  function buildAnnualReviewContext(year) {
-    const audits = getAudits().filter((a) => a.weekKey.slice(0, 4) === String(year)).sort((a, b) => a.weekKey.localeCompare(b.weekKey));
-    let s = 'ANNUAL REVIEW FOR ' + year + '\n' + audits.length + ' weekly audit(s) recorded this year.\n\n';
-    if (!audits.length) { s += 'No weekly audits exist for this year yet -- say so plainly rather than inventing a year in review.\n'; return s; }
-    audits.forEach((a) => {
-      s += 'WEEK ' + a.weekKey + ': verdict ' + (a.verdictWord || '—') + ' (' + (a.verdictScore != null ? a.verdictScore : '—') + '/10)\n';
-      if (a.whatWentWell && a.whatWentWell.length) s += '  Wins: ' + a.whatWentWell.join('; ') + '\n';
-      if (a.whatWentBadly && a.whatWentBadly.length) s += '  Misses: ' + a.whatWentBadly.join('; ') + '\n';
-      if (a.whatToDoBetter && a.whatToDoBetter.length) s += '  To do better: ' + a.whatToDoBetter.join('; ') + '\n';
-      if (a.suggestions && a.suggestions.length) s += '  Suggestions: ' + a.suggestions.map((sg) => sg.text + ' [' + sg.status + ']').join('; ') + '\n';
-    });
-    // Weekly audits are prose, not per-domain numeric scores, so verdict
-    // score is the one consistent number available to show a real trend
-    // across the year -- not a substitute for the model's own qualitative
-    // per-domain trajectory read of the prose above.
-    const scored = audits.filter((a) => typeof a.verdictScore === 'number');
-    if (scored.length >= 2) {
-      const mid = Math.floor(scored.length / 2);
-      const firstHalf = scored.slice(0, mid).reduce((sum, a) => sum + a.verdictScore, 0) / mid;
-      const secondHalf = scored.slice(mid).reduce((sum, a) => sum + a.verdictScore, 0) / (scored.length - mid);
-      s += '\nVerdict-score trend: first half of the year averaged ' + firstHalf.toFixed(1) + '/10, second half averaged ' + secondHalf.toFixed(1) + '/10.\n';
-    }
-    return s;
-  }
-
-  // ---- 6.10 chart helpers (duplicated from 4.4's Advanced Report block
-  // -- separate script block/IIFE, so its functions aren't in scope here;
-  // same per-block-duplication convention as everywhere else in this file). ----
-  function annualRenderLineChart(svgId, points, color) {
-    const svg = $(svgId);
-    const valid = points.filter((p) => p.v != null);
-    if (valid.length < 2) { svg.innerHTML = '<text x="150" y="50" text-anchor="middle" fill="var(--text-tertiary)" font-size="10">Not enough data yet</text>'; return; }
-    const vals = valid.map((p) => p.v);
-    const min = Math.min.apply(null, vals), max = Math.max.apply(null, vals);
-    const w = 300, h = 70, pad = 4;
-    const stepX = (w - pad * 2) / (points.length - 1);
-    const scaleY = (v) => (max === min) ? h / 2 : (h - pad) - ((v - min) / (max - min)) * (h - pad * 2);
-    const coords = points.map((p, i) => ({ x: pad + i * stepX, y: p.v == null ? null : scaleY(p.v) }));
-    let path = '', started = false;
-    coords.forEach((c) => {
-      if (c.y == null) { started = false; return; }
-      path += (started ? 'L' : 'M') + c.x.toFixed(1) + ',' + c.y.toFixed(1) + ' ';
-      started = true;
-    });
-    const dots = coords.filter((c) => c.y != null).map((c) => '<circle cx="' + c.x.toFixed(1) + '" cy="' + c.y.toFixed(1) + '" r="2" fill="' + color + '"/>').join('');
-    svg.innerHTML = '<path d="' + path.trim() + '" fill="none" stroke="' + color + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' + dots;
-  }
-  function annualRenderBarChart(svgId, values, color) {
-    const svg = $(svgId);
-    if (!values.some((v) => v != null)) { svg.innerHTML = '<text x="150" y="50" text-anchor="middle" fill="var(--text-tertiary)" font-size="10">Not enough data yet</text>'; return; }
-    const w = 300, h = 70, pad = 4, n = values.length;
-    const gap = (w - pad * 2) / n, barW = gap * 0.6;
-    svg.innerHTML = values.map((v, i) => {
-      if (v == null) return '';
-      const bh = Math.max(2, (Math.max(0, Math.min(100, v)) / 100) * (h - pad * 2));
-      const x = pad + i * gap + (gap - barW) / 2;
-      const y = h - pad - bh;
-      return '<rect x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + barW.toFixed(1) + '" height="' + bh.toFixed(1) + '" rx="2" fill="' + color + '"/>';
-    }).join('');
-  }
-  function annualRenderPieChart(svgId, legendId, segments) {
-    const svg = $(svgId), legend = $(legendId);
-    const total = segments.reduce((s, x) => s + x.value, 0);
-    if (!total) { svg.innerHTML = ''; legend.innerHTML = '<div class="adv-chart-empty">No activity logged this year yet.</div>'; return; }
-    const r = 50, cx = 60, cy = 60, C = 2 * Math.PI * r;
-    let offset = 0;
-    const active = segments.filter((s) => s.value > 0);
-    svg.innerHTML = active.map((s) => {
-      const len = (s.value / total) * C;
-      const rotate = (offset / C) * 360 - 90;
-      offset += len;
-      return '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="none" stroke="' + s.color + '" stroke-width="16" stroke-dasharray="' + len.toFixed(2) + ' ' + (C - len).toFixed(2) + '" transform="rotate(' + rotate.toFixed(1) + ' ' + cx + ' ' + cy + ')"/>';
-    }).join('');
-    legend.innerHTML = active.map((s) => '<span class="adv-pie-legend-item"><span class="adv-pie-legend-dot" style="background:' + s.color + '"></span>' + s.label + ' (' + s.value + ')</span>').join('');
-  }
-  // Last 12 calendar months, oldest first -- each {year, month} bucket.
-  function annualLast12Months() {
-    const out = [];
-    const now = new Date();
-    for (let i = 11; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      out.push({ y: d.getFullYear(), m: d.getMonth() });
-    }
-    return out;
-  }
-  function annualMonthKey(dateStr) { const d = new Date(dateStr); return d.getFullYear() + '-' + d.getMonth(); }
-  function annualMonthlyAvg(entries, valueField, dateField) {
-    const months = annualLast12Months();
-    const byMonth = {};
-    entries.forEach((e) => {
-      if (e[valueField] == null || !e[dateField]) return;
-      const key = annualMonthKey(e[dateField]);
-      (byMonth[key] = byMonth[key] || []).push(e[valueField]);
-    });
-    return months.map(({ y, m }) => {
-      const vals = byMonth[y + '-' + m];
-      return { v: vals && vals.length ? Number((vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1)) : null };
-    });
-  }
-  function annualHabitAdherenceMonthly() {
-    const habits = storeGet('habits_v1') || [];
-    const months = annualLast12Months();
-    if (!habits.length) return months.map(() => null);
-    return months.map(({ y, m }) => {
-      const daysInMonth = new Date(y, m + 1, 0).getDate();
-      const isFuture = new Date(y, m, 1) > new Date();
-      if (isFuture) return null;
-      let done = 0, tracked = 0;
-      for (let day = 1; day <= daysInMonth; day++) {
-        const d = new Date(y, m, day);
-        if (d > new Date()) break;
-        const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-        habits.forEach((h) => {
-          if (h.createdAt && h.createdAt.slice(0, 10) > key) return;
-          tracked++;
-          if (h.history && h.history[key]) done++;
-        });
-      }
-      return tracked > 0 ? Math.round((done / tracked) * 100) : null;
-    });
-  }
-  function annualDomainActivityYear() {
-    const cutoff = Date.now() - 365 * 86400000;
-    let health = 0, fitness = 0, planner = 0, ability = 0, interactions = 0;
-    (storeGet('sleep_log_v1') || []).forEach((e) => { if (new Date(e.dateKey).getTime() >= cutoff) health++; });
-    (storeGet('po_coach_weights') || []).forEach((e) => { if (new Date(e.dateKey).getTime() >= cutoff) fitness++; });
-    (storeGet('habits_v1') || []).forEach((h) => Object.keys(h.history || {}).forEach((k) => { if (h.history[k] && new Date(k).getTime() >= cutoff) ability++; }));
-    (storeGet('contacts_v1') || []).forEach((c) => (c.history || []).forEach((h) => { if (h.direction !== 'inbound' && new Date(h.date).getTime() >= cutoff) interactions++; }));
-    getAudits().forEach((a) => { planner += (a.whatWentWell || []).length + (a.whatWentBadly || []).length; });
-    return [
-      { label: 'Health', value: health, color: '#6BE3A4' },
-      { label: 'Fitness', value: fitness, color: '#E07658' },
-      { label: 'Planner', value: planner, color: '#6EA8E0' },
-      { label: 'Ability', value: ability, color: '#F2A65A' },
-      { label: 'Interactions', value: interactions, color: '#C48CE0' },
-    ];
-  }
-  function renderAnnualCharts() {
-    const grid = $('annualChartGrid');
-    grid.style.display = '';
-    const sleep = annualMonthlyAvg(storeGet('sleep_log_v1') || [], 'hours', 'dateKey');
-    const weight = annualMonthlyAvg(storeGet('po_coach_weights') || [], 'weight', 'dateKey');
-    const taskSnaps = (storeGet('todo_completion_snapshots_v1') || []).map((s) => ({ pct: s.scheduled > 0 ? (s.completed / s.scheduled) * 100 : null, dateKey: s.dateKey }));
-    const task = annualMonthlyAvg(taskSnaps.filter((s) => s.pct != null), 'pct', 'dateKey').map((p) => p.v);
-    const habit = annualHabitAdherenceMonthly();
-    annualRenderLineChart('annualSleepChart', sleep, '#6BE3A4');
-    annualRenderLineChart('annualWeightChart', weight, '#E07658');
-    annualRenderBarChart('annualTaskChart', task, '#6EA8E0');
-    annualRenderBarChart('annualHabitChart', habit, '#F2A65A');
-    annualRenderPieChart('annualPieChart', 'annualPieLegend', annualDomainActivityYear());
-  }
-
-  function renderAnnualReview() {
-    const year = annualReviewYear();
-    $('annualReviewYear').textContent = String(year);
-    $('annualDecemberNudge').style.display = (new Date().getMonth() === 11) ? '' : 'none';
-    const review = annualReviewFor(year);
-    const wrap = $('annualReviewSections');
-    const btn = $('annualReviewRunBtn');
-    if (!review) { wrap.style.display = 'none'; wrap.innerHTML = ''; $('annualChartGrid').style.display = 'none'; btn.textContent = 'Run annual review'; return; }
-    btn.textContent = 'Run again';
-    wrap.style.display = '';
-    wrap.innerHTML = '';
-    renderAnnualCharts();
-
-    function section(title, items) {
-      if (!items || !items.length) return;
-      const sec = document.createElement('div');
-      sec.className = 'audit-section';
-      sec.innerHTML = '<div class="audit-section-title">' + title + '</div>';
-      const list = document.createElement('ul');
-      list.className = 'audit-list';
-      items.forEach((t) => { const li = document.createElement('li'); li.textContent = t; list.appendChild(li); });
-      sec.appendChild(list);
-      wrap.appendChild(sec);
-    }
-
-    const verdictSec = document.createElement('div');
-    verdictSec.className = 'audit-section';
-    verdictSec.innerHTML = '<div class="audit-section-title">Verdict</div><div class="audit-list" style="font-size:14px;font-weight:700;">' + (review.verdictWord || '—') + ' (' + (review.verdictScore != null ? review.verdictScore : '—') + '/10)</div>';
-    wrap.appendChild(verdictSec);
-
-    if (review.trajectory && review.trajectory.length) {
-      section('Trajectory by domain', review.trajectory.map((t) => t.domain + ': ' + t.text));
-    }
-    section('Kept commitments', review.keptCommitments);
-    section('Broken commitments', review.brokenCommitments);
-    section('Top 5 wins', review.topWins);
-    section('Top 5 costs', review.topCosts);
-
-    if (review.themes && review.themes.length) {
-      const themeSec = document.createElement('div');
-      themeSec.className = 'audit-section';
-      themeSec.innerHTML = '<div class="audit-section-title">Proposed themes for next year</div>';
-      review.themes.forEach((theme, idx) => { themeSec.appendChild(renderThemeCard(year, theme, idx)); });
-      wrap.appendChild(themeSec);
-    }
-  }
-
-  // 6.10 answered question: Implement = adopt as a standing focus (stored,
-  // surfaced in future Weekly Audits' context), NOT a re-send through the
-  // assistant tool loop -- a yearly theme like "protect deep-work time" has
-  // no single tool call it maps to, unlike a concrete weekly suggestion.
-  function renderThemeCard(year, theme, idx) {
-    const wrap = document.createElement('div');
-    wrap.className = 'audit-suggestion';
-    const text = document.createElement('div');
-    text.className = 'audit-suggestion-text';
-    text.textContent = theme.text;
-    wrap.appendChild(text);
-    if (theme.status === 'pending') {
-      const actions = document.createElement('div');
-      actions.className = 'audit-suggestion-actions';
-      const implBtn = document.createElement('button');
-      implBtn.type = 'button'; implBtn.className = 'audit-sugg-btn audit-sugg-implement'; implBtn.textContent = 'Adopt';
-      const ignBtn = document.createElement('button');
-      ignBtn.type = 'button'; ignBtn.className = 'audit-sugg-btn audit-sugg-ignore'; ignBtn.textContent = 'Ignore';
-      implBtn.addEventListener('click', () => { setThemeStatus(year, idx, 'adopted'); });
-      ignBtn.addEventListener('click', () => { setThemeStatus(year, idx, 'ignored'); });
-      actions.appendChild(implBtn); actions.appendChild(ignBtn);
-      wrap.appendChild(actions);
-    } else {
-      const status = document.createElement('div');
-      status.className = 'audit-sugg-status';
-      status.textContent = theme.status === 'adopted' ? '✓ Adopted as a standing focus for ' + year : 'Ignored';
-      wrap.appendChild(status);
-    }
-    return wrap;
-  }
-  function setThemeStatus(year, idx, status) {
-    const reviews = getAnnualReviews();
-    const r = reviews.find((x) => x.year === year);
-    if (!r || !r.themes[idx]) return;
-    r.themes[idx].status = status;
-    setAnnualReviews(reviews);
-    renderAnnualReview();
-  }
   // Adopted themes for the current year, surfaced in the Weekly Audit's own
   // context (buildAuditContext, above) so the assistant keeps this year's
   // stated focus in mind week to week -- the actual wiring for "surfaced in
@@ -4214,64 +3698,6 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!r || !r.themes) return [];
     return r.themes.filter((t) => t.status === 'adopted').map((t) => t.text);
   }
-
-  async function runAnnualReview() {
-    const year = annualReviewYear();
-    const btn = $('annualReviewRunBtn');
-    btn.disabled = true; btn.textContent = 'Running…';
-    $('annualReviewStatus').textContent = '';
-    try {
-      const context = buildAnnualReviewContext(year);
-      const res = await fetch('/api/chat', {
-        method: 'POST',
-        headers: Object.assign({ 'Content-Type': 'application/json' }, window.EqAuth ? window.EqAuth.header() : {}),
-        body: JSON.stringify({
-          messages: [{ role: 'user', content: 'Run my annual review from the data in context.' }],
-          systemContext: 'You are a direct, specific, zero-flattery annual reviewer for a personal tracking app, synthesizing a full year of weekly audits into one year-in-review. Every claim must cite something real from the weekly data below -- never invent a number or event, and say "not enough data" plainly where a domain has too little to say something real. Call submit_annual_review with your findings.\n\n' + context,
-          tools: [SUBMIT_ANNUAL_REVIEW_TOOL],
-          toolChoice: { name: 'submit_annual_review' },
-        }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || 'request failed');
-      if (!data.toolUse || data.toolUse.name !== 'submit_annual_review') throw new Error('unexpected response shape');
-      const out = data.toolUse.input || {};
-      const reviews = getAnnualReviews().filter((r) => r.year !== year);
-      reviews.push({
-        year,
-        trajectory: out.trajectory || [],
-        keptCommitments: out.kept_commitments || [],
-        brokenCommitments: out.broken_commitments || [],
-        topWins: out.top_wins || [],
-        topCosts: out.top_costs || [],
-        themes: (out.themes || []).map((text) => ({ text, status: 'pending' })),
-        verdictWord: out.verdict_word || '—',
-        verdictScore: typeof out.verdict_score === 'number' ? out.verdict_score : null,
-        at: new Date().toISOString(),
-      });
-      setAnnualReviews(reviews);
-      renderAnnualReview();
-
-      if (window.ObsidianSync && ObsidianSync.getConfig().enabled) {
-        const md = '# Annual Review — ' + year + '\n\n' +
-          '## Verdict\n' + (out.verdict_word || '—') + ' (' + out.verdict_score + '/10)\n\n' +
-          '## Trajectory by domain\n' + (out.trajectory || []).map((t) => '- **' + t.domain + '**: ' + t.text).join('\n') + '\n\n' +
-          '## Kept commitments\n' + (out.kept_commitments || []).map((t) => '- ' + t).join('\n') + '\n\n' +
-          '## Broken commitments\n' + (out.broken_commitments || []).map((t) => '- ' + t).join('\n') + '\n\n' +
-          '## Top 5 wins\n' + (out.top_wins || []).map((t) => '- ' + t).join('\n') + '\n\n' +
-          '## Top 5 costs\n' + (out.top_costs || []).map((t) => '- ' + t).join('\n') + '\n\n' +
-          '## Proposed themes for next year\n' + (out.themes || []).map((t) => '- ' + t).join('\n') + '\n';
-        await ObsidianSync.pushWeeklyReport('Reviews/' + year, md);
-      }
-    } catch (e) {
-      $('annualReviewStatus').textContent = 'Could not run annual review — ' + (e.message || 'try again') + '.';
-    } finally {
-      btn.disabled = false;
-    }
-  }
-  $('annualReviewRunBtn').addEventListener('click', runAnnualReview);
-  renderAnnualReview();
-  window.addEventListener('storage', renderAnnualReview);
 
   initWeeklyReport();
   syncAuditToBrowsedWeek();
@@ -4452,11 +3878,13 @@ document.addEventListener('DOMContentLoaded', function () {
       const todayKey = AT.activeDateKeyLocal();
       storeSet(CLOSE_KEY, { dateKey: todayKey, text: data.reply || '', at: new Date().toISOString() });
       renderCloseDay();
-      // Shared with 6.2's mood log (defined below in the same page) so
-      // logging mood earlier in the day and closing the day later both
+      // Delegates to daily-report.js's shared builder so logging mood
+      // (now on Planner) earlier in the day and closing the day later both
       // write ONE merged daily note instead of each overwriting the
-      // other's section via a plain PUT.
-      if (window.EqDailyNote) await window.EqDailyNote(todayKey);
+      // other's section via a plain PUT. Mood's own UI moved to
+      // planner.html (item 10 of the dashboard restyle); this call is
+      // independent of that move -- daily-report.js is still loaded here.
+      if (window.EqDailyReport) { try { await window.EqDailyReport.run(todayKey); } catch (e) {} }
     } catch (e) {
       $('closeDayMeta').textContent = 'Could not close the day — ' + (e.message || 'try again') + '.';
     } finally {
@@ -4686,73 +4114,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
   $('advReportBtn').addEventListener('click', generateAdvancedReport);
   renderAdvancedReport();
-})();
-</script>
-<script>
-(function () {
-  'use strict';
-  const $ = (id) => document.getElementById(id);
-  function storeGet(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }
-  function storeSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
-  const AT = window.AssistantTools;
-
-  // ============================================================
-  // 6.2 MOOD + ONE-LINE JOURNAL. 1-10 scale (answered ASK FIRST, not the
-  // spec's own 1-5-with-faces suggestion -- more granular week-to-week
-  // movement for the correlation view). Purely observational, per the
-  // answered question -- no special-casing a low entry anywhere.
-  // Idempotent per day: tapping a new number after already logging today
-  // just updates the same entry, doesn't create a second one.
-  // ============================================================
-  const MOOD_KEY = 'eq.mood.log_v1';
-  function getMoodLog() { const v = storeGet(MOOD_KEY); return Array.isArray(v) ? v : []; }
-  function setMoodLog(list) { storeSet(MOOD_KEY, list); }
-  function moodToday() { return getMoodLog().find((m) => m.dateKey === AT.activeDateKeyLocal()) || null; }
-
-  // Delegates to daily-report.js's shared builder (mood + close-the-day are
-  // just two of the sections it assembles now) so there's one writer of
-  // <folder>/Daily/<dateKey>.md, not two stepping on the same file.
-  async function writeDailyNote(dateKey) {
-    if (!window.EqDailyReport) return;
-    try { await EqDailyReport.run(dateKey); } catch (e) {}
-  }
-  window.EqDailyNote = writeDailyNote;
-
-  function renderMoodChip() {
-    const chip = $('moodChip');
-    if (!chip) return;
-    chip.style.display = '';
-    const today = moodToday();
-    const scale = $('moodScale');
-    scale.innerHTML = '';
-    for (let i = 1; i <= 10; i++) {
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'mood-num-btn' + (today && today.mood === i ? ' is-selected' : '');
-      btn.textContent = String(i);
-      btn.addEventListener('click', () => saveMood(i));
-      scale.appendChild(btn);
-    }
-    $('moodChipHead').textContent = today ? 'Today: ' + today.mood + '/10' : 'How\'s today?';
-    const noteInput = $('moodNoteInput');
-    noteInput.style.display = '';
-    noteInput.value = today ? (today.note || '') : '';
-  }
-  async function saveMood(value) {
-    const dateKey = AT.activeDateKeyLocal();
-    const list = getMoodLog();
-    const idx = list.findIndex((m) => m.dateKey === dateKey);
-    const note = $('moodNoteInput').value.trim();
-    const entry = { dateKey, mood: value, note, at: new Date().toISOString() };
-    if (idx !== -1) list[idx] = entry; else list.push(entry);
-    setMoodLog(list.slice(-120));
-    renderMoodChip();
-    await writeDailyNote(dateKey);
-  }
-  $('moodNoteInput').addEventListener('change', () => { const today = moodToday(); if (today) saveMood(today.mood); });
-
-  renderMoodChip();
-  window.addEventListener('storage', renderMoodChip);
 })();
 </script>
 <script>
