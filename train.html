@@ -95,7 +95,17 @@
 
   /* day header */
   .dayhead { display:flex; align-items:flex-end; gap:12px; margin-top:14px; }
-  .daytitle { font-family: var(--serif); font-style:italic; font-weight:500; font-size:33px; line-height:1; letter-spacing:-0.01em; }
+  .daytitle { font-family: var(--serif); font-style:italic; font-weight:500; font-size:33px; line-height:1; letter-spacing:-0.01em; cursor:pointer; display:inline-flex; align-items:baseline; gap:7px; padding:9px 6px; margin:-9px -6px; border-radius:10px; transition: background .15s; }
+  .daytitle:hover, .daytitle:focus-visible, .daytitle:active { background: rgba(255,255,255,.045); }
+  .daytitle:focus-visible { outline:1px solid var(--mint); outline-offset:1px; }
+  .daytitle:hover .nameTxt, .daytitle:focus-visible .nameTxt, .daytitle:active .nameTxt { text-decoration: underline; text-decoration-color: rgba(110,231,183,.45); text-underline-offset:4px; }
+  .daytitle .editIcon { width:15px; height:15px; align-self:center; color: var(--muted); flex:none; opacity:0; transition: opacity .15s; }
+  .daytitle:hover .editIcon, .daytitle:focus-visible .editIcon, .daytitle:active .editIcon { opacity:.75; }
+  .daytitleInput { font-family: var(--serif); font-style:italic; font-weight:500; font-size:33px; line-height:1; letter-spacing:-0.01em; color: var(--text); background:transparent; border:none; border-bottom:1px solid var(--mint); outline:none; padding:0 0 2px; min-width:2ch; max-width:min(60vw,420px); }
+  .daytitleInput.shake { animation: dtShake .4s var(--ease); border-bottom-color: var(--fail); }
+  @keyframes dtShake { 20%,60%{ transform:translateX(-4px); } 40%,80%{ transform:translateX(4px); } 100%{ transform:translateX(0); } }
+  .daytitleErr { font-family: var(--vt-mono); font-size:11px; color: var(--fail); }
+  .dayMenuBtn { align-self:center; margin-bottom:3px; }
   .daypill { font-family: var(--vt-mono); font-size:10px; font-weight:600; letter-spacing:.16em; text-transform:uppercase; padding:4px 9px; border-radius:999px; border:1px solid var(--mint); color:var(--mint); align-self:center; margin-bottom:4px; }
   .daypill.vol { border-color: var(--hair); color: var(--muted-strong); }
   .moonbtn { margin-left:auto; align-self:center; margin-bottom:3px; display:inline-flex; align-items:center; gap:7px; background:none; border:1px solid var(--line); color:var(--muted); border-radius:999px; padding:7px 12px; font-size:12px; font-weight:500; cursor:pointer; transition: color .18s, border-color .18s, background .18s; }
@@ -329,6 +339,7 @@
   .menuPop button { display:flex; align-items:center; gap:11px; width:100%; background:none; border:none; color: var(--text); font:inherit; font-size:14px; padding:11px 12px; border-radius:9px; cursor:pointer; text-align:left; transition: background .14s; }
   .menuPop button:hover { background: rgba(255,255,255,.05); }
   .menuPop button.danger { color: #e88a8c; }
+  .menuPop button.danger.arm { background: rgba(224,106,108,.14); font-weight:600; }
   .menuPop button svg { width:16px; height:16px; fill:none; stroke:currentColor; stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round; flex:none; }
   .menuPop .sep { height:1px; background: var(--line); margin:4px 2px; }
 
@@ -350,7 +361,7 @@
   .celebrate .tap { color: var(--muted); font-size:12.5px; margin-top:20px; }
 
   @media (max-width:480px) {
-    .daytitle { font-size:28px; } .popTitle { font-size:24px; }
+    .daytitle { font-size:28px; min-height:44px; } .popTitle { font-size:24px; }
     .exName { font-size:22px; }
     .pill { gap:8px; padding:12px 13px; } .pillValue { font-size:16px; }
     .moonbtn span { display:none; }
@@ -377,6 +388,7 @@
     <div class="daydots" id="daydots"></div>
     <div class="dayhead">
       <h1 class="daytitle" id="daytitle">Push</h1>
+      <button class="menuBtn dayMenuBtn" id="dayMenuBtn" type="button" aria-label="Day options"><svg viewBox="0 0 24 24"><circle cx="6" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="18" cy="12" r="1.7"/></svg></button>
       <span class="daypill" id="daypill">Heavy</span>
       <button class="moonbtn" id="moonbtn" title="Mark the whole day a rest day"><svg viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg><span>rest day</span></button>
     </div>
@@ -585,6 +597,7 @@ function dotsIcon(){ return '<svg viewBox="0 0 24 24"><circle cx="6" cy="12" r="
 function gripIcon(){ return '<svg viewBox="0 0 24 24"><circle cx="9" cy="6" r="1.5"/><circle cx="15" cy="6" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/></svg>'; }
 
 function render(){
+  if(!STATE.order.length){ renderEmptyPlan(); saveState(); return; }
   renderTabs(); renderDots(); renderHead(); renderProgress(); renderBody(); saveState();
 }
 const TAB_LONGPRESS_MS = 500;
@@ -662,14 +675,125 @@ function renderDots(){
   el.style.display='flex';
   el.innerHTML = d.ex.map(e=>{ let c='dd'; if(exComplete(e)){ c+= exHasPR(e)?' pr':' done'; } else if(exHasMiss(e)) c+=' miss'; return '<span class="'+c+'"></span>'; }).join('');
 }
+const DAY_LONGPRESS_MS = 500;
 function renderHead(){
   const d=curDay();
-  $('#daytitle').textContent = d.name;
+  wireDayTitle(d);
   const pill=$('#daypill');
+  pill.style.display='';
   if(d.restDay){ pill.style.display='none'; } else { pill.style.display=''; pill.textContent=d.type||'Session'; pill.className='daypill'+(/vol/i.test(d.type)?' vol':''); }
   const moon=$('#moonbtn');
+  moon.style.display='';
   if(d.restDay){ moon.style.display='none'; } else { moon.style.display=''; moon.classList.toggle('on', d.off); }
   moon.onclick=()=>{ d.off=!d.off; render(); };
+}
+/* ---- day title: tap-to-rename, long-press/"..." to rename or delete --- */
+function wireDayTitle(d){
+  const h1=$('#daytitle');
+  h1.innerHTML = '<span class="nameTxt">'+escapeHtml(d.name)+'</span>'
+    + svg('<path d="M4 20l1-4L16 5l3 3L8 19l-4 1z"/>',' class="editIcon" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"');
+  h1.setAttribute('role','button');
+  h1.setAttribute('tabindex','0');
+  h1.setAttribute('aria-label','Rename day, currently '+d.name);
+  let pressTimer=null, longPressed=false;
+  const clearPress=()=>{ if(pressTimer){ clearTimeout(pressTimer); pressTimer=null; } };
+  h1.onpointerdown=ev=>{ ev.stopPropagation(); longPressed=false; pressTimer=setTimeout(()=>{ longPressed=true; openDayMenu(d, h1); },DAY_LONGPRESS_MS); };
+  h1.onpointerup=ev=>{ ev.stopPropagation(); clearPress(); if(!longPressed) beginDayTitleEdit(h1, d); };
+  h1.onpointerleave=clearPress;
+  h1.onpointercancel=clearPress;
+  h1.onclick=ev=>ev.stopPropagation();
+  h1.onkeydown=ev=>{ if(ev.key==='Enter'){ ev.preventDefault(); ev.stopPropagation(); beginDayTitleEdit(h1, d); } };
+  const menuBtn=$('#dayMenuBtn');
+  menuBtn.style.display='';
+  menuBtn.setAttribute('aria-label','Day options for '+d.name);
+  menuBtn.onclick=ev=>{ ev.stopPropagation(); openDayMenu(d, menuBtn); };
+}
+function beginDayTitleEdit(h1, d){
+  if(h1.dataset.editing) return;
+  h1.dataset.editing='1';
+  const original=d.name;
+  h1.onpointerdown=h1.onpointerup=h1.onpointerleave=h1.onpointercancel=h1.onkeydown=null;
+  h1.innerHTML='<input class="daytitleInput" id="daytitleInput" type="text" maxlength="40" value="'+escapeHtml(original)+'"><span class="daytitleErr" id="daytitleErr"></span>';
+  const inp=$('#daytitleInput');
+  inp.focus(); inp.select();
+  inp.addEventListener('pointerdown', ev=>ev.stopPropagation());
+  inp.addEventListener('click', ev=>ev.stopPropagation());
+  let settled=false;
+  const finish=(commit)=>{
+    if(settled) return;
+    if(commit){
+      const v=inp.value.trim().slice(0,40);
+      if(!v){
+        inp.value=original;
+        inp.classList.add('shake');
+        const err=$('#daytitleErr'); if(err) err.textContent='Name can’t be empty';
+        setTimeout(()=>{ inp.classList.remove('shake'); const e2=$('#daytitleErr'); if(e2) e2.textContent=''; },1600);
+        inp.focus();
+        return;
+      }
+      d.name=v;
+    }
+    settled=true;
+    delete h1.dataset.editing;
+    render();
+  };
+  inp.addEventListener('keydown', ev=>{
+    ev.stopPropagation();
+    if(ev.key==='Enter'){ ev.preventDefault(); finish(true); }
+    else if(ev.key==='Escape'){ ev.preventDefault(); finish(false); }
+  });
+  inp.addEventListener('blur', ()=>finish(true));
+}
+function openDayMenu(day, btn){
+  const key=STATE.active;
+  const root=$('#popRoot');
+  const r=btn.getBoundingClientRect();
+  const canDelete=STATE.order.length>1;
+  root.innerHTML='<div class="scrim" id="scrim" style="background:transparent"><div class="menuPop" id="menuPop"></div></div>';
+  const scrim=$('#scrim'); const menu=$('#menuPop');
+  menu.innerHTML=
+    '<button data-m="rename">'+svg('<path d="M4 20l1-4L16 5l3 3L8 19l-4 1z"/>',' fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"')+'Rename</button>'
+    + '<div class="sep"></div>'
+    + (canDelete
+        ? '<button class="danger" data-m="delete" id="dayMenuDelete">'+svg('<path d="M5 7h14M10 11v6M14 11v6M6 7l1 12h10l1-12M9 7V4h6v3"/>',' fill="none" stroke="currentColor"')+'Delete</button>'
+        : '<div style="padding:11px 12px;font-size:12px;color:var(--muted)">Add another day before deleting this one.</div>');
+  const mw=190; let left=Math.min(r.left, window.innerWidth-mw-10); left=Math.max(10,left); const top=r.bottom+6;
+  menu.style.left=left+'px'; menu.style.top=top+'px';
+  escHandler=ev=>{ if(ev.key==='Escape') closePop(); }; document.addEventListener('keydown',escHandler);
+  scrim.addEventListener('click', ev=>{ if(ev.target===scrim) closePop(); });
+  const renameBtn=menu.querySelector('[data-m="rename"]');
+  renameBtn.onclick=()=>{ closePop(); beginDayTitleEdit($('#daytitle'), day); };
+  const delBtn=menu.querySelector('#dayMenuDelete');
+  if(delBtn){
+    let armed=false, timer=null;
+    delBtn.onclick=ev=>{
+      ev.stopPropagation();
+      if(!armed){ armed=true; delBtn.textContent='Confirm delete?'; delBtn.classList.add('arm'); timer=setTimeout(()=>{ armed=false; delBtn.textContent='Delete'; delBtn.classList.remove('arm'); },3000); return; }
+      clearTimeout(timer);
+      day.ex.forEach(e=>stopRest(e.id));
+      const i=STATE.order.indexOf(key);
+      if(i>=0) STATE.order.splice(i,1);
+      delete STATE.days[key];
+      if(!STATE.order.length){ STATE.active=null; } else if(STATE.active===key){ STATE.active=STATE.order[0]; }
+      closePop(); render();
+    };
+  }
+}
+function renderEmptyPlan(){
+  $('#daytabs').innerHTML='<button class="daytab addtab" id="addTabBtn" type="button" aria-label="Add a new tab" title="Add a new tab">'+svg('<path d="M12 5v14M5 12h14"/>',' fill="none" stroke="currentColor"')+'</button>';
+  $('#addTabBtn').onclick=addTab;
+  const dots=$('#daydots'); dots.innerHTML=''; dots.style.display='none';
+  const h1=$('#daytitle');
+  h1.innerHTML='No session scheduled';
+  h1.removeAttribute('role'); h1.removeAttribute('tabindex'); h1.removeAttribute('aria-label');
+  h1.onpointerdown=h1.onpointerup=h1.onpointerleave=h1.onpointercancel=h1.onclick=h1.onkeydown=null;
+  const mb=$('#dayMenuBtn'); mb.style.display='none'; mb.onclick=null;
+  $('#daypill').style.display='none';
+  $('#moonbtn').style.display='none';
+  $('#progress').style.display='none';
+  $('#exwrap').innerHTML='<div class="restPanel"><div class="moon">'+svg('<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>','')+'</div><h3>No session scheduled</h3><p>Every day was removed from your plan. Add one to start logging again.</p><button class="undo" id="addFirstDayBtn">add a day</button></div>';
+  const addBtn=$('#addFirstDayBtn'); if(addBtn) addBtn.onclick=addTab;
+  $('#finishBtn').parentElement.style.display='none';
 }
 function renderProgress(){
   const d=curDay(); const prog=$('#progress');
