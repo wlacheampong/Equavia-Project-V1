@@ -5,6 +5,7 @@
 <script src="landing-guard.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="vitality-bridge.js"></script>
+<script src="plan-sync.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="theme-color" content="#050506" />
 <link rel="icon" type="image/webp" href="images/Index Landing Page.webp">
@@ -385,6 +386,7 @@
   <div class="sheet" id="sheet">
     <div class="eyebrow">Today's session</div>
     <div class="daytabs" id="daytabs"></div>
+    <span id="planSyncDot" title="" style="display:none;width:7px;height:7px;border-radius:50%;margin-left:6px;vertical-align:middle"></span>
     <div class="daydots" id="daydots"></div>
     <div class="dayhead">
       <h1 class="daytitle" id="daytitle">Push</h1>
@@ -563,7 +565,42 @@ function buildState(){
 /* STATE is filled by the async boot below once the dashboard bridge resolves. */
 let STATE = null;
 /* Fire-and-forget persistence through the dashboard bridge (no device storage). */
-function saveState(){ if(window.Vitality && typeof window.Vitality.save==='function') window.Vitality.save(STATE); }
+function saveState(){
+  if(window.Vitality && typeof window.Vitality.save==='function') window.Vitality.save(STATE);
+  // Day list (names/order/existence) also gets its own row-level Supabase
+  // sync via plan-sync.js -- see planSync.pushSnapshot below -- so it's
+  // live across devices instead of only updating on next full page load.
+  if(planSync) planSync.pushSnapshot(STATE.order.map(k=>({ key:k, name:(STATE.days[k]||{}).name||k })));
+}
+let planSync = null;
+
+/* ---- cross-device day list sync (names/order/deletions) ---------- */
+function updatePlanSyncIndicator(status){
+  const dot = $('#planSyncDot');
+  if(!dot) return;
+  if(status==='synced'){ dot.style.display='none'; return; }
+  dot.style.display='inline-block';
+  dot.style.background = status==='pending' ? 'var(--eq-warning, #F2C063)' : 'var(--eq-danger, #FF6B6B)';
+  dot.title = status==='pending' ? 'Syncing day changes…' : status==='offline' ? 'Offline — day changes will sync when back online' : 'Couldn’t sync day changes';
+}
+/* Reconciles the plan_days table's view of "which days exist, their
+   names, their order" into STATE. Exercise content within a day (type,
+   restDay, ex[]) is NOT carried by this table -- it stays on the existing
+   whole-blob sync via window.Vitality; a day that's brand new on another
+   device shows up here first with a blank/default body until that blob
+   sync catches up. */
+function applyRemotePlanDays(liveList){
+  if(!STATE) return;
+  const liveKeys = liveList.map(d=>d.key);
+  Object.keys(STATE.days).forEach(k=>{ if(liveKeys.indexOf(k)===-1) delete STATE.days[k]; });
+  liveList.forEach(d=>{
+    if(!STATE.days[d.key]) STATE.days[d.key] = { name:d.name, type:'', restDay:false, off:false, ex:[] };
+    else if(STATE.days[d.key].name !== d.name) STATE.days[d.key].name = d.name;
+  });
+  STATE.order = liveKeys;
+  if(!STATE.days[STATE.active]) STATE.active = STATE.order[0];
+  render();
+}
 
 /* ---- helpers on state -------------------------------------------- */
 const curDay = () => STATE.days[STATE.active];
@@ -1250,6 +1287,14 @@ function spawnParticles(root){
   STATE.order = STATE.order.filter(k=>STATE.days[k]);
   if(!STATE.order.length) STATE.order = Object.keys(STATE.days);
   if(!STATE.days[STATE.active]) STATE.active = STATE.order[0];
+  if(window.PlanSync){
+    planSync = window.PlanSync.init({
+      plan: 'train',
+      getLocalSnapshot: () => STATE.order.map(k=>({ key:k, name:(STATE.days[k]||{}).name||k })),
+      applyRemote: applyRemotePlanDays,
+      onStatus: updatePlanSyncIndicator,
+    });
+  }
   render(); wireFresh();
   spawnParticles(document.querySelector('#vt-backdrop .wb-particles'));
 })();

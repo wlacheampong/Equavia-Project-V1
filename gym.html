@@ -1322,6 +1322,7 @@ img, video, canvas, svg { max-width: 100%; }
 
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="plan-sync.js"></script>
 </head>
 <body>
 
@@ -1539,6 +1540,7 @@ img, video, canvas, svg { max-width: 100%; }
       <div class="po-seg-row">
         <span class="po-seg-label">Day</span>
         <div class="po-seg-control" id="daySeg"></div>
+        <span id="planSyncDot" title="" style="display:none;width:7px;height:7px;border-radius:50%;margin-left:6px;vertical-align:middle"></span>
       </div>
     </div>
 
@@ -1842,7 +1844,12 @@ img, video, canvas, svg { max-width: 100%; }
   }
   function saveState() {
     try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch (e) {}
+    // Day list (names/order/existence) also gets its own row-level Supabase
+    // sync via plan-sync.js -- see planSync below -- so it's live across
+    // devices instead of only updating on next full page load.
+    if (planSync) planSync.pushSnapshot(state.days.map(d => ({ key: d.id, name: d.name })));
   }
+  let planSync = null;
   let state = loadState();
   document.getElementById('appTitle').textContent = CONFIG.appTitle || 'Progressive Overload Coach';
 
@@ -3895,6 +3902,44 @@ img, video, canvas, svg { max-width: 100%; }
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) pcFlushPushOnUnload();
   });
+
+  // ------------------------------------------------------------
+  // Cross-device day list sync (names/order/deletions), via plan-sync.js.
+  // Separate from the whole-blob sync above: this only carries which days
+  // exist, their names, and their order, in public.plan_days -- everything
+  // else about a day (its exercises/logs) stays on the blob sync.
+  // ------------------------------------------------------------
+  function updatePlanSyncIndicator(status) {
+    const dot = document.getElementById('planSyncDot');
+    if (!dot) return;
+    if (status === 'synced') { dot.style.display = 'none'; return; }
+    dot.style.display = 'inline-block';
+    dot.style.background = status === 'pending' ? 'var(--eq-warning, #F2C063)' : 'var(--eq-danger, #FF6B6B)';
+    dot.title = status === 'pending' ? 'Syncing day changes…' : status === 'offline' ? 'Offline — day changes will sync when back online' : 'Couldn’t sync day changes';
+  }
+  function applyRemotePlanDaysGym(liveList) {
+    if (!Array.isArray(state.days)) return;
+    const byKey = {};
+    state.days.forEach((d) => { byKey[d.id] = d; });
+    state.days = liveList.map((d) => {
+      const existing = byKey[d.key];
+      return existing ? Object.assign(existing, { name: d.name }) : { id: d.key, name: d.name };
+    });
+    if (!state.days.length) return; // shouldn't happen -- app enforces at least one day locally
+    if (!state.days.find((d) => d.id === state.filterDay)) state.filterDay = state.days[0].id;
+    saveState();
+    try { renderSettings(); } catch (e) {}
+    try { renderAll(); } catch (e) {}
+  }
+  if (window.PlanSync) {
+    planSync = window.PlanSync.init({
+      plan: 'gym',
+      getLocalSnapshot: () => state.days.map((d) => ({ key: d.id, name: d.name })),
+      applyRemote: applyRemotePlanDaysGym,
+      isUserEditing: pcIsUserEditing,
+      onStatus: updatePlanSyncIndicator,
+    });
+  }
 
   // ============================================================
   // 6.4 TRAINING PROGRAMMING. Purely additive from here down -- no
