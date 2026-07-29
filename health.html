@@ -758,8 +758,8 @@ main {
     .sl-add-btn:hover { background:var(--accent); color:#fff; }
 
   </style>
-  <div class="whoop-section">
-    <div class="section-title">Whoop</div>
+  <div class="whoop-section" data-eq-collapse="health:whoop">
+    <div class="section-title" data-eq-collapse-keep data-eq-collapse-trigger>Whoop<span class="eq-collapse-chevron"></span></div>
     <div class="whoop-card">
       <div id="whDisc" class="wh-disc">
         <div class="wh-brand"><span class="wh-brand-mark">W</span><span class="wh-brand-text">WHOOP</span></div>
@@ -767,7 +767,7 @@ main {
         <div class="wh-disc-sub">Link your account to see live recovery, sleep, and strain.</div>
         <button id="whConnectBtn" class="wh-connect" type="button">Connect WHOOP</button>
       </div>
-      <div id="whConn" style="display:none" data-eq-collapse="health:whoop">
+      <div id="whConn" style="display:none">
         <div class="wh-head">
           <div class="wh-brand"><span class="wh-brand-mark">W</span><span class="wh-brand-text">WHOOP</span><span class="wh-live"><span class="wh-live-dot"></span>live</span></div>
           <div class="wh-head-right">
@@ -776,8 +776,7 @@ main {
           </div>
         </div>
         <div id="whErr" class="wh-err" style="display:none"></div>
-        <div class="wh-ring-wrap" data-eq-collapse-keep data-eq-collapse-trigger
-             aria-label="Collapse or expand the Whoop section" title="Tap to collapse or expand Whoop">
+        <div class="wh-ring-wrap">
           <svg class="wh-ring" viewBox="0 0 220 220" aria-hidden="true">
             <circle class="wh-ring-track" cx="110" cy="110" r="96"/>
             <circle class="wh-ring-fill" cx="110" cy="110" r="96" id="whRingFill"/>
@@ -1691,7 +1690,298 @@ main {
   })();
   </script>
 
-  <div class="section-title">Energy</div>
+  <div data-eq-collapse="health:weight">
+    <div class="section-title" data-eq-collapse-keep data-eq-collapse-trigger>Weight<span class="eq-collapse-chevron"></span></div>
+    <div class="hw-card">
+      <div class="hw-row">
+        <span class="hw-num" id="hwNum">—</span>
+        <span class="hw-unit" id="hwUnit">kg</span>
+      </div>
+      <div class="hw-delta hidden" id="hwDelta"></div>
+      <div class="hw-streak hidden" id="hwStreak">🔥<span id="hwStreakNum">0 day streak</span></div>
+      <div class="hw-empty" id="hwEmpty">Log your first weight to start tracking.</div>
+
+      <div class="hw-chart-wrap hidden" id="hwChartWrap">
+        <svg class="hw-chart" viewBox="0 0 320 90" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="hwFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#ffffff" stop-opacity="0.16"/>
+              <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <line class="hw-goal-line hidden" id="hwGoalLine" x1="0" y1="0" x2="320" y2="0"></line>
+          <g id="hwChartContent"></g>
+        </svg>
+        <div class="hw-meta" id="hwMeta">0 entries</div>
+      </div>
+
+      <div class="hw-locked hidden" id="hwLocked">
+        <div class="hw-locked-info">
+          <span class="hw-locked-check">✓</span>
+          <div>
+            <div class="hw-locked-label">LOGGED TODAY</div>
+            <div class="hw-locked-value" id="hwLockedValue">— kg</div>
+          </div>
+        </div>
+        <button class="hw-edit-btn" id="hwEditBtn">Edit</button>
+      </div>
+      <div class="hw-input-row" id="hwInputRow">
+        <input type="number" step="0.1" class="hw-input" id="hwInput" placeholder="Enter weight" inputmode="decimal" aria-label="Today's weight">
+        <span class="hw-unit-static" id="hwUnitStatic">kg</span>
+        <button class="hw-save-btn" id="hwSaveBtn">Save</button>
+      </div>
+    </div>
+    <div class="hw-card">
+      <div class="hw-goal-head">GOAL WEIGHT</div>
+      <div class="hw-input-row">
+        <input type="number" step="0.1" class="hw-input" id="hwGoalInput" placeholder="e.g. 75" inputmode="decimal" aria-label="Goal weight">
+        <span class="hw-unit-static">kg</span>
+        <button class="hw-save-btn" id="hwGoalSaveBtn">Save</button>
+      </div>
+      <div class="hw-goal-summary hidden" id="hwGoalSummary"></div>
+    </div>
+  </div>
+  <style>
+    .hw-card { background:var(--bg-card); border:1px solid rgba(255,255,255,0.06); border-radius:18px; padding:18px; margin-bottom:12px; }
+    .hw-row { display:flex; align-items:baseline; gap:8px; margin-bottom:6px; }
+    .hw-num { font-size:40px; font-weight:700; letter-spacing:-0.02em; line-height:1; font-variant-numeric:tabular-nums; color:var(--text-primary); }
+    .hw-unit { font-size:14px; color:var(--text-tertiary); }
+    .hw-delta { font-size:12.5px; font-weight:500; margin-bottom:10px; font-variant-numeric:tabular-nums; }
+    .hw-delta.up { color:var(--warning); }
+    .hw-delta.down { color:var(--success); }
+    .hw-streak { color:var(--success); font-size:12.5px; font-weight:500; margin-bottom:10px; display:inline-flex; align-items:center; gap:6px; }
+    .hw-empty { text-align:center; padding:20px 12px; color:var(--text-tertiary); font-size:12.5px; border:1px dashed var(--border); border-radius:12px; margin-bottom:4px; }
+    .hw-chart-wrap { margin:12px 0 4px; }
+    .hw-chart { width:100%; height:90px; display:block; }
+    .hw-goal-line { stroke:var(--warning); stroke-width:1.5; stroke-dasharray:3 3; opacity:0.7; }
+    .hw-line { fill:none; stroke:#fff; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+    .hw-avg-line { fill:none; stroke:rgba(255,255,255,0.4); stroke-width:1.5; stroke-dasharray:4 3; opacity:0.6; }
+    .hw-area { fill:url(#hwFill); }
+    .hw-dot { fill:#fff; stroke:var(--bg-card); stroke-width:1.5; }
+    .hw-dot-today { fill:var(--accent); stroke:#fff; stroke-width:1.5; }
+    .hw-meta { text-align:center; font-size:10.5px; color:var(--text-tertiary); margin-top:6px; }
+    .hw-locked { display:flex; align-items:center; justify-content:space-between; background:rgba(255,255,255,0.04); border:1px solid var(--border); border-radius:12px; padding:10px 12px; margin-top:10px; }
+    .hw-locked-info { display:flex; align-items:center; gap:10px; }
+    .hw-locked-check { width:26px; height:26px; background:rgba(255,255,255,0.1); color:var(--text-primary); border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; flex-shrink:0; }
+    .hw-locked-label { font-size:9.5px; letter-spacing:0.14em; font-weight:600; color:var(--text-tertiary); margin-bottom:2px; }
+    .hw-locked-value { font-size:14px; font-weight:600; color:var(--text-primary); }
+    .hw-edit-btn { background:transparent; border:none; color:var(--accent); font-family:inherit; font-size:12.5px; font-weight:600; cursor:pointer; padding:6px 8px; }
+    .hw-input-row { display:grid; grid-template-columns:1fr auto auto; align-items:center; gap:8px; margin-top:10px; }
+    .hw-goal-head { font-size:10px; letter-spacing:0.14em; font-weight:700; color:var(--text-tertiary); text-transform:uppercase; margin-bottom:10px; }
+    .hw-input { background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:10px; color:var(--text-primary); font-family:inherit; font-size:16px; padding:10px 12px; width:100%; outline:none; }
+    .hw-input:focus { border-color:rgba(255,255,255,0.3); }
+    .hw-unit-static { color:var(--text-tertiary); font-size:12.5px; }
+    .hw-save-btn { background:transparent; color:var(--text-primary); border:1.5px solid rgba(255,255,255,0.3); border-radius:10px; padding:9px 15px; font-family:inherit; font-size:12.5px; font-weight:700; cursor:pointer; }
+    .hw-goal-summary { font-size:12.5px; color:var(--text-secondary); line-height:1.5; margin-top:10px; }
+    .hidden { display:none !important; }
+  </style>
+  <script>
+  (function () {
+    'use strict';
+    const $ = (id) => document.getElementById(id);
+    const WT_KEY = 'po_coach_weights';
+    const GOAL_KEY = 'po_coach_goal_weight';
+
+    function wtLoad() {
+      try {
+        const raw = localStorage.getItem(WT_KEY);
+        const arr = raw ? JSON.parse(raw) : [];
+        return Array.isArray(arr) ? arr.sort((a, b) => a.dateKey.localeCompare(b.dateKey)) : [];
+      } catch (e) { return []; }
+    }
+    function wtSave(arr) { try { localStorage.setItem(WT_KEY, JSON.stringify(arr)); } catch (e) {} }
+    function wtDateKey(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+    function wtParseKey(key) { const [y, m, d] = key.split('-').map(Number); return new Date(y, m - 1, d); }
+    function smoothPath(points) {
+      if (!points.length) return '';
+      if (points.length === 1) return 'M ' + points[0].x + ' ' + points[0].y;
+      let d = 'M ' + points[0].x.toFixed(2) + ' ' + points[0].y.toFixed(2);
+      for (let i = 1; i < points.length; i++) {
+        const prev = points[i - 1], curr = points[i];
+        const cx = (prev.x + curr.x) / 2;
+        d += ' Q ' + cx.toFixed(2) + ' ' + prev.y.toFixed(2) + ', ' + cx.toFixed(2) + ' ' + ((prev.y + curr.y) / 2).toFixed(2);
+        d += ' T ' + curr.x.toFixed(2) + ' ' + curr.y.toFixed(2);
+      }
+      return d;
+    }
+    let wtEntries = wtLoad();
+
+    function goalLoad() {
+      try { const v = parseFloat(localStorage.getItem(GOAL_KEY)); return (!isNaN(v) && v > 0) ? v : null; } catch (e) { return null; }
+    }
+    function goalSave(v) { try { if (v == null) localStorage.removeItem(GOAL_KEY); else localStorage.setItem(GOAL_KEY, String(v)); } catch (e) {} }
+    let goalWeight = goalLoad();
+
+    const units = (function () {
+      try { const s = JSON.parse(localStorage.getItem('po_coach_v1')); return (s && s.units) || 'kg'; } catch (e) { return 'kg'; }
+    })();
+
+    // Weight fields only -- read-modify-write so gym.html's own
+    // training-progression fields on the same object are never clobbered.
+    function publishWeightSummary() {
+      try {
+        const current = wtEntries.length ? wtEntries[wtEntries.length - 1] : null;
+        let avg7 = null;
+        if (wtEntries.length) {
+          const cutoffKey = wtDateKey(new Date(Date.now() - 7 * 86400000));
+          const recent = wtEntries.filter((e) => e.dateKey >= cutoffKey);
+          if (recent.length) avg7 = recent.reduce((s, e) => s + e.weight, 0) / recent.length;
+        }
+        let avg7Prior = null;
+        {
+          const startKey = wtDateKey(new Date(Date.now() - 14 * 86400000));
+          const endKey = wtDateKey(new Date(Date.now() - 7 * 86400000));
+          const prior = wtEntries.filter((e) => e.dateKey >= startKey && e.dateKey < endKey);
+          if (prior.length) avg7Prior = prior.reduce((s, e) => s + e.weight, 0) / prior.length;
+        }
+        let existing = {};
+        try { existing = JSON.parse(localStorage.getItem('eq.fitness.summary')) || {}; } catch (e) {}
+        localStorage.setItem('eq.fitness.summary', JSON.stringify(Object.assign({}, existing, {
+          currentWeight: current ? current.weight : null,
+          weight7dAvg: avg7 != null ? Number(avg7.toFixed(1)) : null,
+          weight7dAvgChange: (avg7 != null && avg7Prior != null) ? Number((avg7 - avg7Prior).toFixed(1)) : null,
+          units: units,
+          at: new Date().toISOString()
+        })));
+      } catch (e) {}
+    }
+
+    function renderChart() {
+      const recent = wtEntries.slice(-30);
+      const weights = recent.map((e) => e.weight).concat(goalWeight != null ? [goalWeight] : []);
+      const min = Math.min.apply(null, weights), max = Math.max.apply(null, weights);
+      const pad = Math.max((max - min) * 0.15, 0.5);
+      const yMin = min - pad, yMax = max + pad;
+      const xLeft = 4, xRight = 316, yTop = 6, yBot = 76;
+      const xFor = (i) => recent.length === 1 ? xRight : xLeft + (i / (recent.length - 1)) * (xRight - xLeft);
+      const yFor = (w) => yBot - ((w - yMin) / (yMax - yMin)) * (yBot - yTop);
+      const points = recent.map((e, i) => ({ x: xFor(i), y: yFor(e.weight) }));
+      const linePath = smoothPath(points);
+      const areaPath = linePath + ' L ' + points[points.length - 1].x.toFixed(2) + ' ' + yBot + ' L ' + points[0].x.toFixed(2) + ' ' + yBot + ' Z';
+      const avgPoints = recent.map((_, i) => {
+        const start = Math.max(0, i - 6);
+        const win = recent.slice(start, i + 1);
+        const avg = win.reduce((s, p) => s + p.weight, 0) / win.length;
+        return { x: xFor(i), y: yFor(avg) };
+      });
+      let html = '<path class="hw-avg-line" d="' + smoothPath(avgPoints) + '"></path>'
+        + '<path class="hw-area" d="' + areaPath + '"></path>'
+        + '<path class="hw-line" d="' + linePath + '"></path>';
+      points.forEach((p, i) => {
+        const isToday = i === points.length - 1;
+        html += '<circle class="' + (isToday ? 'hw-dot-today' : 'hw-dot') + '" cx="' + p.x.toFixed(2) + '" cy="' + p.y.toFixed(2) + '" r="' + (isToday ? 4 : 2.5) + '"/>';
+      });
+      $('hwChartContent').innerHTML = html;
+      const goalLine = $('hwGoalLine');
+      if (goalWeight != null) {
+        const gy = yFor(goalWeight).toFixed(2);
+        goalLine.setAttribute('y1', gy); goalLine.setAttribute('y2', gy);
+        goalLine.classList.remove('hidden');
+      } else { goalLine.classList.add('hidden'); }
+      $('hwMeta').textContent = wtEntries.length + ' ' + (wtEntries.length === 1 ? 'entry' : 'entries');
+    }
+    function renderDelta() {
+      const last = wtEntries[wtEntries.length - 1];
+      const lastDate = wtParseKey(last.dateKey);
+      const cutoff = new Date(lastDate); cutoff.setDate(cutoff.getDate() - 7);
+      const baseline = wtEntries.find((e) => wtParseKey(e.dateKey) >= cutoff) || wtEntries[0];
+      const diff = last.weight - baseline.weight;
+      const el = $('hwDelta');
+      if (Math.abs(diff) < 0.05) { el.classList.add('hidden'); return; }
+      el.textContent = (diff > 0 ? '↑ +' : '↓ −') + Math.abs(diff).toFixed(1) + ' ' + units + ' · last 7d';
+      el.classList.toggle('up', diff > 0);
+      el.classList.toggle('down', diff < 0);
+      el.classList.remove('hidden');
+    }
+    function renderStreak() {
+      const el = $('hwStreak');
+      let streak = 0, cursor = new Date();
+      if (!wtEntries.find((e) => e.dateKey === wtDateKey(cursor))) cursor.setDate(cursor.getDate() - 1);
+      while (wtEntries.find((e) => e.dateKey === wtDateKey(cursor))) { streak++; cursor.setDate(cursor.getDate() - 1); }
+      if (streak >= 2) { $('hwStreakNum').textContent = streak + ' day streak'; el.classList.remove('hidden'); }
+      else el.classList.add('hidden');
+    }
+    function renderGoal() {
+      const el = $('hwGoalSummary');
+      if (goalWeight == null || !wtEntries.length) { el.classList.add('hidden'); el.textContent = ''; return; }
+      el.classList.remove('hidden');
+      const current = wtEntries[wtEntries.length - 1].weight;
+      const remaining = Math.abs(goalWeight - current);
+      if (remaining < 0.05) { el.textContent = "You're at your goal weight — nice work."; return; }
+      el.textContent = remaining.toFixed(1) + units + ' to ' + (goalWeight < current ? 'lose' : 'gain') + ' · Goal: ' + goalWeight.toFixed(1) + units;
+    }
+    function render() {
+      const last = wtEntries[wtEntries.length - 1] || null;
+      const todayKey = wtDateKey(new Date());
+      const todayEntry = wtEntries.find((e) => e.dateKey === todayKey);
+      $('hwUnit').textContent = units;
+      $('hwUnitStatic').textContent = units;
+      $('hwNum').textContent = last ? last.weight.toFixed(1) : '—';
+      if (todayEntry) {
+        $('hwEmpty').classList.add('hidden');
+        $('hwLockedValue').textContent = todayEntry.weight.toFixed(1) + ' ' + units;
+        $('hwLocked').classList.remove('hidden');
+        $('hwInputRow').classList.add('hidden');
+      } else {
+        $('hwEmpty').classList.toggle('hidden', wtEntries.length !== 0);
+        $('hwLocked').classList.add('hidden');
+        $('hwInputRow').classList.remove('hidden');
+        if (last && !$('hwInput').value) $('hwInput').value = last.weight.toFixed(1);
+      }
+      if (wtEntries.length >= 2) {
+        $('hwChartWrap').classList.remove('hidden');
+        renderChart();
+        renderDelta();
+      } else {
+        $('hwChartWrap').classList.add('hidden');
+        $('hwDelta').classList.add('hidden');
+      }
+      renderStreak();
+      renderGoal();
+    }
+
+    function saveEntry(weight) {
+      const key = wtDateKey(new Date());
+      const existing = wtEntries.find((e) => e.dateKey === key);
+      if (existing) existing.weight = weight;
+      else { wtEntries.push({ dateKey: key, weight }); wtEntries.sort((a, b) => a.dateKey.localeCompare(b.dateKey)); }
+      wtSave(wtEntries);
+      render();
+      publishWeightSummary();
+    }
+
+    $('hwSaveBtn').addEventListener('click', () => {
+      const v = parseFloat($('hwInput').value);
+      if (isNaN(v) || v <= 0) return;
+      saveEntry(v);
+    });
+    $('hwInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('hwSaveBtn').click(); });
+    $('hwEditBtn').addEventListener('click', () => {
+      $('hwLocked').classList.add('hidden');
+      $('hwInputRow').classList.remove('hidden');
+      const todayEntry = wtEntries.find((e) => e.dateKey === wtDateKey(new Date()));
+      if (todayEntry) $('hwInput').value = todayEntry.weight.toFixed(1);
+      $('hwInput').focus(); $('hwInput').select();
+    });
+    if (goalWeight != null) $('hwGoalInput').value = goalWeight;
+    $('hwGoalSaveBtn').addEventListener('click', () => {
+      const raw = $('hwGoalInput').value;
+      const v = raw === '' ? null : parseFloat(raw);
+      goalWeight = (v != null && !isNaN(v) && v > 0) ? v : null;
+      goalSave(goalWeight);
+      $('hwGoalInput').value = goalWeight != null ? goalWeight : '';
+      renderGoal();
+      if (wtEntries.length >= 2) renderChart();
+    });
+    $('hwGoalInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('hwGoalSaveBtn').click(); });
+
+    render();
+    window.addEventListener('storage', () => { wtEntries = wtLoad(); goalWeight = goalLoad(); render(); });
+  })();
+  </script>
+
+  <div data-eq-collapse="health:energy">
+  <div class="section-title" data-eq-collapse-keep data-eq-collapse-trigger>Energy<span class="eq-collapse-chevron"></span></div>
   <div class="en-card">
     <div class="en-head">
       <div class="en-now">
@@ -2052,8 +2342,10 @@ main {
     window.addEventListener('storage', () => { renderLogList(); renderChart(); });
   })();
   </script>
+  </div>
 
-  <div class="section-title">Sleep Log</div>
+  <div data-eq-collapse="health:sleep">
+  <div class="section-title" data-eq-collapse-keep data-eq-collapse-trigger>Sleep Log<span class="eq-collapse-chevron"></span></div>
 
   <div class="sl-card">
     <div class="sl-head">
@@ -2258,6 +2550,7 @@ main {
     window.addEventListener('storage', slRender);
   })();
   </script>
+  </div>
 
   <div data-eq-collapse="health:daily-stack">
   <div class="section-title" data-eq-collapse-keep data-eq-collapse-trigger>Daily Stack<span class="eq-collapse-chevron"></span></div>

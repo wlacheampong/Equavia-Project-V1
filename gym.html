@@ -234,13 +234,6 @@ img, video, canvas, svg { max-width: 100%; }
 .po-day-split.is-rest { color: #7DD3FC; }
 
 /* ===== 6.4 Training Programming ===== */
-.train-program-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
-.train-program-btn {
-  padding: 6px 12px; border-radius: 999px; border: 1px solid var(--border);
-  background: rgba(255,255,255,0.03); color: var(--text-3); font-family: inherit; font-size: 11px; font-weight: 700; cursor: pointer;
-  min-height: 44px; display: inline-flex; align-items: center; justify-content: center; /* was ~25px tall, under the touch-target minimum */
-}
-.train-program-btn.is-active { background: rgba(255,255,255,0.1); border-color: var(--border-strong); color: var(--text-1); }
 .train-recovery-banner {
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
   background: rgba(251,191,36,0.1); border: 1px solid rgba(251,191,36,0.3); border-radius: 12px;
@@ -1237,151 +1230,6 @@ img, video, canvas, svg { max-width: 100%; }
    styles can't leak into the rest of the app.
    ============================================================ */
 .wt-section { margin-bottom: 22px; }
-.wt-card {
-  background: var(--bg-card);
-  border: 1px solid rgba(110,231,183,0.10);
-  border-radius: 18px;
-  padding: 22px 20px 18px;
-}
-.wt-row { display: flex; align-items: baseline; gap: 8px; margin-bottom: 6px; }
-.wt-num {
-  font-size: 48px; font-weight: 600; letter-spacing: -0.025em;
-  line-height: 1; font-variant-numeric: tabular-nums;
-}
-.wt-unit { font-size: 16px; color: var(--text-3); }
-.wt-delta {
-  font-size: 13px; font-weight: 500; margin-bottom: 14px;
-  font-variant-numeric: tabular-nums;
-}
-.wt-delta.up   { color: var(--warn); }
-.wt-delta.down { color: var(--good); }
-.wt-streak {
-  color: var(--good); font-size: 13px; font-weight: 500;
-  margin-bottom: 14px;
-  display: inline-flex; align-items: center; gap: 6px;
-}
-.wt-empty {
-  text-align: center; padding: 28px 16px;
-  color: var(--text-3); font-size: 13px;
-  border: 1px dashed var(--border);
-  border-radius: 12px; margin-bottom: 4px;
-}
-
-.wt-chart-wrap { position: relative; margin: 16px 0 8px; }
-.wt-chart-yaxis {
-  position: absolute; left: 0; top: 0; bottom: 0; width: 36px;
-  display: flex; flex-direction: column; justify-content: space-between;
-  padding: 4px 0;
-}
-.wt-chart-yaxis span {
-  font-size: 10px; color: rgba(255,255,255,0.5); /* was --text-4 (~2.1:1, fails AA) */
-  font-family: var(--font-mono);
-}
-.wt-chart {
-  height: 130px; display: block;
-  margin-left: 36px; width: calc(100% - 36px);
-}
-.wt-grid { stroke: rgba(255,255,255,0.05); stroke-width: 1; }
-.wt-area { fill: url(#wtFill); }
-.wt-line { fill: none; stroke: var(--good); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-.wt-avg-line { fill: none; stroke: rgba(110,231,183,0.45); stroke-width: 1.5; stroke-dasharray: 4 3; opacity: 0.6; }
-.wt-dot { fill: var(--good); stroke: var(--bg-card); stroke-width: 1.5; }
-.wt-dot-today { fill: #fff; stroke: var(--good); stroke-width: 2; }
-.wt-meta {
-  text-align: center; font-size: 11px; color: var(--text-3);
-  margin-top: 8px;
-}
-.wt-legend {
-  display: flex; justify-content: center; gap: 18px; margin-top: 10px;
-}
-.wt-legend-item {
-  display: inline-flex; align-items: center; gap: 6px;
-  font-size: 10px; letter-spacing: 0.18em; font-weight: 600;
-  color: var(--text-3);
-}
-.wt-legend-dot {
-  width: 14px; height: 2px; background: var(--good); border-radius: 1px;
-}
-.wt-legend-dot-avg {
-  background: transparent; border-top: 2px dashed rgba(110,231,183,0.45);
-  height: 2px;
-}
-
-/* Composition estimate */
-.wt-comp {
-  margin-top: 18px; padding: 14px 16px;
-  background: rgba(255,255,255,0.025);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-}
-.wt-comp-h {
-  display: flex; justify-content: space-between; align-items: baseline;
-  margin-bottom: 8px;
-}
-.wt-comp-label {
-  font-size: 10px; letter-spacing: 0.16em; font-weight: 700;
-  text-transform: uppercase; color: var(--text-3);
-}
-.wt-comp-window {
-  font-size: 10px; color: rgba(255,255,255,0.5); /* was --text-4 (~2.1:1, fails AA) */
-  font-family: var(--font-mono);
-}
-.wt-comp-headline {
-  font-size: 15px; font-weight: 600; line-height: 1.3;
-  color: var(--text-1); margin-bottom: 10px;
-}
-.wt-comp-headline.good   { color: var(--good); }
-.wt-comp-headline.warn   { color: var(--warn); }
-.wt-comp-headline.bad    { color: var(--bad); }
-.wt-comp-bars {
-  display: flex; height: 10px; border-radius: 5px;
-  overflow: hidden; margin-bottom: 8px;
-  background: rgba(255,255,255,0.04);
-}
-.wt-comp-bar {
-  height: 100%; transition: width 0.3s ease;
-}
-.wt-comp-bar.muscle { background: var(--good); }
-.wt-comp-bar.fat    { background: var(--warn); }
-.wt-comp-foot {
-  font-size: 11.5px; line-height: 1.45; color: var(--text-2);
-  font-variant-numeric: tabular-nums;
-}
-
-/* Locked state */
-.wt-locked {
-  display: flex; align-items: center; justify-content: space-between;
-  background: rgba(110,231,183,0.04);
-  border: 1px solid rgba(110,231,183,0.16);
-  border-radius: 12px; padding: 12px 14px; margin-top: 14px;
-}
-.wt-locked-info { display: flex; align-items: center; gap: 12px; }
-.wt-locked-check {
-  width: 30px; height: 30px;
-  background: rgba(110,231,183,0.12);
-  color: var(--good);
-  border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  font-weight: 700;
-}
-.wt-locked-label {
-  font-size: 10px; letter-spacing: 0.16em; font-weight: 600;
-  color: var(--text-3); margin-bottom: 2px;
-}
-.wt-locked-value { font-size: 16px; font-weight: 600; }
-.wt-edit-btn {
-  background: transparent; border: none; color: var(--good);
-  font-family: inherit; font-size: 13px; font-weight: 600;
-  cursor: pointer; padding: 6px 10px;
-  -webkit-tap-highlight-color: transparent;
-}
-
-/* Input row */
-.wt-input-row { margin-top: 14px; }
-.wt-input-top {
-  display: grid; grid-template-columns: 1fr auto auto;
-  align-items: center; gap: 10px;
-}
 .wt-input {
   background: rgba(255,255,255,0.05);
   border: 1px solid var(--border);
@@ -1661,98 +1509,14 @@ img, video, canvas, svg { max-width: 100%; }
     <span class="po-day-split" id="dayPillSplit">—</span>
   </button>
 
-  <!-- ===== 6.4 TRAINING PROGRAMMING ===== -->
-  <div class="train-program-row" id="trainProgramRow"></div>
   <div class="train-recovery-banner" id="trainRecoveryBanner" style="display:none;"></div>
   <div class="train-rest-timer" id="trainRestTimer" style="display:none;">
     <span id="trainRestTimerNum">—</span>
     <button type="button" id="trainRestTimerSkip">Skip</button>
   </div>
 
-  <!-- WEIGHT + PROGRESS PHOTOS -->
+  <!-- CALORIES + PROGRESS PHOTOS (weight tracking itself moved to health.html, below Whoop) -->
   <div class="wt-section">
-    <div class="section-title"><span>WEIGHT</span></div>
-
-    <div class="wt-card">
-      <div class="wt-row">
-        <span class="wt-num" id="wtNum">—</span>
-        <span class="wt-unit" id="wtUnit">kg</span>
-      </div>
-      <div class="wt-delta hidden" id="wtDelta"></div>
-      <div class="wt-streak hidden" id="wtStreak">🔥<span id="wtStreakNum">0 day streak</span></div>
-
-      <div class="wt-empty" id="wtEmpty">Log your first weight to start tracking.</div>
-
-      <div class="wt-chart-wrap hidden" id="wtChartWrap">
-        <div class="wt-chart-yaxis">
-          <span id="wtYAxisMax">—</span>
-          <span id="wtYAxisMin">—</span>
-        </div>
-        <svg class="wt-chart" viewBox="0 0 320 130" preserveAspectRatio="none">
-          <defs>
-            <linearGradient id="wtFill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="#6ee7b7" stop-opacity="0.25"/>
-              <stop offset="100%" stop-color="#6ee7b7" stop-opacity="0"/>
-            </linearGradient>
-            <filter id="wtGlow"><feGaussianBlur stdDeviation="1.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-          </defs>
-          <line class="wt-grid" x1="0" y1="20" x2="320" y2="20"></line>
-          <line class="wt-grid" x1="0" y1="65" x2="320" y2="65"></line>
-          <line class="wt-grid" x1="0" y1="110" x2="320" y2="110"></line>
-          <g id="wtChartContent"></g>
-        </svg>
-        <div class="wt-meta" id="wtMeta">0 entries</div>
-      </div>
-
-      <div class="wt-legend hidden" id="wtLegend">
-        <span class="wt-legend-item"><span class="wt-legend-dot"></span>DAILY</span>
-        <span class="wt-legend-item"><span class="wt-legend-dot wt-legend-dot-avg"></span>7-DAY AVG</span>
-      </div>
-
-      <!-- Composition estimate — uses strength trend + weight trend to guess
-           how much of recent weight change was muscle vs fat. -->
-      <div class="wt-comp hidden" id="wtComp">
-        <div class="wt-comp-h">
-          <span class="wt-comp-label">Composition estimate</span>
-          <span class="wt-comp-window" id="wtCompWindow">last 30d</span>
-        </div>
-        <div class="wt-comp-headline" id="wtCompHeadline">—</div>
-        <div class="wt-comp-bars" id="wtCompBars"></div>
-        <div class="wt-comp-foot" id="wtCompFoot">—</div>
-      </div>
-
-      <div class="wt-locked hidden" id="wtLocked">
-        <div class="wt-locked-info">
-          <span class="wt-locked-check">✓</span>
-          <div>
-            <div class="wt-locked-label">LOGGED TODAY</div>
-            <div class="wt-locked-value" id="wtLockedValue">— kg</div>
-          </div>
-        </div>
-        <button class="wt-edit-btn" id="wtEditBtn">Edit</button>
-      </div>
-
-      <div class="wt-input-row" id="wtInputRow">
-        <div class="wt-input-top">
-          <input type="number" step="0.1" class="wt-input" id="wtInput" placeholder="Enter weight" inputmode="decimal" aria-label="Today's weight">
-          <span class="wt-unit-static" id="wtUnitStatic">kg</span>
-          <button class="wt-save-btn" id="wtSaveBtn">Save</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="wt-goal-card">
-      <div class="wt-goal-head">
-        <span class="wt-goal-label">GOAL WEIGHT</span>
-      </div>
-      <div class="wt-goal-input-row">
-        <input type="number" step="0.1" class="wt-input" id="wtGoalInput" placeholder="e.g. 75" inputmode="decimal" aria-label="Goal weight">
-        <span class="wt-unit-static">kg</span>
-        <button class="wt-save-btn" id="wtGoalSaveBtn">Save</button>
-      </div>
-      <div class="wt-goal-summary hidden" id="wtGoalSummary"></div>
-    </div>
-
     <div class="wt-goal-card">
       <div class="wt-goal-head">
         <span class="wt-goal-label">CALORIES TODAY</span>
@@ -2560,6 +2324,13 @@ img, video, canvas, svg { max-width: 100%; }
     getState: () => state,
     save: () => { saveState(); },
     refresh: () => { renderAll(); if (typeof publishFitnessSummary === 'function') publishFitnessSummary(); },
+    // Exposed so script B's per-exercise Progression popup can reuse the
+    // same math instead of re-deriving it -- one definition of "best set"/
+    // "1RM"/next-session suggestion, not two that could drift apart.
+    estimate1RM,
+    getRx,
+    scoreForLog,
+    topSetPerDay,
   };
 
   function renderAll() {
@@ -3128,7 +2899,10 @@ img, video, canvas, svg { max-width: 100%; }
   // ============================================================
   const WT_KEY = 'po_coach_weights';
   const PHOTO_KEY = 'po_coach_photos';
-  const GOAL_KEY = 'po_coach_goal_weight';
+  // Weight logging + goal weight now live on health.html (below Whoop) --
+  // this file keeps read-only access to po_coach_weights (WT_KEY) since
+  // Progress Photos tags each photo with the current weight, and this
+  // page's own Supabase sync still carries both keys cross-device.
   // Daily calorie intake -- same shape/convention as WT_KEY (plain
   // calendar-day dateKey via wtDateKey, not AssistantTools' 6am-boundary
   // "active date"), kept alongside weight since this is the same
@@ -3152,30 +2926,8 @@ img, video, canvas, svg { max-width: 100%; }
     const [y, m, d] = key.split('-').map(Number);
     return new Date(y, m - 1, d);
   }
-  function wtSmoothPath(points) {
-    if (!points.length) return '';
-    if (points.length === 1) return 'M ' + points[0].x + ' ' + points[0].y;
-    let d = 'M ' + points[0].x.toFixed(2) + ' ' + points[0].y.toFixed(2);
-    for (let i = 1; i < points.length; i++) {
-      const prev = points[i-1], curr = points[i];
-      const cx = (prev.x + curr.x) / 2;
-      d += ' Q ' + cx.toFixed(2) + ' ' + prev.y.toFixed(2) + ', ' + cx.toFixed(2) + ' ' + ((prev.y + curr.y)/2).toFixed(2);
-      d += ' T ' + curr.x.toFixed(2) + ' ' + curr.y.toFixed(2);
-    }
-    return d;
-  }
 
   let wtEntries = wtLoad();
-
-  function wtSaveEntry(weight) {
-    const key = wtDateKey(new Date());
-    const existing = wtEntries.find(e => e.dateKey === key);
-    if (existing) existing.weight = weight;
-    else { wtEntries.push({ dateKey: key, weight }); wtEntries.sort((a,b) => a.dateKey.localeCompare(b.dateKey)); }
-    wtSave(wtEntries);
-    wtRender();
-    publishFitnessSummary();
-  }
 
   function calLoad() {
     try {
@@ -3221,24 +2973,12 @@ img, video, canvas, svg { max-width: 100%; }
     return new Date(sundayShifted.getTime() + 19 * 3600000);
   }
 
+  // Weight fields (currentWeight/weight7dAvg/weight7dAvgChange/units) on
+  // eq.fitness.summary are now owned by health.html's own weight section --
+  // this only ever merges the training-progression fields below into
+  // whatever health.html last wrote for weight, never overwrites them.
   function publishFitnessSummary() {
     try {
-      const current = wtEntries.length ? wtEntries[wtEntries.length - 1] : null;
-      let avg7 = null;
-      if (wtEntries.length) {
-        const cutoffKey = wtDateKey(new Date(Date.now() - 7 * 86400000));
-        const recent = wtEntries.filter(e => e.dateKey >= cutoffKey);
-        if (recent.length) avg7 = recent.reduce((s, e) => s + e.weight, 0) / recent.length;
-      }
-      // Prior-week 7d avg, for the Weekly Report's "weight trend" delta --
-      // same window shifted back 7 days, not just "the change since last log".
-      let avg7Prior = null;
-      {
-        const startKey = wtDateKey(new Date(Date.now() - 14 * 86400000));
-        const endKey = wtDateKey(new Date(Date.now() - 7 * 86400000));
-        const prior = wtEntries.filter(e => e.dateKey >= startKey && e.dateKey < endKey);
-        if (prior.length) avg7Prior = prior.reduce((s, e) => s + e.weight, 0) / prior.length;
-      }
       let lastSessionAt = null, lastSessionDay = null;
       Object.keys(state.logs || {}).forEach((exId) => {
         (state.logs[exId] || []).forEach((l) => {
@@ -3292,406 +3032,18 @@ img, video, canvas, svg { max-width: 100%; }
         progressionThisWeek.push({ exercise: ex.name, status });
       });
 
-      localStorage.setItem('eq.fitness.summary', JSON.stringify({
-        currentWeight: current ? current.weight : null,
-        weight7dAvg: avg7 != null ? Number(avg7.toFixed(1)) : null,
-        weight7dAvgChange: (avg7 != null && avg7Prior != null) ? Number((avg7 - avg7Prior).toFixed(1)) : null,
-        units: state.units,
+      let existing = {};
+      try { existing = JSON.parse(localStorage.getItem('eq.fitness.summary')) || {}; } catch (e) {}
+      localStorage.setItem('eq.fitness.summary', JSON.stringify(Object.assign({}, existing, {
         lastSessionAt: lastSessionAt,
         lastSessionDay: lastSessionDay,
         sessionsThisWeek: sessionDates.size,
         volumeThisWeek: Math.round(volumeThisWeek),
         progressionThisWeek: progressionThisWeek,
         at: new Date().toISOString()
-      }));
+      })));
     } catch (e) {}
   }
-
-  function wtRender() {
-    const last = wtEntries[wtEntries.length - 1] || null;
-    const todayKey = wtDateKey(new Date());
-    const todayEntry = wtEntries.find(e => e.dateKey === todayKey);
-    const u = state.units;
-
-    // Sync unit labels everywhere
-    $('wtUnit').textContent = u;
-    $('wtUnitStatic').textContent = u;
-    $('wtNum').textContent = last ? last.weight.toFixed(1) : '—';
-
-    // Locked vs input
-    if (todayEntry) {
-      $('wtEmpty').classList.add('hidden');
-      $('wtLockedValue').textContent = todayEntry.weight.toFixed(1) + ' ' + u;
-      $('wtLocked').classList.remove('hidden');
-      $('wtInputRow').classList.add('hidden');
-    } else {
-      if (wtEntries.length === 0) $('wtEmpty').classList.remove('hidden');
-      else $('wtEmpty').classList.add('hidden');
-      $('wtLocked').classList.add('hidden');
-      $('wtInputRow').classList.remove('hidden');
-      if (last && !$('wtInput').value) $('wtInput').value = last.weight.toFixed(1);
-    }
-
-    // Chart, delta, composition need 2+ entries
-    if (wtEntries.length >= 2) {
-      $('wtChartWrap').classList.remove('hidden');
-      $('wtLegend').classList.remove('hidden');
-      wtRenderChart();
-      wtRenderDelta();
-      wtRenderComposition();
-    } else {
-      $('wtChartWrap').classList.add('hidden');
-      $('wtLegend').classList.add('hidden');
-      $('wtDelta').classList.add('hidden');
-      $('wtComp').classList.add('hidden');
-    }
-    wtRenderStreak();
-    wtRenderGoal();
-  }
-
-  // Streak — consecutive days ending at today (or yesterday if today
-  // hasn't been logged yet) with at least one weight entry.
-  function wtRenderStreak() {
-    const el = $('wtStreak');
-    let streak = 0;
-    let cursor = new Date(new Date());
-    if (!wtEntries.find(e => e.dateKey === wtDateKey(cursor))) {
-      cursor.setDate(cursor.getDate() - 1);
-    }
-    while (wtEntries.find(e => e.dateKey === wtDateKey(cursor))) {
-      streak++;
-      cursor.setDate(cursor.getDate() - 1);
-    }
-    if (streak >= 2) {
-      $('wtStreakNum').textContent = streak + ' day streak';
-      el.classList.remove('hidden');
-    } else {
-      el.classList.add('hidden');
-    }
-  }
-
-  // ---- Goal weight ----
-  function goalLoad() {
-    try {
-      const raw = localStorage.getItem(GOAL_KEY);
-      const v = raw != null ? parseFloat(raw) : null;
-      return (v != null && !isNaN(v) && v > 0) ? v : null;
-    } catch (e) { return null; }
-  }
-  function goalSave(v) {
-    try {
-      if (v == null) localStorage.removeItem(GOAL_KEY);
-      else localStorage.setItem(GOAL_KEY, String(v));
-    } catch (e) {}
-  }
-  let goalWeight = goalLoad();
-
-  // Rolling-window pace: compares the earliest vs latest entry inside a
-  // 21-day (3-week) window rather than day-to-day deltas, so a single
-  // water-weight swing doesn't wildly swing the estimate. Needs at least
-  // 3 entries spanning 3+ days inside that window to trust the trend.
-  const GOAL_WINDOW_DAYS = 21;
-  const GOAL_MIN_ENTRIES = 3;
-  const GOAL_FLAT_KG_PER_WEEK = 0.05; // below this, treat the trend as "steady" rather than up/down
-  function wtGoalRate() {
-    if (wtEntries.length < GOAL_MIN_ENTRIES) return null;
-    const last = wtEntries[wtEntries.length - 1];
-    const lastDate = wtParseKey(last.dateKey);
-    const cutoff = new Date(lastDate); cutoff.setDate(cutoff.getDate() - GOAL_WINDOW_DAYS);
-    const windowEntries = wtEntries.filter(e => wtParseKey(e.dateKey) >= cutoff);
-    if (windowEntries.length < GOAL_MIN_ENTRIES) return null;
-    const first = windowEntries[0];
-    const days = Math.round((wtParseKey(last.dateKey) - wtParseKey(first.dateKey)) / 86400000);
-    if (days < 3) return null; // window too tight (e.g. all entries logged the same couple of days)
-    const weeks = days / 7;
-    return { ratePerWeek: (last.weight - first.weight) / weeks, weeks };
-  }
-
-  function wtRenderGoal() {
-    const el = $('wtGoalSummary');
-    if (goalWeight == null) { el.classList.add('hidden'); el.textContent = ''; return; }
-    el.classList.remove('hidden');
-
-    if (!wtEntries.length) {
-      el.textContent = 'Log a weigh-in to see your progress toward your goal.';
-      return;
-    }
-
-    const current = wtEntries[wtEntries.length - 1].weight;
-    const diff = goalWeight - current; // + means goal is above current (gain), - means below (lose)
-    const remaining = Math.abs(diff);
-    const u = state.units;
-
-    if (remaining < 0.05) {
-      el.textContent = 'You\'re at your goal weight — nice work.';
-      return;
-    }
-
-    const direction = diff < 0 ? 'lose' : 'gain';
-    const diffLine = remaining.toFixed(1) + u + ' to ' + direction;
-    const rate = wtGoalRate();
-
-    if (!rate) {
-      el.innerHTML = diffLine + ' · Goal: ' + goalWeight.toFixed(1) + u + '<br>Log a few more weigh-ins to see your pace';
-      return;
-    }
-
-    if (Math.abs(rate.ratePerWeek) < GOAL_FLAT_KG_PER_WEEK) {
-      el.innerHTML = diffLine + ' · Goal: ' + goalWeight.toFixed(1) + u + '<br>Weight has been steady — no clear pace yet';
-      return;
-    }
-
-    const movingTowardGoal = (direction === 'lose' && rate.ratePerWeek < 0) || (direction === 'gain' && rate.ratePerWeek > 0);
-    if (!movingTowardGoal) {
-      const changeOverWindow = rate.ratePerWeek * rate.weeks;
-      const roundedWeeks = Math.max(1, Math.round(rate.weeks));
-      const awayDir = changeOverWindow > 0 ? 'up' : 'down';
-      el.textContent = 'Trending away from your goal — ' + awayDir + ' ' + Math.abs(changeOverWindow).toFixed(1) + u
-        + ' over the last ' + roundedWeeks + ' week' + (roundedWeeks === 1 ? '' : 's');
-      return;
-    }
-
-    const weeksToGoal = remaining / Math.abs(rate.ratePerWeek);
-    const etaStr = weeksToGoal < 1 ? 'under a week' : '~' + Math.round(weeksToGoal) + ' week' + (Math.round(weeksToGoal) === 1 ? '' : 's');
-    el.textContent = diffLine + ' · ' + etaStr + ' at current pace · Goal: ' + goalWeight.toFixed(1) + u;
-  }
-
-  function wtRenderChart() {
-    const recent = wtEntries.slice(-30);
-    const weights = recent.map(e => e.weight);
-    const min = Math.min.apply(null, weights);
-    const max = Math.max.apply(null, weights);
-    const pad = Math.max((max - min) * 0.15, 0.5);
-    const yMin = min - pad, yMax = max + pad;
-    const xLeft = 8, xRight = 312, yTop = 20, yBot = 110;
-    const xRange = xRight - xLeft, yRange = yBot - yTop;
-    const xFor = (i) => recent.length === 1 ? xRight : xLeft + (i / (recent.length - 1)) * xRange;
-    const yFor = (w) => yBot - ((w - yMin) / (yMax - yMin)) * yRange;
-    const points = recent.map((e, i) => ({ x: xFor(i), y: yFor(e.weight) }));
-    const linePath = wtSmoothPath(points);
-    const areaPath = linePath + ' L ' + points[points.length - 1].x.toFixed(2) + ' ' + yBot + ' L ' + points[0].x.toFixed(2) + ' ' + yBot + ' Z';
-    // 7d moving avg
-    const avgPoints = recent.map((_, i) => {
-      const start = Math.max(0, i - 6);
-      const win = recent.slice(start, i + 1);
-      const avg = win.reduce((s, p) => s + p.weight, 0) / win.length;
-      return { x: xFor(i), y: yFor(avg) };
-    });
-    const avgPath = wtSmoothPath(avgPoints);
-    let html = '<path class="wt-avg-line" d="' + avgPath + '"></path>'
-             + '<path class="wt-area" d="' + areaPath + '"></path>'
-             + '<path class="wt-line" filter="url(#wtGlow)" d="' + linePath + '"></path>';
-    points.forEach((p, i) => {
-      const cls = (i === points.length - 1) ? 'wt-dot-today' : 'wt-dot';
-      const r = (i === points.length - 1) ? 5 : 3;
-      html += '<circle class="' + cls + '" cx="' + p.x.toFixed(2) + '" cy="' + p.y.toFixed(2) + '" r="' + r + '"/>';
-    });
-    $('wtChartContent').innerHTML = html;
-    $('wtYAxisMax').textContent = yMax.toFixed(1);
-    $('wtYAxisMin').textContent = yMin.toFixed(1);
-    $('wtMeta').textContent = wtEntries.length + ' ' + (wtEntries.length === 1 ? 'entry' : 'entries') + ' · last ' + recent.length + ' days';
-  }
-
-  function wtRenderDelta() {
-    const last = wtEntries[wtEntries.length - 1];
-    const lastDate = wtParseKey(last.dateKey);
-    const cutoff = new Date(lastDate); cutoff.setDate(cutoff.getDate() - 7);
-    const baseline = wtEntries.find(e => wtParseKey(e.dateKey) >= cutoff) || wtEntries[0];
-    const diff = last.weight - baseline.weight;
-    const el = $('wtDelta');
-    if (Math.abs(diff) < 0.05) { el.classList.add('hidden'); return; }
-    const arrow = diff > 0 ? '↑' : '↓';
-    const sign = diff > 0 ? '+' : '−';
-    el.textContent = arrow + ' ' + sign + Math.abs(diff).toFixed(1) + ' ' + state.units + ' · last 7d';
-    el.classList.toggle('up',   diff > 0);
-    el.classList.toggle('down', diff < 0);
-    el.classList.remove('hidden');
-  }
-
-  // ============================================================
-  // COMPOSITION ESTIMATE — muscle vs fat from weight + strength trend
-  //
-  // Math:
-  //   weightDelta   = current weight − weight ~30 days ago
-  //   strengthDelta = avg of (current 1RM / 1RM 30 days ago across all
-  //                   exercises with logs in BOTH windows)
-  //   yearsTraining → max muscle gain rate per week:
-  //     1y → 0.45 kg, 2y → 0.23 kg, 3y+ → 0.11 kg (Lyle McDonald's
-  //     model — cited intermediate intermediate values are real ceilings)
-  //   estimated muscle gain = max muscle rate × weeks × (1 + strengthDelta)
-  //                           clipped to [0, weightDelta]
-  //   estimated fat gain    = weightDelta − estimated muscle gain
-  //
-  // If you LOSE weight: any positive strength delta means you're keeping
-  // (or building) muscle, so the loss is mostly fat.
-  // ============================================================
-  function wtRenderComposition() {
-    const compEl = $('wtComp');
-    if (!CONFIG.composition || !CONFIG.composition.enabled) {
-      compEl.classList.add('hidden'); return;
-    }
-    const window = CONFIG.composition.windowDays || 30;
-    if (wtEntries.length < 2) { compEl.classList.add('hidden'); return; }
-
-    const now = wtParseKey(wtEntries[wtEntries.length - 1].dateKey);
-    const start = new Date(now); start.setDate(start.getDate() - window);
-
-    // Find weight at start of window (closest entry on or after start)
-    const startEntry = wtEntries.find(e => wtParseKey(e.dateKey) >= start);
-    const endEntry = wtEntries[wtEntries.length - 1];
-    if (!startEntry || startEntry === endEntry) { compEl.classList.add('hidden'); return; }
-    const weightDelta = endEntry.weight - startEntry.weight;
-    const actualDays = Math.max(1, Math.round((wtParseKey(endEntry.dateKey) - wtParseKey(startEntry.dateKey)) / 86400000));
-    const weeks = actualDays / 7;
-
-    // Strength delta — for each exercise, take the AVG 1RM of logs inside
-    // the window vs AVG of logs of equal count just before the window.
-    let strengthRatios = [];
-    let workoutDays = new Set();
-    let totalVolumeInWindow = 0;
-    state.exercises.forEach(ex => {
-      const logs = (state.logs[ex.id] || []).slice();
-      if (logs.length < 2 || ex.bw) {
-        // Still count volume / sessions even for bodyweight + sparse exercises
-        logs.forEach(l => {
-          if (new Date(l.date) >= start) {
-            workoutDays.add(l.date.slice(0, 10));
-            totalVolumeInWindow += (l.weight || 0) * (l.reps || 0);
-          }
-        });
-        return;
-      }
-      const inWin  = logs.filter(l => new Date(l.date) >= start);
-      const before = logs.filter(l => new Date(l.date) < start);
-      inWin.forEach(l => {
-        workoutDays.add(l.date.slice(0, 10));
-        totalVolumeInWindow += (l.weight || 0) * (l.reps || 0);
-      });
-      if (!inWin.length || !before.length) return;
-      const avg = arr => arr.reduce((s, l) => s + estimate1RM(l.weight, l.reps), 0) / arr.length;
-      const a = avg(before), b = avg(inWin);
-      if (a <= 0) return;
-      strengthRatios.push(b / a);
-    });
-    const strengthDelta = strengthRatios.length
-      ? (strengthRatios.reduce((s, r) => s + r, 0) / strengthRatios.length) - 1
-      : 0;
-    // Frequency factor: 4+ training days/week = full credit, fewer = penalty.
-    // Volume factor: moderate cap so a single huge day doesn't game the score.
-    const sessionsPerWeek = (workoutDays.size / actualDays) * 7;
-    const frequencyFactor = Math.max(0.4, Math.min(1.2, sessionsPerWeek / 4));
-
-    // Max muscle gain rate per week (kg). Convert to lb if user's units are lb.
-    const yt = CONFIG.composition.yearsTraining || 1;
-    let maxMuscleKgPerWeek;
-    if (yt <= 1) maxMuscleKgPerWeek = 0.45;
-    else if (yt === 2) maxMuscleKgPerWeek = 0.23;
-    else maxMuscleKgPerWeek = 0.11;
-    const unitConv = (state.units === 'lb') ? 2.20462 : 1;
-    const maxMusclePerWeek = maxMuscleKgPerWeek * unitConv;
-
-    // Estimated muscle: scale by strength gain (capped between 0.5x and 1.5x)
-    // AND by training frequency (you can't build muscle you didn't stimulate).
-    const strengthBoost = Math.max(0.5, Math.min(1.5, 1 + strengthDelta * 4));
-    let estMuscle = maxMusclePerWeek * weeks * strengthBoost * frequencyFactor;
-
-    let estFat;
-    let headlineCls = '';
-    let headline = '';
-    if (weightDelta > 0) {
-      // Surplus: split between muscle and fat. Cap muscle at the weight gained.
-      estMuscle = Math.min(estMuscle, weightDelta);
-      estFat = Math.max(0, weightDelta - estMuscle);
-      const musclePct = estMuscle / weightDelta;
-      if (musclePct >= 0.6 && strengthDelta > 0) {
-        headlineCls = 'good';
-        headline = '+' + weightDelta.toFixed(1) + ' ' + state.units + ' — mostly muscle, strength up.';
-      } else if (musclePct >= 0.35) {
-        headlineCls = 'warn';
-        headline = '+' + weightDelta.toFixed(1) + ' ' + state.units + ' — mixed. Tighten kcal or push lifts harder.';
-      } else {
-        headlineCls = 'bad';
-        headline = '+' + weightDelta.toFixed(1) + ' ' + state.units + ' — mostly fat. Strength flat. Cut kcal.';
-      }
-    } else {
-      // Deficit: assume fat first, only credit muscle loss if strength dropped.
-      const wDown = Math.abs(weightDelta);
-      if (strengthDelta >= 0) {
-        // Strength preserved or up → all fat lost, slight muscle gain
-        estMuscle = Math.min(maxMusclePerWeek * weeks * 0.3, 0.5);
-        estFat = wDown + estMuscle;
-        headlineCls = 'good';
-        headline = '−' + wDown.toFixed(1) + ' ' + state.units + ' — strength holding, fat dropping.';
-      } else {
-        // Strength dropped → some muscle loss
-        const lossPct = Math.min(0.4, Math.abs(strengthDelta) * 2);
-        estMuscle = -wDown * lossPct;
-        estFat = -(wDown + estMuscle);
-        headlineCls = 'warn';
-        headline = '−' + wDown.toFixed(1) + ' ' + state.units + ' — strength slipping. You may be losing muscle.';
-      }
-    }
-
-    // Render
-    compEl.classList.remove('hidden');
-    $('wtCompWindow').textContent = 'last ' + actualDays + 'd';
-    const headlineEl = $('wtCompHeadline');
-    headlineEl.textContent = headline;
-    headlineEl.className = 'wt-comp-headline ' + headlineCls;
-
-    // Bars
-    const totalAbs = Math.abs(estMuscle) + Math.abs(estFat) || 1;
-    const musclePct = (Math.abs(estMuscle) / totalAbs) * 100;
-    const fatPct = (Math.abs(estFat) / totalAbs) * 100;
-    $('wtCompBars').innerHTML =
-      '<div class="wt-comp-bar muscle" style="width:' + musclePct.toFixed(1) + '%"></div>' +
-      '<div class="wt-comp-bar fat" style="width:' + fatPct.toFixed(1) + '%"></div>';
-
-    // Foot line — strength + training frequency (so you can see why the
-    // muscle estimate is what it is).
-    const sd = strengthDelta * 100;
-    const sdStr = (sd >= 0 ? '+' : '') + sd.toFixed(1) + '%';
-    const muscleSign = estMuscle >= 0 ? '+' : '';
-    const fatSign = estFat >= 0 ? '+' : '';
-    const freqStr = sessionsPerWeek.toFixed(1) + ' sessions/wk';
-    $('wtCompFoot').textContent =
-      '~' + muscleSign + estMuscle.toFixed(1) + ' ' + state.units + ' muscle · '
-      + '~' + fatSign + estFat.toFixed(1) + ' ' + state.units + ' fat · '
-      + 'strength ' + sdStr
-      + ' · ' + freqStr
-      + (strengthRatios.length ? '' : ' (no lift data)');
-  }
-
-  // Wire weight UI
-  $('wtSaveBtn').addEventListener('click', () => {
-    const v = parseFloat($('wtInput').value);
-    if (isNaN(v) || v <= 0) return;
-    wtSaveEntry(v);
-  });
-  $('wtInput').addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') $('wtSaveBtn').click();
-  });
-  $('wtEditBtn').addEventListener('click', () => {
-    $('wtLocked').classList.add('hidden');
-    $('wtInputRow').classList.remove('hidden');
-    const todayEntry = wtEntries.find(e => e.dateKey === wtDateKey(new Date()));
-    if (todayEntry) $('wtInput').value = todayEntry.weight.toFixed(1);
-    $('wtInput').focus(); $('wtInput').select();
-  });
-
-  // Wire goal-weight UI
-  if (goalWeight != null) $('wtGoalInput').value = goalWeight;
-  $('wtGoalSaveBtn').addEventListener('click', () => {
-    const raw = $('wtGoalInput').value;
-    const v = raw === '' ? null : parseFloat(raw);
-    goalWeight = (v != null && !isNaN(v) && v > 0) ? v : null;
-    goalSave(goalWeight);
-    if (goalWeight != null) $('wtGoalInput').value = goalWeight; else $('wtGoalInput').value = '';
-    wtRenderGoal();
-  });
-  $('wtGoalInput').addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') $('wtGoalSaveBtn').click();
-  });
 
   // Wire calories UI
   calRender();
@@ -4070,7 +3422,6 @@ img, video, canvas, svg { max-width: 100%; }
   // BOOT
   // ============================================================
   renderAll();
-  wtRender();
   photosLoad().then(photosRender); // async (IndexedDB) -- everything else above renders immediately, photos fill in a beat later
   publishFitnessSummary();
 
@@ -4149,16 +3500,16 @@ img, video, canvas, svg { max-width: 100%; }
 
   function pcRerender() {
     // Reload every closure variable that mirrors a synced localStorage
-    // key — otherwise renderAll/wtRender/photosRender would read stale
-    // in-memory copies from before the remote pull. Photos are NOT part of
-    // this anymore (6.9: moved to IndexedDB, no longer in PC_SYNCED_KEYS,
-    // no longer touched by this Supabase mechanism at all) -- the in-memory
+    // key — otherwise renderAll/photosRender would read stale in-memory
+    // copies from before the remote pull. Weight logging + goal weight now
+    // live on health.html; wtEntries stays here read-only for Progress
+    // Photos' weight-tagging. Photos themselves are NOT part of this
+    // anymore (6.9: moved to IndexedDB, no longer in PC_SYNCED_KEYS, no
+    // longer touched by this Supabase mechanism at all) -- the in-memory
     // `photos` array is left exactly as IndexedDB last loaded it.
     try { state = loadState(); } catch {}
     try { wtEntries = wtLoad(); } catch {}
-    try { goalWeight = goalLoad(); if (goalWeight != null) $('wtGoalInput').value = goalWeight; } catch {}
     try { renderAll(); } catch {}
-    try { wtRender(); } catch {}
     try { photosRender(); } catch {}
     try { publishFitnessSummary(); } catch {}
   }
@@ -4889,6 +4240,7 @@ const IC = {
   swap:'<path d="M4 7h13M14 4l3 3-3 3M20 17H7M10 14l-3 3 3 3"/>',
   history:'<path d="M3 17l5-5 4 4 8-8M16 8h5v5"/>',
   tune:'<path d="M4 7h16M4 17h16"/><circle cx="15" cy="7" r="2.2" fill="currentColor" stroke="none"/><circle cx="9" cy="17" r="2.2" fill="currentColor" stroke="none"/>',
+  progression:'<rect x="3" y="12" width="4" height="8" fill="currentColor" stroke="none"/><rect x="10" y="7" width="4" height="13" fill="currentColor" stroke="none"/><rect x="17" y="3" width="4" height="17" fill="currentColor" stroke="none"/>',
   eyeOpen:'<path d="M1.5 12S5 5 12 5s10.5 7 10.5 7-3.5 7-10.5 7S1.5 12 1.5 12Z"/><circle cx="12" cy="12" r="3"/>',
   eyeOff:'<path d="M3 3l18 18M10.6 10.7a3 3 0 0 0 4 4M9.9 5.2A9.8 9.8 0 0 1 12 5c7 0 10.5 7 10.5 7a17 17 0 0 1-3.2 4M6.1 6.1A17 17 0 0 0 1.5 12S5 19 12 19a9.7 9.7 0 0 0 3.9-.8"/>',
   reset:'<path d="M3.5 6.5 A6 6 0 1 0 6 3.2"/><polyline points="2.4 2.4 3.7 6.6 8 5.2"/>',
@@ -5171,6 +4523,7 @@ function renderCard(e, day){
     +   '<button class="actionPill" data-act="swap">'+svg(IC.swap,' fill="none" stroke="currentColor"')+'<span class="pl">swap</span></button>'
     +   '<button class="actionPill" data-act="history">'+svg(IC.history,' fill="none" stroke="currentColor"')+'<span class="pl">history</span></button>'
     +   '<button class="actionPill" data-act="tune">'+svg(IC.tune,' fill="none" stroke="currentColor"')+'<span class="pl">tune</span></button>'
+    +   '<button class="actionPill" data-act="progression">'+svg(IC.progression,' fill="none" stroke="currentColor"')+'<span class="pl">progression</span></button>'
     + '</div>'
     + '<div class="restSlot"></div>'
     + '<div class="pills"></div>';
@@ -5252,6 +4605,7 @@ function handleAct(act, e, day, btn){
   else if(act==='history'){ openHistory(e); }
   else if(act==='swap'){ openSwap(e); }
   else if(act==='tune'){ openTune(e); }
+  else if(act==='progression'){ openProgression(e); }
   else if(act==='menu'){ openMenu(e, day, btn); }
 }
 
@@ -5465,6 +4819,62 @@ function openTune(e){
 }
 function fieldRow(label, ctl, icon){ const ic={weight:'<path d="M7 9v6M17 9v6M4 12h3M17 12h3M9 9h6v6H9z"/>'}[icon]||''; return '<div class="field"><span class="lbl">'+svg(ic,' fill="none" stroke="currentColor"')+label+'</span><div class="stepper">'+ctl+'</div></div>'; }
 function stepRow(label, id, val){ const f=id==='tsets'?'sets':(id==='treps'?'reps':'rest'); return '<div class="field" id="'+id+'"><span class="lbl">'+label+'</span><div class="stepper"><button class="step minus" data-f="'+f+'" data-d="-1">−</button><span class="stepVal">'+val+'</span><button class="step" data-f="'+f+'" data-d="1">+</button></div></div>'; }
+
+/* ---- progression popup -- reads the classic Progressive Overload
+   Coach's own logs/formulas via window.PoCoach (see its bridge object
+   in script A), so there's one shared definition of best-set/1RM/
+   next-session suggestion instead of a second one invented here. ---- */
+function openProgression(e){
+  openPop(popHead('Progression', e.name) + '<div id="progBody"></div>', () => { drawProgression(e); });
+}
+function drawProgression(e){
+  const body = $('#progBody');
+  const PC = window.PoCoach;
+  const st = PC && PC.getState();
+  const poEx = (st && e.poId) ? st.exercises.find(x => x.id === e.poId) : null;
+  const logs = (st && e.poId && st.logs[e.poId]) || [];
+  if (!PC || !poEx || !logs.length) {
+    body.innerHTML = '<div class="po-empty">Log a set for this exercise to see progression stats.</div>';
+    return;
+  }
+  const unit = st.units;
+  const oneRm = poEx.bw
+    ? Math.max.apply(null, logs.map(l => l.reps)) + ' reps'
+    : Math.round(Math.max.apply(null, logs.map(l => PC.estimate1RM(l.weight, l.reps)))) + unit;
+  let best = logs[0];
+  logs.forEach(l => { if (PC.scoreForLog(poEx, l) > PC.scoreForLog(poEx, best)) best = l; });
+  const bestStr = poEx.bw ? (best.reps + ' reps') : (best.weight + '×' + best.reps);
+
+  let html = '<div class="stats">'
+    + '<div class="stat"><div class="k">Est. 1RM</div><div class="v gold">' + oneRm + '</div></div>'
+    + '<div class="stat"><div class="k">Best Set</div><div class="v">' + bestStr + '</div></div>'
+    + '<div class="stat"><div class="k">Sessions</div><div class="v">' + logs.length + '</div></div>'
+    + '</div>';
+
+  const trend = PC.topSetPerDay(poEx, logs).slice(-10);
+  if (trend.length < 2) {
+    html += '<div class="po-spark-caption">Trend (last 10 sessions)</div><div class="po-empty">Need 2+ sessions for a trend.</div>';
+  } else {
+    const vals = trend.map(l => poEx.bw ? l.reps : PC.estimate1RM(l.weight, l.reps));
+    const min = Math.min.apply(null, vals), max = Math.max.apply(null, vals);
+    const range = max - min || 1;
+    const W = 300, H = 60, pad = 4;
+    const pts = vals.map((v, i) => [pad + (W - pad * 2) * (i / (vals.length - 1)), H - pad - (H - pad * 2) * ((v - min) / range)]);
+    const linePath = pts.map((p, i) => (i === 0 ? 'M' : 'L') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ');
+    const fillPath = linePath + ' L' + pts[pts.length - 1][0].toFixed(1) + ' ' + H + ' L' + pts[0][0].toFixed(1) + ' ' + H + ' Z';
+    html += '<div class="po-spark-caption">Trend (last ' + trend.length + ' sessions)</div>'
+      + '<div class="po-spark-wrap"><svg class="po-spark-svg" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none">'
+      + '<defs><linearGradient id="progSparkGrad" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="rgba(255,255,255,0.18)"/><stop offset="100%" stop-color="rgba(255,255,255,0)"/></linearGradient></defs>'
+      + '<path fill="url(#progSparkGrad)" d="' + fillPath + '"/><path class="po-spark-line" fill="none" d="' + linePath + '"/></svg></div>';
+  }
+
+  const rx = PC.getRx(poEx, logs);
+  if (rx) {
+    const head = rx.bw ? ('<span class="po-accent">' + rx.reps + ' reps</span>') : ('<span class="po-accent">' + rx.weight + unit + '</span> × ' + rx.reps + ' reps');
+    html += '<div class="po-rx-card po-rx-' + rx.type + '"><div class="po-rx-label">Next session</div><div class="po-rx-headline">' + head + '</div><span class="po-rx-tag ' + rx.type + '">' + rx.tag + '</span><p class="po-rx-reason">' + rx.reason + '</p></div>';
+  }
+  body.innerHTML = html;
+}
 
 /* ---- overflow menu (remove / deload / note) ---------------------- */
 function openMenu(e, day, btn){
