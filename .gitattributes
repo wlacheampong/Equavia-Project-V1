@@ -1,0 +1,19 @@
+# Line endings.
+#
+# Every text file in this repo is stored and checked out as LF, on every
+# platform. Without this, cloning onto a machine with core.autocrlf=true
+# (Git for Windows sets it by default) rewrites the whole tree to CRLF on
+# checkout, and the next commit then reads as a 100%-changed diff on every
+# file — which buries whatever actually changed.
+#
+# Settings this in .gitattributes rather than via `git config` deliberately:
+# config is per-clone and has to be remembered on each new machine, whereas
+# this travels with the repo and applies everywhere automatically.
+* text=auto eol=lf
+
+# Binary assets — exempt, so conversion can never corrupt them.
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.webp binary
+*.ico  binary
