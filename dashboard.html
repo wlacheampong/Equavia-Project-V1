@@ -1,361 +1,1162 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<script src="js/support.js"></script>
+<meta charset="UTF-8">
+<script src="js/landing-guard.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#050506">
+<link rel="icon" type="image/webp" href="images/Index Landing Page.webp">
+<link rel="apple-touch-icon" href="images/apple-touch-icon.png">
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Project Equavia">
+<title>Project Equavia</title>
+<link rel="stylesheet" href="css/equavia-core.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/sync.js" defer></script>
+<script src="js/assistant-tools.js"></script>
+<script src="js/topbar.js" defer></script>
+<script src="js/obsidian-sync.js"></script>
+<script src="js/daily-report.js" defer></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+html, body {
+  margin: 0; padding: 0;
+  background: var(--eq-bg-primary);
+  color: var(--eq-text-secondary);
+  font-family: var(--eq-font-family);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+}
+body { min-height: 100vh; position: relative; overflow-x: hidden; }
+* { box-sizing: border-box; }
+a { color: inherit; text-decoration: none; }
+
+.dash-wrap {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: max(20px, env(safe-area-inset-top)) 16px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.card {
+  background: var(--eq-bg-card);
+  border: 1px solid var(--eq-border);
+  border-radius: 20px;
+  padding: 22px;
+}
+.card-link { display: block; }
+.card-title {
+  font-size: var(--eq-font-sm);
+  color: var(--eq-text-secondary);
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 14px;
+}
+.card-title .card-title-more { font-size: 12px; color: var(--eq-text-muted); }
+
+.grid { display: grid; gap: 16px; }
+.grid-2 { grid-template-columns: 1fr; }
+.grid-3 { grid-template-columns: 1fr; }
+.grid-4 { grid-template-columns: 1fr; }
+@media (min-width: 640px) {
+  .grid-2 { grid-template-columns: 1fr 1fr; }
+  .grid-3 { grid-template-columns: 1fr 1fr; }
+  .grid-4 { grid-template-columns: 1fr 1fr; }
+}
+@media (min-width: 980px) {
+  .grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .grid-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+}
+
+/* Backup nudge + Yesterday alert */
+.backup-nudge {
+  display: block; padding: 10px 16px; border-radius: 12px;
+  background: rgba(242, 192, 99, 0.1); border: 1px solid rgba(242, 192, 99, 0.25);
+  color: var(--eq-warning); font-size: var(--eq-font-sm);
+}
+.yd-alert {
+  border-radius: 20px; border: 1px solid rgba(255, 107, 107, 0.25);
+  background: rgba(255, 107, 107, 0.08); padding: 16px 18px;
+}
+.yd-alert-head { font-size: var(--eq-font-sm); color: var(--eq-danger); font-weight: 600; margin-bottom: 10px; }
+.yd-alert-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; }
+.yd-alert-warn { color: var(--eq-danger); }
+.yd-alert-text { flex: 1; font-size: var(--eq-font-sm); color: var(--eq-text-primary); }
+.yd-alert-actions { display: flex; gap: 8px; }
+.yd-alert-actions button {
+  font-size: 11px; padding: 5px 10px; border-radius: 8px; border: 1px solid var(--eq-border-strong);
+  background: transparent; color: var(--eq-text-secondary); cursor: pointer;
+}
+.yd-alert-today { color: var(--eq-accent) !important; border-color: var(--eq-accent) !important; }
+
+/* Greeting */
+.greet-card { display: flex; flex-direction: column; justify-content: space-between; min-height: 130px; }
+.greet-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.greet-label { font-size: var(--eq-font-sm); color: var(--eq-text-muted); margin-bottom: 6px; }
+.greet-text { font-size: 22px; font-weight: 700; color: var(--eq-text-primary); }
+.greet-right { display: flex; align-items: center; gap: 8px; }
+.greet-clock, .whoop-pill {
+  background: rgba(255,255,255,0.06); padding: 5px 12px; border-radius: 8px;
+  font-size: 12px; font-weight: 600; color: var(--eq-text-secondary); white-space: nowrap;
+}
+.whoop-pill.good { color: var(--eq-success); }
+.whoop-pill.warn { color: var(--eq-warning); }
+.whoop-pill.bad { color: var(--eq-danger); }
+
+/* Day window ring */
+.dw-card { display: flex; justify-content: space-between; align-items: center; min-height: 130px; cursor: pointer; position: relative; }
+.dw-edit-btn {
+  position: absolute; top: 18px; right: 18px; background: none; border: none; color: var(--eq-text-muted);
+  cursor: pointer; font-size: 13px; padding: 4px;
+}
+.dw-date { font-size: 13px; color: var(--eq-text-secondary); display: block; }
+.dw-weekday { font-size: 13px; color: var(--eq-text-muted); display: block; margin-bottom: 12px; }
+.dw-remaining { font-size: 32px; font-weight: 700; color: var(--eq-text-primary); }
+.dw-sub { font-size: 12px; color: var(--eq-text-muted); margin-top: 2px; }
+.dw-ring-wrap { position: relative; width: 92px; height: 92px; flex-shrink: 0; }
+.dw-ring-wrap svg { width: 100%; height: 100%; }
+.dw-percent {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 15px; font-weight: 700; color: var(--eq-text-primary);
+}
+.dw-expanded { display: none; gap: 16px; font-size: 12px; color: var(--eq-text-muted); margin-top: 10px; }
+.dw-card.is-expanded .dw-expanded { display: flex; }
+.dw-expanded b { color: var(--eq-text-primary); }
+
+/* Tasks */
+.task-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 7px 0; }
+.task-check {
+  width: 18px; height: 18px; border-radius: 5px; border: 1.4px solid var(--eq-border-strong);
+  flex-shrink: 0; cursor: pointer; display: flex; align-items: center; justify-content: center; background: none;
+}
+.task-check.is-done { background: var(--eq-success); border-color: var(--eq-success); }
+.task-check svg { display: none; }
+.task-check.is-done svg { display: block; }
+.task-text { font-size: var(--eq-font-sm); color: var(--eq-text-primary); flex: 1; }
+.task-text.is-done { color: var(--eq-text-muted); text-decoration: line-through; }
+.task-status { font-size: 11px; color: var(--eq-text-muted); flex-shrink: 0; }
+.task-status.is-done { color: var(--eq-success); }
+.task-status.is-p1 { color: var(--eq-danger); }
+.empty-note { font-size: var(--eq-font-sm); color: var(--eq-text-muted); }
+
+/* Goals (longterm) */
+.goal-row { margin-bottom: 14px; }
+.goal-row:last-child { margin-bottom: 0; }
+.goal-row-top { display: flex; justify-content: space-between; font-size: 12.5px; margin-bottom: 4px; }
+.goal-row-top span:first-child { color: var(--eq-text-primary); }
+.goal-row-top span:last-child { color: var(--eq-text-muted); }
+
+/* Day view */
+.dayview-slot { display: flex; gap: 10px; padding: 7px 0; border-top: 1px solid var(--eq-border); align-items: flex-start; }
+.dayview-slot:first-child { border-top: none; }
+.dayview-time { width: 48px; flex-shrink: 0; padding-top: 1px; font-size: 11px; color: var(--eq-text-muted); }
+.dayview-event { flex: 1; background: rgba(224, 118, 88, 0.18); border-radius: 6px; padding: 5px 8px; font-size: 12px; color: var(--eq-text-primary); font-weight: 600; }
+
+/* Habit tracker */
+.habit-bars { display: flex; justify-content: space-between; align-items: flex-end; height: 80px; }
+.habit-col { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 22px; }
+.habit-bar { width: 6px; border-radius: 3px; background: var(--eq-text-muted); min-height: 3px; }
+.habit-bar.is-today { background: var(--eq-accent); }
+.habit-label { font-size: 11px; color: var(--eq-text-muted); }
+.habit-label.is-today { color: var(--eq-text-primary); }
+
+/* Sleep */
+.sleep-duration { font-size: 26px; font-weight: 800; color: var(--eq-text-primary); margin-bottom: 10px; }
+.sleep-target-badge { background: rgba(255,255,255,0.08); padding: 2px 10px; border-radius: 10px; font-size: 11px; color: var(--eq-text-secondary); }
+.greet-bar { fill: var(--eq-accent); opacity: 0.85; }
+
+/* Upcoming events */
+.event-row { display: flex; align-items: center; gap: 12px; padding: 7px 0; }
+.event-date { text-align: center; width: 34px; flex-shrink: 0; }
+.event-day { font-size: 14px; font-weight: 700; color: var(--eq-text-primary); }
+.event-month { font-size: 9px; color: var(--eq-text-muted); text-transform: uppercase; }
+.event-title { font-size: 13px; font-weight: 500; color: var(--eq-text-primary); }
+.event-time { font-size: 11px; color: var(--eq-text-muted); }
+.gcal-connect-btn {
+  font-size: 12px; color: var(--eq-accent); background: none; border: none; cursor: pointer; padding: 0;
+}
+
+/* Productivity ring */
+.prod-row { display: flex; justify-content: space-between; align-items: center; }
+.prod-pct { font-size: 34px; font-weight: 800; color: var(--eq-text-primary); }
+.prod-pct span { font-size: 16px; font-weight: 600; }
+.prod-sub { font-size: 12px; color: var(--eq-text-muted); margin-bottom: 14px; }
+.prod-stats { display: flex; gap: 26px; }
+.prod-stat-label { font-size: 11px; color: var(--eq-text-muted); }
+.prod-stat-val { font-size: 17px; font-weight: 700; color: var(--eq-text-primary); }
+
+/* Fitness */
+.fit-eyebrow { font-size: 11px; letter-spacing: 0.06em; color: var(--eq-text-muted); font-weight: 600; text-transform: uppercase; }
+.fit-split { font-size: 19px; font-weight: 700; color: var(--eq-text-primary); margin-top: 2px; }
+.fit-sub { font-size: 12px; color: var(--eq-text-muted); margin-top: 2px; }
+.fit-divider { height: 1px; background: var(--eq-border); margin: 14px 0; }
+.fit-weight { font-size: 15px; font-weight: 600; color: var(--eq-text-primary); }
+.fit-weight span { color: var(--eq-text-muted); font-weight: 400; }
+
+/* Morning checklist */
+.chk-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; }
+.chk-box {
+  width: 16px; height: 16px; border-radius: 4px; border: 1.4px solid var(--eq-border-strong); flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; cursor: pointer; background: none;
+}
+.chk-box.is-done { background: var(--eq-success); border-color: var(--eq-success); }
+.chk-box svg { display: none; }
+.chk-box.is-done svg { display: block; }
+.chk-text { font-size: 13px; color: var(--eq-text-primary); }
+.chk-text.is-done { color: var(--eq-text-muted); text-decoration: line-through; }
+
+/* Finance */
+.fin-title { font-size: 16px; font-weight: 700; color: var(--eq-text-primary); margin-bottom: 12px; }
+.fin-row { display: flex; justify-content: space-between; margin-top: 14px; align-items: center; }
+.fin-label { font-size: 11px; color: var(--eq-text-muted); }
+.fin-val { font-size: 18px; font-weight: 700; color: var(--eq-text-primary); }
+.fin-badge { padding: 3px 10px; border-radius: 10px; font-size: 11px; background: rgba(255,255,255,0.08); color: var(--eq-text-secondary); }
+.fin-badge.is-ontrack { color: var(--eq-success); }
+.fin-badge.is-off { color: var(--eq-warning); }
+
+/* Project */
+.proj-title { font-size: 16px; font-weight: 700; color: var(--eq-text-primary); margin-bottom: 6px; }
+.proj-status { font-size: 12px; color: var(--eq-text-muted); text-transform: capitalize; }
+
+/* Day-ring edit modal */
+.dr-modal-bg {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 60;
+  align-items: center; justify-content: center; padding: 20px;
+}
+.dr-modal-bg.show { display: flex; }
+.dr-modal {
+  background: var(--eq-bg-elevated); border: 1px solid var(--eq-border-strong); border-radius: 16px;
+  padding: 20px; width: 100%; max-width: 320px; display: flex; flex-direction: column; gap: 14px;
+}
+.dr-modal label { font-size: 12px; color: var(--eq-text-muted); display: flex; flex-direction: column; gap: 6px; }
+.dr-modal input[type=time] {
+  background: var(--eq-bg-input); border: 1px solid var(--eq-border); border-radius: 8px; color: var(--eq-text-primary);
+  padding: 8px 10px; font-size: var(--eq-font-md);
+}
+.dr-modal-actions { display: flex; gap: 10px; }
+.dr-btn-cancel, .dr-btn-save {
+  flex: 1; padding: 10px; border-radius: 10px; border: none; font-size: var(--eq-font-sm); cursor: pointer;
+}
+.dr-btn-cancel { background: rgba(255,255,255,0.08); color: var(--eq-text-secondary); }
+.dr-btn-save { background: var(--eq-accent); color: #050506; font-weight: 600; }
+.dr-reset-link { font-size: 11px; color: var(--eq-text-muted); text-align: center; cursor: pointer; }
+</style>
 </head>
 <body>
-<x-dc>
-<helmet>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <style>
-    body { margin: 0; background: oklch(0.13 0 0); font-family: 'Inter', -apple-system, sans-serif; }
-    a { color: oklch(0.72 0.16 255); text-decoration: none; }
-    a:hover { color: oklch(0.8 0.14 255); }
-  </style>
-</helmet>
-<div style="display:flex; gap:16px; padding:20px; min-height:900px; background:oklch(0.13 0 0); color:oklch(0.97 0 0); box-sizing:border-box;">
+<div class="dash-wrap">
 
-  <div style="width:64px; flex-shrink:0; background:oklch(0.18 0 0); border-radius:24px; display:flex; flex-direction:column; align-items:center; padding:16px 0; gap:22px; border:1px solid oklch(1 0 0 / 0.05);">
-    <div style="width:36px; height:36px; border-radius:50%; background:oklch(0.97 0 0); display:flex; align-items:center; justify-content:center;">
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 7L8 2L14 7V13.5C14 13.776 13.776 14 13.5 14H10V10H6V14H2.5C2.224 14 2 13.776 2 13.5V7Z" fill="oklch(0.13 0 0)"/></svg>
-    </div>
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="opacity:0.5"><rect x="1" y="1" width="6" height="6" rx="1.5" fill="currentColor"/><rect x="9" y="1" width="6" height="6" rx="1.5" fill="currentColor"/><rect x="1" y="9" width="6" height="6" rx="1.5" fill="currentColor"/><rect x="9" y="9" width="6" height="6" rx="1.5" fill="currentColor"/></svg>
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="opacity:0.5"><path d="M1 13L5 7L9 10L15 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="opacity:0.5"><rect x="1.5" y="2.5" width="13" height="12" rx="2" stroke="currentColor" stroke-width="1.4"/><path d="M1.5 6H14.5" stroke="currentColor" stroke-width="1.4"/></svg>
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="opacity:0.5"><path d="M2 4C2 3 3 2 4 2H12C13 2 14 3 14 4V13L8 10.5L2 13V4Z" stroke="currentColor" stroke-width="1.4"/></svg>
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="opacity:0.5"><circle cx="8" cy="5.5" r="3" stroke="currentColor" stroke-width="1.4"/><path d="M2.5 14C2.5 11 5 9 8 9C11 9 13.5 11 13.5 14" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
-    <div style="flex:1;"></div>
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="opacity:0.5"><rect x="2.5" y="1.5" width="11" height="13" rx="1.5" stroke="currentColor" stroke-width="1.4"/><path d="M5 5H11M5 8H11M5 11H8.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="opacity:0.5"><path d="M6.6 2H9.4L9.8 3.6C10.2 3.75 10.6 3.95 10.95 4.2L12.5 3.7L13.9 6.1L12.7 7.2C12.75 7.45 12.75 7.7 12.75 8C12.75 8.3 12.75 8.55 12.7 8.8L13.9 9.9L12.5 12.3L10.95 11.8C10.6 12.05 10.2 12.25 9.8 12.4L9.4 14H6.6L6.2 12.4C5.8 12.25 5.4 12.05 5.05 11.8L3.5 12.3L2.1 9.9L3.3 8.8C3.25 8.55 3.25 8.3 3.25 8C3.25 7.7 3.25 7.45 3.3 7.2L2.1 6.1L3.5 3.7L5.05 4.2C5.4 3.95 5.8 3.75 6.2 3.6L6.6 2Z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.2"/></svg>
-    <div style="display:flex; flex-direction:column; align-items:center; gap:4px;">
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="3.2" fill="currentColor"/><g stroke="currentColor" stroke-width="1.2" stroke-linecap="round"><path d="M8 1V2.6"/><path d="M8 13.4V15"/><path d="M1 8H2.6"/><path d="M13.4 8H15"/><path d="M3.1 3.1L4.2 4.2"/><path d="M11.8 11.8L12.9 12.9"/><path d="M3.1 12.9L4.2 11.8"/><path d="M11.8 4.2L12.9 3.1"/></g></svg>
-      <span style="font-size:10px; color:oklch(0.72 0.16 255); font-weight:600;">Light</span>
-    </div>
+  <div class="backup-nudge" id="backupNudge" style="display:none;">
+    <span id="backupNudgeText"></span>
   </div>
 
-  <div style="flex:1; display:flex; flex-direction:column; gap:16px;">
+  <div class="yd-alert" id="ydAlertWrap" style="display:none;">
+    <div class="yd-alert-head">Yesterday — <span id="ydAlertCount">0</span> unfinished</div>
+    <div id="ydAlertList"></div>
+  </div>
 
-  <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
-
-    <div style="background:oklch(0.18 0 0); border:1px solid oklch(1 0 0 / 0.05); border-radius:20px; padding:22px; display:flex; flex-direction:column; justify-content:space-between; min-height:170px;">
-      <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+  <div class="grid grid-2">
+    <div class="card greet-card">
+      <div class="greet-row">
         <div>
-          <div style="font-size:14px; color:oklch(0.65 0 0); margin-bottom:6px;">Greetings,</div>
-          <div style="display:inline-block; background:oklch(0.4 0 0); padding:2px 10px; border-radius:6px; font-size:26px; font-weight:800;">MAHINO</div>
-          <div style="margin-top:10px; display:inline-block; background:oklch(0.4 0 0 / 0.35); color:oklch(0.85 0 0); padding:3px 10px; border-radius:6px; font-size:12px;">Domination is a matter of course. Perfection is not the enemy.</div>
+          <div class="greet-label">Greetings,</div>
+          <div class="greet-text" id="dashGreeting">—</div>
         </div>
-        <div style="background:oklch(0.4 0 0); padding:5px 12px; border-radius:8px; font-size:12px; font-weight:600;">07:45 PM</div>
+        <div class="greet-right">
+          <span class="whoop-pill" id="whoopPill" style="display:none;"></span>
+          <span class="greet-clock" id="greetClock">—</span>
+        </div>
       </div>
-      <svg width="100%" height="70" viewBox="0 0 340 70" preserveAspectRatio="none" style="margin-top:14px;">
-        <path d="M0 55 L20 45 L40 50 L58 20 L76 40 L95 10 L115 32 L135 15 L155 38 L175 24 L195 42 L215 12 L235 34 L255 20 L275 44 L295 28 L315 40 L340 22" fill="none" stroke="oklch(0.8 0 0)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
     </div>
 
-    <div style="background:oklch(0.18 0 0); border:1px solid oklch(1 0 0 / 0.05); border-radius:20px; padding:22px; display:flex; justify-content:space-between; align-items:center; min-height:170px;">
+    <div class="card dw-card" id="dwCard" role="button" tabindex="0" aria-expanded="false" aria-label="Day window, tap to expand">
+      <button class="dw-edit-btn" id="dayRingEditBtn" type="button" aria-label="Edit wake-up and bedtime">Edit</button>
       <div>
-        <div style="font-size:13px; color:oklch(0.65 0 0);">May 24, 2025</div>
-        <div style="font-size:13px; color:oklch(0.5 0 0); margin-bottom:14px;">Saturday</div>
-        <div style="font-size:38px; font-weight:700;">06:20</div>
-        <div style="font-size:12px; color:oklch(0.5 0 0); margin-top:4px;">until 12:00 AM</div>
-      </div>
-      <svg width="108" height="108" viewBox="0 0 100 100">
-        <circle cx="50" cy="50" r="40" fill="none" stroke="oklch(1 0 0 / 0.1)" stroke-width="7"/>
-        <circle cx="50" cy="50" r="40" fill="none" stroke="oklch(0.95 0 0)" stroke-width="7" stroke-linecap="round" stroke-dasharray="170.9 251.3" transform="rotate(-90 50 50)"/>
-      </svg>
-    </div>
-
-  </div>
-
-  <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px;">
-
-    <div style="background:oklch(0.18 0 0); border:1px solid oklch(1 0 0 / 0.05); border-radius:20px; padding:22px; min-height:260px;">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-        <div style="font-size:14px; color:oklch(0.85 0 0);">Tasks</div>
-        <div style="font-size:16px; color:oklch(0.55 0 0);">+</div>
-      </div>
-      <div style="display:flex; flex-direction:column; gap:14px;">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <div style="display:flex; align-items:center; gap:10px;">
-            <svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="none" stroke="oklch(0.6 0.15 155)" stroke-width="1.4"/><path d="M5 8L7 10L11 5.5" stroke="oklch(0.6 0.15 155)" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            <span style="font-size:13px; text-decoration:line-through; color:oklch(0.55 0 0);">UI/UX Research</span>
-          </div>
-          <span style="font-size:11px; color:oklch(0.6 0.15 155);">Completed</span>
-        </div>
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <div style="display:flex; align-items:center; gap:10px;">
-            <svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="none" stroke="oklch(0.6 0.15 155)" stroke-width="1.4"/><path d="M5 8L7 10L11 5.5" stroke="oklch(0.6 0.15 155)" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            <span style="font-size:13px; text-decoration:line-through; color:oklch(0.55 0 0);">Design Dashboard</span>
-          </div>
-          <span style="font-size:11px; color:oklch(0.6 0.15 155);">Completed</span>
-        </div>
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <div style="display:flex; align-items:center; gap:10px;">
-            <svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="none" stroke="oklch(0.55 0 0)" stroke-width="1.4"/></svg>
-            <span style="font-size:13px;">Prototype App</span>
-          </div>
-          <span style="font-size:11px; color:oklch(0.72 0.16 255); font-weight:600;">In Progress</span>
-        </div>
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <div style="display:flex; align-items:center; gap:10px;">
-            <svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="none" stroke="oklch(0.55 0 0)" stroke-width="1.4"/></svg>
-            <span style="font-size:13px; color:oklch(0.6 0 0);">User Testing</span>
-          </div>
-          <span style="font-size:11px; color:oklch(0.5 0 0);">Pending</span>
+        <span class="dw-date" id="dwDate">—</span>
+        <span class="dw-weekday" id="dwWeekday">—</span>
+        <div class="dw-remaining" id="dwRemaining">—</div>
+        <div class="dw-sub" id="dwSub">—</div>
+        <div class="dw-expanded" id="dwExpanded">
+          <span>Wake <b id="dwWakeTime">—</b></span>
+          <span>Bed <b id="dwBedTime">—</b></span>
         </div>
       </div>
-    </div>
-
-    <div style="background:oklch(0.18 0 0); border:1px solid oklch(1 0 0 / 0.05); border-radius:20px; padding:22px; min-height:260px;">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-        <div style="font-size:14px; color:oklch(0.85 0 0);">Goals</div>
-        <div style="font-size:16px; color:oklch(0.55 0 0);">+</div>
-      </div>
-      <div style="display:flex; flex-direction:column; gap:16px;">
-        <div>
-          <div style="display:flex; justify-content:space-between; font-size:12.5px; margin-bottom:6px;"><span>Read 20 books</span><span style="color:oklch(0.55 0 0);">60%</span></div>
-          <div style="height:6px; border-radius:3px; background:oklch(1 0 0 / 0.08);"><div style="height:100%; width:60%; border-radius:3px; background:oklch(0.95 0 0);"></div></div>
-        </div>
-        <div>
-          <div style="display:flex; justify-content:space-between; font-size:12.5px; margin-bottom:6px;"><span>Run 100 km</span><span style="color:oklch(0.55 0 0);">45%</span></div>
-          <div style="height:6px; border-radius:3px; background:oklch(1 0 0 / 0.08);"><div style="height:100%; width:45%; border-radius:3px; background:oklch(0.95 0 0);"></div></div>
-        </div>
-        <div>
-          <div style="display:flex; justify-content:space-between; font-size:12.5px; margin-bottom:6px;"><span>Save $5,000</span><span style="color:oklch(0.55 0 0);">80%</span></div>
-          <div style="height:6px; border-radius:3px; background:oklch(1 0 0 / 0.08);"><div style="height:100%; width:80%; border-radius:3px; background:oklch(0.95 0 0);"></div></div>
-        </div>
-      </div>
-    </div>
-
-    <div style="background:oklch(0.18 0 0); border:1px solid oklch(1 0 0 / 0.05); border-radius:20px; padding:22px; min-height:260px; display:flex; flex-direction:column;">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-        <div style="font-size:14px; color:oklch(0.85 0 0);">Sat, May 24</div>
-        <div style="display:flex; gap:4px; background:oklch(1 0 0 / 0.06); border-radius:8px; padding:2px;">
-          <span style="font-size:11px; padding:3px 8px; border-radius:6px; background:oklch(0.95 0 0); color:oklch(0.13 0 0); font-weight:600;">Day</span>
-          <span style="font-size:11px; padding:3px 8px; border-radius:6px; color:oklch(0.55 0 0);">Week</span>
-          <span style="font-size:11px; padding:3px 8px; border-radius:6px; color:oklch(0.55 0 0);">Month</span>
-        </div>
-      </div>
-      <div style="flex:1; display:flex; flex-direction:column; gap:0; font-size:11px; color:oklch(0.5 0 0); position:relative;">
-        <sc-for list="{{ dayViewSlots }}" as="slot" hint-placeholder-count="6">
-          <div style="display:flex; gap:10px; padding:8px 0; border-top:1px solid oklch(1 0 0 / 0.06); align-items:flex-start;">
-            <div style="width:44px; flex-shrink:0; padding-top:1px;">{{ slot.time }}</div>
-            <sc-if value="{{ slot.event }}" hint-placeholder-val="{{ false }}">
-              <div style="flex:1; background:{{ slot.color }}; border-radius:6px; padding:5px 8px;">
-                <div style="font-size:12px; color:oklch(0.95 0 0); font-weight:600;">{{ slot.event }}</div>
-              </div>
-            </sc-if>
-          </div>
-        </sc-for>
-      </div>
-    </div>
-
-  </div>
-
-    <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:16px;">
-
-    <div style="background:oklch(0.18 0 0); border:1px solid oklch(1 0 0 / 0.05); border-radius:20px; padding:22px;">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-        <div style="font-size:14px; color:oklch(0.85 0 0);">Habit Tracker</div>
-        <div style="font-size:12px; color:oklch(0.55 0 0);">This Week ⌄</div>
-      </div>
-      <div style="display:flex; justify-content:space-between; align-items:flex-end; height:80px;">
-        <sc-for list="{{ habitDays }}" as="d" hint-placeholder-count="7">
-          <div style="display:flex; flex-direction:column; align-items:center; gap:8px; width:22px;">
-            <div style="width:6px; border-radius:3px; height:{{ d.height }}; background:{{ d.color }};"></div>
-            <span style="font-size:11px; color:{{ d.labelColor }};">{{ d.label }}</span>
-          </div>
-        </sc-for>
-      </div>
-    </div>
-
-    <div style="background:oklch(0.18 0 0); border:1px solid oklch(1 0 0 / 0.05); border-radius:20px; padding:22px;">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-        <div style="font-size:14px; color:oklch(0.85 0 0);">Sleep Log</div>
-        <div style="background:oklch(1 0 0 / 0.08); padding:2px 10px; border-radius:10px; font-size:11px;">Good</div>
-      </div>
-      <div style="font-size:26px; font-weight:800; margin-bottom:10px;">7h 32m</div>
-      <svg width="100%" height="40" viewBox="0 0 300 40" preserveAspectRatio="none">
-        <path d="M0 20 Q20 8 40 20 T80 20 T120 22 T160 18 T200 22 T240 16 T280 22 T300 20" fill="none" stroke="oklch(0.85 0 0)" stroke-width="2" stroke-linecap="round"/>
-      </svg>
-      <div style="display:flex; justify-content:space-between; margin-top:14px;">
-        <div>
-          <div style="font-size:11px; color:oklch(0.5 0 0);">Bedtime</div>
-          <div style="font-size:13px; font-weight:600; color:oklch(0.72 0.16 255);">11:15 PM</div>
-        </div>
-        <div style="text-align:right;">
-          <div style="font-size:11px; color:oklch(0.5 0 0);">Wake Up</div>
-          <div style="font-size:13px; font-weight:600; color:oklch(0.72 0.16 255);">6:47 AM</div>
-        </div>
-      </div>
-    </div>
-
-    <div style="background:oklch(0.18 0 0); border:1px solid oklch(1 0 0 / 0.05); border-radius:20px; padding:22px;">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
-        <div style="font-size:14px; color:oklch(0.85 0 0);">Upcoming Events</div>
-        <div style="font-size:12px; color:oklch(0.72 0.16 255);">View All</div>
-      </div>
-      <div style="display:flex; flex-direction:column; gap:14px;">
-        <sc-for list="{{ events }}" as="ev" hint-placeholder-count="3">
-          <div style="display:flex; align-items:center; gap:12px;">
-            <div style="text-align:center; width:34px;">
-              <div style="font-size:14px; font-weight:700;">{{ ev.day }}</div>
-              <div style="font-size:9px; color:oklch(0.5 0 0);">{{ ev.month }}</div>
-            </div>
-            <div style="flex:1;">
-              <div style="font-size:13px; font-weight:500;">{{ ev.title }}</div>
-              <div style="font-size:11px; color:oklch(0.5 0 0);">{{ ev.time }}</div>
-            </div>
-            <div style="width:6px; height:6px; border-radius:50%; background:oklch(0.6 0 0);"></div>
-          </div>
-        </sc-for>
-      </div>
-    </div>
-
-    <div style="background:oklch(0.18 0 0); border:1px solid oklch(1 0 0 / 0.05); border-radius:20px; padding:22px;">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
-        <div style="font-size:14px; color:oklch(0.85 0 0);">Productivity</div>
-        <div style="font-size:12px; color:oklch(0.55 0 0);">Today ⌄</div>
-      </div>
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        <div>
-          <div style="font-size:36px; font-weight:800;">78<span style="font-size:18px; font-weight:600;">%</span></div>
-          <div style="font-size:12px; color:oklch(0.55 0 0); margin-bottom:16px;">Great Progress!</div>
-          <div style="display:flex; gap:28px;">
-            <div>
-              <div style="font-size:11px; color:oklch(0.5 0 0);">Tasks Completed</div>
-              <div style="font-size:18px; font-weight:700;">14</div>
-            </div>
-            <div>
-              <div style="font-size:11px; color:oklch(0.5 0 0);">Total Tasks</div>
-              <div style="font-size:18px; font-weight:700;">18</div>
-            </div>
-          </div>
-        </div>
-        <svg width="86" height="86" viewBox="0 0 90 90">
-          <circle cx="45" cy="45" r="36" fill="none" stroke="oklch(1 0 0 / 0.1)" stroke-width="7"/>
-          <circle cx="45" cy="45" r="36" fill="none" stroke="oklch(0.95 0 0)" stroke-width="7" stroke-linecap="round" stroke-dasharray="176.4 226.2" transform="rotate(-90 45 45)"/>
-          <text x="45" y="50" text-anchor="middle" font-size="16" font-weight="700" fill="oklch(0.97 0 0)">78%</text>
+      <div class="dw-ring-wrap">
+        <svg viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="7"/>
+          <circle id="dwRingFill" cx="50" cy="50" r="40" fill="none" stroke="var(--eq-accent)" stroke-width="7" stroke-linecap="round" transform="rotate(-90 50 50)"/>
         </svg>
+        <span class="dw-percent" id="dwPercent">—</span>
       </div>
     </div>
-
   </div>
 
-  <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:16px;">
-    <div style="background:oklch(0.18 0 0); border:1px solid oklch(1 0 0 / 0.05); border-radius:20px; min-height:230px; padding:22px;">
-      <div style="font-size:12px; color:oklch(0.5 0 0); margin-bottom:8px;">Fitness</div>
-      <div style="font-size:20px; font-weight:700;">Shoulders &amp; Arms</div>
-      <div style="font-size:12px; color:oklch(0.5 0 0); margin-top:4px;">Today's split</div>
-      <div style="height:1px; background:oklch(1 0 0 / 0.08); margin:16px 0;"></div>
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
-        <div style="font-size:11px; letter-spacing:0.06em; color:oklch(0.55 0 0); font-weight:600;">CURRENT WEIGHT</div>
-        <div style="font-size:14px; color:oklch(0.5 0 0);">→</div>
+  <div class="grid grid-3">
+    <a class="card card-link" href="planner.html">
+      <div class="card-title"><span>Tasks</span><span class="card-title-more">Planner ›</span></div>
+      <div id="taskList"></div>
+    </a>
+
+    <a class="card card-link" href="planner.html">
+      <div class="card-title"><span>Goals</span><span class="card-title-more">Planner ›</span></div>
+      <div id="goalsList"></div>
+    </a>
+
+    <a class="card card-link" href="planner.html">
+      <div class="card-title">
+        <span id="dayViewDate">Today</span>
       </div>
-      <div style="font-size:15px; font-weight:600; margin-bottom:14px;">78.95kg <span style="color:oklch(0.5 0 0); font-weight:400;">· 79kg</span></div>
-      <svg width="100%" height="40" viewBox="0 0 240 40" preserveAspectRatio="none">
-        <line x1="0" y1="32" x2="240" y2="32" stroke="oklch(0.4 0 0)" stroke-width="1" stroke-dasharray="3 3"/>
-        <path d="M0 20 L30 18 L60 22 L90 16 L120 20 L150 15 L180 18 L210 12 L240 14" fill="none" stroke="oklch(0.85 0 0)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <div id="dayViewSlots"></div>
+    </a>
+  </div>
+
+  <div class="grid grid-4">
+    <a class="card card-link" href="planner.html">
+      <div class="card-title"><span>Habit Tracker</span><span class="card-title-more">This Week</span></div>
+      <div class="habit-bars" id="habitBars"></div>
+    </a>
+
+    <a class="card card-link" href="health.html">
+      <div class="card-title">
+        <span>Sleep Log</span>
+        <span class="sleep-target-badge" id="sleepTargetBadge">—</span>
+      </div>
+      <div class="sleep-duration" id="sleepDuration">—</div>
+      <svg width="100%" height="40" viewBox="0 0 300 40" preserveAspectRatio="none">
+        <g id="sleepBars"></g>
       </svg>
+    </a>
+
+    <div class="card">
+      <div class="card-title">
+        <span>Upcoming Events</span>
+        <button type="button" class="gcal-connect-btn" id="gcalConnectBtn" style="display:none;">Connect Google Calendar</button>
+      </div>
+      <div id="eventsList"></div>
     </div>
-    <div style="background:oklch(0.18 0 0); border:1px solid oklch(1 0 0 / 0.05); border-radius:20px; min-height:230px; padding:22px;">
-      <div style="font-size:16px; font-weight:700; margin-bottom:14px;">Morning Checklist</div>
-      <div style="display:flex; flex-direction:column; gap:12px;">
-        <div style="display:flex; align-items:center; gap:10px;">
-          <div style="width:16px; height:16px; border-radius:4px; background:oklch(0.9 0 0); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
-            <svg width="10" height="10" viewBox="0 0 16 16"><path d="M3 8.5L6.5 12L13 4.5" stroke="oklch(0.13 0 0)" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+
+    <a class="card card-link" href="planner.html">
+      <div class="card-title"><span>Productivity</span><span class="card-title-more">Today</span></div>
+      <div class="prod-row">
+        <div>
+          <div class="prod-pct" id="prodPct">—<span>%</span></div>
+          <div class="prod-sub" id="prodSub">—</div>
+          <div class="prod-stats">
+            <div><div class="prod-stat-label">Tasks Completed</div><div class="prod-stat-val" id="prodDone">—</div></div>
+            <div><div class="prod-stat-label">Total Tasks</div><div class="prod-stat-val" id="prodTotal">—</div></div>
           </div>
-          <span style="font-size:13px; text-decoration:line-through; color:oklch(0.5 0 0);">Drink water</span>
         </div>
-        <div style="display:flex; align-items:center; gap:10px;">
-          <div style="width:16px; height:16px; border-radius:4px; background:oklch(0.9 0 0); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
-            <svg width="10" height="10" viewBox="0 0 16 16"><path d="M3 8.5L6.5 12L13 4.5" stroke="oklch(0.13 0 0)" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </div>
-          <span style="font-size:13px; text-decoration:line-through; color:oklch(0.5 0 0);">Stretch</span>
-        </div>
-        <div style="display:flex; align-items:center; gap:10px;">
-          <div style="width:16px; height:16px; border-radius:4px; border:1.4px solid oklch(0.5 0 0); flex-shrink:0;"></div>
-          <span style="font-size:13px;">Meditate 10 min</span>
-        </div>
-        <div style="display:flex; align-items:center; gap:10px;">
-          <div style="width:16px; height:16px; border-radius:4px; border:1.4px solid oklch(0.5 0 0); flex-shrink:0;"></div>
-          <span style="font-size:13px;">Plan the day</span>
+        <div class="dw-ring-wrap" style="width:86px;height:86px;">
+          <svg viewBox="0 0 90 90">
+            <circle cx="45" cy="45" r="36" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="7"/>
+            <circle id="prodRingFill" cx="45" cy="45" r="36" fill="none" stroke="var(--eq-accent)" stroke-width="7" stroke-linecap="round" transform="rotate(-90 45 45)"/>
+          </svg>
+          <span class="dw-percent" id="prodRingLabel" style="font-size:14px;">—</span>
         </div>
       </div>
+    </a>
+  </div>
+
+  <div class="grid grid-4">
+    <a class="card card-link" href="gym.html">
+      <div class="fit-eyebrow">Fitness</div>
+      <div class="fit-split" id="fitSplit">—</div>
+      <div class="fit-sub">Today's split</div>
+      <div class="fit-divider"></div>
+      <div class="fit-eyebrow" style="margin-bottom:6px;">Current Weight</div>
+      <div class="fit-weight" id="fitWeight">—</div>
+    </a>
+
+    <div class="card">
+      <div class="card-title" style="margin-bottom:12px;"><span>Morning Checklist</span></div>
+      <div id="checklistItems"></div>
     </div>
-    <div style="background:oklch(0.18 0 0); border:1px solid oklch(1 0 0 / 0.05); border-radius:20px; min-height:230px; padding:22px;">
-      <div style="font-size:16px; font-weight:700; margin-bottom:10px;">Finance</div>
-      <div style="display:flex; gap:16px; font-size:11px; color:oklch(0.6 0 0); margin-bottom:12px;">
-        <div style="display:flex; align-items:center; gap:5px;"><span style="width:7px; height:7px; border-radius:50%; background:oklch(0.9 0 0); display:inline-block;"></span>Budget</div>
-        <div style="display:flex; align-items:center; gap:5px;"><span style="width:7px; height:7px; border-radius:50%; background:oklch(0.5 0 0); display:inline-block;"></span>Spending</div>
-      </div>
-      <svg width="100%" height="60" viewBox="0 0 240 60" preserveAspectRatio="none">
-        <path d="M0 45 L40 40 L80 35 L120 25 L160 20 L200 12 L240 8" fill="none" stroke="oklch(0.9 0 0)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M0 50 L40 48 L80 44 L120 38 L160 34 L200 26 L240 18" fill="none" stroke="oklch(0.5 0 0)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <a class="card card-link" href="finance.html">
+      <div class="fin-title">Finance</div>
+      <svg width="100%" height="44" viewBox="0 0 240 44" preserveAspectRatio="none">
+        <path id="finTrendPath" fill="none" stroke="var(--eq-accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <div style="display:flex; justify-content:space-between; margin-top:14px; align-items:center;">
+      <div class="fin-row">
         <div>
-          <div style="font-size:11px; color:oklch(0.5 0 0);">Play Money</div>
-          <div style="font-size:18px; font-weight:700;">$2,540</div>
+          <div class="fin-label">Play Money</div>
+          <div class="fin-val" id="finPlayMoney">—</div>
         </div>
-        <div style="background:oklch(1 0 0 / 0.08); padding:3px 10px; border-radius:10px; font-size:11px;">On Track</div>
+        <div class="fin-badge" id="finOnTrackBadge">—</div>
       </div>
-    </div>
-    <div style="background:oklch(0.18 0 0); border:1px solid oklch(1 0 0 / 0.05); border-radius:20px; min-height:230px; padding:22px;">
-      <div style="font-size:16px; font-weight:700; margin-bottom:14px;">Project</div>
-      <div style="display:flex; flex-direction:column; gap:12px;">
-        <div>
-          <div style="display:flex; justify-content:space-between; font-size:12.5px; margin-bottom:6px;"><span>Dashboard Redesign</span><span style="color:oklch(0.55 0 0);">65%</span></div>
-          <div style="height:6px; border-radius:3px; background:oklch(1 0 0 / 0.08);"><div style="height:100%; width:65%; border-radius:3px; background:oklch(0.95 0 0);"></div></div>
-        </div>
-        <div style="font-size:12px; color:oklch(0.5 0 0);">Due Jun 5</div>
-      </div>
-    </div>
+    </a>
+
+    <a class="card card-link" href="planner.html">
+      <div class="card-title" style="margin-bottom:14px;"><span>Project</span></div>
+      <div class="proj-title" id="projectTitle">No active projects</div>
+      <div class="proj-status" id="projectStatus"></div>
+    </a>
   </div>
 
-  </div>
+</div>
 
+<div class="dr-modal-bg" id="drModalBg">
+  <div class="dr-modal">
+    <label>Wake-up time <input type="time" id="drWakeInput"></label>
+    <label>Bedtime <input type="time" id="drBedInput"></label>
+    <div class="dr-modal-actions">
+      <button type="button" class="dr-btn-cancel" id="drCancelBtn">Cancel</button>
+      <button type="button" class="dr-btn-save" id="drSaveBtn">Save</button>
+    </div>
+    <span class="dr-reset-link" id="drResetLink">Reset to default (8:00 AM – 12:00 AM)</span>
   </div>
 </div>
 
-</x-dc>
-<script type="text/x-dc" data-dc-script>
-class Component extends DCLogic {
-  renderVals() {
-    return {
-      habitDays: [
-        { label: 'Mon', height: '18px', color: 'oklch(0.5 0 0)', labelColor: 'oklch(0.5 0 0)' },
-        { label: 'Tue', height: '26px', color: 'oklch(0.5 0 0)', labelColor: 'oklch(0.5 0 0)' },
-        { label: 'Wed', height: '38px', color: 'oklch(0.5 0 0)', labelColor: 'oklch(0.5 0 0)' },
-        { label: 'Thu', height: '44px', color: 'oklch(0.5 0 0)', labelColor: 'oklch(0.5 0 0)' },
-        { label: 'Fri', height: '50px', color: 'oklch(0.5 0 0)', labelColor: 'oklch(0.5 0 0)' },
-        { label: 'Sat', height: '70px', color: 'oklch(0.97 0 0)', labelColor: 'oklch(0.97 0 0)' },
-        { label: 'Sun', height: '20px', color: 'oklch(0.5 0 0)', labelColor: 'oklch(0.5 0 0)' },
-      ],
-      events: [
-        { day: '25', month: 'MAY', title: 'Project Meeting', time: '10:00 AM – 11:00 AM' },
-        { day: '26', month: 'MAY', title: 'Design Review', time: '02:00 PM – 03:30 PM' },
-        { day: '28', month: 'MAY', title: 'Client Call', time: '11:00 AM – 12:00 PM' },
-      ],
-      dayScores: [
-        { label: 'Focus', pct: '88%' },
-        { label: 'Movement', pct: '74%' },
-        { label: 'Sleep', pct: '91%' },
-      ],
-      dayViewSlots: [
-        { time: '9 AM', event: null, color: '' },
-        { time: '10 AM', event: 'Project Meeting', color: 'oklch(0.45 0.15 255 / 0.5)' },
-        { time: '11 AM', event: null, color: '' },
-        { time: '12 PM', event: 'Lunch with Sam', color: 'oklch(0.5 0.1 155 / 0.4)' },
-        { time: '1 PM', event: null, color: '' },
-        { time: '2 PM', event: 'Design Review', color: 'oklch(0.45 0.15 255 / 0.5)' },
-        { time: '3 PM', event: null, color: '' },
-      ],
-    };
+<script>
+(function () {
+  'use strict';
+
+  // ============================================================
+  // Storage helpers -- same convention as every other page (JSON
+  // over localStorage, mirrored to Supabase by js/sync.js).
+  // ============================================================
+  function storeGet(key) { try { return JSON.parse(localStorage.getItem(key)); } catch (e) { return null; } }
+  function storeSet(key, value) {
+    try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) {}
+    if (typeof key === 'string' && key.indexOf('goals:') === 0) window.dispatchEvent(new CustomEvent('goals-changed'));
   }
-}
+  function storeDelete(key) { try { localStorage.removeItem(key); } catch (e) {} }
+  function storeListKeys(prefix) {
+    const out = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.indexOf(prefix) === 0) out.push(k);
+    }
+    return out;
+  }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+  function pad2(n) { return String(n).padStart(2, '0'); }
+  function dateToKey(d) { return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); }
+
+  function getActiveDateString() {
+    const now = new Date();
+    if (now.getHours() < 6) { const d = new Date(now); d.setDate(d.getDate() - 1); return dateToKey(d); }
+    return dateToKey(now);
+  }
+  function todayKey() { return 'goals:' + getActiveDateString(); }
+  function getGoals(key) { const g = storeGet(key); return Array.isArray(g) ? g : []; }
+  function setGoals(key, list) { storeSet(key, list); }
+  function getLongtermGoals() { const g = storeGet('longterm_goals_v1'); return Array.isArray(g) ? g : []; }
+  function goalDeadlineMs(g) {
+    if (!g.deadline) return null;
+    const d = new Date(g.deadline + 'T23:59:59');
+    return isNaN(d.getTime()) ? null : d.getTime();
+  }
+  function formatCountdown(ms) {
+    if (ms === null) return '';
+    if (ms <= 0) return 'Overdue';
+    const totalSeconds = Math.floor(ms / 1000);
+    const days = Math.floor(totalSeconds / 86400);
+    const hours = Math.floor((totalSeconds % 86400) / 3600);
+    return days > 0 ? (days + 'd ' + hours + 'h') : (hours + 'h ' + Math.floor((totalSeconds % 3600) / 60) + 'm');
+  }
+
+  // ============================================================
+  // Rollover + streak (ported as-is from the old dashboard --
+  // snapshots yesterday via AssistantTools before retiring old
+  // goals: keys; never silently merges undone tasks into today).
+  // ============================================================
+  function rollover() {
+    if (window.AssistantTools) window.AssistantTools.ensureYesterdaySnapshot();
+    const todayDateStr = getActiveDateString();
+    storeListKeys('goals:').forEach((k) => {
+      const dateStr = k.slice('goals:'.length);
+      if (dateStr >= todayDateStr) return;
+      storeDelete(k);
+    });
+  }
+  function loadStreak() {
+    const s = storeGet('goal_streak_v1');
+    if (s && typeof s.count === 'number') return s;
+    return { count: 0, lastProcessedDate: '' };
+  }
+  function processStreak() {
+    const s = loadStreak();
+    const todayDateStr = getActiveDateString();
+    const keys = storeListKeys('goals:').map((k) => k.slice('goals:'.length)).filter((d) => d < todayDateStr).sort();
+    keys.forEach((dateStr) => {
+      if (s.lastProcessedDate && dateStr <= s.lastProcessedDate) return;
+      const list = getGoals('goals:' + dateStr);
+      if (list.length === 0) { /* empty days don't break the streak */ }
+      else if (list.every((g) => g.done)) s.count += 1;
+      else s.count = 0;
+      s.lastProcessedDate = dateStr;
+    });
+    storeSet('goal_streak_v1', s);
+  }
+
+  // ============================================================
+  // Day window ring (wake/bed countdown) -- ported as-is.
+  // ============================================================
+  let WAKE_HOUR = 8, SLEEP_HOUR = 24;
+  const DAY_RING_TIMES_KEY = 'day_ring_times_v1';
+  function timeStrToHour(timeStr) { const [h, m] = timeStr.split(':').map(Number); return h + (m || 0) / 60; }
+  function hourToTimeStr(hourDecimal) {
+    const wrapped = ((hourDecimal % 24) + 24) % 24;
+    const h = Math.floor(wrapped), m = Math.round((wrapped - h) * 60);
+    return pad2(h) + ':' + pad2(m);
+  }
+  function formatClock(d) {
+    let h = d.getHours(); const m = d.getMinutes(); const ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12; if (h === 0) h = 12;
+    return h + ':' + pad2(m) + ' ' + ampm;
+  }
+  function formatHourLabel(hourDecimal) {
+    const wrapped = ((hourDecimal % 24) + 24) % 24;
+    const h = Math.floor(wrapped), m = Math.round((wrapped - h) * 60);
+    const d = new Date(); d.setHours(h, m, 0, 0);
+    return formatClock(d);
+  }
+  function formatRemaining(totalMin) {
+    const h = Math.floor(totalMin / 60), m = Math.floor(totalMin % 60);
+    return h + 'h ' + m + 'm';
+  }
+  function loadDayRingTimes() {
+    const saved = storeGet(DAY_RING_TIMES_KEY);
+    const wakeHour = saved && typeof saved.wakeHour === 'number' ? saved.wakeHour : 8;
+    const bedHour = saved && typeof saved.bedHour === 'number' ? saved.bedHour : 0;
+    WAKE_HOUR = wakeHour;
+    SLEEP_HOUR = bedHour <= wakeHour ? bedHour + 24 : bedHour;
+    return { wakeHour, bedHour };
+  }
+  function saveDayRingTimes(wakeHour, bedHour) {
+    storeSet(DAY_RING_TIMES_KEY, { wakeHour, bedHour });
+    WAKE_HOUR = wakeHour;
+    SLEEP_HOUR = bedHour <= wakeHour ? bedHour + 24 : bedHour;
+  }
+  let dayRingTimes = loadDayRingTimes();
+  const DW_RING_C = 2 * Math.PI * 40;
+
+  function updateDayRing() {
+    const now = new Date();
+    let hours = now.getHours() + now.getMinutes() / 60 + now.getSeconds() / 3600;
+    if (SLEEP_HOUR > 24 && hours < SLEEP_HOUR - 24) hours += 24;
+    document.getElementById('dwDate').textContent = now.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' });
+    document.getElementById('dwWeekday').textContent = now.toLocaleDateString(undefined, { weekday: 'long' });
+    document.getElementById('dwWakeTime').textContent = formatHourLabel(WAKE_HOUR);
+    document.getElementById('dwBedTime').textContent = formatHourLabel(SLEEP_HOUR);
+    const remainingEl = document.getElementById('dwRemaining');
+    const subEl = document.getElementById('dwSub');
+    const percentEl = document.getElementById('dwPercent');
+    const ringFill = document.getElementById('dwRingFill');
+    ringFill.setAttribute('stroke-dasharray', DW_RING_C);
+
+    if (hours < WAKE_HOUR) {
+      remainingEl.textContent = formatRemaining((WAKE_HOUR - hours) * 60);
+      subEl.textContent = 'until wake-up';
+      percentEl.textContent = '—';
+      ringFill.setAttribute('stroke-dashoffset', DW_RING_C);
+      return;
+    }
+    if (hours >= SLEEP_HOUR) {
+      remainingEl.textContent = 'Past bedtime';
+      subEl.textContent = '';
+      percentEl.textContent = '100%';
+      ringFill.setAttribute('stroke-dashoffset', 0);
+      return;
+    }
+    const span = SLEEP_HOUR - WAKE_HOUR;
+    const percent = (hours - WAKE_HOUR) / span * 100;
+    percentEl.textContent = Math.floor(percent) + '%';
+    ringFill.setAttribute('stroke-dashoffset', DW_RING_C * (1 - percent / 100));
+    remainingEl.textContent = formatRemaining((SLEEP_HOUR - hours) * 60) + ' left';
+    subEl.textContent = 'until ' + formatHourLabel(SLEEP_HOUR);
+  }
+
+  const DW_EXPANDED_KEY = 'eq.dashboard.dayWindowExpanded';
+  function setDayWindowExpanded(expanded) {
+    const card = document.getElementById('dwCard');
+    card.classList.toggle('is-expanded', expanded);
+    card.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+    sessionStorage.setItem(DW_EXPANDED_KEY, expanded ? '1' : '0');
+  }
+  document.getElementById('dwCard').addEventListener('click', (e) => {
+    if (e.target.closest('#dayRingEditBtn')) return;
+    setDayWindowExpanded(!document.getElementById('dwCard').classList.contains('is-expanded'));
+  });
+  document.getElementById('dwCard').addEventListener('keydown', (e) => {
+    if ((e.key === 'Enter' || e.key === ' ') && !e.target.closest('#dayRingEditBtn')) {
+      e.preventDefault();
+      setDayWindowExpanded(!document.getElementById('dwCard').classList.contains('is-expanded'));
+    }
+  });
+  setDayWindowExpanded(sessionStorage.getItem(DW_EXPANDED_KEY) === '1');
+
+  function openDayRingModal() {
+    document.getElementById('drWakeInput').value = hourToTimeStr(dayRingTimes.wakeHour);
+    document.getElementById('drBedInput').value = hourToTimeStr(dayRingTimes.bedHour);
+    document.getElementById('drModalBg').classList.add('show');
+  }
+  function closeDayRingModal() { document.getElementById('drModalBg').classList.remove('show'); }
+  document.getElementById('dayRingEditBtn').addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); openDayRingModal(); });
+  document.getElementById('drCancelBtn').addEventListener('click', closeDayRingModal);
+  document.getElementById('drModalBg').addEventListener('click', (e) => { if (e.target === e.currentTarget) closeDayRingModal(); });
+  document.getElementById('drSaveBtn').addEventListener('click', () => {
+    const wakeStr = document.getElementById('drWakeInput').value, bedStr = document.getElementById('drBedInput').value;
+    if (!wakeStr || !bedStr) return;
+    const wakeHour = timeStrToHour(wakeStr), bedHour = timeStrToHour(bedStr);
+    saveDayRingTimes(wakeHour, bedHour);
+    dayRingTimes = { wakeHour, bedHour };
+    closeDayRingModal();
+    updateDayRing();
+  });
+  document.getElementById('drResetLink').addEventListener('click', () => {
+    storeDelete(DAY_RING_TIMES_KEY);
+    dayRingTimes = loadDayRingTimes();
+    closeDayRingModal();
+    updateDayRing();
+  });
+
+  // ============================================================
+  // Greeting
+  // ============================================================
+  function updateGreeting() {
+    const now = new Date();
+    const h = now.getHours();
+    const part = h < 12 ? 'morning' : (h < 18 ? 'afternoon' : 'evening');
+    document.getElementById('dashGreeting').textContent = 'Good ' + part;
+    document.getElementById('greetClock').textContent = formatClock(now);
+  }
+
+  // ============================================================
+  // Tasks (today's goals) + Productivity ring -- same underlying
+  // goals:<date> list. Toggling here is a plain local write, same
+  // shape Planner reads/writes, so it stays in sync everywhere.
+  // ============================================================
+  function renderTasks() {
+    const list = getGoals(todayKey());
+    const wrap = document.getElementById('taskList');
+    if (!list.length) { wrap.innerHTML = '<div class="empty-note">No tasks yet — add one on Planner.</div>'; return; }
+    wrap.innerHTML = list.map((t, i) =>
+      '<div class="task-row">' +
+        '<button type="button" class="task-check' + (t.done ? ' is-done' : '') + '" data-idx="' + i + '" aria-label="Toggle done">' +
+          '<svg width="10" height="10" viewBox="0 0 16 16"><path d="M3 8.5L6.5 12L13 4.5" stroke="#050506" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+        '</button>' +
+        '<span class="task-text' + (t.done ? ' is-done' : '') + '">' + esc(t.text) + '</span>' +
+        '<span class="task-status' + (t.done ? ' is-done' : (t.priority === 'P1' ? ' is-p1' : '')) + '">' +
+          (t.done ? 'Completed' : (t.priority === 'P1' ? 'P1' : 'Pending')) +
+        '</span>' +
+      '</div>'
+    ).join('');
+  }
+  document.getElementById('taskList').addEventListener('click', (e) => {
+    const btn = e.target.closest('.task-check'); if (!btn) return;
+    e.preventDefault(); e.stopPropagation();
+    const idx = Number(btn.getAttribute('data-idx'));
+    const key = todayKey();
+    const list = getGoals(key);
+    if (!list[idx]) return;
+    list[idx].done = !list[idx].done;
+    setGoals(key, list);
+    renderTasks();
+    renderProductivity();
+  });
+
+  const PROD_RING_C = 2 * Math.PI * 36;
+  function renderProductivity() {
+    const list = getGoals(todayKey());
+    const total = list.length, done = list.filter((g) => g.done).length;
+    const pct = total ? Math.round((done / total) * 100) : 0;
+    document.getElementById('prodPct').innerHTML = pct + '<span>%</span>';
+    document.getElementById('prodSub').textContent = total === 0 ? 'No tasks set for today' : (pct >= 80 ? 'Great progress!' : pct >= 40 ? 'Keep going' : 'Just getting started');
+    document.getElementById('prodDone').textContent = String(done);
+    document.getElementById('prodTotal').textContent = String(total);
+    const ring = document.getElementById('prodRingFill');
+    ring.setAttribute('stroke-dasharray', PROD_RING_C);
+    ring.setAttribute('stroke-dashoffset', PROD_RING_C * (1 - pct / 100));
+    document.getElementById('prodRingLabel').textContent = pct + '%';
+  }
+
+  // ============================================================
+  // Goals card (longterm_goals_v1) -- title + deadline countdown
+  // only. No completion % shown: the schema has no progress field
+  // (flagged as a data gap to revisit, not fabricated here).
+  // ============================================================
+  function renderGoalsCard() {
+    const goals = getLongtermGoals().filter((g) => !g.archived);
+    const wrap = document.getElementById('goalsList');
+    if (!goals.length) { wrap.innerHTML = '<div class="empty-note">No long-term goals yet — add one on Planner.</div>'; return; }
+    const sorted = goals.slice().sort((a, b) => {
+      const ma = goalDeadlineMs(a), mb = goalDeadlineMs(b);
+      if (ma == null && mb == null) return 0;
+      if (ma == null) return 1;
+      if (mb == null) return -1;
+      return ma - mb;
+    }).slice(0, 4);
+    wrap.innerHTML = sorted.map((g) => {
+      const ms = goalDeadlineMs(g);
+      const countdown = ms != null ? formatCountdown(ms - Date.now()) : '';
+      return '<div class="goal-row"><div class="goal-row-top"><span>' + esc(g.title) + '</span><span>' + esc(countdown) + '</span></div></div>';
+    }).join('');
+  }
+
+  // ============================================================
+  // Habit tracker -- current week Mon-Sun, bar height = % of
+  // habits done that day. Future days in the week show empty.
+  // ============================================================
+  function habDateKey(d) { return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); }
+  function renderHabitTracker() {
+    const habits = storeGet('habits_v1') || [];
+    const wrap = document.getElementById('habitBars');
+    if (!habits.length) { wrap.parentElement.querySelector('.card-title-more') && (wrap.parentElement.querySelector('.card-title-more').textContent = ''); wrap.innerHTML = '<div class="empty-note">No habits yet.</div>'; return; }
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const monday = new Date(today); monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7));
+    const labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    let html = '';
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(monday); d.setDate(d.getDate() + i);
+      const isFuture = d > today;
+      const isToday = d.getTime() === today.getTime();
+      const k = habDateKey(d);
+      const doneCount = isFuture ? 0 : habits.filter((h) => h.history && h.history[k]).length;
+      const pct = habits.length ? doneCount / habits.length : 0;
+      const heightPx = isFuture ? 3 : Math.max(3, Math.round(pct * 70));
+      html += '<div class="habit-col">' +
+        '<div class="habit-bar' + (isToday ? ' is-today' : '') + '" style="height:' + heightPx + 'px;"></div>' +
+        '<span class="habit-label' + (isToday ? ' is-today' : '') + '">' + labels[i] + '</span>' +
+      '</div>';
+    }
+    wrap.innerHTML = html;
+  }
+
+  // ============================================================
+  // Sleep log -- duration + target only (real). Bedtime/wake-up
+  // clock-times aren't logged anywhere in this app (data gap,
+  // left alone per plan -- revisit later rather than fabricate).
+  // ============================================================
+  function renderSleepCard() {
+    const entries = storeGet('sleep_log_v1');
+    const list = Array.isArray(entries) ? entries : [];
+    const byKey = {}; list.forEach((e) => { if (e && e.dateKey) byKey[e.dateKey] = e; });
+    const today = new Date();
+    const nights = [];
+    for (let i = 6; i >= 0; i--) { const d = new Date(today); d.setDate(d.getDate() - i); nights.push(byKey[habDateKey(d)] || null); }
+    const targetRaw = Number(storeGet('sleep_target_hours_v1'));
+    const target = targetRaw > 0 ? targetRaw : 7;
+    document.getElementById('sleepTargetBadge').textContent = 'Target ' + target + 'h';
+
+    const latest = list.slice().filter((e) => e && e.dateKey).sort((a, b) => a.dateKey.localeCompare(b.dateKey)).pop();
+    const durEl = document.getElementById('sleepDuration');
+    if (latest && latest.hours != null) {
+      const h = Math.floor(latest.hours), m = Math.round((latest.hours - h) * 60);
+      durEl.textContent = h + 'h ' + m + 'm';
+    } else {
+      durEl.textContent = '—';
+    }
+
+    const barsEl = document.getElementById('sleepBars');
+    if (!nights.some(Boolean)) { barsEl.innerHTML = ''; return; }
+    const vals = nights.filter(Boolean).map((e) => e.hours).concat([target]);
+    const min = Math.min.apply(null, vals), max = Math.max.apply(null, vals);
+    const pad = Math.max((max - min) * 0.15, 0.4);
+    const yMin = min - pad, yMax = max + pad;
+    const xLeft = 6, xRight = 294, yTop = 4, yBot = 36;
+    const slotW = (xRight - xLeft) / nights.length;
+    const barW = Math.min(20, slotW * 0.5);
+    const yFor = (h) => yBot - ((h - yMin) / (yMax - yMin)) * (yBot - yTop);
+    let html = '';
+    nights.forEach((e, i) => {
+      if (!e) return;
+      const cx = xLeft + slotW * (i + 0.5);
+      const y = yFor(e.hours);
+      html += '<rect class="greet-bar" x="' + (cx - barW / 2).toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + barW.toFixed(1) + '" height="' + (yBot - y).toFixed(1) + '" rx="3"></rect>';
+    });
+    barsEl.innerHTML = html;
+  }
+
+  // ============================================================
+  // Calendar: local events + live Google Calendar, merged.
+  // ============================================================
+  const GOOGLE_CAL_CLIENT_ID = '83878675540-40tpq4hkpd05jarl8m8nj9i8vhm5rnel.apps.googleusercontent.com';
+  const GOOGLE_CAL_SCOPE = 'https://www.googleapis.com/auth/calendar.events';
+  const GCAL_TOKENS_KEY = 'gcal_tokens_v1';
+  function getGcalTokens() { return storeGet(GCAL_TOKENS_KEY); }
+  function setGcalTokens(t) { storeSet(GCAL_TOKENS_KEY, t); }
+  function clearGcalTokens() { storeDelete(GCAL_TOKENS_KEY); }
+
+  function processGcalHashTokens() {
+    const hash = window.location.hash;
+    if (!hash || hash.indexOf('gcal_access=') === -1) return;
+    const params = new URLSearchParams(hash.slice(1));
+    const access = params.get('gcal_access'), refresh = params.get('gcal_refresh'), expires = params.get('gcal_expires');
+    if (access) {
+      const existing = getGcalTokens() || {};
+      setGcalTokens({ access_token: access, refresh_token: refresh || existing.refresh_token || '', expires_at: Number(expires) || (Date.now() + 3600 * 1000) });
+    }
+    history.replaceState(null, '', window.location.pathname + window.location.search);
+  }
+  function gcalAuthUrl() {
+    const redirectUri = window.location.origin + '/api/google-calendar-callback';
+    const params = new URLSearchParams({ client_id: GOOGLE_CAL_CLIENT_ID, redirect_uri: redirectUri, response_type: 'code', scope: GOOGLE_CAL_SCOPE, access_type: 'offline', prompt: 'consent' });
+    return 'https://accounts.google.com/o/oauth2/v2/auth?' + params.toString();
+  }
+  async function ensureValidGcalToken() {
+    const tokens = getGcalTokens();
+    if (!tokens || !tokens.access_token) return null;
+    if (tokens.expires_at && Date.now() < tokens.expires_at - 60000) return tokens.access_token;
+    if (!tokens.refresh_token) { clearGcalTokens(); return null; }
+    try {
+      const res = await fetch('/api/google-calendar-refresh', {
+        method: 'POST',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, window.EqAuth ? window.EqAuth.header() : {}),
+        body: JSON.stringify({ refresh_token: tokens.refresh_token })
+      });
+      const json = await res.json();
+      if (!res.ok || !json.access_token) { clearGcalTokens(); return null; }
+      setGcalTokens({ access_token: json.access_token, refresh_token: tokens.refresh_token, expires_at: Date.now() + (json.expires_in || 3600) * 1000 });
+      return json.access_token;
+    } catch (e) { return null; }
+  }
+  async function fetchGcalEvents(timeMinISO, timeMaxISO) {
+    const token = await ensureValidGcalToken();
+    if (!token) return null;
+    const params = new URLSearchParams({ timeMin: timeMinISO, timeMax: timeMaxISO, singleEvents: 'true', orderBy: 'startTime', maxResults: '250' });
+    const res = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events?' + params.toString(), { headers: { Authorization: 'Bearer ' + token } });
+    if (res.status === 401) { clearGcalTokens(); throw new Error('Session expired — reconnect Google Calendar.'); }
+    if (!res.ok) throw new Error('Google Calendar request failed (' + res.status + ').');
+    const json = await res.json();
+    return json.items || [];
+  }
+  function getLocalCalEvents() { const v = storeGet('local_cal_events_v1'); return Array.isArray(v) ? v : []; }
+  function calEventDate(ev, which) {
+    const part = ev[which];
+    if (!part) return null;
+    if (part.date) { const p = part.date.split('-').map(Number); return new Date(p[0], p[1] - 1, p[2]); }
+    if (part.dateTime) return new Date(part.dateTime);
+    return null;
+  }
+  function calEventIsAllDay(ev) { return !!(ev.start && ev.start.date); }
+
+  let liveGcalEvents = [];
+  function initCalendarConnectUI() {
+    const btn = document.getElementById('gcalConnectBtn');
+    const tokens = getGcalTokens();
+    btn.style.display = tokens && tokens.access_token ? 'none' : '';
+    btn.addEventListener('click', (e) => { e.preventDefault(); window.location.href = gcalAuthUrl(); });
+  }
+  async function loadLiveEvents() {
+    const tokens = getGcalTokens();
+    if (!tokens || !tokens.access_token) { liveGcalEvents = []; return; }
+    try {
+      const now = new Date();
+      const start = new Date(now); start.setHours(0, 0, 0, 0);
+      const end = new Date(start); end.setDate(end.getDate() + 7);
+      liveGcalEvents = await fetchGcalEvents(start.toISOString(), end.toISOString()) || [];
+    } catch (e) { liveGcalEvents = []; }
+    renderDayView();
+    renderUpcomingEvents();
+  }
+  function mergedEvents() { return getLocalCalEvents().concat(liveGcalEvents); }
+
+  function renderDayView() {
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1);
+    document.getElementById('dayViewDate').textContent = today.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+    const todays = mergedEvents().filter((ev) => {
+      if (calEventIsAllDay(ev)) return false;
+      const d = calEventDate(ev, 'start');
+      return d && d >= today && d < tomorrow;
+    }).sort((a, b) => calEventDate(a, 'start') - calEventDate(b, 'start'));
+
+    const HOURS = [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22];
+    const wrap = document.getElementById('dayViewSlots');
+    wrap.innerHTML = HOURS.map((hr) => {
+      const ev = todays.find((e) => calEventDate(e, 'start').getHours() === hr);
+      const label = hr === 12 ? '12 PM' : hr > 12 ? (hr - 12) + ' PM' : hr + ' AM';
+      return '<div class="dayview-slot"><div class="dayview-time">' + label + '</div>' +
+        (ev ? '<div class="dayview-event">' + esc(ev.summary || '(untitled)') + '</div>' : '') +
+      '</div>';
+    }).join('');
+  }
+
+  function renderUpcomingEvents() {
+    const now = new Date();
+    const upcoming = mergedEvents().map((ev) => ({ ev, d: calEventDate(ev, 'start') }))
+      .filter((x) => x.d && x.d >= now)
+      .sort((a, b) => a.d - b.d)
+      .slice(0, 6);
+    const wrap = document.getElementById('eventsList');
+    if (!upcoming.length) { wrap.innerHTML = '<div class="empty-note">No upcoming events.</div>'; return; }
+    const months = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+    wrap.innerHTML = upcoming.map(({ ev, d }) => {
+      const timeTxt = calEventIsAllDay(ev) ? 'All day' : d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+      return '<div class="event-row">' +
+        '<div class="event-date"><div class="event-day">' + d.getDate() + '</div><div class="event-month">' + months[d.getMonth()] + '</div></div>' +
+        '<div><div class="event-title">' + esc(ev.summary || '(untitled)') + '</div><div class="event-time">' + timeTxt + '</div></div>' +
+      '</div>';
+    }).join('');
+  }
+
+  // ============================================================
+  // Fitness -- today's split ported from gym.html's todaySplit(),
+  // weight + trend from gym.html's published eq.fitness.summary.
+  // ============================================================
+  function todaySplit() {
+    try {
+      const state = storeGet('po_coach_v1');
+      const rot = state && state.splitRotation;
+      if (!rot || !rot.length) return { name: '—', index: 0 };
+      const a = new Date(state.splitAnchor.date), t = new Date();
+      a.setHours(0, 0, 0, 0); t.setHours(0, 0, 0, 0);
+      const diffDays = Math.round((t - a) / 86400000);
+      const idx = ((state.splitAnchor.index + diffDays) % rot.length + rot.length) % rot.length;
+      return { name: rot[idx], index: idx };
+    } catch (e) { return { name: '—', index: 0 }; }
+  }
+  function renderFitnessCard() {
+    document.getElementById('fitSplit').textContent = todaySplit().name;
+    const summary = storeGet('eq.fitness.summary');
+    const weightEl = document.getElementById('fitWeight');
+    if (!summary || summary.currentWeight == null) { weightEl.textContent = 'No weigh-ins logged yet'; return; }
+    const units = summary.units || 'kg';
+    weightEl.innerHTML = summary.currentWeight + units + (summary.weight7dAvg != null ? ' <span>· ' + summary.weight7dAvg + units + ' 7d avg</span>' : '');
+  }
+
+  // ============================================================
+  // Morning checklist -- interactive toggle, no AI.
+  // ============================================================
+  function getActiveDateStringForChecklist() { return getActiveDateString(); }
+  function renderChecklist() {
+    const items = storeGet('checklist:items:morning') || [];
+    const doneMap = storeGet('checklist:done:morning:' + getActiveDateStringForChecklist()) || {};
+    const wrap = document.getElementById('checklistItems');
+    if (!items.length) { wrap.innerHTML = '<div class="empty-note">No morning checklist items yet — add some on Planner.</div>'; return; }
+    wrap.innerHTML = items.map((it) =>
+      '<div class="chk-row">' +
+        '<button type="button" class="chk-box' + (doneMap[it.id] ? ' is-done' : '') + '" data-id="' + esc(it.id) + '" aria-label="Toggle done">' +
+          '<svg width="10" height="10" viewBox="0 0 16 16"><path d="M3 8.5L6.5 12L13 4.5" stroke="#050506" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+        '</button>' +
+        '<span class="chk-text' + (doneMap[it.id] ? ' is-done' : '') + '">' + esc(it.text || '') + '</span>' +
+      '</div>'
+    ).join('');
+  }
+  document.getElementById('checklistItems').addEventListener('click', (e) => {
+    const btn = e.target.closest('.chk-box'); if (!btn) return;
+    const id = btn.getAttribute('data-id');
+    const key = 'checklist:done:morning:' + getActiveDateStringForChecklist();
+    const doneMap = storeGet(key) || {};
+    doneMap[id] = !doneMap[id];
+    storeSet(key, doneMap);
+    renderChecklist();
+  });
+
+  // ============================================================
+  // Finance -- net worth recomputed from raw category arrays
+  // (there is no published eq.finance.summary key). Play Money =
+  // net worth x the 'play' allocation bucket %, genuinely derived.
+  // ============================================================
+  const FIN_ALLOC_DEFAULTS = [
+    { id: 'investment', pct: 50 }, { id: 'operations', pct: 30 }, { id: 'tax', pct: 15 }, { id: 'play', pct: 5 }
+  ];
+  function getFinAllocBuckets() {
+    const saved = storeGet('eq.finance.allocation.buckets');
+    return (Array.isArray(saved) && saved.length) ? saved : FIN_ALLOC_DEFAULTS;
+  }
+  function renderFinanceCard() {
+    let netWorth = 0, hasAny = false;
+    ['bank', 'stocks', 'crypto', 'other'].forEach((c) => {
+      const list = storeGet('nw:' + c);
+      if (Array.isArray(list) && list.length) hasAny = true;
+      (list || []).forEach((it) => { netWorth += Number(it.amount) || 0; });
+    });
+    const playMoneyEl = document.getElementById('finPlayMoney');
+    const badgeEl = document.getElementById('finOnTrackBadge');
+    if (!hasAny) {
+      playMoneyEl.textContent = 'Add an account on Finance';
+      badgeEl.textContent = '';
+      document.getElementById('finTrendPath').setAttribute('d', '');
+      return;
+    }
+    const buckets = getFinAllocBuckets();
+    const playBucket = buckets.find((b) => b.id === 'play') || buckets.find((b) => (b.name || '').toLowerCase().indexOf('play') !== -1);
+    const playPct = playBucket ? (Number(playBucket.pct) || 0) : 0;
+    playMoneyEl.textContent = 'GBP ' + Math.round(netWorth * playPct / 100).toLocaleString('en-US');
+
+    const income = (storeGet('budget:income') || []).reduce((s, x) => s + (Number(x.amount) || 0), 0);
+    const expenses = (storeGet('budget:expenses') || []).reduce((s, x) => s + (Number(x.amount) || 0), 0);
+    const net = income - expenses;
+    if (income || expenses) {
+      badgeEl.textContent = net >= 0 ? 'On Track' : 'Over Budget';
+      badgeEl.className = 'fin-badge ' + (net >= 0 ? 'is-ontrack' : 'is-off');
+    } else {
+      badgeEl.textContent = '';
+      badgeEl.className = 'fin-badge';
+    }
+
+    const history = (storeGet('nw:history') || []).filter((h) => h && typeof h.v === 'number').slice(-30);
+    const pathEl = document.getElementById('finTrendPath');
+    if (history.length < 2) { pathEl.setAttribute('d', ''); return; }
+    const vals = history.map((h) => h.v);
+    const min = Math.min.apply(null, vals), max = Math.max.apply(null, vals);
+    const pad = Math.max((max - min) * 0.15, 1);
+    const yMin = min - pad, yMax = max + pad;
+    const xLeft = 0, xRight = 240, yTop = 4, yBot = 40;
+    const xFor = (i) => xLeft + (i / (history.length - 1)) * (xRight - xLeft);
+    const yFor = (v) => yBot - ((v - yMin) / (yMax - yMin)) * (yBot - yTop);
+    let d = '';
+    history.forEach((h, i) => { d += (i === 0 ? 'M ' : ' L ') + xFor(i).toFixed(1) + ' ' + yFor(h.v).toFixed(1); });
+    pathEl.setAttribute('d', d);
+  }
+
+  // ============================================================
+  // Project -- title + status only (no fabricated progress/due
+  // date; those fields don't exist in projects_v1's schema).
+  // ============================================================
+  function renderProjectCard() {
+    const list = (storeGet('projects_v1') || []).filter((p) => !p.archived && p.status !== 'completed' && p.status !== 'done');
+    const titleEl = document.getElementById('projectTitle');
+    const statusEl = document.getElementById('projectStatus');
+    if (!list.length) { titleEl.textContent = 'No active projects'; statusEl.textContent = ''; return; }
+    const sorted = list.slice().sort((a, b) => (a.priority === 'P1' ? -1 : 0) - (b.priority === 'P1' ? -1 : 0));
+    const top = sorted[0];
+    titleEl.textContent = top.title || 'Untitled project';
+    statusEl.textContent = top.status || '';
+  }
+
+  // ============================================================
+  // Backup nudge + Yesterday unfinished-tasks alert -- ported as-is.
+  // ============================================================
+  function renderBackupNudge() {
+    const iso = storeGet('eq.lastBackupAt');
+    const days = iso ? Math.floor((Date.now() - new Date(iso).getTime()) / 86400000) : null;
+    const nudge = document.getElementById('backupNudge');
+    if (days !== null && days <= 14) { nudge.style.display = 'none'; return; }
+    nudge.style.display = '';
+    document.getElementById('backupNudgeText').textContent = days === null ? 'You have never backed up your data. Back up now →' : ('Last backed up ' + days + ' days ago. Back up now →');
+    nudge.onclick = () => { window.location.href = 'settings.html'; };
+    nudge.style.cursor = 'pointer';
+  }
+
+  function renderYesterdayAlert() {
+    const AT = window.AssistantTools;
+    const wrap = document.getElementById('ydAlertWrap');
+    if (!AT || !wrap) return;
+    const snap = AT.getYesterdaySnapshot();
+    const unfinished = (snap.tasks || []).filter((t) => !t.done);
+    if (!unfinished.length) { wrap.style.display = 'none'; return; }
+    wrap.style.display = '';
+    document.getElementById('ydAlertCount').textContent = String(unfinished.length);
+    document.getElementById('ydAlertList').innerHTML = unfinished.map((t) =>
+      '<div class="yd-alert-row"><span class="yd-alert-warn">⚠</span><span class="yd-alert-text">' + esc(t.text) + '</span>' +
+      '<div class="yd-alert-actions">' +
+        '<button type="button" class="yd-alert-today" data-id="' + t.id + '" data-action="today">Do today</button>' +
+        '<button type="button" data-id="' + t.id + '" data-action="dismiss">Dismiss</button>' +
+      '</div></div>'
+    ).join('');
+  }
+  document.getElementById('ydAlertList').addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-action]'); if (!btn) return;
+    const AT = window.AssistantTools; if (!AT) return;
+    const id = btn.getAttribute('data-id');
+    if (btn.getAttribute('data-action') === 'today') AT.moveYesterdayTaskToToday(id);
+    else AT.removeFromYesterdaySnapshot(id);
+    renderYesterdayAlert();
+    renderTasks();
+    renderProductivity();
+  });
+
+  // ============================================================
+  // Whoop recovery -- token refresh + display only (connect flow
+  // lives on health.html; its OAuth callback never targets this page).
+  // ============================================================
+  async function renderWhoopRecovery() {
+    const pill = document.getElementById('whoopPill');
+    let t = storeGet('whoop_tokens_v1');
+    if (!t) { pill.style.display = 'none'; return; }
+    async function refreshTok(tok) {
+      if (!tok.refresh) return null;
+      try {
+        const r = await fetch('/api/whoop-refresh', {
+          method: 'POST',
+          headers: Object.assign({ 'Content-Type': 'application/json' }, window.EqAuth ? window.EqAuth.header() : {}),
+          body: JSON.stringify({ refresh_token: tok.refresh })
+        });
+        const j = await r.json();
+        if (j.access_token) {
+          const next = { access: j.access_token, refresh: j.refresh_token || tok.refresh, expires: Date.now() + (j.expires_in || 3500) * 1000 };
+          storeSet('whoop_tokens_v1', next);
+          return next;
+        }
+      } catch (e) {}
+      return null;
+    }
+    async function whFetch(path, tok) {
+      const [p, qs] = path.split('?');
+      const params = new URLSearchParams(qs || ''); params.set('path', p);
+      const r = await fetch('/api/whoop-data?' + params.toString(), {
+        headers: Object.assign({ Authorization: 'Bearer ' + tok.access, Accept: 'application/json' }, window.EqAuth ? window.EqAuth.header() : {})
+      });
+      if (r.status === 401) { const n = await refreshTok(tok); if (n) return whFetch(path, n); throw new Error('unauthorized'); }
+      if (!r.ok) throw new Error('whoop ' + r.status);
+      return await r.json();
+    }
+    try {
+      if (t.expires && Date.now() > t.expires - 60000) { const n = await refreshTok(t); if (n) t = n; }
+      const rec = await whFetch('/recovery?limit=1', t);
+      const r0 = rec && rec.records && rec.records[0];
+      const score = r0 && r0.score && r0.score.recovery_score != null ? Math.round(r0.score.recovery_score) : null;
+      if (score == null) { pill.style.display = 'none'; return; }
+      pill.style.display = '';
+      pill.textContent = score + '% recovery';
+      pill.className = 'whoop-pill ' + (score >= 67 ? 'good' : score >= 34 ? 'warn' : 'bad');
+    } catch (e) { pill.style.display = 'none'; }
+  }
+
+  // ============================================================
+  // Boot
+  // ============================================================
+  rollover();
+  processStreak();
+  updateDayRing();
+  updateGreeting();
+  renderTasks();
+  renderProductivity();
+  renderGoalsCard();
+  renderHabitTracker();
+  renderSleepCard();
+  renderFitnessCard();
+  renderChecklist();
+  renderFinanceCard();
+  renderProjectCard();
+  renderBackupNudge();
+  renderYesterdayAlert();
+  renderWhoopRecovery();
+  processGcalHashTokens();
+  initCalendarConnectUI();
+  renderDayView();
+  renderUpcomingEvents();
+  loadLiveEvents();
+
+  setInterval(() => { updateDayRing(); updateGreeting(); }, 60 * 1000);
+  window.addEventListener('goals-changed', () => { renderTasks(); renderProductivity(); });
+  window.addEventListener('storage', () => {
+    renderTasks(); renderProductivity(); renderGoalsCard(); renderHabitTracker(); renderSleepCard();
+    renderFitnessCard(); renderChecklist(); renderFinanceCard(); renderProjectCard(); renderYesterdayAlert();
+    renderDayView(); renderUpcomingEvents();
+  });
+})();
+
+document.addEventListener('DOMContentLoaded', function () {
+  if (typeof initCloudSync !== 'function') return;
+  initCloudSync({
+    appKey: 'goals',
+    syncedKeys: ['longterm_goals_v1', 'projects_v1', 'local_cal_events_v1'],
+    syncedPrefixes: ['goals:', 'checklist:items:', 'checklist:done:'],
+    onApplied: function () {
+      window.dispatchEvent(new CustomEvent('goals-changed'));
+      window.dispatchEvent(new Event('storage'));
+    }
+  });
+});
 </script>
 </body>
 </html>
