@@ -1,6 +1,6 @@
 // =============================================================
 // Row-level Supabase sync for a page's list of "plan days"
-// (day_key/name/order/soft-delete) -- e.g. train.html's Push/Pull/Legs
+// (day_key/name/order/soft-delete) -- e.g. Fitness's Push/Pull/Legs
 // tabs and gym.html's day-tag list. Decoupled from the existing whole-blob
 // localStorage sync (sync.js/vitality-bridge.js/gym.html's own PC_*): those
 // keep syncing everything else (logged sets, exercise config, weights);
@@ -12,7 +12,7 @@
 // is permissive for the anon key, same trust model as app_state already
 // uses everywhere else.
 //
-// Usage (see train.html / gym.html for the actual wiring):
+// Usage (see gym.html for the actual wiring):
 //   const sync = PlanSync.init({
 //     plan: 'train',                       // 'train' | 'gym'
 //     getLocalSnapshot: () => [...],       // () => [{key,name}] in order, read once for first-run migration

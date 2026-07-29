@@ -1574,15 +1574,10 @@ body::after {
       <span class="eq-summary-value" id="eqSumFinance">—</span>
       <span class="eq-summary-sub">Net worth</span>
     </a>
-    <a class="eq-summary-card" href="train.html">
-      <span class="eq-summary-label">Train</span>
+    <a class="eq-summary-card" href="gym.html">
+      <span class="eq-summary-label">Fitness</span>
       <span class="eq-summary-value" id="eqSumTrain">—</span>
       <span class="eq-summary-sub">Today's split</span>
-    </a>
-    <a class="eq-summary-card" href="gym.html">
-      <span class="eq-summary-label">Gym</span>
-      <span class="eq-summary-value" id="eqSumGym">—</span>
-      <span class="eq-summary-sub">Current weight</span>
     </a>
     <a class="eq-summary-card" href="health.html">
       <span class="eq-summary-label">Health</span>
@@ -1802,7 +1797,7 @@ body::after {
       <div class="dsum-body" id="dsumPlannerBody">Loading…</div>
     </a>
 
-    <a class="dsum-card" href="ability.html" data-card="habits">
+    <a class="dsum-card" href="planner.html#habit-tracker" data-card="habits">
       <div class="dsum-head">
         <span class="dsum-icon">🔥</span>
         <span class="dsum-title">Habits</span>
@@ -1817,10 +1812,6 @@ body::after {
         <span class="dsum-title">Shortcuts</span>
       </div>
       <div class="sc-grid">
-        <button class="sc-tile" id="scNotesBtn" type="button">
-          <span class="sc-tile-icon">📝</span>
-          <span class="sc-tile-label">Notes</span>
-        </button>
         <button class="sc-tile" id="scBriefBtn" type="button">
           <span class="sc-tile-icon">☀️</span>
           <span class="sc-tile-label">Brief</span>
@@ -2621,7 +2612,7 @@ body::after {
     renderDashboardSummaries();
   });
 
-  // 0.7 re-walk: local habit score/streak, duplicated from ability.html's
+  // 0.7 re-walk: local habit score/streak, duplicated from the Habit Tracker's
   // own computeHabitScore/computeStreak (same shared habits_v1 shape) --
   // this file's established pattern for every other cross-page metric
   // (see the tier-cadence re-derivations, HEALTH_FAIL_LABELS, etc. above)
@@ -2906,7 +2897,6 @@ body::after {
     if (e.target === e.currentTarget) closeScPanel();
   });
 
-  document.getElementById('scNotesBtn').addEventListener('click', () => { location.href = 'notes.html'; });
 
   document.getElementById('scBriefBtn').addEventListener('click', () => {
     openScPanel('Brief', () => {
@@ -3034,7 +3024,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // said Sunday 9 PM; user's call when asked to resolve the conflict).
   // Was Monday 6am, an intentional deviation from an earlier session --
   // now deliberately reverted to match the new answer. Same boundary as
-  // gym.html/interactions.html/news.html/topbar.js's own copies -- kept
+  // gym.html/interactions.html/topbar.js's own copies -- kept
   // as its own copy here rather than shared, matching this app's
   // established per-file-duplication convention for small date-math
   // helpers. Sunday is already JS's native day 0, so no Monday-style
@@ -3392,28 +3382,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     s += 'Monthly cash-flow pace: ' + (m.finance.monthlyCashFlow != null ? (m.finance.monthlyCashFlow >= 0 ? '+' : '') + 'GBP ' + m.finance.monthlyCashFlow : 'no data') + '\n';
     s += 'Stack adherence this week: ' + (stackPct != null ? stackPct + '%' : 'no data') + '\n';
-    const moodLog = (storeGet('eq.mood.log_v1') || []).filter((m) => m.dateKey >= r.weekStart.slice(0, 10) && m.dateKey < r.weekEnd.slice(0, 10));
-    s += 'Mood this week: ' + (moodLog.length ? (moodLog.reduce((a, m) => a + m.mood, 0) / moodLog.length).toFixed(1) + '/10 avg (' + moodLog.length + ' entries)' : 'no data') + '\n';
-    // 6.5: symptom frequency/severity trend as its own audit domain, per
-    // spec's own example phrasing ("skin flare incidents: 1 this week, down
-    // from 4"). Re-derived directly from the raw log (health.html's own
-    // storage key), same per-file convention already used for moodLog above
-    // and elsewhere in this function -- there's no cross-page function
-    // sharing in this app, only shared localStorage keys.
-    const symLog = storeGet('eq.symptoms.log_v1') || [];
-    const symWeekStartKey = r.weekStart.slice(0, 10), symWeekEndKey = r.weekEnd.slice(0, 10);
-    const symPrevStartKey = AT.fmtDateKey(new Date(new Date(r.weekStart).getTime() - 7 * 86400000));
-    const symPrevEndKey = AT.fmtDateKey(new Date(new Date(r.weekEnd).getTime() - 7 * 86400000));
-    const symThisWeek = symLog.filter((e) => e.dateKey >= symWeekStartKey && e.dateKey < symWeekEndKey);
-    const symPrevWeek = symLog.filter((e) => e.dateKey >= symPrevStartKey && e.dateKey < symPrevEndKey);
-    if (symThisWeek.length || symPrevWeek.length) {
-      const byType = {}, prevByType = {};
-      symThisWeek.forEach((e) => { byType[e.type] = (byType[e.type] || 0) + 1; });
-      symPrevWeek.forEach((e) => { prevByType[e.type] = (prevByType[e.type] || 0) + 1; });
-      const parts = Object.keys(byType).map((t) => t + ': ' + byType[t] + ' this week (was ' + (prevByType[t] || 0) + ')');
-      const avgSev = symThisWeek.length ? (symThisWeek.reduce((a, e) => a + e.severity, 0) / symThisWeek.length).toFixed(1) : null;
-      s += 'Symptoms this week: ' + (parts.length ? parts.join(', ') : 'none') + (avgSev ? '; avg severity ' + avgSev + '/5' : '') + '\n';
-    }
 
     const audits = getAudits().filter((a) => a.weekKey < r.weekKey).sort((a, b) => a.weekKey.localeCompare(b.weekKey));
     const prev = audits.length ? audits[audits.length - 1] : null;
@@ -4150,7 +4118,7 @@ document.addEventListener('DOMContentLoaded', function () {
   function dateKeyOf(d) { return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); }
   function todayKey() { return dateKeyOf(new Date()); }
 
-  const HABIT_SCORE_K = 0.95; // same constant as ability.html's computeHabitScore -- see that file for the full rationale
+  const HABIT_SCORE_K = 0.95; // same constant as the Habit Tracker's computeHabitScore (planner.html) -- see there for the full rationale
   function habitStartBoundary(habit) {
     if (habit.createdAt) { const t = new Date(habit.createdAt); t.setHours(0, 0, 0, 0); return t; }
     const keys = Object.keys(habit.history || {}).sort();
@@ -4362,27 +4330,24 @@ document.addEventListener('DOMContentLoaded', function () {
     el.textContent = fmtGBP(last ? last.v : null) || 'No data';
   })();
 
-  // ---- Train: active split day's name ----
+  // ---- Fitness: active training day's name. Reads the merged plan that
+  // now lives inside po_coach_v1; falls back to the retired Train page's
+  // own blob for a device that has not opened Fitness since the merge and
+  // so has not run the import yet. ----
   (async function () {
     const el = document.getElementById('eqSumTrain');
     if (!el) return;
-    let state = localJSON('vitality_bridge:vitality_train');
-    if (!state) state = await remoteAppState('vitality_train');
-    const name = state && state.days && state.active && state.days[state.active] ? state.days[state.active].name : null;
-    el.textContent = name || 'No data';
-  })();
-
-  // ---- Gym: current weight (po_coach_weights' last entry) ----
-  (async function () {
-    const el = document.getElementById('eqSumGym');
-    if (!el) return;
-    let arr = localJSON('po_coach_weights');
-    if (!Array.isArray(arr) || !arr.length) {
-      const remote = await remoteAppState('po-coach');
-      arr = remote && Array.isArray(remote['po_coach_weights']) ? remote['po_coach_weights'] : null;
+    let name = null;
+    let coach = localJSON('po_coach_v1');
+    if (!coach) coach = await remoteAppState('po-coach');
+    const plan = coach && coach.plan;
+    if (plan && plan.days && plan.active && plan.days[plan.active]) name = plan.days[plan.active].name;
+    if (!name) {
+      let legacy = localJSON('vitality_bridge:vitality_train');
+      if (!legacy) legacy = await remoteAppState('vitality_train');
+      if (legacy && legacy.days && legacy.active && legacy.days[legacy.active]) name = legacy.days[legacy.active].name;
     }
-    const last = Array.isArray(arr) && arr.length ? arr[arr.length - 1] : null;
-    el.textContent = (last && last.weight != null) ? (Math.round(last.weight * 10) / 10 + ' kg') : 'No data';
+    el.textContent = name || 'No data';
   })();
 
   // ---- Health: WHOOP recovery score ----

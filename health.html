@@ -17,6 +17,7 @@
 <script src="js/sync.js" defer></script>
 <script src="js/assistant-tools.js"></script>
 <script src="js/topbar.js" defer></script>
+<script src="js/collapsible.js" defer></script>
 <script src="js/obsidian-sync.js"></script>
 <script src="js/daily-report.js" defer></script>
 <style>
@@ -82,22 +83,6 @@ main {
   max-width: 1160px; margin: 0 auto;
   padding: 56px 16px 80px;
   padding-top: max(56px, env(safe-area-inset-top, 56px));
-}
-
-.water-embed { margin-top: 56px; }
-.water-iframe {
-  display: block;
-  width: 100%;
-  height: 880px;
-  border: 0;
-  background: transparent;
-  border-radius: 16px;
-  overflow: hidden;
-  color-scheme: dark;
-}
-@media (max-width: 480px) {
-  .water-embed { margin-top: 40px; }
-  .water-iframe { height: 780px; }
 }
 
 .stack-card {
@@ -772,70 +757,6 @@ main {
     }
     .sl-add-btn:hover { background:var(--accent); color:#fff; }
 
-    /* ===== Symptom Log (6.5) ===== */
-    .sym-card { background:var(--bg-card); border:1px solid rgba(255,255,255,0.06); border-radius:18px; padding:18px; margin-bottom:22px; }
-    .sym-type-row, .sym-sev-row { display:flex; flex-wrap:wrap; gap:6px; }
-    .sym-type-btn, .sym-sev-btn {
-      padding:7px 13px; border-radius:999px; border:1px solid rgba(255,255,255,0.1);
-      background:rgba(255,255,255,0.03); color:var(--text-secondary); font-family:inherit;
-      font-size:12.5px; font-weight:600; cursor:pointer;
-    }
-    .sym-sev-btn { flex:1; min-width:36px; text-align:center; padding:7px 0; }
-    .sym-type-btn.is-selected, .sym-sev-btn.is-selected { background:var(--accent); border-color:transparent; color:#fff; }
-    .sym-sev-row { margin-top:10px; }
-    .sym-add-type-row { display:flex; gap:8px; margin-top:10px; }
-    .sym-add-type-input {
-      flex:1; background:rgba(0,0,0,0.28); border:1px solid rgba(255,255,255,0.1); border-radius:9px;
-      color:var(--text-primary); padding:9px 10px; font-family:inherit; font-size:13px;
-    }
-    .sym-add-type-btn {
-      padding:0 16px; background:rgba(255,255,255,0.06); border:none; color:var(--text-secondary);
-      font-family:inherit; font-size:12px; font-weight:600; border-radius:9px; cursor:pointer;
-    }
-    .sym-add-type-btn:hover { background:var(--accent); color:#fff; }
-    .sym-note-input {
-      width:100%; box-sizing:border-box; margin-top:10px; background:rgba(0,0,0,0.28);
-      border:1px solid rgba(255,255,255,0.1); border-radius:9px; color:var(--text-primary);
-      font-family:inherit; font-size:12.5px; padding:9px 10px;
-    }
-    .sym-list { margin-top:14px; display:flex; flex-direction:column; gap:8px; }
-    .sym-entry { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; padding:10px 12px; background:rgba(255,255,255,0.025); border-radius:10px; }
-    .sym-entry-main { display:flex; flex-wrap:wrap; align-items:baseline; gap:8px; }
-    .sym-entry-type { font-size:12.5px; font-weight:700; color:var(--text-primary); }
-    .sym-entry-sev { font-size:12px; color:var(--text-secondary); }
-    .sym-entry-when { font-size:11px; color:var(--text-tertiary); }
-    .sym-entry-note { flex-basis:100%; font-size:12px; color:var(--text-secondary); margin-top:2px; }
-    .sym-entry-del { background:none; border:none; color:var(--text-tertiary); font-size:16px; cursor:pointer; line-height:1; padding:2px 4px; }
-    .sym-entry-del:hover { color:var(--text-primary); }
-    .sym-empty { font-size:12.5px; color:var(--text-tertiary); padding:8px 0; }
-
-    /* ===== Correlation (3.5) ===== */
-    .corr-card { background:var(--bg-card); border:1px solid rgba(255,255,255,0.06); border-radius:18px; padding:18px; margin-bottom:22px; }
-    .corr-presets { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px; }
-    .corr-preset-btn {
-      padding:5px 12px; border-radius:999px; border:1px solid rgba(255,255,255,0.1);
-      background:rgba(255,255,255,0.03); color:var(--text-tertiary);
-      font-family:inherit; font-size:11px; font-weight:600; cursor:pointer;
-    }
-    .corr-preset-btn.is-active { background:rgba(29,158,117,0.14); border-color:rgba(29,158,117,0.4); color:var(--accent); }
-    .corr-pickers { display:flex; align-items:center; gap:8px; margin-bottom:14px; }
-    .corr-select {
-      flex:1; min-width:0; background:rgba(0,0,0,0.28); border:1px solid rgba(255,255,255,0.10);
-      border-radius:8px; color:var(--text-primary); font-family:inherit; font-size:12.5px; padding:8px 8px;
-    }
-    .corr-x { color:var(--text-tertiary); font-size:13px; flex-shrink:0; }
-    .corr-empty { font-size:12.5px; color:var(--text-tertiary); text-align:center; padding:18px 8px; }
-    .corr-body.hidden { display:none; }
-    .corr-scatter { width:100%; height:220px; display:block; } /* was 180px, didn't match the viewBox's 220 height (unlike the Energy/Sleep charts, whose CSS height and viewBox height already matched) -- caused the plot to render compressed ~18% vs its own coordinate space */
-    .corr-grid { stroke:rgba(255,255,255,0.06); stroke-width:1; }
-    .corr-dot { fill:var(--accent); opacity:0.7; }
-    .corr-r-row { display:flex; align-items:baseline; gap:8px; margin-top:12px; }
-    .corr-r-label { font-size:10.5px; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-tertiary); }
-    .corr-r-value { font-family:var(--font-mono); font-size:20px; font-weight:700; color:var(--text-primary); }
-    .corr-r-strength { font-size:11px; color:var(--text-secondary); }
-    .corr-sentence { font-size:13px; color:var(--text-secondary); line-height:1.5; margin-top:8px; }
-    .corr-disclaimer { font-size:10.5px; color:var(--text-quaternary); font-style:italic; margin-top:10px; }
-    .corr-meta { font-size:10.5px; color:var(--text-tertiary); font-family:var(--font-mono); margin-top:6px; }
   </style>
   <div class="whoop-section">
     <div class="section-title">Whoop</div>
@@ -846,7 +767,7 @@ main {
         <div class="wh-disc-sub">Link your account to see live recovery, sleep, and strain.</div>
         <button id="whConnectBtn" class="wh-connect" type="button">Connect WHOOP</button>
       </div>
-      <div id="whConn" style="display:none">
+      <div id="whConn" style="display:none" data-eq-collapse="health:whoop">
         <div class="wh-head">
           <div class="wh-brand"><span class="wh-brand-mark">W</span><span class="wh-brand-text">WHOOP</span><span class="wh-live"><span class="wh-live-dot"></span>live</span></div>
           <div class="wh-head-right">
@@ -855,7 +776,8 @@ main {
           </div>
         </div>
         <div id="whErr" class="wh-err" style="display:none"></div>
-        <div class="wh-ring-wrap">
+        <div class="wh-ring-wrap" data-eq-collapse-keep data-eq-collapse-trigger
+             aria-label="Collapse or expand the Whoop section" title="Tap to collapse or expand Whoop">
           <svg class="wh-ring" viewBox="0 0 220 220" aria-hidden="true">
             <circle class="wh-ring-track" cx="110" cy="110" r="96"/>
             <circle class="wh-ring-fill" cx="110" cy="110" r="96" id="whRingFill"/>
@@ -2337,417 +2259,8 @@ main {
   })();
   </script>
 
-  <div class="section-title">Symptom Log</div>
-
-  <div class="sym-card">
-    <div class="sym-type-row" id="symTypeRow"></div>
-    <div class="sym-add-type-row">
-      <input type="text" class="sym-add-type-input" id="symAddTypeInput" placeholder="Add custom type…">
-      <button type="button" class="sym-add-type-btn" id="symAddTypeBtn">Add</button>
-    </div>
-    <div class="sym-sev-row" id="symSevRow" style="display:none;"></div>
-    <input type="text" class="sym-note-input" id="symNoteInput" placeholder="Note, optional…" style="display:none;">
-    <div class="sym-empty" id="symEmpty">No symptoms logged yet.</div>
-    <div class="sym-list" id="symList"></div>
-  </div>
-  <script>
-  (function () {
-    const $ = (id) => document.getElementById(id);
-    const SYM_LOG_KEY = 'eq.symptoms.log_v1';
-    const SYM_TYPES_KEY = 'eq.symptoms.types_v1';
-    // Spec's own list, confirmed as-is (ASK FIRST) -- editable below, so this
-    // is just the starting set, not a hardcoded ceiling.
-    const DEFAULT_TYPES = ['Gut', 'Skin', 'Energy dip', 'Headache', 'Other'];
-
-    function dateKeyOf(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
-    function symLoad() { try { const v = JSON.parse(localStorage.getItem(SYM_LOG_KEY)); return Array.isArray(v) ? v : []; } catch (e) { return []; } }
-    function symSave(list) { try { localStorage.setItem(SYM_LOG_KEY, JSON.stringify(list)); } catch (e) {} }
-    function symTypes() {
-      try { const v = JSON.parse(localStorage.getItem(SYM_TYPES_KEY)); return (Array.isArray(v) && v.length) ? v : DEFAULT_TYPES.slice(); }
-      catch (e) { return DEFAULT_TYPES.slice(); }
-    }
-    function setSymTypes(list) { try { localStorage.setItem(SYM_TYPES_KEY, JSON.stringify(list)); } catch (e) {} }
-    function symUid() { return 'sym_' + Date.now() + '_' + Math.floor(Math.random() * 9999); }
-
-    let selectedType = null;
-
-    // Standard entry is exactly two taps: a type button, then a severity
-    // button. Severity tap saves immediately -- the note field only shows up
-    // after, and is entirely optional (per the answered ASK FIRST question,
-    // there's no special-cased prompt at any severity level).
-    function renderTypes() {
-      const row = $('symTypeRow');
-      row.innerHTML = '';
-      symTypes().forEach((t) => {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'sym-type-btn' + (selectedType === t ? ' is-selected' : '');
-        btn.textContent = t;
-        btn.addEventListener('click', () => {
-          selectedType = t;
-          renderTypes();
-          renderSeverity();
-          $('symSevRow').style.display = 'flex';
-        });
-        row.appendChild(btn);
-      });
-    }
-    function renderSeverity() {
-      const row = $('symSevRow');
-      row.innerHTML = '';
-      for (let i = 1; i <= 5; i++) {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'sym-sev-btn';
-        btn.textContent = String(i);
-        btn.addEventListener('click', () => logSymptom(selectedType, i));
-        row.appendChild(btn);
-      }
-    }
-    function logSymptom(type, severity) {
-      if (!type || !severity) return;
-      const list = symLoad();
-      const entry = { id: symUid(), type: type, severity: severity, note: '', dateKey: dateKeyOf(new Date()), at: new Date().toISOString() };
-      list.push(entry);
-      symSave(list);
-      selectedType = null;
-      $('symSevRow').style.display = 'none';
-      $('symSevRow').innerHTML = '';
-      renderTypes();
-      renderList();
-      const noteInput = $('symNoteInput');
-      noteInput.style.display = '';
-      noteInput.value = '';
-      noteInput.dataset.forId = entry.id;
-      noteInput.focus();
-    }
-    $('symNoteInput').addEventListener('change', () => {
-      const id = $('symNoteInput').dataset.forId;
-      if (!id) return;
-      const list = symLoad();
-      const idx = list.findIndex((e) => e.id === id);
-      if (idx === -1) return;
-      list[idx].note = $('symNoteInput').value.trim();
-      symSave(list);
-      renderList();
-    });
-    $('symAddTypeBtn').addEventListener('click', () => {
-      const val = $('symAddTypeInput').value.trim();
-      if (!val) return;
-      const types = symTypes();
-      if (!types.some((t) => t.toLowerCase() === val.toLowerCase())) { types.push(val); setSymTypes(types); }
-      $('symAddTypeInput').value = '';
-      renderTypes();
-    });
-
-    function renderList() {
-      const list = symLoad().slice().sort((a, b) => b.at.localeCompare(a.at)).slice(0, 20);
-      $('symEmpty').style.display = list.length ? 'none' : '';
-      $('symList').innerHTML = list.map((e) => {
-        const d = new Date(e.at);
-        const when = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + ' ' + d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
-        return '<div class="sym-entry">'
-          + '<div class="sym-entry-main">'
-          + '<span class="sym-entry-type">' + e.type.replace(/</g, '&lt;') + '</span>'
-          + '<span class="sym-entry-sev">Sev ' + e.severity + '/5</span>'
-          + '<span class="sym-entry-when">' + when + '</span>'
-          + (e.note ? '<div class="sym-entry-note">' + e.note.replace(/</g, '&lt;') + '</div>' : '')
-          + '</div>'
-          + '<button type="button" class="sym-entry-del" data-id="' + e.id + '">×</button>'
-          + '</div>';
-      }).join('');
-      $('symList').querySelectorAll('.sym-entry-del').forEach((btn) => {
-        btn.addEventListener('click', () => {
-          symSave(symLoad().filter((e) => e.id !== btn.dataset.id));
-          renderList();
-        });
-      });
-    }
-
-    renderTypes();
-    renderList();
-    window.addEventListener('storage', () => { renderTypes(); renderList(); });
-  })();
-  </script>
-
-  <div class="section-title">Correlation</div>
-
-  <div class="corr-card">
-    <div class="corr-presets" id="corrPresets"></div>
-    <div class="corr-pickers">
-      <select class="corr-select" id="corrMetricA"></select>
-      <span class="corr-x">×</span>
-      <select class="corr-select" id="corrMetricB"></select>
-    </div>
-
-    <div class="corr-empty" id="corrEmpty">Not enough overlapping data yet — need at least 14 days where both metrics were logged.</div>
-
-    <div class="corr-body hidden" id="corrBody">
-      <svg class="corr-scatter" id="corrScatter" viewBox="0 0 320 220" preserveAspectRatio="none">
-        <line class="corr-grid" x1="0" y1="20" x2="320" y2="20"></line>
-        <line class="corr-grid" x1="0" y1="110" x2="320" y2="110"></line>
-        <line class="corr-grid" x1="0" y1="200" x2="320" y2="200"></line>
-        <g id="corrDots"></g>
-      </svg>
-      <div class="corr-r-row">
-        <span class="corr-r-label">Pearson r</span>
-        <span class="corr-r-value" id="corrRValue">—</span>
-        <span class="corr-r-strength" id="corrRStrength"></span>
-      </div>
-      <div class="corr-sentence" id="corrSentence"></div>
-      <div class="corr-disclaimer">Correlation, not causation — this shows two things moving together, not that one causes the other.</div>
-      <div class="corr-meta" id="corrMeta"></div>
-    </div>
-  </div>
-  <script>
-  (function () {
-    const $ = (id) => document.getElementById(id);
-    const CORR_WINDOW_DAYS = 90;
-    const CORR_MIN_PAIRS = 14;
-
-    function corrDateKeyOf(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
-    function corrGet(k) { try { const v = JSON.parse(localStorage.getItem(k)); return Array.isArray(v) ? v : []; } catch (e) { return []; } }
-
-    function corrSleepSeries() {
-      const map = {};
-      corrGet('sleep_log_v1').forEach(e => { if (e.hours != null) map[e.dateKey] = e.hours; });
-      return map;
-    }
-    function corrRecoverySeries() {
-      const map = {};
-      corrGet('recovery_log_v1').forEach(e => { if (e.recovery != null) map[e.dateKey] = e.recovery; });
-      return map;
-    }
-    function corrTaskCompletionSeries() {
-      const map = {};
-      corrGet('todo_completion_snapshots_v1').forEach(s => { if (s.scheduled > 0) map[s.dateKey] = (s.completed / s.scheduled) * 100; });
-      return map;
-    }
-    // Per-day "% of habits done that day" -- a directly-computable proxy
-    // from habits_v1's raw history, not the same number as 3.2's smoothed
-    // Habit Health Score ring (that's a live rolling value with no daily
-    // history of its own to correlate against); labeled differently in the
-    // UI on purpose so the two aren't mistaken for the same metric.
-    function corrHabitSeries() {
-      const habits = corrGet('habits_v1');
-      const map = {};
-      const today = new Date(); today.setHours(0, 0, 0, 0);
-      for (let i = 1; i <= CORR_WINDOW_DAYS; i++) { // starts at 1: excludes today, same "don't judge an unfinished day" rule as 3.1/3.2
-        const d = new Date(today.getTime() - i * 86400000);
-        const key = corrDateKeyOf(d);
-        let done = 0, tracked = 0;
-        habits.forEach(h => {
-          if (h.createdAt) { const c = new Date(h.createdAt); c.setHours(0, 0, 0, 0); if (d < c) return; }
-          tracked++;
-          if ((h.history || {})[key]) done++;
-        });
-        if (tracked > 0) map[key] = (done / tracked) * 100;
-      }
-      return map;
-    }
-    function corrWeightTrendSeries() {
-      let entries = corrGet('po_coach_weights').slice().sort((a, b) => a.dateKey.localeCompare(b.dateKey));
-      const map = {};
-      const today = new Date(); today.setHours(0, 0, 0, 0);
-      for (let i = 0; i <= CORR_WINDOW_DAYS; i++) {
-        const d = new Date(today.getTime() - i * 86400000);
-        const key = corrDateKeyOf(d);
-        const cutoff = corrDateKeyOf(new Date(d.getTime() - 6 * 86400000));
-        const windowVals = entries.filter(e => e.dateKey >= cutoff && e.dateKey <= key).map(e => e.weight);
-        if (windowVals.length) map[key] = windowVals.reduce((a, b) => a + b, 0) / windowVals.length;
-      }
-      return map;
-    }
-    function corrWeightUnit() {
-      try { return (JSON.parse(localStorage.getItem('eq.fitness.summary')) || {}).units || 'kg'; } catch (e) { return 'kg'; }
-    }
-    // Re-walk vs equavia-pre-answers-final.md 3.5: "recovery % x training
-    // volume" is a default pair, but training volume didn't exist as a
-    // selectable correlation metric at all -- reads gym.html's raw
-    // po_coach_v1.logs directly (not via corrGet, which forces an array
-    // shape -- this store is a keyed object of per-exercise log arrays),
-    // same weight*reps formula gym.html's own weekly aggregate uses.
-    function corrTrainingVolumeSeries() {
-      const map = {};
-      let state;
-      try { state = JSON.parse(localStorage.getItem('po_coach_v1')); } catch (e) { state = null; }
-      if (!state || !state.logs) return map;
-      Object.keys(state.logs).forEach((exId) => {
-        (state.logs[exId] || []).forEach((l) => {
-          if (!l.date) return;
-          const d = new Date(l.date);
-          if (isNaN(d.getTime())) return;
-          const key = corrDateKeyOf(d);
-          map[key] = (map[key] || 0) + (l.weight || 0) * (l.reps || 0);
-        });
-      });
-      return map;
-    }
-    // 6.2: mood is a per-day series (eq.mood.log_v1), so it drops straight
-    // into this window the same way sleep/recovery do. "Mood x training
-    // done" and "mood x interaction score" from the spec weren't added as
-    // presets -- gym.html's per-session log lives inside its own internal
-    // `state.logs` object, which 3.3's own code comment already flags as
-    // "not safely re-derivable from outside" (it's been through that
-    // page's normalize() step); and interaction score (5.7) is a weekly
-    // figure, not a daily series, so it doesn't fit this per-day
-    // correlation engine's shape at all without a redesign. Real gaps,
-    // not silently skipped.
-    function corrMoodSeries() {
-      const map = {};
-      (corrGet('eq.mood.log_v1') || []).forEach((m) => { map[m.dateKey] = m.mood; });
-      return map;
-    }
-    // 6.5: per-day aggregates of the symptom log, same "drop straight into
-    // this window" shape as mood above -- severity averages same-day
-    // multiple entries, frequency is a plain same-day count.
-    function corrSymptomSeveritySeries() {
-      const byDay = {};
-      (corrGet('eq.symptoms.log_v1') || []).forEach((e) => {
-        (byDay[e.dateKey] = byDay[e.dateKey] || []).push(e.severity);
-      });
-      const map = {};
-      Object.keys(byDay).forEach((k) => { map[k] = byDay[k].reduce((a, b) => a + b, 0) / byDay[k].length; });
-      return map;
-    }
-    function corrSymptomFrequencySeries() {
-      const map = {};
-      (corrGet('eq.symptoms.log_v1') || []).forEach((e) => { map[e.dateKey] = (map[e.dateKey] || 0) + 1; });
-      return map;
-    }
-
-    const CORR_METRICS = {
-      sleep: { label: 'Sleep hours', unit: 'h', series: corrSleepSeries },
-      recovery: { label: 'Recovery %', unit: '%', series: corrRecoverySeries },
-      taskCompletion: { label: 'Task completion %', unit: '%', series: corrTaskCompletionSeries },
-      habitScore: { label: 'Habit success %', unit: '%', series: corrHabitSeries },
-      weightTrend: { label: 'Weight 7d trend', unit: corrWeightUnit(), series: corrWeightTrendSeries },
-      mood: { label: 'Mood (1-10)', unit: '', series: corrMoodSeries },
-      symptomSeverity: { label: 'Symptom severity (avg/5)', unit: '', series: corrSymptomSeveritySeries },
-      symptomFrequency: { label: 'Symptom frequency (count)', unit: '', series: corrSymptomFrequencySeries },
-      trainingVolume: { label: 'Training volume', unit: '', series: corrTrainingVolumeSeries },
-    };
-    // Re-walk vs equavia-pre-answers-final.md 3.5: confirmed default pairs
-    // are sleep x mood, sleep x task completion, recovery x training
-    // volume -- was Recovery x Task, Weight x Task, Sleep x Recovery.
-    const CORR_PRESETS = [
-      { label: 'Sleep × Mood', a: 'sleep', b: 'mood' },
-      { label: 'Sleep × Task', a: 'sleep', b: 'taskCompletion' },
-      { label: 'Recovery × Volume', a: 'recovery', b: 'trainingVolume' },
-    ];
-
-    function pearsonR(pairs) {
-      const n = pairs.length;
-      if (n < 2) return null;
-      const meanX = pairs.reduce((s, p) => s + p.x, 0) / n;
-      const meanY = pairs.reduce((s, p) => s + p.y, 0) / n;
-      let num = 0, denX = 0, denY = 0;
-      pairs.forEach(p => {
-        const dx = p.x - meanX, dy = p.y - meanY;
-        num += dx * dy; denX += dx * dx; denY += dy * dy;
-      });
-      if (denX === 0 || denY === 0) return null;
-      return num / Math.sqrt(denX * denY);
-    }
-    function rStrengthLabel(r) {
-      const a = Math.abs(r);
-      if (a >= 0.7) return 'strong';
-      if (a >= 0.4) return 'moderate';
-      if (a >= 0.2) return 'weak';
-      return 'very weak / none';
-    }
-    function median(nums) {
-      const s = nums.slice().sort((a, b) => a - b);
-      const mid = Math.floor(s.length / 2);
-      return s.length % 2 === 0 ? (s[mid - 1] + s[mid]) / 2 : s[mid];
-    }
-    function plainEnglishSentence(pairs, labelA, labelB, unitB) {
-      const med = median(pairs.map(p => p.x));
-      const below = pairs.filter(p => p.x < med);
-      const aboveEq = pairs.filter(p => p.x >= med);
-      if (!below.length || !aboveEq.length) return null;
-      const avgBelow = below.reduce((s, p) => s + p.y, 0) / below.length;
-      const avgAboveEq = aboveEq.reduce((s, p) => s + p.y, 0) / aboveEq.length;
-      const diff = avgAboveEq - avgBelow;
-      // The sentence describes the BELOW group relative to the above one,
-      // so the direction word has to compare that way round too -- diff
-      // itself (above minus below) is the wrong sign for that comparison.
-      const direction = avgBelow >= avgAboveEq ? 'higher' : 'lower';
-      const magnitude = avgBelow !== 0 ? Math.round(Math.abs(diff / avgBelow * 100)) + '%' : Math.abs(diff).toFixed(1) + unitB;
-      return 'On days with ' + labelA.toLowerCase() + ' below ' + (Math.round(med * 10) / 10) +
-        ', ' + labelB.toLowerCase() + ' averages ' + magnitude + ' ' + direction + ' than days at or above that.';
-    }
-
-    function initMetricPickers() {
-      const optionsHtml = Object.keys(CORR_METRICS).map(k => '<option value="' + k + '">' + CORR_METRICS[k].label + '</option>').join('');
-      $('corrMetricA').innerHTML = optionsHtml;
-      $('corrMetricB').innerHTML = optionsHtml;
-    }
-    function renderPresets(activeIdx) {
-      $('corrPresets').innerHTML = CORR_PRESETS.map((p, i) =>
-        '<button type="button" class="corr-preset-btn' + (i === activeIdx ? ' is-active' : '') + '" data-idx="' + i + '">' + p.label + '</button>'
-      ).join('');
-      $('corrPresets').querySelectorAll('.corr-preset-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const preset = CORR_PRESETS[Number(btn.dataset.idx)];
-          $('corrMetricA').value = preset.a;
-          $('corrMetricB').value = preset.b;
-          renderPresets(Number(btn.dataset.idx));
-          renderCorrelation();
-        });
-      });
-    }
-
-    function renderCorrelation() {
-      const keyA = $('corrMetricA').value, keyB = $('corrMetricB').value;
-      const metricA = CORR_METRICS[keyA], metricB = CORR_METRICS[keyB];
-      const seriesA = metricA.series(), seriesB = metricB.series();
-      const pairs = Object.keys(seriesA)
-        .filter(k => seriesB[k] != null)
-        .map(k => ({ x: seriesA[k], y: seriesB[k] }));
-
-      const emptyEl = $('corrEmpty'), bodyEl = $('corrBody');
-      if (pairs.length < CORR_MIN_PAIRS) {
-        emptyEl.textContent = 'Not enough overlapping data yet (' + pairs.length + ' of ' + CORR_MIN_PAIRS + ' days needed where both "' + metricA.label + '" and "' + metricB.label + '" were logged).';
-        emptyEl.style.display = '';
-        bodyEl.classList.add('hidden');
-        return;
-      }
-      emptyEl.style.display = 'none';
-      bodyEl.classList.remove('hidden');
-
-      const xs = pairs.map(p => p.x), ys = pairs.map(p => p.y);
-      const xMin = Math.min.apply(null, xs), xMax = Math.max.apply(null, xs);
-      const yMin = Math.min.apply(null, ys), yMax = Math.max.apply(null, ys);
-      const xPad = Math.max((xMax - xMin) * 0.1, 0.5), yPad = Math.max((yMax - yMin) * 0.1, 0.5);
-      const left = 12, right = 308, top = 14, bot = 206;
-      const xFor = (v) => left + ((v - (xMin - xPad)) / ((xMax + xPad) - (xMin - xPad))) * (right - left);
-      const yFor = (v) => bot - ((v - (yMin - yPad)) / ((yMax + yPad) - (yMin - yPad))) * (bot - top);
-
-      $('corrDots').innerHTML = pairs.map(p =>
-        '<circle class="corr-dot" cx="' + xFor(p.x).toFixed(2) + '" cy="' + yFor(p.y).toFixed(2) + '" r="3"/>'
-      ).join('');
-
-      const r = pearsonR(pairs);
-      $('corrRValue').textContent = r == null ? '—' : (r >= 0 ? '+' : '') + r.toFixed(2);
-      $('corrRStrength').textContent = r == null ? '' : rStrengthLabel(r);
-      const sentence = plainEnglishSentence(pairs, metricA.label, metricB.label, metricB.unit);
-      $('corrSentence').textContent = sentence || (metricA.label + ' vs ' + metricB.label + ' — not enough spread in the data yet for a plain-English read.');
-      $('corrMeta').textContent = pairs.length + ' paired days · last ' + CORR_WINDOW_DAYS + ' days';
-    }
-
-    initMetricPickers();
-    $('corrMetricA').value = CORR_PRESETS[0].a;
-    $('corrMetricB').value = CORR_PRESETS[0].b;
-    renderPresets(0);
-    renderCorrelation();
-    $('corrMetricA').addEventListener('change', () => { renderPresets(-1); renderCorrelation(); });
-    $('corrMetricB').addEventListener('change', () => { renderPresets(-1); renderCorrelation(); });
-    window.addEventListener('storage', renderCorrelation);
-  })();
-  </script>
-
-  <div class="section-title">Daily Stack</div>
+  <div data-eq-collapse="health:daily-stack">
+  <div class="section-title" data-eq-collapse-keep data-eq-collapse-trigger>Daily Stack<span class="eq-collapse-chevron"></span></div>
 
   <div class="stack-card">
     <div class="stack-ticker" id="stackTicker">
@@ -2788,11 +2301,7 @@ main {
       </div>
     </div>
   </div>
-
-  <section id="water" class="water-embed">
-    <div class="section-title">Water Tracker</div>
-    <iframe src="po-water.html" class="water-iframe" loading="lazy" title="Water Tracker"></iframe>
-  </section>
+  </div>
 
 </main>
 
@@ -3351,7 +2860,7 @@ document.addEventListener('DOMContentLoaded', function () {
   if (typeof initCloudSync !== 'function') return;
   initCloudSync({
     appKey: 'health',
-    syncedKeys: ['stack:items', 'stack:version', 'stack:low', 'po_water_v1', 'eq.energy.logs_v1', 'eq.health.summary'],
+    syncedKeys: ['stack:items', 'stack:version', 'stack:low', 'eq.energy.logs_v1', 'eq.health.summary'],
     syncedPrefixes: ['stack:taken:'],
     onApplied: function () { window.dispatchEvent(new Event('storage')); }
   });

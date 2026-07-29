@@ -361,19 +361,21 @@ body {
   const { logAssistantActivity, undoAssistantActivity, genId, activeDateKeyLocal, tomorrowDateKeyLocal, fmtDateKey } = AT;
   function getStackItemsList() { return storeGet('stack:items') || []; }
 
-  // ---------- Calendar (local_cal_events_v1 + Google, per the answered
-  // ASK FIRST question: keep the confirm-first card, write both places) ----------
+  // ---------- Calendar (local_cal_events_v1 + Google) ----------
+  // Writes immediately -- Equavia 0 is a data-entry tool, so "add X to my
+  // calendar" creates X rather than drafting a card to approve.
   const ADD_CALENDAR_EVENT_TOOL = {
     name: 'add_calendar_event',
-    description: 'Draft a calendar event for the user to review in a confirm/decline card. This does NOT create the event by itself -- it only renders the card. Only call this when the user is clearly asking to schedule or add something to their calendar. Resolve relative dates ("tomorrow", "Tuesday") against the current date given in context.',
+    description: 'Create a calendar event immediately, in the app and in Google Calendar. Resolve relative dates ("tomorrow", "Tuesday", "next Friday") against the current date given in context. For a repeating request ("every Friday for the next 5 weeks"), pass the FIRST occurrence as `date` and set `repeat_weekly` to the total number of occurrences -- do not call this tool once per week.',
     input_schema: {
       type: 'object',
       properties: {
         title: { type: 'string', description: 'Short event title.' },
-        date: { type: 'string', description: 'ISO date the event is on, YYYY-MM-DD.' },
+        date: { type: 'string', description: 'ISO date of the first occurrence, YYYY-MM-DD.' },
         time: { type: 'string', description: '24-hour HH:MM local start time. Omit entirely for an all-day event.' },
         duration_min: { type: 'number', description: 'Length of the event in minutes. Defaults to 30 if omitted.' },
         notes: { type: 'string', description: 'Optional short description/notes for the event.' },
+        repeat_weekly: { type: 'number', description: 'Total number of weekly occurrences including the first. Omit or 1 for a one-off event. E.g. "every Friday for the next 5 weeks" is 5.' },
       },
       required: ['title', 'date'],
     },
@@ -412,25 +414,101 @@ body {
     storeSet('local_cal_events_v1', list);
     return entry;
   }
-  // Executed only from resolvePendingAction (add_calendar_event always
-  // confirms, per the answered ASK FIRST question), never auto-run silently.
+  function addDaysIso(dateStr, days) {
+    const d = new Date(dateStr + 'T12:00:00');
+    d.setDate(d.getDate() + days);
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+
+  // Runs immediately on tool call. A weekly repeat is expanded here into N
+  // discrete events rather than a Google recurrence rule, so the local
+  // calendar (which has no concept of recurrence) and Google stay in step
+  // and Undo can remove all of them as one action.
   async function exec_add_calendar_event(input) {
-    const localEntry = addLocalCalEvent(input);
-    let googleNote = '';
-    if (storeGet(GCAL_TOKENS_KEY)) {
+    const count = Math.max(1, Math.min(Number(input.repeat_weekly) || 1, 52));
+    const dates = [];
+    for (let i = 0; i < count; i++) dates.push(addDaysIso(input.date, i * 7));
+
+    const localEntries = [];
+    let googleOk = 0, googleErr = null;
+    const hasGoogle = !!storeGet(GCAL_TOKENS_KEY);
+
+    for (const date of dates) {
+      const occurrence = Object.assign({}, input, { date });
+      localEntries.push(addLocalCalEvent(occurrence));
+      if (!hasGoogle) continue;
       try {
-        const created = await createGcalEvent(buildGcalEventResource(input));
-        googleNote = ' and Google Calendar' + (created && created.htmlLink ? ' (' + created.htmlLink + ')' : '');
+        await createGcalEvent(buildGcalEventResource(occurrence));
+        googleOk++;
       } catch (e) {
-        googleNote = ' (Google Calendar sync failed: ' + (e.message || 'unknown error') + ' -- saved locally only)';
+        if (!googleErr) googleErr = e.message || 'unknown error';
       }
     }
-    const activityId = logAssistantActivity('add_calendar_event', 'Added calendar event: "' + input.title + '" (' + input.date + (input.time ? ' ' + input.time : '') + ')', async () => {
+
+    const when = dates[0] + (input.time ? ' ' + input.time : '');
+    const label = count > 1
+      ? count + '× "' + input.title + '" weekly from ' + when
+      : '"' + input.title + '" (' + when + ')';
+
+    const activityId = logAssistantActivity('add_calendar_event', 'Added calendar event: ' + label, async () => {
       const list = storeGet('local_cal_events_v1') || [];
-      const i = list.findIndex((e) => e.id === localEntry.id);
-      if (i !== -1) { list.splice(i, 1); storeSet('local_cal_events_v1', list); }
+      const ids = new Set(localEntries.map((e) => e.id));
+      storeSet('local_cal_events_v1', list.filter((e) => !ids.has(e.id)));
     });
-    return { ok: true, summary: 'Added "' + input.title + '" to your calendar' + googleNote + '.', activityId };
+
+    let googleNote = '';
+    if (hasGoogle) {
+      if (googleOk === dates.length) googleNote = ' and Google Calendar';
+      else if (googleOk > 0) googleNote = ' (' + googleOk + ' of ' + dates.length + ' reached Google Calendar; ' + googleErr + ')';
+      else googleNote = ' (Google Calendar sync failed: ' + googleErr + ' -- saved locally only)';
+    }
+    return {
+      ok: true,
+      summary: 'Added ' + (count > 1 ? count + ' events' : '1 event') + ': ' + label + ' to your calendar' + googleNote + '.',
+      activityId,
+    };
+  }
+
+  // ---------- Goals (longterm_goals_v1) ----------
+  // Field names match the Goals section's own add form exactly (title /
+  // rank / deadline / value / createdAt) so a goal added here is
+  // indistinguishable from one typed in by hand.
+  const GOAL_RANKS = ['Year', 'Quarter', 'Month', 'Week', 'Day'];
+  const ADD_GOAL_TOOL = {
+    name: 'add_goal',
+    description: 'Create a new longterm goal immediately. Use for "add X to my goals". Resolve a stated deadline ("by August 25th") into an ISO date against the current date given in context.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        title: { type: 'string', description: 'The goal itself, e.g. "get to 77kg".' },
+        deadline: { type: 'string', description: 'Optional ISO deadline, YYYY-MM-DD.' },
+        rank: { type: 'string', enum: GOAL_RANKS, description: 'Time horizon. Infer from the deadline if one is given (within a week => Week, within a month => Month, and so on). Defaults to Year.' },
+      },
+      required: ['title'],
+    },
+  };
+  async function exec_add_goal(input) {
+    const list = storeGet('longterm_goals_v1') || [];
+    const goal = {
+      id: genId('g'),
+      title: input.title,
+      rank: GOAL_RANKS.indexOf(input.rank) !== -1 ? input.rank : 'Year',
+      deadline: input.deadline || '',
+      value: 0,
+      createdAt: new Date().toISOString(),
+      source: 'assistant',
+    };
+    list.push(goal);
+    storeSet('longterm_goals_v1', list);
+    const activityId = logAssistantActivity('add_goal', 'Added goal: "' + goal.title + '"', async () => {
+      const l = storeGet('longterm_goals_v1') || [];
+      storeSet('longterm_goals_v1', l.filter((g) => g.id !== goal.id));
+    });
+    return {
+      ok: true,
+      summary: 'Added goal: ' + goal.title + (goal.deadline ? ', target ' + goal.deadline : '') + '.',
+      activityId,
+    };
   }
 
   // 11 tools moved to assistant-tools.js in Phase 4.2 (see the comment
@@ -553,11 +631,18 @@ body {
   // only make sense inside this page (Google Calendar OAuth state, chat
   // domain-context builders) -- see assistant-tools.js's own header comment.
   const TOOL_REGISTRY = Object.assign({}, AT.TOOL_REGISTRY, {
-    // Re-walk vs equavia-pre-answers-final.md 4.1: "write to Google
-    // Calendar directly (no confirm step)" -- was 'always'.
+    // Equavia 0 executes rather than proposes, so every tool here is
+    // confirmMode 'never' -- including calendar writes.
     add_calendar_event: { schema: ADD_CALENDAR_EVENT_TOOL, confirmMode: 'never', execute: exec_add_calendar_event },
+    add_goal: { schema: ADD_GOAL_TOOL, confirmMode: 'never', execute: exec_add_goal },
     get_data: { schema: GET_DATA_TOOL, confirmMode: 'never', execute: exec_get_data },
   });
+  // Exposed for testability, same reasoning as window.EqRunObsidianSync /
+  // window.EqRunWeeklyBackup in topbar.js -- lets the tool write paths be
+  // exercised directly without standing up a model round-trip.
+  window.__eqTools = TOOL_REGISTRY;
+  window.__eqUndo = (activityId) => undoAssistantActivity(activityId);
+
   // Own copy, not AT.toolNeedsConfirm -- that one closes over the shared
   // module's own (smaller) registry, not this page's merged one.
   function toolNeedsConfirm(name, input) {
@@ -696,21 +781,41 @@ body {
     finance: buildFinanceContext, habits: buildHabitsContext, relationships: buildRelationshipsContext,
     notes: buildNotesContext, stack: buildStackContext, news: buildNewsContext,
   };
-  // Re-walk vs equavia-pre-answers-final.md Phase 2: this file had NO
-  // persona/system-prompt at all before -- systemContext was pure app-data
-  // context with zero tone/voice instruction. Verbatim text from the
-  // pre-answers, scoped to this page's own chat only (not injected
-  // server-side in api/chat.js, which every other assistant feature --
-  // Morning Brief, Weekly Audit, Smart Capture, News digest -- also
-  // calls with its own separately-tuned prompt; a global persona swap
-  // wasn't asked for and risks changing those in ways their own specs
-  // don't call for).
-  const EQUAVIA_PERSONA = 'You are Equavia 0 — a loyal retainer and second-in-command, in the tradition of a Roman legion’s most trusted officer. You serve MAHINO (address him as "Exalted MAHINO" or simply "MAHINO").\n\n'
-    + 'Your duty is to provide sharp, evidence-based counsel drawn from MAHINO’s own data. You are direct, specific, and waste no words. You cite numbers when you have them. You do not flatter, hedge, or pad responses with motivational filler.\n\n'
-    + 'When MAHINO’s data shows a problem, you name it plainly. When it shows progress, you acknowledge it briefly and move on. You never say "great job" — you say "weight trend down 0.3kg this week, deficit is holding."\n\n'
-    + 'You know MAHINO’s frameworks: low-histamine/low-FODMAP nutrition, Whoop-gated training, reverse pyramid progression, supplement stack with specific timing windows, and a financial independence roadmap. Reference these naturally when relevant.\n\n'
-    + 'You never: use emojis, write motivational speeches, say "I’m just an AI", pad with caveats, or repeat yourself. You are concise, loyal, and useful.\n\n'
-    + 'When asked about events, local activities, or anything requiring current information, use web search and frame recommendations around MAHINO’s location (London N17), schedule, and interests.\n\n';
+  // Equavia 0 is a data-entry and retrieval interface, not an advisor. The
+  // previous build gave it a "loyal retainer" persona that volunteered
+  // counsel, judgement and framing on top of every answer; that is
+  // deliberately gone. It now does exactly three things: record what it is
+  // told, perform the app/calendar action it is asked for, and report data
+  // back verbatim.
+  //
+  // Scoped to this page's chat only. Other assistant features (Morning
+  // Brief, Weekly Audit, News digest) call api/chat.js with their own
+  // separately-tuned prompts and are unaffected.
+  const EQUAVIA_PERSONA = 'You are Equavia 0, the command interface for this personal tracking app. You are a utility, not an assistant with opinions.\n\n'
+    + 'YOUR ONLY JOBS:\n'
+    + '1. Record data the user gives you, by calling the matching tool.\n'
+    + '2. Perform app and calendar actions the user asks for, by calling the matching tool.\n'
+    + '3. Report data back when asked, straight from the context provided.\n\n'
+    + 'RULES:\n'
+    + '- Never give advice, recommendations, coaching, encouragement or opinions.\n'
+    + '- Never comment on, interpret, evaluate or editorialise about the data. Do not say whether a number is good, bad, on track, concerning or improving. Report it.\n'
+    + '- Never volunteer observations, patterns, suggestions or next steps that were not asked for.\n'
+    + '- Never ask follow-up questions when the request is actionable. Make the most reasonable interpretation and execute.\n'
+    + '- Do not pad. No preamble, no sign-off, no restating the request back.\n'
+    + '- After performing an action, confirm it in one short line stating exactly what was recorded, and nothing else.\n'
+    + '- When asked for data, output the data. A list, a number, or a short table. No narrative wrapper.\n'
+    + '- If a request genuinely cannot map to any tool or any data you hold, say so in one line. Do not improvise an answer.\n\n'
+    + 'EXAMPLES OF CORRECT BEHAVIOUR:\n'
+    + 'User: "Add wake up at 4 AM and clean room to my tasks."\n'
+    + 'You: [calls add_task twice] "Added 2 tasks for today: wake up at 4 AM; clean room."\n\n'
+    + 'User: "Add get to 77kg by August 25th to my goals."\n'
+    + 'You: [calls add_goal] "Added goal: get to 77kg, target 2026-08-25."\n\n'
+    + 'User: "Add boxing training every Friday for the next 5 weeks, 7pm to 8pm."\n'
+    + 'You: [calls add_calendar_event with repeat_weekly=5] "Added 5 events: Boxing training, Fridays 19:00-20:00, from 2026-07-31."\n\n'
+    + 'User: "What is today\'s itinerary?"\n'
+    + 'You: [reports the day\'s calendar events and today\'s tasks as two short lists, nothing else]\n\n'
+    + 'User: "How is my weight going?"\n'
+    + 'You: "Latest 82.9kg (2026-07-28). 7-day average 83.2kg." — and stop. No assessment of whether that is good.\n\n';
 
   async function assembleContext(query) {
     const domains = getDomains();

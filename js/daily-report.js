@@ -2,7 +2,7 @@
 // Comprehensive daily report -> Obsidian. Pulls together everything the
 // app knows about a given day (weight/goal, WHOOP + steps, supplement
 // stack, tasks, checklists, habits, longterm goals, active projects,
-// today's workout sets from both gym.html and train.html, mood, and the
+// today's workout sets from gym.html, and the
 // close-the-day text) into one markdown file, pushed via
 // ObsidianSync.pushDailyNote to the same <folder>/Daily/<dateKey>.md path
 // the old dashboard.html-only writer used. This is the single writer of
@@ -124,7 +124,7 @@
     return out;
   }
 
-  // ---------- Habits (ability.html: habits_v1) ----------
+  // ---------- Habits (planner.html: habits_v1) ----------
   function sectionHabits(dateKey) {
     const list = storeGet('habits_v1') || [];
     if (!list.length) return '';
@@ -151,44 +151,44 @@
     return '## Active Projects\n' + lines.join('\n') + '\n\n';
   }
 
-  // ---------- Today's workout (gym.html: po_coach_v1, train.html: vitality_bridge:vitality_train) ----------
+  // ---------- Today's workout (po_coach_v1) ----------
+  // Single source since the Train page was merged into Fitness: its
+  // sessions now land in these same logs. Reading the old
+  // vitality_bridge:vitality_train blob as well would double-report every
+  // migrated session, because that blob is left in place after the import.
+  //
+  // An entry logged from the Training Plan carries the full per-set detail
+  // in `sets`; one logged from the top-set form has only weight/reps.
   function sectionWorkout(dateKey) {
     const lines = [];
     const gymState = storeGet('po_coach_v1');
-    if (gymState && Array.isArray(gymState.exercises) && gymState.logs) {
-      const unit = gymState.units || 'kg';
-      gymState.exercises.forEach((ex) => {
-        const sets = (gymState.logs[ex.id] || []).filter((s) => isoToDateKey(s.date) === dateKey);
-        if (!sets.length) return;
-        const setsTxt = sets.map((s, i) => 'Set ' + (i + 1) + ': ' + s.weight + unit + '×' + s.reps).join(', ');
-        lines.push('- ' + ex.name + ' — ' + setsTxt);
-      });
-    }
-    const vit = storeGet('vitality_bridge:vitality_train');
-    if (vit && vit.days) {
-      const unit = vit.unit || 'kg';
-      Object.keys(vit.days).forEach((dayKey) => {
-        const day = vit.days[dayKey];
-        (day.ex || []).forEach((ex) => {
-          (ex.hist || []).filter((h) => h.date === dateKey).forEach((h) => {
-            const setsTxt = (h.sets || []).map((s, i) => 'Set ' + (i + 1) + ': ' + h.kg + unit + '×' + s.r + (s.fail ? ' (fail)' : '')).join(', ');
-            lines.push('- ' + ex.name + ' — ' + setsTxt);
+    if (!gymState || !Array.isArray(gymState.exercises) || !gymState.logs) return '';
+    const unit = gymState.units || 'kg';
+    gymState.exercises.forEach((ex) => {
+      const entries = (gymState.logs[ex.id] || []).filter((s) => isoToDateKey(s.date) === dateKey);
+      if (!entries.length) return;
+      const parts = [];
+      entries.forEach((entry) => {
+        if (Array.isArray(entry.sets) && entry.sets.length) {
+          entry.sets.forEach((s) => {
+            parts.push(entry.weight + unit + '×' + s.reps + (s.fail ? ' (fail)' : ''));
           });
-        });
+        } else {
+          parts.push(entry.weight + unit + '×' + entry.reps);
+        }
       });
-    }
+      const setsTxt = parts.map((p, i) => 'Set ' + (i + 1) + ': ' + p).join(', ');
+      lines.push('- ' + ex.name + ' — ' + setsTxt);
+    });
     if (!lines.length) return '';
     return '## Workout\n' + lines.join('\n') + '\n\n';
   }
 
-  // ---------- Mood + close-the-day (dashboard.html: eq.mood.log_v1 / eq.assistant.close_day_v1) ----------
-  function sectionMoodAndClose(dateKey) {
-    let out = '';
-    const mood = (storeGet('eq.mood.log_v1') || []).find((m) => m.dateKey === dateKey);
-    if (mood) out += '## Mood\n' + mood.mood + '/10' + (mood.note ? ' — ' + mood.note : '') + '\n\n';
+  // ---------- Close-the-day (eq.assistant.close_day_v1) ----------
+  function sectionCloseDay(dateKey) {
     const close = storeGet('eq.assistant.close_day_v1');
-    if (close && close.dateKey === dateKey && close.text) out += '## Close the Day\n\n' + close.text + '\n\n';
-    return out;
+    if (close && close.dateKey === dateKey && close.text) return '## Close the Day\n\n' + close.text + '\n\n';
+    return '';
   }
 
   function buildMarkdown(dateKey) {
@@ -203,7 +203,7 @@
     md += safe(() => sectionGoals());
     md += safe(() => sectionProjects());
     md += safe(() => sectionWorkout(dateKey));
-    md += safe(() => sectionMoodAndClose(dateKey));
+    md += safe(() => sectionCloseDay(dateKey));
     return md;
   }
 

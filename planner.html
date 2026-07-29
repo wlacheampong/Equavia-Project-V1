@@ -10,7 +10,7 @@
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Project Equavia">
-<title>Planner — Project Equavia</title>
+<title>Ability — Project Equavia</title>
 <link rel="stylesheet" href="css/equavia-core.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/sync.js" defer></script>
@@ -18,6 +18,7 @@
 <script src="js/daily-report.js" defer></script>
 <script src="js/assistant-tools.js"></script>
 <script src="js/topbar.js" defer></script>
+<script src="js/collapsible.js" defer></script>
 <!-- Google Identity Services -- needed for the Inbox (Gmail) card's
      client-side popup consent flow, moved here from dashboard.html. The
      page's own Calendar feature uses a separate server-side redirect flow
@@ -227,22 +228,6 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
   border-radius: 10px;
   margin-bottom: 6px;
 }
-/* ===== Mood + journal (moved from dashboard.html, Phase 6.2) ===== */
-.mood-chip-head { font-size: 12.5px; font-weight: 700; color: var(--text-secondary); margin-bottom: 10px; }
-.mood-scale { display: flex; gap: 5px; flex-wrap: wrap; }
-.mood-num-btn {
-  flex: 1; min-width: 26px; height: 36px; border-radius: 8px; border: 1px solid var(--eq-border-strong);
-  background: rgba(255,255,255,0.04); color: var(--text-secondary); font-family: inherit; font-size: 12px; font-weight: 700; cursor: pointer;
-  position: relative;
-}
-.mood-num-btn::before { content: ''; position: absolute; top: -6px; bottom: -6px; left: -2px; right: -2px; }
-.mood-num-btn.is-selected { background: var(--accent); border-color: transparent; color: #1a0f0a; }
-.mood-note-input {
-  width: 100%; box-sizing: border-box; margin-top: 10px; background: rgba(0,0,0,0.28);
-  border: 1px solid var(--eq-border-strong); border-radius: 8px; color: var(--text-primary);
-  font-family: inherit; font-size: 12.5px; padding: 8px 10px;
-}
-
 /* ===== Annual Review (moved from dashboard.html, Phase 6.10) ===== */
 .wkr-card { background: rgba(255,255,255,0.04); border-radius: 16px; padding: 18px; max-width: 640px; margin: 0 auto 18px; }
 .wkr-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
@@ -1582,27 +1567,473 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
 }
 .contact-notes-input::placeholder { color: var(--text-quaternary); }
 .contact-notes-input:focus { outline: none; border-color: rgba(255,255,255,0.14); color: var(--text-primary); }
+
+/* ===== Merged in from the retired Ability page ===== */
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100%;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: -10%;
+  z-index: -2;
+  background:
+    radial-gradient(60% 45% at 82% 14%, rgba(224, 118, 88, 0.16) 0%, transparent 55%),
+    radial-gradient(55% 45% at 18% 90%, rgba(180, 180, 200, 0.06) 0%, transparent 55%),
+    linear-gradient(180deg, #0A0A0B 0%, #050506 100%);
+  filter: blur(40px) saturate(1.05);
+  pointer-events: none;
+}
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-image: radial-gradient(rgba(255,255,255,0.014) 1px, transparent 1px);
+  background-size: 3px 3px;
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.shell {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 24px 16px 60px;
+}
+
+/* Hide scrollbars everywhere */
+html, body { scrollbar-width: none; -ms-overflow-style: none; }
+*::-webkit-scrollbar { width: 0 !important; height: 0 !important; display: none !important; }
+
+/* Section title */
+.section { margin-bottom: 18px; scroll-margin-top: 18px; }
+/* Card */
+.card {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  margin-bottom: 10px;
+  backdrop-filter: blur(24px) saturate(1.2);
+  -webkit-backdrop-filter: blur(24px) saturate(1.2);
+  box-shadow: var(--glass-shadow);
+  position: relative;
+  overflow: hidden;
+}
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 14px; right: 14px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.16), transparent);
+  pointer-events: none;
+}
+
+/* Empty state */
+.empty-state {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  text-align: center;
+  padding: 16px 0;
+  font-family: var(--font-mono);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.empty-state::before {
+  content: '';
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--text-quaternary);
+  flex-shrink: 0;
+}
+
+/* ============================================================
+   Shared add-row / input styling
+   ============================================================ */
+.hab-add-row, .skill-add-row {
+  display: flex; gap: 6px; align-items: stretch;
+  padding: 4px;
+  background: rgba(0, 0, 0, 0.30);
+  border-radius: 12px;
+  margin-bottom: 14px;
+}
+.hab-input, .skill-input {
+  flex: 1; min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  padding: 9px 12px;
+  font-family: inherit;
+  font-size: 16px; /* was 14px; also avoids iOS zoom-on-focus */
+  -moz-appearance: textfield;
+}
+.hab-input:focus, .skill-input:focus {
+  box-shadow: inset 0 -2px 0 rgba(255,255,255,0.4); /* was outline:none with no replacement focus state */
+}
+.hab-input::-webkit-outer-spin-button, .hab-input::-webkit-inner-spin-button,
+.skill-input::-webkit-outer-spin-button, .skill-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.hab-input::placeholder, .skill-input::placeholder { color: var(--text-tertiary); }
+.hab-add-btn, .skill-add-btn {
+  padding: 0 16px;
+  background: rgba(255,255,255,0.06);
+  border: none;
+  color: var(--text-secondary);
+  border-radius: 9px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.hab-add-btn:hover, .skill-add-btn:hover { background: rgba(255,255,255,0.12); color: var(--text-primary); }
+.hab-add-btn:active, .skill-add-btn:active { transform: scale(0.97); }
+
+/* ============================================================
+   HABIT TRACKER
+   ============================================================ */
+.hab-row {
+  padding: 12px 14px;
+  background: rgba(255,255,255,0.025);
+  border-radius: 12px;
+  margin-bottom: 8px;
+}
+.hab-row:hover { background: rgba(255,255,255,0.04); }
+.hab-row-top { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.hab-name {
+  flex: 1; min-width: 0;
+  font-size: 14px; font-weight: 600; color: var(--text-primary);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.hab-streak {
+  font-family: var(--font-mono); font-size: 12px; font-weight: 700;
+  color: var(--text-tertiary); white-space: nowrap;
+}
+.hab-streak.is-active { color: #F2A65A; }
+.hab-del {
+  background: transparent; border: 1px solid rgba(255,255,255,0.08);
+  color: var(--text-tertiary);
+  cursor: pointer; font-size: 13px;
+  padding: 4px 8px; border-radius: 6px;
+  font-family: inherit; line-height: 1; flex-shrink: 0;
+}
+.hab-del:hover { color: var(--danger); }
+.hab-grid { display: flex; flex-wrap: wrap; gap: 6px; } /* was 4px; a bit more forgiving spacing around each small tap target */
+.hab-day {
+  width: 16px; height: 16px; border-radius: 4px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.03);
+  cursor: pointer; padding: 0;
+  transition: background 0.15s, border-color 0.15s;
+  position: relative;
+}
+.hab-day::before {
+  /* invisible tap-target expansion -- capped small: this is a dense heatmap grid (like a GitHub
+     contribution graph), so a full 44px target per cell isn't achievable without destroying the grid */
+  content: ''; position: absolute; inset: -3px;
+}
+.hab-day:hover { border-color: rgba(255,255,255,0.30); }
+.hab-day.is-done { background: var(--accent); border-color: var(--accent); }
+.hab-day.is-today { box-shadow: 0 0 0 2px rgba(255,255,255,0.35); }
+
+.hab-year-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; cursor: pointer; background: none; border: none; padding: 0; }
+.hab-year-grid { display: grid; grid-template-rows: repeat(7, 1fr); grid-auto-flow: column; gap: 1.5px; height: 28px; }
+.hab-year-cell { width: 3px; height: 3px; border-radius: 1px; }
+.hab-year-cell.is-done { background: var(--success); }
+.hab-year-cell.is-missed { background: rgba(255,107,107,0.55); }
+.hab-year-cell.is-grey { background: rgba(255,255,255,0.06); }
+.hab-year-pct { font-family: var(--font-mono); font-size: 10.5px; color: var(--text-tertiary); white-space: nowrap; }
+.hab-year-row:hover .hab-year-pct { color: var(--text-secondary); }
+
+.hab-year-modal-bg {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+  display: none; align-items: center; justify-content: center; z-index: 200; padding: 20px;
+}
+.hab-year-modal-bg.show { display: flex; }
+.hab-year-modal {
+  background: var(--bg); border-radius: 16px; padding: 20px; max-width: 640px; width: 100%;
+  max-height: 80vh; overflow-y: auto; border: 1px solid rgba(255,255,255,0.06);
+}
+.hab-year-modal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+.hab-year-modal-title { font-size: 15px; font-weight: 700; color: var(--text-primary); }
+.hab-year-modal-close { background: transparent; border: none; color: var(--text-tertiary); font-size: 22px; line-height: 1; cursor: pointer; padding: 4px; }
+.hab-year-modal-close:hover { color: var(--text-primary); }
+.hab-year-modal-pct { font-size: 12px; color: var(--text-tertiary); margin-bottom: 14px; }
+.hab-year-modal-grid-wrap { overflow-x: auto; padding-bottom: 8px; }
+.hab-year-modal-grid { display: grid; grid-template-rows: repeat(7, 1fr); grid-auto-flow: column; gap: 3px; width: max-content; }
+
+/* ===== Learn Hub (6.3) ===== */
+.learn-due-chip {
+  background: rgba(224,118,88,0.16); color: var(--accent); border-radius: 999px;
+  padding: 3px 10px; font-size: 10.5px; font-weight: 700;
+}
+.learn-track-add-row, .learn-status-row, .learn-deadline-add-row, .learn-hours-add-row, .learn-deck-add-row, .learn-log-add-row {
+  display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;
+}
+.learn-track-add-row input, .learn-deadline-add-row input, .learn-hours-add-row input, .learn-deck-add-row input, .learn-log-add-row input, .learn-status-row select, .learn-status-row input {
+  flex: 1; min-width: 90px; background: rgba(0,0,0,0.28); border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px; color: var(--text-primary); font-family: inherit; font-size: 12.5px; padding: 8px 10px;
+}
+.learn-track-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 11px 4px; border-bottom: 1px solid rgba(255,255,255,0.06); cursor: pointer;
+}
+.learn-track-row:last-child { border-bottom: none; }
+.learn-track-name { font-size: 13.5px; font-weight: 600; }
+.learn-track-status { font-size: 10.5px; color: var(--text-tertiary); text-transform: capitalize; }
+.learn-subsection-title { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-tertiary); margin: 18px 0 8px; }
+.learn-item-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 12.5px; }
+.learn-item-row:last-child { border-bottom: none; }
+.learn-item-sub { color: var(--text-tertiary); font-size: 11px; }
+.learn-item-del { background: none; border: none; color: var(--text-quaternary); cursor: pointer; font-size: 14px; padding: 0 4px; }
+.learn-deadline-soon { color: var(--warning); font-weight: 700; }
+.learn-hours-total { font-size: 12px; color: var(--text-secondary); margin-bottom: 8px; }
+.learn-deck-row { padding: 9px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.learn-deck-row:last-child { border-bottom: none; }
+.learn-deck-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.learn-deck-name { font-size: 13px; font-weight: 600; }
+.learn-deck-meta { font-size: 11px; color: var(--text-tertiary); }
+.learn-deck-actions { display: flex; gap: 6px; margin-top: 6px; }
+.learn-deck-actions button {
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14); border-radius: 7px;
+  padding: 5px 10px; font-family: inherit; font-size: 10.5px; font-weight: 600; color: var(--text-primary); cursor: pointer;
+}
+.learn-import-hint { font-size: 11.5px; color: var(--text-tertiary); margin: 0 0 10px; }
+#learnDeckImportText {
+  width: 100%; box-sizing: border-box; background: rgba(0,0,0,0.28); border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px; color: var(--text-primary); font-family: inherit; font-size: 12.5px; padding: 9px 11px; margin-bottom: 10px;
+}
+.learn-review-card { text-align: center; padding: 20px 10px; }
+.learn-review-face { font-size: 15px; line-height: 1.5; margin-bottom: 16px; min-height: 40px; }
+.learn-review-grades { display: flex; gap: 8px; justify-content: center; margin-top: 12px; }
+.learn-grade-btn {
+  flex: 1; padding: 10px; border-radius: 9px; border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.06); color: var(--text-primary); font-family: inherit; font-size: 12px; font-weight: 700; cursor: pointer;
+  min-height: 44px; display: flex; align-items: center; justify-content: center; /* was ~34px tall, the most-tapped control in the review flow */
+}
+.learn-grade-btn[data-grade="2"] { border-color: rgba(255,107,107,0.4); color: #FF9B9B; }
+.learn-grade-btn[data-grade="5"] { border-color: rgba(107,227,164,0.4); color: #6BE3A4; }
+.learn-review-status { text-align: center; font-size: 12px; color: var(--text-tertiary); margin-top: 12px; }
+.hab-year-modal-cell { width: 11px; height: 11px; border-radius: 2px; }
+.hab-year-modal-cell.is-done { background: var(--success); }
+.hab-year-modal-cell.is-missed { background: rgba(255,107,107,0.55); }
+.hab-year-modal-cell.is-grey { background: rgba(255,255,255,0.06); }
+.hab-year-modal-cell.is-today { box-shadow: 0 0 0 1.5px rgba(255,255,255,0.6); }
+.hab-year-legend { display: flex; gap: 14px; margin-top: 12px; font-size: 10px; color: var(--text-tertiary); }
+.hab-year-legend-item { display: flex; align-items: center; gap: 5px; }
+.hab-year-legend-dot { width: 9px; height: 9px; border-radius: 2px; }
+
+.hab-score-ring { position: relative; width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.hab-score-ring svg { position: absolute; inset: 0; transform: rotate(-90deg); }
+.hab-score-track { fill: none; stroke: rgba(255,255,255,0.08); stroke-width: 2.5; }
+.hab-score-fill { fill: none; stroke-width: 2.5; stroke-linecap: round; transition: stroke-dashoffset 0.3s; }
+.hab-score-num { position: relative; font-family: var(--font-mono); font-size: 9px; font-weight: 700; color: var(--text-secondary); }
+
+/* ============================================================
+   SKILL TRACKER
+   ============================================================ */
+.skill-row {
+  padding: 12px 14px;
+  background: rgba(255,255,255,0.025);
+  border-radius: 12px;
+  margin-bottom: 8px;
+}
+.skill-row:hover { background: rgba(255,255,255,0.04); }
+.skill-row-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+.skill-name {
+  flex: 1; min-width: 90px;
+  font-size: 14px; font-weight: 600; color: var(--text-primary);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.skill-total {
+  font-family: var(--font-mono); font-size: 11px; color: var(--text-tertiary);
+  white-space: nowrap;
+}
+.skill-log-btn {
+  padding: 6px 12px; border-radius: 8px;
+  border: 1px dashed rgba(255,255,255,0.16);
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: inherit; font-size: 11px; font-weight: 700;
+  cursor: pointer; white-space: nowrap;
+}
+.skill-log-btn:hover { color: var(--text-primary); border-color: rgba(255,255,255,0.3); }
+.skill-del {
+  background: transparent; border: 1px solid rgba(255,255,255,0.08);
+  color: var(--text-tertiary);
+  cursor: pointer; font-size: 13px;
+  padding: 4px 8px; border-radius: 6px;
+  font-family: inherit; line-height: 1; flex-shrink: 0;
+}
+.skill-del:hover { color: var(--danger); }
+
+.skill-progress-row { display: flex; justify-content: flex-end; margin-bottom: 4px; }
+.skill-progress-value {
+  font-family: var(--font-mono); font-size: 12px; font-weight: 700; color: var(--text-primary);
+}
+.skill-slider {
+  width: 100%; display: block;
+  accent-color: var(--accent);
+  cursor: pointer;
+  margin-bottom: 10px;
+}
+
+.skill-log-form {
+  display: flex; gap: 6px; flex-wrap: wrap; align-items: stretch;
+  padding: 4px;
+  background: rgba(0, 0, 0, 0.30);
+  border-radius: 10px;
+  margin-bottom: 10px;
+}
+.skill-log-form .skill-input { flex: 1; min-width: 90px; }
+.skill-log-form .skill-log-minutes { flex: 0 1 90px; }
+.skill-log-form .skill-log-notes { flex: 2; min-width: 120px; }
+.skill-log-cancel {
+  padding: 0 14px;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.10);
+  color: var(--text-secondary);
+  border-radius: 9px;
+  font-family: inherit; font-size: 13px; font-weight: 700;
+  cursor: pointer; white-space: nowrap;
+}
+.skill-log-cancel:hover { color: var(--text-primary); }
+
+.skill-history {
+  display: flex; flex-direction: column; gap: 4px;
+  max-height: 150px; overflow-y: auto;
+}
+.skill-history-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 6px 9px;
+  background: rgba(255,255,255,0.02);
+  border-radius: 8px;
+  font-size: 11.5px; color: var(--text-secondary);
+}
+.skill-history-date {
+  font-family: var(--font-mono); color: var(--text-tertiary); white-space: nowrap;
+}
+.skill-history-dur {
+  font-family: var(--font-mono); font-weight: 700; color: var(--text-primary); white-space: nowrap;
+}
+.skill-history-notes {
+  flex: 1; min-width: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  color: var(--text-tertiary);
+}
+.skill-history-del {
+  background: transparent; border: none; color: var(--text-tertiary);
+  cursor: pointer; font-size: 13px; padding: 0 4px; flex-shrink: 0;
+}
+.skill-history-del:hover { color: var(--danger); }
+.skill-history-empty {
+  font-size: 11px; color: var(--text-tertiary); font-style: italic; padding: 4px 2px;
+}
+
+/* ============================================================
+   BOOK TRACKER
+   ============================================================ */
+.book-year-stat {
+  font-family: var(--font-mono); font-size: 11px; color: var(--text-tertiary);
+  margin-bottom: 12px;
+}
+.book-year-stat b { color: var(--text-primary); font-weight: 700; }
+.book-add-row {
+  display: flex; gap: 6px; flex-wrap: wrap; align-items: stretch;
+  padding: 4px;
+  background: rgba(0, 0, 0, 0.30);
+  border-radius: 12px;
+  margin-bottom: 16px;
+}
+.book-add-row .hab-input { flex: 1.4; min-width: 120px; }
+.book-add-row .book-author-input { flex: 1; min-width: 100px; }
+.book-shelf { margin-bottom: 16px; }
+.book-shelf:last-child { margin-bottom: 0; }
+.book-shelf-title {
+  font-family: var(--font-mono); font-size: 10px; font-weight: 700;
+  letter-spacing: 0.10em; text-transform: uppercase;
+  color: var(--text-tertiary);
+  margin-bottom: 8px;
+}
+.book-row {
+  padding: 12px 14px;
+  background: rgba(255,255,255,0.025);
+  border-radius: 12px;
+  margin-bottom: 8px;
+}
+.book-row:hover { background: rgba(255,255,255,0.04); }
+.book-row-top { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 8px; }
+.book-titles { flex: 1; min-width: 0; }
+.book-title { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+.book-author { font-size: 12px; color: var(--text-tertiary); margin-top: 1px; }
+.book-status-select {
+  background: rgba(255,255,255,0.06);
+  border: none; color: var(--text-secondary);
+  border-radius: 7px; padding: 5px 8px;
+  font-family: inherit; font-size: 11px; font-weight: 700;
+  cursor: pointer; flex-shrink: 0;
+}
+.book-del {
+  background: transparent; border: 1px solid rgba(255,255,255,0.08);
+  color: var(--text-tertiary);
+  cursor: pointer; font-size: 13px;
+  padding: 4px 8px; border-radius: 6px;
+  font-family: inherit; line-height: 1; flex-shrink: 0;
+}
+.book-del:hover { color: var(--danger); }
+.book-meta-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
+.book-stars { display: inline-flex; gap: 6px; } /* was 2px */
+.book-star {
+  background: transparent; border: none; cursor: pointer;
+  font-size: 15px; color: var(--text-quaternary);
+  padding: 0; line-height: 1;
+  position: relative;
+}
+.book-star::before {
+  content: ''; position: absolute; inset: -8px; /* modest expansion, capped by the 6px gap between stars */
+}
+.book-star.is-filled { color: var(--warning); }
+.book-finished-date {
+  font-family: var(--font-mono); font-size: 11px; color: var(--text-tertiary);
+}
+.book-notes-input {
+  width: 100%; display: block;
+  background: rgba(0,0,0,0.25);
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-family: inherit; font-size: 12px;
+  padding: 7px 9px;
+  resize: none;
+}
+.book-notes-input::placeholder { color: var(--text-quaternary); }
+.book-notes-input:focus { outline: none; border-color: rgba(255,255,255,0.14); color: var(--text-primary); }
+
+@media (max-width: 480px) {
+  .hab-day { width: 14px; height: 14px; } /* was 13px -- a smaller shrink than before, still fits a year of cells */
+}
 </style>
 </head>
 <body>
 <div class="shell shell-wide">
 
-<!-- ===== MOOD (moved from dashboard.html) ===== -->
-<div class="section" data-section="mood" id="mood">
-  <div class="section-title">
-    <span class="section-title-text">MOOD</span>
-  </div>
-  <div class="card mood-chip" id="moodChip">
-    <div class="mood-chip-head" id="moodChipHead">How's today?</div>
-    <div class="mood-scale" id="moodScale"></div>
-    <input type="text" class="mood-note-input" id="moodNoteInput" placeholder="One line, optional…">
-  </div>
-</div>
-
 <!-- ===== INBOX (moved from dashboard.html) ===== -->
-<div class="section" data-section="inbox" id="inbox">
-  <div class="section-title">
-    <span class="section-title-text">INBOX</span>
+<div class="section" data-section="inbox" id="inbox" data-eq-collapse="planner:inbox">
+  <div class="section-title" data-eq-collapse-keep data-eq-collapse-trigger>
+    <span class="section-title-text">INBOX<span class="eq-collapse-chevron"></span></span>
   </div>
   <div class="card gmail-card" id="gmailCard">
     <div id="gmailErr" class="gmail-err" style="display:none"></div>
@@ -1624,9 +2055,9 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
 </div>
 
 <!-- ===== TASKS ===== -->
-<div class="section" data-section="tasks" id="tasks">
-  <div class="section-title">
-    <span class="section-title-text">TASKS</span>
+<div class="section" data-section="tasks" id="tasks" data-eq-collapse="planner:tasks">
+  <div class="section-title" data-eq-collapse-keep data-eq-collapse-trigger>
+    <span class="section-title-text">TASKS<span class="eq-collapse-chevron"></span></span>
   </div>
 
   <div class="yd-card" id="ydCard" style="display:none;">
@@ -1688,9 +2119,9 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
 </div>
 
 <!-- ===== GOALS ===== -->
-<div class="section" data-section="goals" id="goals">
-  <div class="section-title">
-    <span class="section-title-text">GOALS</span>
+<div class="section" data-section="goals" id="goals" data-eq-collapse="planner:goals">
+  <div class="section-title" data-eq-collapse-keep data-eq-collapse-trigger>
+    <span class="section-title-text">GOALS<span class="eq-collapse-chevron"></span></span>
   </div>
   <div class="card">
     <div class="dgt-add-form" id="dgtAddForm">
@@ -1715,9 +2146,9 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
 </div>
 
 <!-- ===== CALENDAR ===== -->
-<div class="section" data-section="calendar" id="calendar">
-  <div class="section-title">
-    <span class="section-title-text">CALENDAR</span>
+<div class="section" data-section="calendar" id="calendar" data-eq-collapse="planner:calendar">
+  <div class="section-title" data-eq-collapse-keep data-eq-collapse-trigger>
+    <span class="section-title-text">CALENDAR<span class="eq-collapse-chevron"></span></span>
   </div>
   <div class="card">
     <div class="cal-toolbar">
@@ -1806,17 +2237,17 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
 </div>
 
 <!-- ===== CHECKLISTS ===== -->
-<div class="section" data-section="checklists" id="checklists">
-  <div class="section-title">
-    <span class="section-title-text">CHECKLISTS</span>
+<div class="section" data-section="checklists" id="checklists" data-eq-collapse="planner:checklists">
+  <div class="section-title" data-eq-collapse-keep data-eq-collapse-trigger>
+    <span class="section-title-text">CHECKLISTS<span class="eq-collapse-chevron"></span></span>
   </div>
   <div class="chk-list-row" id="chkList"></div>
 </div>
 
 <!-- ===== PROJECTS ===== -->
-<div class="section" data-section="projects" id="projects">
-  <div class="section-title">
-    <span class="section-title-text">PROJECTS</span>
+<div class="section" data-section="projects" id="projects" data-eq-collapse="planner:projects">
+  <div class="section-title" data-eq-collapse-keep data-eq-collapse-trigger>
+    <span class="section-title-text">PROJECTS<span class="eq-collapse-chevron"></span></span>
   </div>
   <div class="card">
     <div class="proj-header">
@@ -1873,9 +2304,9 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
 </div>
 
 <!-- ===== SHOPPING LIST ===== -->
-<div class="section" data-section="shopping" id="shopping-list">
-  <div class="section-title">
-    <span class="section-title-text">SHOPPING LIST</span>
+<div class="section" data-section="shopping" id="shopping-list" data-eq-collapse="planner:shopping">
+  <div class="section-title" data-eq-collapse-keep data-eq-collapse-trigger>
+    <span class="section-title-text">SHOPPING LIST<span class="eq-collapse-chevron"></span></span>
   </div>
   <div class="card">
     <div class="shop-scroll">
@@ -1903,42 +2334,15 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
   </div>
 </div>
 
-<!-- ===== RELATIONSHIP TRACKER ===== -->
-<div class="section" data-section="relationships" id="relationships">
-  <div class="section-title">
-    <span class="section-title-text">RELATIONSHIPS</span>
-  </div>
-  <a class="card" href="interactions.html" style="display:block; text-decoration:none; color:inherit; position:relative;">
-    <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
-      <div>
-        <div style="font-weight:700; font-size:14px;" id="relSummaryLine">Loading…</div>
-        <div style="font-size:11.5px; color:var(--text-tertiary); margin-top:2px;">Moved to Interactions — tap to open</div>
-      </div>
-      <span style="color:var(--text-tertiary); font-size:18px;">&rsaquo;</span>
-    </div>
-  </a>
-</div>
-
 <!-- ===== LEARN HUB SUMMARY (6.3) -- compact link, full management lives on Ability ===== -->
-<div class="section" data-section="learn-summary" id="learn-summary">
-  <div class="section-title">
-    <span class="section-title-text">LEARN</span>
-  </div>
-  <a class="card" href="ability.html" style="display:block; text-decoration:none; color:inherit; position:relative;">
-    <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
-      <div>
-        <div style="font-weight:700; font-size:14px;" id="learnSummaryLine">Loading…</div>
-        <div style="font-size:11.5px; color:var(--text-tertiary); margin-top:2px;">Lives on Ability — tap to open</div>
-      </div>
-      <span style="color:var(--text-tertiary); font-size:18px;">&rsaquo;</span>
-    </div>
-  </a>
-</div>
+<!-- The read-only LEARN summary that used to sit here only existed to link
+     across to the separate Ability page. Learn Hub itself is on this page
+     now (below), so the summary would just be a duplicate of it. -->
 
 <!-- ===== ANNUAL REVIEW (moved from dashboard.html, Phase 6.10) ===== -->
-<div class="section" data-section="annual-review" id="annual-review">
-  <div class="section-title">
-    <span class="section-title-text">ANNUAL REVIEW</span>
+<div class="section" data-section="annual-review" id="annual-review" data-eq-collapse="planner:annual-review">
+  <div class="section-title" data-eq-collapse-keep data-eq-collapse-trigger>
+    <span class="section-title-text">ANNUAL REVIEW<span class="eq-collapse-chevron"></span></span>
   </div>
   <div class="wkr-card" id="annualReviewCard">
     <div class="wkr-head">
@@ -1979,6 +2383,70 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
       </div>
     </div>
     <div id="annualReviewSections" style="display:none;"></div>
+  </div>
+</div>
+
+
+<!-- ===== HABIT TRACKER ===== -->
+<div class="section" data-section="habits" id="habit-tracker" data-eq-collapse="ability:habits">
+  <div class="section-title" data-eq-collapse-keep data-eq-collapse-trigger>
+    <span class="section-title-text">HABIT TRACKER<span class="eq-collapse-chevron"></span></span>
+  </div>
+  <div class="card">
+    <div class="hab-add-row">
+      <input type="text" class="hab-input" id="habNameInput" placeholder="New habit…">
+      <button type="button" class="hab-add-btn" id="habAddBtn">+ Add</button>
+    </div>
+    <div id="habList"></div>
+    <div class="empty-state" id="habEmptyState" style="display:none;">No habits yet — add one above.</div>
+  </div>
+</div>
+
+<!-- ===== SKILL TRACKER ===== -->
+<div class="section" data-section="skills" id="skill-tracker" data-eq-collapse="ability:skills">
+  <div class="section-title" data-eq-collapse-keep data-eq-collapse-trigger>
+    <span class="section-title-text">SKILL TRACKER<span class="eq-collapse-chevron"></span></span>
+  </div>
+  <div class="card">
+    <div class="skill-add-row">
+      <input type="text" class="skill-input" id="skillNameInput" placeholder="New skill or hobby…">
+      <button type="button" class="skill-add-btn" id="skillAddBtn">+ Add</button>
+    </div>
+    <div id="skillList"></div>
+    <div class="empty-state" id="skillEmptyState" style="display:none;">No skills yet — add one above.</div>
+  </div>
+</div>
+
+<!-- ===== BOOK TRACKER ===== -->
+<div class="section" data-section="books" id="book-tracker" data-eq-collapse="ability:books">
+  <div class="section-title" data-eq-collapse-keep data-eq-collapse-trigger>
+    <span class="section-title-text">BOOK TRACKER<span class="eq-collapse-chevron"></span></span>
+  </div>
+  <div class="card">
+    <div class="book-year-stat" id="bookYearStat"></div>
+    <div class="book-add-row">
+      <input type="text" class="hab-input" id="bookTitleInput" placeholder="Book title…">
+      <input type="text" class="hab-input book-author-input" id="bookAuthorInput" placeholder="Author…">
+      <button type="button" class="hab-add-btn" id="bookAddBtn">+ Add</button>
+    </div>
+    <div id="bookShelves"></div>
+    <div class="empty-state" id="bookEmptyState" style="display:none;">No books yet — add one above.</div>
+  </div>
+</div>
+
+<!-- ===== LEARN HUB (6.3) ===== -->
+<div class="section" data-section="learn" id="learn-hub" data-eq-collapse="ability:learn">
+  <div class="section-title" data-eq-collapse-keep data-eq-collapse-trigger>
+    <span class="section-title-text">LEARN HUB<span class="eq-collapse-chevron"></span></span>
+    <span class="learn-due-chip" id="learnDueChip" style="display:none;"></span>
+  </div>
+  <div class="card">
+    <div class="learn-track-add-row">
+      <input type="text" class="hab-input" id="learnTrackInput" placeholder="New track (e.g. Adult Nursing BSc)…">
+      <button type="button" class="hab-add-btn" id="learnTrackAddBtn">+ Add</button>
+    </div>
+    <div id="learnTracksList"></div>
+    <div class="empty-state" id="learnEmptyState" style="display:none;">No tracks yet — add one above.</div>
   </div>
 </div>
 
@@ -4586,55 +5054,6 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
     el._t = setTimeout(() => { el.textContent = ''; }, 4000);
   }
 
-  // ============================================================
-  // RELATIONSHIP TRACKER
-  // ============================================================
-  // Full contact manager moved to interactions.html (Phase 5.1/5.2) -- this
-  // is read-only here, just enough to compute the overdue count for the
-  // summary card above. Tier cadences/schema (history log, not a single
-  // lastContactedAt) are interactions.html's source of truth now; kept in
-  // sync here only via that same read, never written back from Planner.
-  const CONTACTS_KEY = 'contacts_v1';
-  // Re-walk vs equavia-pre-answers-final.md 5.2: Close 21d->14d, Acquaintance 60d->45d.
-  const TIER_CADENCE = { inner: 7, close: 14, acquaintance: 45, networking: 90 };
-  function getContacts() { const v = storeGet(CONTACTS_KEY); return Array.isArray(v) ? v : []; }
-  function contactIsOverdue(c) {
-    if (c.snoozedUntil && new Date(c.snoozedUntil).getTime() > Date.now()) return false;
-    const history = Array.isArray(c.history) ? c.history : (c.lastContactedAt ? [{ date: c.lastContactedAt }] : []);
-    if (!history.length) return true;
-    const last = history.reduce((latest, h) => (!latest || h.date > latest) ? h.date : latest, null);
-    const days = Math.floor((Date.now() - new Date(last).getTime()) / 86400000);
-    const cadence = TIER_CADENCE[c.tier] || TIER_CADENCE[{ network: 'networking' }[c.tier]] || 21;
-    return days >= cadence;
-  }
-  function renderRelationshipsSummary() {
-    const line = document.getElementById('relSummaryLine');
-    if (!line) return;
-    const list = getContacts();
-    if (!list.length) { line.textContent = 'No contacts yet'; return; }
-    const overdueCount = list.filter(contactIsOverdue).length;
-    line.textContent = list.length + ' contact' + (list.length === 1 ? '' : 's') +
-      (overdueCount > 0 ? ' · ' + overdueCount + ' overdue' : ' · up to date');
-  }
-
-  // 6.3: read-only summary, same pattern as Relationships above -- full
-  // management lives on Ability, this is just enough to surface deadlines
-  // due soon and flashcards due today without duplicating the editable UI.
-  function renderLearnSummary() {
-    const line = document.getElementById('learnSummaryLine');
-    if (!line) return;
-    const tracks = storeGet('eq.learn.tracks_v1') || [];
-    if (!tracks.length) { line.textContent = 'No tracks yet'; return; }
-    const deadlines = (storeGet('eq.learn.deadlines_v1') || []).filter((d) => d.status !== 'done');
-    const soon = deadlines.filter((d) => { const days = Math.ceil((new Date(d.dueDate).getTime() - Date.now()) / 86400000); return days >= 0 && days <= 7; });
-    const decks = storeGet('eq.learn.decks_v1') || [];
-    const dueCards = decks.reduce((s, d) => s + (d.cards || []).filter((c) => c.dueDate <= new Date().toISOString()).length, 0);
-    const parts = [];
-    if (soon.length) parts.push(soon.length + ' deadline' + (soon.length === 1 ? '' : 's') + ' due soon');
-    if (dueCards) parts.push(dueCards + ' card' + (dueCards === 1 ? '' : 's') + ' due');
-    line.textContent = parts.length ? parts.join(' · ') : tracks.length + ' track' + (tracks.length === 1 ? '' : 's') + ' · nothing due';
-  }
-
   // ---------- Boot ----------
   rollover();
   processStreak();
@@ -4648,12 +5067,10 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
   renderChecklists();
   initCalendar();
   initProjects();
-  renderRelationshipsSummary();
-  renderLearnSummary();
   initSuggestSlot();
 
   window.addEventListener('storage', () => {
-    loadToday(); loadTomorrow(); renderStreak(); renderLongtermGoals(); renderChecklists(); renderProjects(); renderRelationshipsSummary(); renderLearnSummary(); renderYesterdayPanel();
+    loadToday(); loadTomorrow(); renderStreak(); renderLongtermGoals(); renderChecklists(); renderProjects(); renderYesterdayPanel();
   });
 })();
 </script>
@@ -4670,67 +5087,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 });
-</script>
-<script>
-// ============================================================
-// MOOD + ONE-LINE JOURNAL (moved from dashboard.html, Phase 6.2).
-// 1-10 scale, purely observational. Idempotent per day: tapping a new
-// number after already logging today just updates the same entry.
-// ============================================================
-(function () {
-  'use strict';
-  const $ = (id) => document.getElementById(id);
-  function storeGet(key) { try { return JSON.parse(localStorage.getItem(key)); } catch (e) { return null; } }
-  function storeSet(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) {} }
-  const AT = window.AssistantTools;
-
-  const MOOD_KEY = 'eq.mood.log_v1';
-  function getMoodLog() { const v = storeGet(MOOD_KEY); return Array.isArray(v) ? v : []; }
-  function setMoodLog(list) { storeSet(MOOD_KEY, list); }
-  function activeDateKey() { return AT ? AT.activeDateKeyLocal() : new Date().toISOString().slice(0, 10); }
-  function moodToday() { return getMoodLog().find((m) => m.dateKey === activeDateKey()) || null; }
-
-  // Delegates to daily-report.js's shared builder (mood + close-the-day are
-  // just two of the sections it assembles) so there's one writer of
-  // <folder>/Daily/<dateKey>.md, not two stepping on the same file.
-  async function writeDailyNote(dateKey) {
-    if (!window.EqDailyReport) return;
-    try { await window.EqDailyReport.run(dateKey); } catch (e) {}
-  }
-
-  function renderMoodChip() {
-    const chip = $('moodChip');
-    if (!chip) return;
-    const today = moodToday();
-    const scale = $('moodScale');
-    scale.innerHTML = '';
-    for (let i = 1; i <= 10; i++) {
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'mood-num-btn' + (today && today.mood === i ? ' is-selected' : '');
-      btn.textContent = String(i);
-      btn.addEventListener('click', () => saveMood(i));
-      scale.appendChild(btn);
-    }
-    $('moodChipHead').textContent = today ? 'Today: ' + today.mood + '/10' : 'How\'s today?';
-    $('moodNoteInput').value = today ? (today.note || '') : '';
-  }
-  async function saveMood(value) {
-    const dateKey = activeDateKey();
-    const list = getMoodLog();
-    const idx = list.findIndex((m) => m.dateKey === dateKey);
-    const note = $('moodNoteInput').value.trim();
-    const entry = { dateKey, mood: value, note, at: new Date().toISOString() };
-    if (idx !== -1) list[idx] = entry; else list.push(entry);
-    setMoodLog(list.slice(-120));
-    renderMoodChip();
-    await writeDailyNote(dateKey);
-  }
-  $('moodNoteInput').addEventListener('change', () => { const today = moodToday(); if (today) saveMood(today.mood); });
-
-  renderMoodChip();
-  window.addEventListener('storage', renderMoodChip);
-})();
 </script>
 <script>
 // ============================================================
@@ -5369,5 +5725,1040 @@ document.addEventListener('DOMContentLoaded', function () {
   trySilentAuth(20);
 })();
 </script>
+<div class="hab-year-modal-bg" id="learnTrackModalBg">
+  <div class="hab-year-modal">
+    <div class="hab-year-modal-head">
+      <span class="hab-year-modal-title" id="learnTrackModalTitle">Track</span>
+      <button type="button" class="hab-year-modal-close" id="learnTrackModalClose" aria-label="Close">&times;</button>
+    </div>
+    <div class="learn-status-row">
+      <select id="learnTrackStatus">
+        <option value="active">Active</option>
+        <option value="paused">Paused</option>
+        <option value="done">Done</option>
+      </select>
+      <input type="date" id="learnTrackEndDate">
+      <button type="button" class="hab-add-btn" id="learnTrackDelBtn">Delete track</button>
+    </div>
+
+    <div class="learn-subsection-title">Deadlines</div>
+    <div class="learn-deadline-add-row">
+      <input type="text" id="learnDeadlineTitle" placeholder="Assignment / exam / application…">
+      <input type="date" id="learnDeadlineDate">
+      <input type="number" id="learnDeadlineWeight" placeholder="Weight %" min="0" max="100">
+      <button type="button" class="hab-add-btn" id="learnDeadlineAddBtn">+ Add</button>
+    </div>
+    <div id="learnDeadlinesList"></div>
+
+    <div class="learn-subsection-title">Hours log</div>
+    <div class="learn-hours-add-row">
+      <input type="number" id="learnHoursInput" placeholder="Minutes" min="1">
+      <input type="text" id="learnHoursNote" placeholder="Note (optional)…">
+      <button type="button" class="hab-add-btn" id="learnHoursAddBtn">Log</button>
+    </div>
+    <div class="learn-hours-total" id="learnHoursTotal"></div>
+    <div id="learnHoursList"></div>
+
+    <div class="learn-subsection-title">Flashcard decks</div>
+    <div class="learn-deck-add-row">
+      <input type="text" id="learnDeckNameInput" placeholder="New deck name…">
+      <button type="button" class="hab-add-btn" id="learnDeckAddBtn">+ Deck</button>
+    </div>
+    <div id="learnDecksList"></div>
+
+    <div class="learn-subsection-title">Learning log</div>
+    <div class="learn-log-add-row">
+      <input type="text" id="learnLogText" placeholder="Thing you learned…">
+      <input type="text" id="learnLogLink" placeholder="Link (optional)…">
+      <button type="button" class="hab-add-btn" id="learnLogAddBtn">+ Log</button>
+    </div>
+    <div id="learnLogList"></div>
+  </div>
+</div>
+
+<div class="hab-year-modal-bg" id="learnDeckImportModalBg">
+  <div class="hab-year-modal">
+    <div class="hab-year-modal-head">
+      <span class="hab-year-modal-title">Paste cards</span>
+      <button type="button" class="hab-year-modal-close" id="learnDeckImportClose" aria-label="Close">&times;</button>
+    </div>
+    <p class="learn-import-hint">One card per line, front and back separated by a tab or " :: ". Paste output from Ask Claude directly.</p>
+    <textarea id="learnDeckImportText" rows="8" placeholder="What is the normal adult resting HR range? :: 60-100 bpm"></textarea>
+    <button type="button" class="hab-add-btn" id="learnDeckImportSaveBtn">Import</button>
+  </div>
+</div>
+
+<div class="hab-year-modal-bg" id="learnReviewModalBg">
+  <div class="hab-year-modal">
+    <div class="hab-year-modal-head">
+      <span class="hab-year-modal-title" id="learnReviewTitle">Review</span>
+      <button type="button" class="hab-year-modal-close" id="learnReviewClose" aria-label="Close">&times;</button>
+    </div>
+    <div class="learn-review-card" id="learnReviewCard">
+      <div class="learn-review-face" id="learnReviewFront"></div>
+      <div class="learn-review-face" id="learnReviewBack" style="display:none;"></div>
+      <button type="button" class="hab-add-btn" id="learnReviewShowBtn">Show answer</button>
+    </div>
+    <div class="learn-review-grades" id="learnReviewGrades" style="display:none;">
+      <button type="button" class="learn-grade-btn" data-grade="2">Again</button>
+      <button type="button" class="learn-grade-btn" data-grade="4">Good</button>
+      <button type="button" class="learn-grade-btn" data-grade="5">Easy</button>
+    </div>
+    <div class="learn-review-status" id="learnReviewStatus"></div>
+  </div>
+</div>
+
+<div class="hab-year-modal-bg" id="habYearModalBg">
+  <div class="hab-year-modal">
+    <div class="hab-year-modal-head">
+      <span class="hab-year-modal-title" id="habYearModalTitle">Habit</span>
+      <button type="button" class="hab-year-modal-close" id="habYearModalClose" aria-label="Close">&times;</button>
+    </div>
+    <div class="hab-year-modal-pct" id="habYearModalPct"></div>
+    <div class="hab-year-modal-grid-wrap">
+      <div class="hab-year-modal-grid" id="habYearModalGrid"></div>
+    </div>
+    <div class="hab-year-legend">
+      <span class="hab-year-legend-item"><span class="hab-year-legend-dot" style="background:var(--success)"></span>Done</span>
+      <span class="hab-year-legend-item"><span class="hab-year-legend-dot" style="background:rgba(255,107,107,0.55)"></span>Missed</span>
+      <span class="hab-year-legend-item"><span class="hab-year-legend-dot" style="background:rgba(255,255,255,0.06)"></span>Not tracked yet</span>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  // ---------- storage helpers (same interface as dashboard.html) ----------
+  function storeGet(key) {
+    try { const raw = localStorage.getItem(key); return raw == null ? null : JSON.parse(raw); }
+    catch (e) { return null; }
+  }
+  function storeSet(key, value) {
+    try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) {}
+  }
+
+  function pad2(n) { return String(n).padStart(2, '0'); }
+  function dateKey(d) { return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); }
+  function addDays(d, n) { const x = new Date(d); x.setDate(x.getDate() + n); return x; }
+
+  // ============================================================
+  // HABIT TRACKER
+  // ============================================================
+  const HABITS_KEY = 'habits_v1';
+  const HAB_GRID_DAYS = 30;
+  function getHabits() { const v = storeGet(HABITS_KEY); return Array.isArray(v) ? v : []; }
+  function setHabits(list) { storeSet(HABITS_KEY, list); }
+
+  function computeStreak(history) {
+    let streak = 0;
+    let cursor = new Date();
+    if (!history[dateKey(cursor)]) cursor = addDays(cursor, -1);
+    while (history[dateKey(cursor)]) {
+      streak++;
+      cursor = addDays(cursor, -1);
+    }
+    return streak;
+  }
+
+  // ============================================================
+  // YEAR GRID (rolling 365 days, not calendar-year-to-date -- stays
+  // full/useful all year round instead of resetting to nearly-empty
+  // every January). Three states: done (green/accent), missed (red,
+  // only for past days on/after the habit existed), not-tracked-yet
+  // (grey, for days before the habit was created or in the future).
+  // Habits from before this feature has no createdAt -- inferred from
+  // the earliest history entry instead of retroactively marking a
+  // brand-new habit's pre-creation days as "missed".
+  // ============================================================
+  function habitStartBoundary(habit) {
+    if (habit.createdAt) {
+      const t = new Date(habit.createdAt);
+      t.setHours(0, 0, 0, 0);
+      return t;
+    }
+    const keys = Object.keys(habit.history || {}).sort();
+    if (keys.length) {
+      const p = keys[0].split('-').map(Number);
+      return new Date(p[0], p[1] - 1, p[2]);
+    }
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return today;
+  }
+
+  function habitYearCells(habit) {
+    const history = habit.history || {};
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const start = habitStartBoundary(habit);
+    const cells = [];
+    let doneCount = 0, trackedDays = 0;
+    for (let i = 364; i >= 0; i--) {
+      const d = addDays(today, -i);
+      const key = dateKey(d);
+      const isToday = i === 0;
+      let state;
+      if (d < start) {
+        state = 'grey';
+      } else if (history[key]) {
+        state = 'done'; doneCount++; trackedDays++;
+      } else if (isToday) {
+        state = 'grey'; // today isn't over yet -- don't mark it missed
+      } else {
+        state = 'missed'; trackedDays++;
+      }
+      cells.push({ dateKey: key, state, isToday });
+    }
+    return { cells, pct: trackedDays > 0 ? Math.round((doneCount / trackedDays) * 100) : null };
+  }
+
+  // ============================================================
+  // HABIT HEALTH SCORE (exponential smoothing, alongside the streak,
+  // not replacing it -- per spec). score = previous*k + done*(1-k).
+  // k=0.95 gives roughly a 2-week half-life under sustained misses:
+  // a single bad day only nudges the score, matching "decays gradually
+  // instead of zeroing it." This app's habits have no per-habit
+  // frequency setting (unlike Loop's scheduled-habit model), so one
+  // fixed k is used for all habits rather than inventing a frequency
+  // field nothing else in the app has.
+  // ============================================================
+  const HABIT_SCORE_K = 0.95;
+
+  function computeHabitScore(habit) {
+    const history = habit.history || {};
+    const start = habitStartBoundary(habit);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    let score = 50; // neutral seed -- k's exponential decay makes the seed's influence fade within a few weeks regardless
+    let cursor = new Date(start);
+    while (cursor < today) {
+      const done = !!history[dateKey(cursor)];
+      score = score * HABIT_SCORE_K + (done ? 100 : 0) * (1 - HABIT_SCORE_K);
+      cursor = addDays(cursor, 1);
+    }
+    // Today only counts once it's actually been marked done -- an
+    // unmarked "today" isn't a miss yet, same rule as the year grid.
+    if (history[dateKey(today)]) {
+      score = score * HABIT_SCORE_K + 100 * (1 - HABIT_SCORE_K);
+    }
+    return Math.round(score);
+  }
+
+  function buildHabitScoreRing(score) {
+    const wrap = document.createElement('div');
+    wrap.className = 'hab-score-ring';
+    wrap.title = 'Habit health score: ' + score + '/100';
+    const color = score >= 70 ? 'var(--success)' : score >= 40 ? 'var(--warning)' : 'var(--danger)';
+    const r = 12, c = 2 * Math.PI * r;
+    const offset = c * (1 - score / 100);
+    wrap.innerHTML =
+      '<svg viewBox="0 0 28 28" width="28" height="28">' +
+        '<circle class="hab-score-track" cx="14" cy="14" r="' + r + '"/>' +
+        '<circle class="hab-score-fill" cx="14" cy="14" r="' + r + '" stroke="' + color + '" stroke-dasharray="' + c.toFixed(2) + '" stroke-dashoffset="' + offset.toFixed(2) + '"/>' +
+      '</svg>' +
+      '<span class="hab-score-num">' + score + '</span>';
+    return wrap;
+  }
+
+  function buildHabitYearRow(habit) {
+    const { cells, pct } = habitYearCells(habit);
+    const row = document.createElement('button');
+    row.type = 'button';
+    row.className = 'hab-year-row';
+    row.setAttribute('aria-label', 'View ' + habit.name + '’s full year');
+    const grid = document.createElement('div');
+    grid.className = 'hab-year-grid';
+    cells.forEach(c => {
+      const cell = document.createElement('span');
+      cell.className = 'hab-year-cell is-' + c.state;
+      grid.appendChild(cell);
+    });
+    row.appendChild(grid);
+    const pctEl = document.createElement('span');
+    pctEl.className = 'hab-year-pct';
+    pctEl.textContent = pct == null ? 'no data yet' : pct + '% this year';
+    row.appendChild(pctEl);
+    row.addEventListener('click', () => openHabitYearModal(habit));
+    return row;
+  }
+
+  function openHabitYearModal(habit) {
+    const { cells, pct } = habitYearCells(habit);
+    document.getElementById('habYearModalTitle').textContent = habit.name;
+    document.getElementById('habYearModalPct').textContent = (pct == null ? 'No tracked days yet' : pct + '% success over the last year');
+    const grid = document.getElementById('habYearModalGrid');
+    grid.innerHTML = '';
+    cells.forEach(c => {
+      const cell = document.createElement('span');
+      cell.className = 'hab-year-modal-cell is-' + c.state + (c.isToday ? ' is-today' : '');
+      cell.title = c.dateKey + (c.isToday ? ' (today)' : '');
+      grid.appendChild(cell);
+    });
+    document.getElementById('habYearModalBg').classList.add('show');
+  }
+  function closeHabitYearModal() {
+    document.getElementById('habYearModalBg').classList.remove('show');
+  }
+  function initHabitYearModal() {
+    document.getElementById('habYearModalClose').addEventListener('click', closeHabitYearModal);
+    document.getElementById('habYearModalBg').addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) closeHabitYearModal();
+    });
+  }
+
+  function buildHabitRow(habit) {
+    const row = document.createElement('div');
+    row.className = 'hab-row';
+    row.dataset.id = habit.id;
+    const history = habit.history || {};
+    const streak = computeStreak(history);
+
+    const top = document.createElement('div');
+    top.className = 'hab-row-top';
+    top.innerHTML =
+      '<span class="hab-name"></span>' +
+      '<span class="hab-streak' + (streak > 0 ? ' is-active' : '') + '">🔥 ' + streak + '</span>' +
+      '<button type="button" class="hab-del" aria-label="Delete habit">×</button>';
+    top.querySelector('.hab-name').textContent = habit.name;
+    top.insertBefore(buildHabitScoreRing(computeHabitScore(habit)), top.querySelector('.hab-del'));
+    top.querySelector('.hab-del').addEventListener('click', () => {
+      setHabits(getHabits().filter(h => h.id !== habit.id));
+      renderHabits();
+    });
+    row.appendChild(top);
+
+    const grid = document.createElement('div');
+    grid.className = 'hab-grid';
+    const today = new Date();
+    for (let i = HAB_GRID_DAYS - 1; i >= 0; i--) {
+      const d = addDays(today, -i);
+      const key = dateKey(d);
+      const isToday = i === 0;
+      const isDone = !!history[key];
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'hab-day' + (isDone ? ' is-done' : '') + (isToday ? ' is-today' : '');
+      btn.title = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + (isToday ? ' (today)' : '');
+      btn.addEventListener('click', () => {
+        const list = getHabits();
+        const idx = list.findIndex(h => h.id === habit.id);
+        if (idx === -1) return;
+        const hist = Object.assign({}, list[idx].history || {});
+        if (hist[key]) delete hist[key]; else hist[key] = true;
+        list[idx] = Object.assign({}, list[idx], { history: hist });
+        setHabits(list);
+        renderHabits();
+      });
+      grid.appendChild(btn);
+    }
+    row.appendChild(grid);
+    row.appendChild(buildHabitYearRow(habit));
+    return row;
+  }
+
+  function renderHabits() {
+    const wrap = document.getElementById('habList');
+    const emptyState = document.getElementById('habEmptyState');
+    if (!wrap) return;
+    const list = getHabits();
+    wrap.innerHTML = '';
+    emptyState.style.display = list.length ? 'none' : '';
+    list.forEach(h => wrap.appendChild(buildHabitRow(h)));
+  }
+
+  function initHabitAddForm() {
+    document.getElementById('habAddBtn').addEventListener('click', () => {
+      const input = document.getElementById('habNameInput');
+      const name = input.value.trim();
+      if (!name) return;
+      const list = getHabits();
+      list.push({ id: 'hb' + Date.now() + Math.random().toString(36).slice(2, 7), name, history: {}, createdAt: new Date().toISOString() });
+      setHabits(list);
+      input.value = '';
+      renderHabits();
+    });
+  }
+
+  // ============================================================
+  // SKILL TRACKER
+  // ============================================================
+  const SKILLS_KEY = 'skills_v1';
+  let skillLoggingId = null;
+
+  function getSkills() { const v = storeGet(SKILLS_KEY); return Array.isArray(v) ? v : []; }
+  function setSkills(list) { storeSet(SKILLS_KEY, list); }
+
+  function totalMinutes(skill) {
+    return (skill.sessions || []).reduce((sum, s) => sum + (s.minutes || 0), 0);
+  }
+  function formatMinutes(total) {
+    if (!total) return '0m logged';
+    const h = Math.floor(total / 60);
+    const m = total % 60;
+    if (h && m) return h + 'h ' + m + 'm logged';
+    if (h) return h + 'h logged';
+    return m + 'm logged';
+  }
+
+  function buildSkillHistory(skill) {
+    const wrap = document.createElement('div');
+    wrap.className = 'skill-history';
+    const sessions = (skill.sessions || []).slice().sort((a, b) => new Date(b.loggedAt) - new Date(a.loggedAt));
+    if (!sessions.length) {
+      const empty = document.createElement('div');
+      empty.className = 'skill-history-empty';
+      empty.textContent = 'No sessions logged yet.';
+      wrap.appendChild(empty);
+      return wrap;
+    }
+    sessions.forEach(s => {
+      const row = document.createElement('div');
+      row.className = 'skill-history-row';
+      const d = new Date(s.loggedAt);
+      row.innerHTML =
+        '<span class="skill-history-date"></span>' +
+        '<span class="skill-history-dur"></span>' +
+        '<span class="skill-history-notes"></span>' +
+        '<button type="button" class="skill-history-del" aria-label="Delete session">×</button>';
+      row.querySelector('.skill-history-date').textContent = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+      row.querySelector('.skill-history-dur').textContent = (s.minutes || 0) + 'm';
+      row.querySelector('.skill-history-notes').textContent = s.notes || '';
+      row.querySelector('.skill-history-del').addEventListener('click', () => {
+        const list = getSkills();
+        const idx = list.findIndex(x => x.id === skill.id);
+        if (idx === -1) return;
+        list[idx] = Object.assign({}, list[idx], { sessions: (list[idx].sessions || []).filter(x => x.id !== s.id) });
+        setSkills(list);
+        renderSkills();
+      });
+      wrap.appendChild(row);
+    });
+    return wrap;
+  }
+
+  function buildSkillRow(skill) {
+    const row = document.createElement('div');
+    row.className = 'skill-row';
+    row.dataset.id = skill.id;
+
+    const top = document.createElement('div');
+    top.className = 'skill-row-top';
+    top.innerHTML =
+      '<span class="skill-name"></span>' +
+      '<span class="skill-total"></span>' +
+      '<button type="button" class="skill-log-btn">+ Log session</button>' +
+      '<button type="button" class="skill-del" aria-label="Delete skill">×</button>';
+    top.querySelector('.skill-name').textContent = skill.name;
+    top.querySelector('.skill-total').textContent = formatMinutes(totalMinutes(skill));
+    top.querySelector('.skill-del').addEventListener('click', () => {
+      setSkills(getSkills().filter(x => x.id !== skill.id));
+      renderSkills();
+    });
+    top.querySelector('.skill-log-btn').addEventListener('click', () => {
+      skillLoggingId = (skillLoggingId === skill.id) ? null : skill.id;
+      renderSkills();
+    });
+    row.appendChild(top);
+
+    const progressRow = document.createElement('div');
+    progressRow.className = 'skill-progress-row';
+    progressRow.innerHTML = '<span class="skill-progress-value">' + (skill.progress || 0) + '%</span>';
+    row.appendChild(progressRow);
+
+    const slider = document.createElement('input');
+    slider.type = 'range';
+    slider.min = '0';
+    slider.max = '100';
+    slider.className = 'skill-slider';
+    slider.value = String(skill.progress || 0);
+    const valueLabel = progressRow.querySelector('.skill-progress-value');
+    slider.addEventListener('input', () => { valueLabel.textContent = slider.value + '%'; });
+    slider.addEventListener('change', () => {
+      const list = getSkills();
+      const idx = list.findIndex(x => x.id === skill.id);
+      if (idx !== -1) {
+        list[idx] = Object.assign({}, list[idx], { progress: Number(slider.value) });
+        setSkills(list);
+      }
+    });
+    row.appendChild(slider);
+
+    if (skillLoggingId === skill.id) {
+      const form = document.createElement('div');
+      form.className = 'skill-log-form';
+      form.innerHTML =
+        '<input type="number" class="skill-input skill-log-minutes" placeholder="Minutes" min="1">' +
+        '<input type="text" class="skill-input skill-log-notes" placeholder="Notes (optional)…">' +
+        '<button type="button" class="skill-add-btn skill-log-save">Save</button>' +
+        '<button type="button" class="skill-log-cancel">Cancel</button>';
+      form.querySelector('.skill-log-save').addEventListener('click', () => {
+        const minutes = Number(form.querySelector('.skill-log-minutes').value) || 0;
+        if (!minutes) return;
+        const notes = form.querySelector('.skill-log-notes').value.trim();
+        const list = getSkills();
+        const idx = list.findIndex(x => x.id === skill.id);
+        if (idx !== -1) {
+          const sessions = (list[idx].sessions || []).concat([{
+            id: 'ss' + Date.now() + Math.random().toString(36).slice(2, 7),
+            minutes, notes, loggedAt: new Date().toISOString()
+          }]);
+          list[idx] = Object.assign({}, list[idx], { sessions });
+          setSkills(list);
+        }
+        skillLoggingId = null;
+        renderSkills();
+      });
+      form.querySelector('.skill-log-cancel').addEventListener('click', () => {
+        skillLoggingId = null;
+        renderSkills();
+      });
+      row.appendChild(form);
+    }
+
+    row.appendChild(buildSkillHistory(skill));
+    return row;
+  }
+
+  function renderSkills() {
+    const wrap = document.getElementById('skillList');
+    const emptyState = document.getElementById('skillEmptyState');
+    if (!wrap) return;
+    const list = getSkills();
+    wrap.innerHTML = '';
+    emptyState.style.display = list.length ? 'none' : '';
+    list.forEach(s => wrap.appendChild(buildSkillRow(s)));
+  }
+
+  function initSkillAddForm() {
+    document.getElementById('skillAddBtn').addEventListener('click', () => {
+      const input = document.getElementById('skillNameInput');
+      const name = input.value.trim();
+      if (!name) return;
+      const list = getSkills();
+      list.push({ id: 'sk' + Date.now() + Math.random().toString(36).slice(2, 7), name, progress: 0, sessions: [] });
+      setSkills(list);
+      input.value = '';
+      renderSkills();
+    });
+  }
+
+  // ============================================================
+  // BOOK TRACKER
+  // ============================================================
+  const BOOKS_KEY = 'books_v1';
+  const BOOK_SHELVES = [
+    { status: 'want',    label: 'Want to Read' },
+    { status: 'reading', label: 'Reading' },
+    { status: 'read',    label: 'Read' }
+  ];
+
+  function getBooks() { const v = storeGet(BOOKS_KEY); return Array.isArray(v) ? v : []; }
+  function setBooks(list) { storeSet(BOOKS_KEY, list); }
+
+  // Re-walk vs equavia-pre-answers-final.md 1.1: yearly "books finished"
+  // target, Goodreads-challenge style -- wasn't tracked at all before,
+  // just a bare count. Stored (not hardcoded) so it can be adjusted the
+  // same way sleep_target_hours_v1 is, without another code change.
+  const BOOKS_TARGET_KEY = 'books_yearly_target_v1';
+  const DEFAULT_BOOKS_TARGET = 6;
+  function getBooksTarget() { const v = storeGet(BOOKS_TARGET_KEY); return (typeof v === 'number' && v > 0) ? v : DEFAULT_BOOKS_TARGET; }
+
+  function renderBookYearStat() {
+    const el = document.getElementById('bookYearStat');
+    if (!el) return;
+    const year = new Date().getFullYear();
+    const count = getBooks().filter(b => b.status === 'read' && b.finishedAt && new Date(b.finishedAt).getFullYear() === year).length;
+    const target = getBooksTarget();
+    el.innerHTML = '<b>' + count + '</b> / ' + target + ' book' + (target === 1 ? '' : 's') + ' finished in ' + year;
+  }
+
+  function buildBookRow(book) {
+    const row = document.createElement('div');
+    row.className = 'book-row';
+    row.dataset.id = book.id;
+
+    const top = document.createElement('div');
+    top.className = 'book-row-top';
+    top.innerHTML =
+      '<div class="book-titles">' +
+        '<div class="book-title"></div>' +
+        '<div class="book-author"></div>' +
+      '</div>' +
+      '<select class="book-status-select">' +
+        BOOK_SHELVES.map(s => '<option value="' + s.status + '">' + s.label + '</option>').join('') +
+      '</select>' +
+      '<button type="button" class="book-del" aria-label="Delete book">×</button>';
+    top.querySelector('.book-title').textContent = book.title;
+    top.querySelector('.book-author').textContent = book.author || '';
+    const statusSel = top.querySelector('.book-status-select');
+    statusSel.value = book.status;
+    statusSel.addEventListener('change', () => {
+      const list = getBooks();
+      const idx = list.findIndex(b => b.id === book.id);
+      if (idx === -1) return;
+      const next = Object.assign({}, list[idx], { status: statusSel.value });
+      if (statusSel.value === 'read' && !next.finishedAt) next.finishedAt = new Date().toISOString();
+      if (statusSel.value !== 'read') next.finishedAt = null;
+      list[idx] = next;
+      setBooks(list);
+      renderBooks();
+    });
+    top.querySelector('.book-del').addEventListener('click', () => {
+      setBooks(getBooks().filter(b => b.id !== book.id));
+      renderBooks();
+    });
+    row.appendChild(top);
+
+    if (book.status === 'read') {
+      const meta = document.createElement('div');
+      meta.className = 'book-meta-row';
+      const stars = document.createElement('div');
+      stars.className = 'book-stars';
+      for (let i = 1; i <= 5; i++) {
+        const starBtn = document.createElement('button');
+        starBtn.type = 'button';
+        starBtn.className = 'book-star' + ((book.rating || 0) >= i ? ' is-filled' : '');
+        starBtn.textContent = '★';
+        starBtn.setAttribute('aria-label', 'Rate ' + i + ' star' + (i === 1 ? '' : 's'));
+        starBtn.addEventListener('click', () => {
+          const list = getBooks();
+          const idx = list.findIndex(b => b.id === book.id);
+          if (idx === -1) return;
+          const newRating = list[idx].rating === i ? 0 : i;
+          list[idx] = Object.assign({}, list[idx], { rating: newRating });
+          setBooks(list);
+          renderBooks();
+        });
+        stars.appendChild(starBtn);
+      }
+      meta.appendChild(stars);
+      if (book.finishedAt) {
+        const dateEl = document.createElement('span');
+        dateEl.className = 'book-finished-date';
+        dateEl.textContent = 'Finished ' + new Date(book.finishedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+        meta.appendChild(dateEl);
+      }
+      row.appendChild(meta);
+    }
+
+    const notes = document.createElement('textarea');
+    notes.className = 'book-notes-input';
+    notes.rows = 1;
+    notes.placeholder = 'Notes…';
+    notes.value = book.notes || '';
+    notes.addEventListener('change', () => {
+      const list = getBooks();
+      const idx = list.findIndex(b => b.id === book.id);
+      if (idx === -1) return;
+      list[idx] = Object.assign({}, list[idx], { notes: notes.value.trim() });
+      setBooks(list);
+    });
+    row.appendChild(notes);
+
+    return row;
+  }
+
+  function renderBooks() {
+    const wrap = document.getElementById('bookShelves');
+    const emptyState = document.getElementById('bookEmptyState');
+    if (!wrap) return;
+    const list = getBooks();
+    wrap.innerHTML = '';
+    emptyState.style.display = list.length ? 'none' : '';
+    BOOK_SHELVES.forEach(shelf => {
+      const items = list.filter(b => b.status === shelf.status);
+      if (!items.length) return;
+      const section = document.createElement('div');
+      section.className = 'book-shelf';
+      const title = document.createElement('div');
+      title.className = 'book-shelf-title';
+      title.textContent = shelf.label + ' (' + items.length + ')';
+      section.appendChild(title);
+      items.forEach(b => section.appendChild(buildBookRow(b)));
+      wrap.appendChild(section);
+    });
+    renderBookYearStat();
+  }
+
+  function initBookAddForm() {
+    document.getElementById('bookAddBtn').addEventListener('click', () => {
+      const titleInput = document.getElementById('bookTitleInput');
+      const authorInput = document.getElementById('bookAuthorInput');
+      const title = titleInput.value.trim();
+      if (!title) return;
+      const list = getBooks();
+      list.push({
+        id: 'bk' + Date.now() + Math.random().toString(36).slice(2, 7),
+        title, author: authorInput.value.trim(),
+        status: 'want', rating: 0, notes: '', finishedAt: null,
+        addedAt: new Date().toISOString()
+      });
+      setBooks(list);
+      titleInput.value = '';
+      authorInput.value = '';
+      renderBooks();
+    });
+  }
+
+  // ---------- Boot ----------
+  renderHabits();
+  initHabitAddForm();
+  initHabitYearModal();
+  renderSkills();
+  initSkillAddForm();
+  renderBooks();
+  initBookAddForm();
+
+  // Re-render if storage changes from another tab.
+  window.addEventListener('storage', () => { renderHabits(); renderSkills(); renderBooks(); });
+})();
+</script>
+<script>
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  function storeGet(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }
+  function storeSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  function genId(p) { return p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+
+  // ============================================================
+  // 6.3 LEARN HUB -- lives on Ability (the user explicitly kept this page's
+  // name rather than the spec's proposed "Growth" rename, earlier in this
+  // same Phase 6 pass). Starts empty, no seed tracks, per the answered
+  // ASK FIRST question. Flashcards included in v1 (also answered) --
+  // classic SM-2 spaced repetition, not a simplified variant.
+  // ============================================================
+  const TRACKS_KEY = 'eq.learn.tracks_v1';
+  const DEADLINES_KEY = 'eq.learn.deadlines_v1';
+  const HOURS_KEY = 'eq.learn.hours_v1';
+  const DECKS_KEY = 'eq.learn.decks_v1';
+  const LOG_KEY = 'eq.learn.log_v1';
+
+  // Re-walk vs equavia-pre-answers-final.md 6.3: seed tracks on first
+  // load, same "seed on first empty read" pattern as gym.html's stack
+  // items -- only fires when the key has never been written at all
+  // (storeGet returns null), never re-seeds after a real, deliberate
+  // empty state (e.g. the user deleted every track).
+  function getTracks() {
+    const stored = storeGet(TRACKS_KEY);
+    if (stored === null) {
+      const seeded = [
+        { id: genId('lt'), name: 'Adult Nursing BSc', status: 'active', endDate: null, createdAt: new Date().toISOString() },
+        { id: genId('lt'), name: 'Property Investing', status: 'active', endDate: null, createdAt: new Date().toISOString() },
+      ];
+      setTracks(seeded);
+      return seeded;
+    }
+    return Array.isArray(stored) ? stored : [];
+  }
+  function setTracks(v) { storeSet(TRACKS_KEY, v); }
+  function getDeadlines() { return storeGet(DEADLINES_KEY) || []; }
+  function setDeadlines(v) { storeSet(DEADLINES_KEY, v); }
+  function getHours() { return storeGet(HOURS_KEY) || []; }
+  function setHours(v) { storeSet(HOURS_KEY, v); }
+  function getDecks() { return storeGet(DECKS_KEY) || []; }
+  function setDecks(v) { storeSet(DECKS_KEY, v); }
+  function getLearnLog() { return storeGet(LOG_KEY) || []; }
+  function setLearnLog(v) { storeSet(LOG_KEY, v); }
+
+  let activeTrackId = null;
+
+  // ---- Tracks ----
+  function renderTracks() {
+    const wrap = $('learnTracksList');
+    const tracks = getTracks();
+    wrap.innerHTML = '';
+    $('learnEmptyState').style.display = tracks.length ? 'none' : '';
+    tracks.forEach((t) => {
+      const row = document.createElement('div');
+      row.className = 'learn-track-row';
+      row.innerHTML = '<span class="learn-track-name"></span><span class="learn-track-status"></span>';
+      row.querySelector('.learn-track-name').textContent = t.name;
+      row.querySelector('.learn-track-status').textContent = t.status;
+      row.addEventListener('click', () => openTrackModal(t.id));
+      wrap.appendChild(row);
+    });
+  }
+  $('learnTrackAddBtn').addEventListener('click', () => {
+    const input = $('learnTrackInput');
+    const name = input.value.trim();
+    if (!name) return;
+    const tracks = getTracks();
+    tracks.push({ id: genId('lt'), name, status: 'active', endDate: null, createdAt: new Date().toISOString() });
+    setTracks(tracks);
+    input.value = '';
+    renderTracks();
+  });
+
+  // ---- Track detail modal ----
+  function openTrackModal(id) {
+    activeTrackId = id;
+    const t = getTracks().find((x) => x.id === id);
+    if (!t) return;
+    $('learnTrackModalTitle').textContent = t.name;
+    $('learnTrackStatus').value = t.status;
+    $('learnTrackEndDate').value = t.endDate || '';
+    renderDeadlines();
+    renderHoursLog();
+    renderDecks();
+    renderLearnLog();
+    $('learnTrackModalBg').classList.add('show');
+  }
+  function closeTrackModal() { $('learnTrackModalBg').classList.remove('show'); activeTrackId = null; }
+  $('learnTrackModalClose').addEventListener('click', closeTrackModal);
+  $('learnTrackModalBg').addEventListener('click', (e) => { if (e.target === $('learnTrackModalBg')) closeTrackModal(); });
+  $('learnTrackStatus').addEventListener('change', () => {
+    const tracks = getTracks();
+    const t = tracks.find((x) => x.id === activeTrackId);
+    if (t) { t.status = $('learnTrackStatus').value; setTracks(tracks); renderTracks(); }
+  });
+  $('learnTrackEndDate').addEventListener('change', () => {
+    const tracks = getTracks();
+    const t = tracks.find((x) => x.id === activeTrackId);
+    if (t) { t.endDate = $('learnTrackEndDate').value || null; setTracks(tracks); }
+  });
+  $('learnTrackDelBtn').addEventListener('click', () => {
+    if (!confirm('Delete this track and all its deadlines/hours/decks/log entries? This can\'t be undone.')) return;
+    setTracks(getTracks().filter((x) => x.id !== activeTrackId));
+    setDeadlines(getDeadlines().filter((x) => x.trackId !== activeTrackId));
+    setHours(getHours().filter((x) => x.trackId !== activeTrackId));
+    setDecks(getDecks().filter((x) => x.trackId !== activeTrackId));
+    setLearnLog(getLearnLog().filter((x) => x.trackId !== activeTrackId));
+    closeTrackModal();
+    renderTracks();
+    renderDueChip();
+  });
+
+  // ---- Deadlines ----
+  function renderDeadlines() {
+    const wrap = $('learnDeadlinesList');
+    const items = getDeadlines().filter((d) => d.trackId === activeTrackId).sort((a, b) => a.dueDate.localeCompare(b.dueDate));
+    wrap.innerHTML = '';
+    items.forEach((d) => {
+      const daysOut = Math.ceil((new Date(d.dueDate).getTime() - Date.now()) / 86400000);
+      const row = document.createElement('div');
+      row.className = 'learn-item-row';
+      row.innerHTML = '<span></span><button type="button" class="learn-item-del" aria-label="Delete">×</button>';
+      const label = row.querySelector('span');
+      label.innerHTML = (d.status === 'done' ? '<s>' : '') + escapeHtml(d.title) + (d.status === 'done' ? '</s>' : '') +
+        ' <span class="learn-item-sub' + (daysOut <= 7 && d.status !== 'done' ? ' learn-deadline-soon' : '') + '">' + d.dueDate + (d.weight ? ' · ' + d.weight + '%' : '') + '</span>';
+      label.style.cursor = 'pointer';
+      label.addEventListener('click', () => {
+        const list = getDeadlines();
+        const idx = list.findIndex((x) => x.id === d.id);
+        list[idx].status = list[idx].status === 'done' ? 'pending' : 'done';
+        setDeadlines(list);
+        renderDeadlines();
+        renderDueChip();
+      });
+      row.querySelector('.learn-item-del').addEventListener('click', () => { setDeadlines(getDeadlines().filter((x) => x.id !== d.id)); renderDeadlines(); renderDueChip(); });
+      wrap.appendChild(row);
+    });
+  }
+  function escapeHtml(s) { return String(s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c])); }
+  $('learnDeadlineAddBtn').addEventListener('click', () => {
+    const title = $('learnDeadlineTitle').value.trim();
+    const dueDate = $('learnDeadlineDate').value;
+    if (!title || !dueDate || !activeTrackId) return;
+    const list = getDeadlines();
+    list.push({ id: genId('ld'), trackId: activeTrackId, title, dueDate, weight: Number($('learnDeadlineWeight').value) || null, status: 'pending', createdAt: new Date().toISOString() });
+    setDeadlines(list);
+    $('learnDeadlineTitle').value = ''; $('learnDeadlineDate').value = ''; $('learnDeadlineWeight').value = '';
+    renderDeadlines();
+  });
+
+  // ---- Hours log ----
+  function trackName(id) { const t = getTracks().find((x) => x.id === id); return t ? t.name : 'Unknown track'; }
+  function renderHoursLog() {
+    const entries = getHours().filter((h) => h.trackId === activeTrackId).sort((a, b) => b.at.localeCompare(a.at));
+    const totalMin = entries.reduce((s, h) => s + h.minutes, 0);
+    $('learnHoursTotal').textContent = entries.length ? (totalMin / 60).toFixed(1) + 'h total (' + entries.length + ' sessions)' : 'No sessions logged yet.';
+    const wrap = $('learnHoursList');
+    wrap.innerHTML = '';
+    entries.slice(0, 15).forEach((h) => {
+      const row = document.createElement('div');
+      row.className = 'learn-item-row';
+      row.innerHTML = '<span>' + new Date(h.at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + ' — ' + h.minutes + 'min' + (h.note ? ' <span class="learn-item-sub">' + escapeHtml(h.note) + '</span>' : '') + '</span><button type="button" class="learn-item-del" aria-label="Delete">×</button>';
+      row.querySelector('.learn-item-del').addEventListener('click', () => { setHours(getHours().filter((x) => x.id !== h.id)); renderHoursLog(); });
+      wrap.appendChild(row);
+    });
+  }
+  $('learnHoursAddBtn').addEventListener('click', () => {
+    const minutes = Number($('learnHoursInput').value);
+    if (!minutes || !activeTrackId) return;
+    const list = getHours();
+    list.push({ id: genId('lh'), trackId: activeTrackId, minutes, note: $('learnHoursNote').value.trim(), at: new Date().toISOString() });
+    setHours(list);
+    $('learnHoursInput').value = ''; $('learnHoursNote').value = '';
+    renderHoursLog();
+  });
+  // Re-walk vs equavia-pre-answers-final.md 6.3: hours-export removed
+  // ("not needed") -- was a CSV button here (date/hours/note columns).
+
+  // ---- Flashcard decks (SM-2) ----
+  function sm2Update(card, quality) {
+    if (quality < 3) { card.repetition = 0; card.interval = 1; }
+    else {
+      if (card.repetition === 0) card.interval = 1;
+      else if (card.repetition === 1) card.interval = 6;
+      else card.interval = Math.round(card.interval * card.efactor);
+      card.repetition++;
+    }
+    card.efactor = Math.max(1.3, card.efactor + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02)));
+    card.dueDate = new Date(Date.now() + card.interval * 86400000).toISOString();
+    return card;
+  }
+  function newCard(front, back) { return { id: genId('lc'), front, back, repetition: 0, interval: 0, efactor: 2.5, dueDate: new Date().toISOString() }; }
+  function dueCardCount(deck) { return (deck.cards || []).filter((c) => c.dueDate <= new Date().toISOString()).length; }
+  function allDueCount() {
+    return getDecks().reduce((s, d) => s + dueCardCount(d), 0);
+  }
+  function renderDueChip() {
+    const n = allDueCount();
+    const chip = $('learnDueChip');
+    if (n > 0) { chip.style.display = ''; chip.textContent = 'due today: ' + n; }
+    else chip.style.display = 'none';
+  }
+  function renderDecks() {
+    const wrap = $('learnDecksList');
+    const decks = getDecks().filter((d) => d.trackId === activeTrackId);
+    wrap.innerHTML = '';
+    decks.forEach((d) => {
+      const row = document.createElement('div');
+      row.className = 'learn-deck-row';
+      row.innerHTML =
+        '<div class="learn-deck-top"><span class="learn-deck-name"></span><span class="learn-deck-meta"></span></div>' +
+        '<div class="learn-deck-actions"><button type="button" data-act="import">Paste cards</button><button type="button" data-act="review">Review</button><button type="button" data-act="del">Delete</button></div>';
+      row.querySelector('.learn-deck-name').textContent = d.name;
+      row.querySelector('.learn-deck-meta').textContent = (d.cards || []).length + ' cards · ' + dueCardCount(d) + ' due';
+      row.querySelector('[data-act="import"]').addEventListener('click', () => openDeckImport(d.id));
+      row.querySelector('[data-act="review"]').addEventListener('click', () => openReview(d.id));
+      row.querySelector('[data-act="del"]').addEventListener('click', () => { if (confirm('Delete deck "' + d.name + '"?')) { setDecks(getDecks().filter((x) => x.id !== d.id)); renderDecks(); renderDueChip(); } });
+      wrap.appendChild(row);
+    });
+  }
+  $('learnDeckAddBtn').addEventListener('click', () => {
+    const name = $('learnDeckNameInput').value.trim();
+    if (!name || !activeTrackId) return;
+    const decks = getDecks();
+    decks.push({ id: genId('ld2'), trackId: activeTrackId, name, cards: [] });
+    setDecks(decks);
+    $('learnDeckNameInput').value = '';
+    renderDecks();
+  });
+
+  let importDeckId = null;
+  function openDeckImport(deckId) { importDeckId = deckId; $('learnDeckImportText').value = ''; $('learnDeckImportModalBg').classList.add('show'); }
+  $('learnDeckImportClose').addEventListener('click', () => $('learnDeckImportModalBg').classList.remove('show'));
+  $('learnDeckImportModalBg').addEventListener('click', (e) => { if (e.target === $('learnDeckImportModalBg')) $('learnDeckImportModalBg').classList.remove('show'); });
+  $('learnDeckImportSaveBtn').addEventListener('click', () => {
+    const text = $('learnDeckImportText').value;
+    const lines = text.split('\n').map((l) => l.trim()).filter(Boolean);
+    const decks = getDecks();
+    const deck = decks.find((x) => x.id === importDeckId);
+    if (!deck) return;
+    let added = 0;
+    lines.forEach((line) => {
+      const sep = line.indexOf('\t') !== -1 ? '\t' : ' :: ';
+      const parts = line.split(sep);
+      if (parts.length >= 2) { deck.cards.push(newCard(parts[0].trim(), parts.slice(1).join(sep).trim())); added++; }
+    });
+    setDecks(decks);
+    $('learnDeckImportModalBg').classList.remove('show');
+    renderDecks();
+    renderDueChip();
+  });
+
+  let reviewDeckId = null, reviewQueue = [], reviewCard = null;
+  function openReview(deckId) {
+    reviewDeckId = deckId;
+    const deck = getDecks().find((x) => x.id === deckId);
+    if (!deck) return;
+    reviewQueue = (deck.cards || []).filter((c) => c.dueDate <= new Date().toISOString());
+    $('learnReviewTitle').textContent = deck.name;
+    $('learnReviewModalBg').classList.add('show');
+    nextReviewCard();
+  }
+  function nextReviewCard() {
+    if (!reviewQueue.length) {
+      $('learnReviewCard').style.display = 'none';
+      $('learnReviewGrades').style.display = 'none';
+      $('learnReviewStatus').textContent = 'All done for now.';
+      return;
+    }
+    reviewCard = reviewQueue.shift();
+    $('learnReviewCard').style.display = '';
+    $('learnReviewFront').textContent = reviewCard.front;
+    $('learnReviewFront').style.display = '';
+    $('learnReviewBack').style.display = 'none';
+    $('learnReviewBack').textContent = reviewCard.back;
+    $('learnReviewShowBtn').style.display = '';
+    $('learnReviewGrades').style.display = 'none';
+    $('learnReviewStatus').textContent = reviewQueue.length + ' more after this.';
+  }
+  $('learnReviewShowBtn').addEventListener('click', () => {
+    $('learnReviewBack').style.display = '';
+    $('learnReviewShowBtn').style.display = 'none';
+    $('learnReviewGrades').style.display = '';
+  });
+  document.querySelectorAll('.learn-grade-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const quality = Number(btn.dataset.grade);
+      const decks = getDecks();
+      const deck = decks.find((x) => x.id === reviewDeckId);
+      const card = (deck.cards || []).find((c) => c.id === reviewCard.id);
+      sm2Update(card, quality);
+      setDecks(decks);
+      renderDecks();
+      renderDueChip();
+      nextReviewCard();
+    });
+  });
+  $('learnReviewClose').addEventListener('click', () => { $('learnReviewModalBg').classList.remove('show'); renderDecks(); });
+  $('learnReviewModalBg').addEventListener('click', (e) => { if (e.target === $('learnReviewModalBg')) { $('learnReviewModalBg').classList.remove('show'); renderDecks(); } });
+
+  // ---- Learning log ----
+  function renderLearnLog() {
+    const items = getLearnLog().filter((l) => l.trackId === activeTrackId).sort((a, b) => b.at.localeCompare(a.at));
+    const wrap = $('learnLogList');
+    wrap.innerHTML = '';
+    items.slice(0, 15).forEach((l) => {
+      const row = document.createElement('div');
+      row.className = 'learn-item-row';
+      row.innerHTML = '<span>' + escapeHtml(l.text) + (l.link ? ' <a href="' + l.link + '" target="_blank" rel="noopener" class="learn-item-sub">link</a>' : '') + '</span><button type="button" class="learn-item-del" aria-label="Delete">×</button>';
+      row.querySelector('.learn-item-del').addEventListener('click', () => { setLearnLog(getLearnLog().filter((x) => x.id !== l.id)); renderLearnLog(); });
+      wrap.appendChild(row);
+    });
+  }
+  $('learnLogAddBtn').addEventListener('click', () => {
+    const text = $('learnLogText').value.trim();
+    if (!text || !activeTrackId) return;
+    const list = getLearnLog();
+    list.push({ id: genId('ll'), trackId: activeTrackId, text, link: $('learnLogLink').value.trim() || null, at: new Date().toISOString() });
+    setLearnLog(list);
+    $('learnLogText').value = ''; $('learnLogLink').value = '';
+    renderLearnLog();
+  });
+
+  renderTracks();
+  renderDueChip();
+  window.addEventListener('storage', () => { renderTracks(); renderDueChip(); });
+})();
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  if (typeof initCloudSync !== 'function') return;
+  // Same shared pattern as finance.html/health.html's sync -- habits had no
+  // cloud presence at all until now, purely per-device localStorage.
+  initCloudSync({
+    appKey: 'habits',
+    syncedKeys: ['habits_v1'],
+    onApplied: function () { window.dispatchEvent(new Event('storage')); }
+  });
+});
+</script>
+
 </body>
 </html>

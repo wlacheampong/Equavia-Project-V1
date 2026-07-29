@@ -16,6 +16,7 @@
 <script src="js/sync.js" defer></script>
 <script src="js/assistant-tools.js"></script>
 <script src="js/topbar.js" defer></script>
+<script src="js/collapsible.js" defer></script>
 <script src="js/obsidian-sync.js"></script>
 <script src="js/daily-report.js" defer></script>
 <style>
@@ -1587,9 +1588,9 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 </div>
 
 <!-- ===== NET WORTH ===== -->
-<div class="section" data-section="net">
-  <div class="section-title">
-    <span class="section-title-text">NET WORTH</span>
+<div class="section" data-section="net" data-eq-collapse="finance:net">
+  <div class="section-title" data-eq-collapse-keep data-eq-collapse-trigger>
+    <span class="section-title-text">NET WORTH<span class="eq-collapse-chevron"></span></span>
   </div>
   <div class="card" style="background:transparent;border:none !important;box-shadow:none;padding:0;overflow:visible">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:14px">
@@ -1738,9 +1739,9 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 </div>
 
 <!-- ===== BUDGET ===== -->
-<div class="section" data-section="budget">
-  <div class="section-title">
-    <span class="section-title-text bgt-section-head">BUDGET<span class="bgt-update-badge" id="bgtUpdateBadge" style="display:none">Update</span></span>
+<div class="section" data-section="budget" data-eq-collapse="finance:budget">
+  <div class="section-title" data-eq-collapse-keep data-eq-collapse-trigger>
+    <span class="section-title-text bgt-section-head">BUDGET<span class="bgt-update-badge" id="bgtUpdateBadge" style="display:none">Update</span><span class="eq-collapse-chevron"></span></span>
   </div>
 
   <!-- Expenses (top) -->
@@ -1825,9 +1826,9 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 </div>
 
 <!-- ===== ACTIVE SUBSCRIPTIONS ===== -->
-<div class="section" data-section="subs">
-  <div class="section-title">
-    <span class="section-title-text">ACTIVE SUBSCRIPTIONS</span>
+<div class="section" data-section="subs" data-eq-collapse="finance:subs">
+  <div class="section-title" data-eq-collapse-keep data-eq-collapse-trigger>
+    <span class="section-title-text">ACTIVE SUBSCRIPTIONS<span class="eq-collapse-chevron"></span></span>
   </div>
   <div class="card" style="background:linear-gradient(135deg, rgba(83,74,183,0.07), rgba(216,90,48,0.05));border:1px solid rgba(83,74,183,0.20)">
     <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px;margin-bottom:12px">
@@ -1869,9 +1870,9 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 </div>
 
 <!-- ===== INCOMING ORDERS ===== -->
-<div class="section" data-section="incoming">
-  <div class="section-title">
-    <span class="section-title-text">INCOMING ORDERS</span>
+<div class="section" data-section="incoming" data-eq-collapse="finance:incoming">
+  <div class="section-title" data-eq-collapse-keep data-eq-collapse-trigger>
+    <span class="section-title-text">INCOMING ORDERS<span class="eq-collapse-chevron"></span></span>
   </div>
 
   <!-- Add card with cost + currency + from-category + arrival date -->
@@ -1909,9 +1910,9 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 </div>
 
 <!-- ===== WISHLIST ===== -->
-<div class="section" data-section="wish">
-  <div class="section-title">
-    <span class="section-title-text">WISHLIST</span>
+<div class="section" data-section="wish" data-eq-collapse="finance:wish">
+  <div class="section-title" data-eq-collapse-keep data-eq-collapse-trigger>
+    <span class="section-title-text">WISHLIST<span class="eq-collapse-chevron"></span></span>
   </div>
   <!-- Hero card with stats -->
   <div class="card wish-hero">

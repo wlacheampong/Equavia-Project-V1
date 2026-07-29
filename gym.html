@@ -13,6 +13,8 @@
 <title>Progressive Overload Coach — Project Equavia</title>
 <script src="js/assistant-tools.js"></script>
 <script src="js/topbar.js" defer></script>
+<script src="js/collapsible.js" defer></script>
+<script src="js/train-migrate.js"></script>
 <script src="js/obsidian-sync.js"></script>
 <script src="js/daily-report.js" defer></script>
 <!-- 6.9: vendored locally (not a CDN <script>) so it's covered by the
@@ -320,6 +322,83 @@ img, video, canvas, svg { max-width: 100%; }
   color: #0a0a0b;
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.5), 0 4px 12px rgba(0,0,0,0.35);
 }
+
+/* ----- Training plan (merged in from the old Train page) -----
+   Deliberately built only from this page's own tokens/vars, so the
+   merged section inherits the site colour theme instead of carrying
+   the old page's separate palette. */
+.tp-wrap { margin-top: 26px; }
+.tp-body { margin-top: 12px; }
+.tp-daybar { display: flex; align-items: center; gap: 8px; }
+.tp-daytabs { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; flex: 1; min-width: 0; }
+.tp-daytabs::-webkit-scrollbar { display: none; }
+.tp-daytab {
+  flex: 0 0 auto; padding: 7px 14px; border-radius: 999px;
+  border: 1px solid var(--border); background: rgba(255,255,255,0.03);
+  color: var(--text-3); font-family: inherit; font-size: 12px; font-weight: 700;
+  letter-spacing: 0.04em; cursor: pointer; white-space: nowrap;
+}
+.tp-daytab.is-active { background: var(--accent); border-color: transparent; color: #0a0a0b; }
+.tp-daytab.is-rest { opacity: 0.55; font-style: italic; }
+.tp-dayadd { flex: 0 0 auto; }
+.tp-danger:hover { color: var(--bad); }
+
+.tp-dayhead { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 16px 0 12px; }
+.tp-daytitle { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -0.015em; color: var(--text-1); }
+.tp-daytype {
+  flex: 1; min-width: 110px; background: rgba(0,0,0,0.28);
+  border: 1px solid var(--border-strong); border-radius: 8px; color: var(--text-2);
+  font-family: inherit; font-size: 12px; padding: 6px 10px;
+}
+.tp-rest.is-on { background: rgba(251,191,36,0.16); color: var(--warn); border-color: rgba(251,191,36,0.4); }
+
+.tp-progress { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+.tp-ptrack { flex: 1; height: 6px; border-radius: 999px; background: rgba(255,255,255,0.07); overflow: hidden; }
+.tp-pfill { height: 100%; width: 0; background: var(--good); border-radius: 999px; transition: width 0.3s ease; }
+.tp-plabel { font-family: var(--font-mono); font-size: 11px; color: var(--text-3); white-space: nowrap; }
+
+.tp-ex {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 14px; padding: 14px; margin-bottom: 10px;
+}
+.tp-ex.is-done { border-color: rgba(52,211,153,0.35); }
+.tp-ex-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.tp-ex-name { font-size: 14.5px; font-weight: 700; color: var(--text-1); flex: 1; min-width: 0; }
+.tp-ex-target { font-family: var(--font-mono); font-size: 11px; color: var(--text-3); }
+.tp-ex-last { font-family: var(--font-mono); font-size: 11px; color: var(--good); }
+.tp-sets { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.tp-set {
+  display: flex; align-items: center; gap: 4px; padding: 5px 8px;
+  border: 1px solid var(--border); border-radius: 10px; background: rgba(255,255,255,0.02);
+}
+.tp-set.is-filled { border-color: rgba(52,211,153,0.4); background: rgba(52,211,153,0.06); }
+.tp-set.is-fail { border-color: rgba(248,113,113,0.4); background: rgba(248,113,113,0.06); }
+.tp-set-idx { font-family: var(--font-mono); font-size: 10px; color: var(--text-4); }
+.tp-set input {
+  width: 46px; background: transparent; border: none; color: var(--text-1);
+  font-family: var(--font-mono); font-size: 13px; font-weight: 700; text-align: center; padding: 2px 0;
+}
+.tp-set input:focus { outline: none; color: var(--accent); }
+.tp-set-x { font-size: 10px; color: var(--text-4); }
+.tp-set-fail {
+  border: none; background: transparent; cursor: pointer; padding: 0 2px;
+  font-size: 11px; color: var(--text-4); font-family: inherit;
+}
+.tp-set.is-fail .tp-set-fail { color: var(--bad); }
+.tp-ex-foot { display: flex; align-items: center; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.tp-ex-note {
+  flex: 1; min-width: 120px; background: transparent; border: none;
+  border-bottom: 1px dashed var(--border-strong); color: var(--text-2);
+  font-family: inherit; font-size: 12px; padding: 3px 0;
+}
+.tp-ex-note:focus { outline: none; border-bottom-color: var(--accent); }
+
+.tp-addrow { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+.tp-addselect { flex: 1; min-width: 160px; }
+.tp-actions { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+.tp-finish { flex: 1; }
+.tp-note { font-size: 11.5px; color: var(--text-3); margin-top: 10px; min-height: 16px; }
+.tp-empty { font-size: 12.5px; color: var(--text-3); padding: 18px 4px; text-align: center; }
 
 /* ----- Sub-section title ----- */
 .po-sub-section { margin-top: 22px; }
@@ -1677,6 +1756,52 @@ img, video, canvas, svg { max-width: 100%; }
   </div>
 </div>
 
+<!-- =========================================================
+     TRAINING PLAN — absorbed from the old standalone Train page.
+     Same day-tab session runner, restyled onto this page's tokens
+     (the old page carried its own "Vitality" mountains/particles
+     backdrop, dropped here so Fitness reads as one page). Writes
+     finished sessions into the same state.logs every other section
+     on this page reads, so there is one workout log, not two.
+     ========================================================= -->
+<div class="po-wrap tp-wrap" data-eq-collapse="fitness:training-plan">
+  <div class="section-title" data-eq-collapse-keep data-eq-collapse-trigger>
+    Training plan<span class="eq-collapse-chevron"></span>
+  </div>
+  <div class="tp-body">
+    <div class="tp-daybar">
+      <div class="tp-daytabs" id="tpDayTabs"></div>
+      <button class="po-btn-icon tp-dayadd" id="tpAddDayBtn" type="button" aria-label="Add a training day">+</button>
+    </div>
+
+    <div class="tp-dayhead">
+      <h2 class="tp-daytitle" id="tpDayTitle">—</h2>
+      <input class="tp-daytype" id="tpDayType" type="text" placeholder="Heavy / Volume…" aria-label="Day focus">
+      <button class="po-btn-secondary tp-rest" id="tpRestBtn" type="button" aria-pressed="false">Rest day</button>
+      <button class="po-btn-icon" id="tpRenameBtn" type="button" aria-label="Rename this day">✎</button>
+      <button class="po-btn-icon tp-danger" id="tpDeleteDayBtn" type="button" aria-label="Delete this day">🗑</button>
+    </div>
+
+    <div class="tp-progress">
+      <div class="tp-ptrack"><div class="tp-pfill" id="tpProgFill"></div></div>
+      <div class="tp-plabel" id="tpProgLabel">0 / 0 sets</div>
+    </div>
+
+    <div class="tp-exwrap" id="tpExWrap"></div>
+
+    <div class="tp-addrow">
+      <select class="po-ex-select tp-addselect" id="tpAddExSelect" aria-label="Exercise to add"></select>
+      <button class="po-add-row-btn" id="tpAddExBtn" type="button">Add to day</button>
+    </div>
+
+    <div class="tp-actions">
+      <button class="po-btn-secondary" id="tpResetBtn" type="button">Clear today's sets</button>
+      <button class="po-add-row-btn tp-finish" id="tpFinishBtn" type="button">Finish session</button>
+    </div>
+    <div class="tp-note" id="tpNote"></div>
+  </div>
+</div>
+
 <!-- Add / Edit Exercise Modal -->
 <div class="po-modal-bg" id="exModalBg">
   <div class="po-modal">
@@ -2180,6 +2305,17 @@ img, video, canvas, svg { max-width: 100%; }
     row.innerHTML = html;
     row.dataset.value = String(active);
   }
+
+  // The Training Plan section (merged in from the old Train page) lives in
+  // its own script block but must not keep a second copy of this state --
+  // two independent load/save cycles over po_coach_v1 would each clobber
+  // the other's writes. It goes through this accessor instead, so there is
+  // exactly one `state` object and one writer.
+  window.PoCoach = {
+    getState: () => state,
+    save: () => { saveState(); },
+    refresh: () => { renderAll(); if (typeof publishFitnessSummary === 'function') publishFitnessSummary(); },
+  };
 
   function renderAll() {
     renderDayPill();
@@ -4150,6 +4286,436 @@ img, video, canvas, svg { max-width: 100%; }
   renderTrainProgramRow();
   renderRecoveryBanner();
   window.addEventListener('storage', () => { renderRecoveryBanner(); });
+})();
+</script>
+
+<script>
+// ============================================================
+// TRAINING PLAN — the old standalone Train page, merged in.
+//
+// Same feature set (day tabs, per-day exercise list, per-set kg/reps
+// with a failure flag, rest-day toggle, finish-session) but running on
+// this page's single workout log instead of its own separate store:
+//   - the plan itself      -> state.plan
+//   - every completed set  -> state.logs[exerciseId], the same array the
+//                             Stats/Trend/History/Today's-workout sections
+//                             above already read
+// so logging here immediately moves the overload numbers, which was the
+// whole point of merging the two pages.
+//
+// State is reached through window.PoCoach rather than re-reading
+// po_coach_v1 directly -- see the accessor's own comment for why.
+// ============================================================
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const PC = () => window.PoCoach;
+
+  // ---------- one-time import of the old Train page's data ----------
+  const MIGRATED_FLAG = 'eq.training.mergedIntoFitness_v1';
+  const OLD_TRAIN_CACHE = 'vitality_bridge:vitality_train';
+  const SUPABASE_URL = 'https://ubhjdibldkknviezrjys.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InViaGpkaWJsZGtrbnZpZXpyanlzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3NzAyNjEsImV4cCI6MjA5OTM0NjI2MX0.ODgzRHVYLEaDCUBXmmSd3oENXlSlarRYVERagHbVCK0';
+
+  // Local cache first (instant, works offline, present on any device that
+  // ever opened the old page); the Supabase row is the fallback for a
+  // device where the plan only ever existed on another one.
+  async function readOldTrainState() {
+    try {
+      const cached = JSON.parse(localStorage.getItem(OLD_TRAIN_CACHE));
+      if (cached && cached.days) return cached;
+    } catch (e) {}
+    try {
+      const res = await fetch(
+        SUPABASE_URL + '/rest/v1/app_state?key=eq.vitality_train&select=data',
+        { headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY } }
+      );
+      if (!res.ok) return null;
+      const rows = await res.json();
+      const data = rows[0] && rows[0].data;
+      return (data && data.days) ? data : null;
+    } catch (e) { return null; }
+  }
+
+  async function ensurePlan() {
+    const state = PC().getState();
+    if (state.plan && state.plan.order) return;
+
+    let imported = null;
+    if (!localStorage.getItem(MIGRATED_FLAG)) {
+      const old = await readOldTrainState();
+      if (old) {
+        const out = window.EqTrainMigrate.migrate(old, state);
+        // Copy the migrated fields back onto the live object rather than
+        // swapping it -- the accessor hands out the one instance every
+        // other section on this page is already holding a reference to.
+        state.exercises = out.state.exercises;
+        state.logs = out.state.logs;
+        state.plan = out.state.plan;
+        imported = out.report;
+      }
+      localStorage.setItem(MIGRATED_FLAG, new Date().toISOString());
+    }
+    if (!state.plan || !state.plan.order) {
+      state.plan = window.EqTrainMigrate.emptyPlan(state.days);
+    }
+    PC().save();
+    if (imported && imported.sessionsImported) {
+      note('Imported ' + imported.sessionsImported + ' session' +
+        (imported.sessionsImported === 1 ? '' : 's') + ' from your old Train page.');
+    }
+  }
+
+  // ---------- helpers ----------
+  function plan() { return PC().getState().plan; }
+  function activeDay() { const p = plan(); return p.days[p.active] || null; }
+  function exerciseById(id) {
+    return (PC().getState().exercises || []).find((e) => e.id === id) || null;
+  }
+  function unit() { return PC().getState().units || 'kg'; }
+  function todayKey() {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  let noteTimer = null;
+  function note(msg) {
+    const el = $('tpNote');
+    if (!el) return;
+    el.textContent = msg;
+    clearTimeout(noteTimer);
+    noteTimer = setTimeout(() => { el.textContent = ''; }, 5000);
+  }
+  function commit() { PC().save(); PC().refresh(); render(); }
+
+  // Last recorded top set for an exercise, read from the shared log so the
+  // plan shows the same "last time" the rest of the page does.
+  function lastTop(exId) {
+    const logs = (PC().getState().logs || {})[exId] || [];
+    return logs.length ? logs[logs.length - 1] : null;
+  }
+
+  // ---------- render ----------
+  function renderDayTabs() {
+    const p = plan();
+    const wrap = $('tpDayTabs');
+    wrap.innerHTML = '';
+    p.order.forEach((key) => {
+      const day = p.days[key];
+      if (!day) return;
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'tp-daytab' + (key === p.active ? ' is-active' : '') + (day.restDay ? ' is-rest' : '');
+      btn.textContent = day.name || key;
+      btn.addEventListener('click', () => { plan().active = key; commit(); });
+      wrap.appendChild(btn);
+    });
+  }
+
+  function renderHead() {
+    const day = activeDay();
+    $('tpDayTitle').textContent = day ? (day.name || plan().active) : '—';
+    $('tpDayType').value = day ? (day.type || '') : '';
+    const restBtn = $('tpRestBtn');
+    restBtn.classList.toggle('is-on', !!(day && day.restDay));
+    restBtn.setAttribute('aria-pressed', String(!!(day && day.restDay)));
+  }
+
+  function renderProgress() {
+    const day = activeDay();
+    let done = 0, total = 0;
+    (day ? day.ex : []).forEach((ex) => {
+      total += ex.sets || 0;
+      done += (ex.log || []).filter((s) => s && s.reps > 0).length;
+    });
+    $('tpProgFill').style.width = total ? Math.round((done / total) * 100) + '%' : '0%';
+    $('tpProgLabel').textContent = done + ' / ' + total + ' sets';
+  }
+
+  function renderSetCell(ex, idx) {
+    const entry = (ex.log || [])[idx] || null;
+    const cell = document.createElement('div');
+    cell.className = 'tp-set' + (entry && entry.reps > 0 ? ' is-filled' : '') + (entry && entry.fail ? ' is-fail' : '');
+
+    const label = document.createElement('span');
+    label.className = 'tp-set-idx';
+    label.textContent = String(idx + 1);
+    cell.appendChild(label);
+
+    const kg = document.createElement('input');
+    kg.type = 'number'; kg.step = 'any'; kg.inputMode = 'decimal';
+    kg.setAttribute('aria-label', 'Set ' + (idx + 1) + ' weight');
+    kg.value = entry && entry.kg != null ? entry.kg : '';
+    kg.placeholder = ex.kg != null ? String(ex.kg) : '0';
+    cell.appendChild(kg);
+
+    const x = document.createElement('span');
+    x.className = 'tp-set-x'; x.textContent = '×';
+    cell.appendChild(x);
+
+    const reps = document.createElement('input');
+    reps.type = 'number'; reps.inputMode = 'numeric';
+    reps.setAttribute('aria-label', 'Set ' + (idx + 1) + ' reps');
+    reps.value = entry && entry.reps != null ? entry.reps : '';
+    reps.placeholder = ex.reps != null ? String(ex.reps) : '0';
+    cell.appendChild(reps);
+
+    const fail = document.createElement('button');
+    fail.type = 'button'; fail.className = 'tp-set-fail';
+    fail.title = 'Mark this set as taken to failure';
+    fail.textContent = 'F';
+    cell.appendChild(fail);
+
+    function write() {
+      ex.log = ex.log || [];
+      while (ex.log.length < ex.sets) ex.log.push(null);
+      const repsVal = parseInt(reps.value, 10) || 0;
+      const kgVal = kg.value === '' ? (ex.kg || 0) : (parseFloat(kg.value) || 0);
+      ex.log[idx] = repsVal > 0
+        ? { kg: kgVal, reps: repsVal, fail: !!(ex.log[idx] && ex.log[idx].fail) }
+        : null;
+      PC().save();
+      renderProgress();
+      cell.className = 'tp-set' + (repsVal > 0 ? ' is-filled' : '') + (ex.log[idx] && ex.log[idx].fail ? ' is-fail' : '');
+    }
+    kg.addEventListener('change', write);
+    reps.addEventListener('change', write);
+    fail.addEventListener('click', () => {
+      ex.log = ex.log || [];
+      while (ex.log.length < ex.sets) ex.log.push(null);
+      if (!ex.log[idx]) ex.log[idx] = { kg: ex.kg || 0, reps: ex.reps || 0, fail: false };
+      ex.log[idx].fail = !ex.log[idx].fail;
+      PC().save();
+      render();
+    });
+    return cell;
+  }
+
+  function renderExercises() {
+    const wrap = $('tpExWrap');
+    wrap.innerHTML = '';
+    const day = activeDay();
+    if (!day) { wrap.innerHTML = '<div class="tp-empty">No training days yet — add one above.</div>'; return; }
+    if (day.restDay) { wrap.innerHTML = '<div class="tp-empty">Rest day. Nothing scheduled.</div>'; return; }
+    if (!day.ex.length) { wrap.innerHTML = '<div class="tp-empty">No exercises on this day yet — add one below.</div>'; return; }
+
+    day.ex.forEach((ex, exIdx) => {
+      const meta = exerciseById(ex.id);
+      const card = document.createElement('div');
+      const doneCount = (ex.log || []).filter((s) => s && s.reps > 0).length;
+      card.className = 'tp-ex' + (doneCount >= ex.sets && ex.sets > 0 ? ' is-done' : '');
+
+      const head = document.createElement('div');
+      head.className = 'tp-ex-head';
+      const name = document.createElement('div');
+      name.className = 'tp-ex-name';
+      name.textContent = meta ? meta.name : 'Removed exercise';
+      head.appendChild(name);
+
+      const target = document.createElement('span');
+      target.className = 'tp-ex-target';
+      target.textContent = ex.sets + '×' + ex.reps;
+      head.appendChild(target);
+
+      const prev = lastTop(ex.id);
+      if (prev) {
+        const last = document.createElement('span');
+        last.className = 'tp-ex-last';
+        last.textContent = 'last ' + prev.weight + unit() + '×' + prev.reps;
+        head.appendChild(last);
+      }
+
+      const del = document.createElement('button');
+      del.type = 'button'; del.className = 'po-btn-icon tp-danger';
+      del.setAttribute('aria-label', 'Remove from this day');
+      del.textContent = '×';
+      del.addEventListener('click', () => {
+        day.ex.splice(exIdx, 1);
+        commit();
+        note('Removed from this day — its logged history is kept.');
+      });
+      head.appendChild(del);
+      card.appendChild(head);
+
+      const sets = document.createElement('div');
+      sets.className = 'tp-sets';
+      for (let i = 0; i < (ex.sets || 0); i++) sets.appendChild(renderSetCell(ex, i));
+      card.appendChild(sets);
+
+      const foot = document.createElement('div');
+      foot.className = 'tp-ex-foot';
+      const noteInput = document.createElement('input');
+      noteInput.type = 'text'; noteInput.className = 'tp-ex-note';
+      noteInput.placeholder = 'Note…'; noteInput.value = ex.note || '';
+      noteInput.addEventListener('change', () => { ex.note = noteInput.value.trim(); PC().save(); });
+      foot.appendChild(noteInput);
+      card.appendChild(foot);
+
+      wrap.appendChild(card);
+    });
+  }
+
+  function renderAddSelect() {
+    const sel = $('tpAddExSelect');
+    const cur = sel.value;
+    sel.innerHTML = '';
+    (PC().getState().exercises || []).slice()
+      .sort((a, b) => String(a.name).localeCompare(String(b.name)))
+      .forEach((e) => {
+        const opt = document.createElement('option');
+        opt.value = e.id; opt.textContent = e.name;
+        sel.appendChild(opt);
+      });
+    if (cur) sel.value = cur;
+  }
+
+  function render() {
+    if (!PC() || !plan()) return;
+    renderDayTabs(); renderHead(); renderProgress(); renderExercises(); renderAddSelect();
+  }
+
+  // ---------- finish / reset ----------
+  // One entry per exercise per session, matching what the rest of the page
+  // stores: `weight`/`reps` are the top set (so existing readers are
+  // unchanged) plus the full per-set detail the old Train page kept.
+  function finishSession() {
+    const day = activeDay();
+    if (!day) return;
+    const state = PC().getState();
+    state.logs = state.logs || {};
+    const today = todayKey();
+    let logged = 0, bests = [];
+
+    day.ex.forEach((ex) => {
+      const done = (ex.log || []).filter((s) => s && s.reps > 0);
+      if (!done.length) return;
+      const top = done.reduce((a, b) => (b.kg > a.kg || (b.kg === a.kg && b.reps > a.reps) ? b : a), done[0]);
+      const arr = state.logs[ex.id] || [];
+
+      const prevBest = arr.reduce((m, l) => Math.max(m, l.weight || 0), 0);
+      // Replace rather than append if this exercise already has an entry
+      // today, so tapping Finish twice can't double-count the session.
+      const existingIdx = arr.findIndex((l) => String(l.date).slice(0, 10) === today);
+      const entry = {
+        weight: top.kg,
+        reps: top.reps,
+        date: new Date().toISOString(),
+        sets: done.map((s) => ({ reps: s.reps, fail: !!s.fail })),
+      };
+      if (existingIdx !== -1) arr[existingIdx] = entry; else arr.push(entry);
+      arr.sort((a, b) => String(a.date).localeCompare(String(b.date)));
+      state.logs[ex.id] = arr;
+
+      if (top.kg > prevBest && prevBest > 0) {
+        const meta = exerciseById(ex.id);
+        bests.push(meta ? meta.name : 'exercise');
+      }
+      ex.lastKg = top.kg;
+      ex.log = [];
+      logged++;
+    });
+
+    if (!logged) { note('Nothing logged yet — fill in some sets first.'); return; }
+    commit();
+    note('Session saved — ' + logged + ' exercise' + (logged === 1 ? '' : 's') + ' added to your log.' +
+      (bests.length ? ' New best on ' + bests.join(', ') + '.' : ''));
+  }
+
+  function resetToday() {
+    const day = activeDay();
+    if (!day) return;
+    day.ex.forEach((ex) => { ex.log = []; });
+    commit();
+    note("Today's sets cleared.");
+  }
+
+  // ---------- day management ----------
+  function slugFor(name, taken) {
+    const base = String(name).toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 30) || 'day';
+    if (!taken.includes(base)) return base;
+    let n = 2;
+    while (taken.includes(base + '_' + n)) n++;
+    return base + '_' + n;
+  }
+
+  function wire() {
+    $('tpAddDayBtn').addEventListener('click', () => {
+      const name = (prompt('Name this training day') || '').trim();
+      if (!name) return;
+      const p = plan();
+      const key = slugFor(name, p.order);
+      p.days[key] = { name, type: '', restDay: false, off: false, ex: [] };
+      p.order.push(key);
+      p.active = key;
+      commit();
+    });
+
+    $('tpRenameBtn').addEventListener('click', () => {
+      const day = activeDay();
+      if (!day) return;
+      const name = (prompt('Rename this day', day.name || '') || '').trim();
+      if (!name) return;
+      day.name = name;
+      commit();
+    });
+
+    $('tpDeleteDayBtn').addEventListener('click', () => {
+      const p = plan();
+      const day = activeDay();
+      if (!day) return;
+      if (p.order.length <= 1) { note('Keep at least one training day.'); return; }
+      if (!confirm('Delete "' + (day.name || p.active) + '"? Logged history for its exercises is kept.')) return;
+      const key = p.active;
+      p.order = p.order.filter((k) => k !== key);
+      delete p.days[key];
+      p.active = p.order[0];
+      commit();
+    });
+
+    $('tpRestBtn').addEventListener('click', () => {
+      const day = activeDay();
+      if (!day) return;
+      day.restDay = !day.restDay;
+      commit();
+    });
+
+    $('tpDayType').addEventListener('change', () => {
+      const day = activeDay();
+      if (!day) return;
+      day.type = $('tpDayType').value.trim();
+      PC().save();
+    });
+
+    $('tpAddExBtn').addEventListener('click', () => {
+      const day = activeDay();
+      const id = $('tpAddExSelect').value;
+      if (!day || !id) return;
+      if (day.ex.some((e) => e.id === id)) { note('Already on this day.'); return; }
+      const prev = lastTop(id);
+      day.ex.push({
+        id, sets: 3, reps: 10, kg: prev ? prev.weight : 0,
+        perHand: false, rest: 120, note: '', pinned: false, deload: false, tier: 2,
+        lastKg: prev ? prev.weight : null, log: [],
+      });
+      commit();
+    });
+
+    $('tpFinishBtn').addEventListener('click', finishSession);
+    $('tpResetBtn').addEventListener('click', resetToday);
+    window.addEventListener('storage', render);
+  }
+
+  async function boot() {
+    if (!window.PoCoach || !window.EqTrainMigrate) return;
+    await ensurePlan();
+    wire();
+    render();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot, { once: true });
+  } else {
+    boot();
+  }
 })();
 </script>
 

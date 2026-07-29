@@ -1,5 +1,5 @@
 // =============================================================
-// Obsidian Local REST API bridge for the Notes tile.
+// Obsidian Local REST API bridge.
 // Talks directly from the browser to the "Local REST API" community
 // plugin running inside Obsidian on this device -- this can never be
 // routed through Vercel's serverless functions, since those execute
@@ -22,7 +22,6 @@
     // it can't focus/open the app UI), projectsFolder keeps project pages out of AppNotes.
     vaultName: '', projectsFolder: 'AppProjects'
   };
-  const IMAGE_EXT_RE = /\.(png|jpe?g|gif|webp)$/i;
 
   function getConfig() {
     try {
@@ -82,20 +81,6 @@
     } catch (e) { return { ok: false, reason: 'network', results: [] }; }
   }
 
-  function esc(s) { return String(s == null ? '' : s).replace(/"/g, '\\"'); }
-  function stripFrontmatter(text) {
-    const m = /^---\r?\n[\s\S]*?\r?\n---\r?\n?/.exec(text || '');
-    return m ? text.slice(m[0].length) : (text || '');
-  }
-  function frontmatterBlock(note) {
-    return '---\n'
-      + 'id: ' + note.id + '\n'
-      + 'title: "' + esc(note.title || '') + '"\n'
-      + 'pinned: ' + (!!note.pinned) + '\n'
-      + 'created: ' + note.createdAt + '\n'
-      + 'updated: ' + note.updatedAt + '\n'
-      + '---\n\n';
-  }
   function dataUrlToBlob(dataUrl) {
     const comma = dataUrl.indexOf(',');
     const meta = dataUrl.slice(0, comma);
@@ -107,38 +92,6 @@
     for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
     return new Blob([bytes], { type: mime });
   }
-  async function blobToDataUrl(blob) {
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = () => resolve(null);
-      reader.readAsDataURL(blob);
-    });
-  }
-
-  async function pushNote(note) {
-    const cfg = getConfig();
-    if (!cfg.enabled) return { ok: false, reason: 'disabled' };
-    let body = note.body || '';
-    for (const img of note.images || []) {
-      const ref = '![](attachment:' + img.id + ')';
-      if (body.indexOf(ref) === -1) continue;
-      const relPath = cfg.folder + '/attachments/' + note.id + '-' + img.id + '.jpg';
-      try {
-        const blob = dataUrlToBlob(img.dataUrl);
-        const res = await apiFetch(vaultPath(cfg, relPath), { method: 'PUT', body: blob, headers: { 'Content-Type': blob.type } });
-        if (res.ok) body = body.split(ref).join('![[' + relPath + ']]');
-      } catch (e) { /* leave placeholder, retry next sync */ }
-    }
-    const content = frontmatterBlock(note) + body;
-    const relPath = cfg.folder + '/' + note.id + '.md';
-    try {
-      const res = await apiFetch(vaultPath(cfg, relPath), { method: 'PUT', body: content, headers: { 'Content-Type': 'text/markdown' } });
-      if (!res.ok) return { ok: false, reason: 'http_' + res.status };
-      return { ok: true, path: relPath, body, syncedAt: new Date().toISOString() };
-    } catch (e) { return { ok: false, reason: 'network' }; }
-  }
-
   // Create-once write for the About Me template (settings.html) -- checks
   // the path first so a second click (or the button being pressed again
   // months later) never clobbers what the user has since hand-edited in
@@ -159,53 +112,11 @@
     } catch (e) { return { ok: false, reason: 'network' }; }
   }
 
-  async function deleteNote(note) {
-    const cfg = getConfig();
-    if (!cfg.enabled || !note.obsidian || !note.obsidian.path) return { ok: false };
-    try {
-      await apiFetch(vaultPath(cfg, note.obsidian.path), { method: 'DELETE' });
-      return { ok: true };
-    } catch (e) { return { ok: false }; }
-  }
-
-  async function fetchNoteJson(cfg, relPath) {
-    try {
-      const res = await apiFetch(vaultPath(cfg, relPath), { headers: { Accept: 'application/vnd.olrapi.note+json' } });
-      if (!res.ok) return null;
-      return await res.json();
-    } catch (e) { return null; }
-  }
-
-  async function resolveImageEmbeds(cfg, body) {
-    const images = [];
-    let resolvedBody = body;
-    const embedRe = /!\[\[([^\]]+)\]\]/g;
-    let match;
-    while ((match = embedRe.exec(body))) {
-      const target = match[1];
-      if (!IMAGE_EXT_RE.test(target)) continue;
-      const candidates = target.indexOf('/') !== -1 ? [target] : [cfg.folder + '/attachments/' + target, target];
-      let dataUrl = null;
-      for (const candidate of candidates) {
-        try {
-          const res = await apiFetch(vaultPath(cfg, candidate));
-          if (res.ok) { dataUrl = await blobToDataUrl(await res.blob()); if (dataUrl) break; }
-        } catch (e) { /* try next candidate */ }
-      }
-      if (dataUrl) {
-        const imgId = 'img' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-        images.push({ id: imgId, dataUrl });
-        resolvedBody = resolvedBody.split(match[0]).join('![](attachment:' + imgId + ')');
-      }
-    }
-    return { body: resolvedBody, images };
-  }
-
   // Auto-creates a project's Obsidian page the first time it's opened (Planner's
-  // Projects section). Unlike pushNote/pullAll this is one-directional and idempotent
-  // by design — the spec asks only to create-if-missing, not keep the page in sync on
-  // every edit, so re-pushing an already-linked project is a no-op the caller should
-  // simply skip (checked via project.obsidian.path before calling this).
+  // Projects section). One-directional and idempotent by design — the spec asks
+  // only to create-if-missing, not keep the page in sync on every edit, so
+  // re-pushing an already-linked project is a no-op the caller should simply
+  // skip (checked via project.obsidian.path before calling this).
   async function pushProjectPage(project) {
     const cfg = getConfig();
     if (!cfg.enabled) return { ok: false, reason: 'disabled' };
@@ -309,62 +220,6 @@
     } catch (e) { return { ok: false, reason: 'network' }; }
   }
 
-  async function pullAll(existingNotes) {
-    const cfg = getConfig();
-    if (!cfg.enabled) return { ok: false, reason: 'disabled', notes: existingNotes };
-    let listRes;
-    try { listRes = await apiFetch(vaultPath(cfg, cfg.folder) + '/'); } catch (e) { return { ok: false, reason: 'network', notes: existingNotes }; }
-    if (!listRes.ok) return { ok: false, reason: 'http_' + listRes.status, notes: existingNotes };
-    let listJson;
-    try { listJson = await listRes.json(); } catch (e) { return { ok: false, reason: 'bad_json', notes: existingNotes }; }
-    const files = (listJson.files || []).filter((f) => /\.md$/i.test(f) && f.indexOf('/') === -1);
-
-    const notes = existingNotes.slice();
-    const byId = {};
-    notes.forEach((n) => { byId[n.id] = n; });
-
-    for (const filename of files) {
-      const relPath = cfg.folder + '/' + filename;
-      const data = await fetchNoteJson(cfg, relPath);
-      if (!data) continue;
-      const meta = data.frontmatter || {};
-      const rawBody = stripFrontmatter(data.content || '');
-      const remoteMtime = (data.stat && data.stat.mtime) || Date.now();
-      const id = meta.id;
-      const { body, images } = await resolveImageEmbeds(cfg, rawBody);
-
-      if (id && byId[id]) {
-        const local = byId[id];
-        const localTime = new Date(local.updatedAt || 0).getTime();
-        if (remoteMtime > localTime) {
-          Object.assign(local, {
-            title: meta.title != null ? String(meta.title) : local.title,
-            body,
-            images: images.length ? images : local.images,
-            pinned: !!meta.pinned,
-            updatedAt: new Date(remoteMtime).toISOString(),
-          });
-        }
-        local.obsidian = { path: relPath, lastSyncedAt: new Date().toISOString(), remoteMtime };
-      } else if (!id) {
-        const newId = 'n' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-        const note = {
-          id: newId,
-          title: (meta.title != null ? String(meta.title) : filename.replace(/\.md$/i, '')),
-          body,
-          images,
-          pinned: !!meta.pinned,
-          createdAt: new Date(remoteMtime).toISOString(),
-          updatedAt: new Date(remoteMtime).toISOString(),
-          obsidian: { path: relPath, lastSyncedAt: new Date().toISOString(), remoteMtime },
-        };
-        notes.push(note);
-        byId[newId] = note;
-      }
-    }
-    return { ok: true, notes };
-  }
-
   // ============================================================
   // 6.8 -- multi-device sync file (equavia-sync.json), one JSON object at
   // the vault root of cfg.folder holding every synced namespace's raw
@@ -444,5 +299,5 @@
     catch (e) { return { ok: false }; }
   }
 
-  window.ObsidianSync = { getConfig, setConfig, testConnection, pushNote, pushIfAbsent, deleteNote, pullAll, pushProjectPage, moveProjectPageToFolder, pushWeeklyReport, searchNotes, pushChatTranscript, pushDailyNote, pullSyncFile, pushSyncFile, pushBinary, pushBackupFile, listBackupFiles, deleteBackupFile };
+  window.ObsidianSync = { getConfig, setConfig, testConnection, pushIfAbsent, pushProjectPage, moveProjectPageToFolder, pushWeeklyReport, searchNotes, pushChatTranscript, pushDailyNote, pullSyncFile, pushSyncFile, pushBinary, pushBackupFile, listBackupFiles, deleteBackupFile };
 })();
