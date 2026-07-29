@@ -19,10 +19,10 @@ Open any `.html` file directly in your browser — no build step, no install.
 | [po-water.html](po-water.html) | Water intake tracker |
 | [finance.html](finance.html) | Finances |
 | [gym.html](gym.html) | Progressive overload gym tracker |
-| [topbar.js](topbar.js) | Shared top bar — auto-injected into pages that `<script src="topbar.js">` |
+| [topbar.js](js/topbar.js) | Shared top bar — auto-injected into pages that `<script src="js/topbar.js">` |
 
 Each app stores its own state in browser `localStorage`. No accounts, no server.
 
 ## Building from scratch
 
-[BUILD_DASHBOARD.md](BUILD_DASHBOARD.md) is the prompt I gave Claude to generate `index.html` — paste it into Claude if you want to rebuild that page yourself.
+[BUILD_DASHBOARD.md](docs/BUILD_DASHBOARD.md) is the prompt I gave Claude to generate `index.html` — paste it into Claude if you want to rebuild that page yourself.

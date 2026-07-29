@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<script src="landing-guard.js"></script>
+<script src="js/landing-guard.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0a0a0b">
 <link rel="icon" type="image/webp" href="images/Index Landing Page.webp">
@@ -11,15 +11,15 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Project Equavia">
 <title>Progressive Overload Coach — Project Equavia</title>
-<script src="assistant-tools.js"></script>
-<script src="topbar.js" defer></script>
-<script src="obsidian-sync.js"></script>
-<script src="daily-report.js" defer></script>
+<script src="js/assistant-tools.js"></script>
+<script src="js/topbar.js" defer></script>
+<script src="js/obsidian-sync.js"></script>
+<script src="js/daily-report.js" defer></script>
 <!-- 6.9: vendored locally (not a CDN <script>) so it's covered by the
      service worker's offline precache like everything else this app
      depends on -- a third-party CDN script would silently break progress
      photos offline, defeating the whole point of this being a PWA. -->
-<script src="dexie.min.js"></script>
+<script src="js/dexie.min.js"></script>
 
 <!-- =============================================================
      EDIT THIS BLOCK TO MAKE THE APP YOURS.
@@ -105,7 +105,7 @@ const CONFIG = {
 };
 </script>
 
-<link rel="stylesheet" href="equavia-core.css">
+<link rel="stylesheet" href="css/equavia-core.css">
 <style>
 :root {
   --bg: var(--eq-bg-primary);
@@ -1322,7 +1322,7 @@ img, video, canvas, svg { max-width: 100%; }
 
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="plan-sync.js"></script>
+<script src="js/plan-sync.js"></script>
 </head>
 <body>
 
