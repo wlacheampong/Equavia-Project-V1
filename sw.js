@@ -28,7 +28,6 @@ const APP_SHELL = [
   'js/obsidian-sync.js',
   'js/sync.js',
   'js/collapsible.js',
-  'js/train-migrate.js',
   'js/dexie.min.js',
   'images/Index Landing Page.webp',
   'images/splash-red-wing.jpg',
