@@ -1,7 +1,7 @@
-// Routes every fresh entry into the app through the landing page
-// (index.html) first. "Fresh entry" means a hard refresh, a typed URL,
+// Routes every fresh entry into the app through the dashboard
+// (dashboard.html) first. "Fresh entry" means a hard refresh, a typed URL,
 // a bookmark, or a new tab — anything that isn't a click from inside
-// the app's own navigation (topbar / bottom tabs / the landing hero).
+// the app's own navigation (topbar / bottom tabs).
 //
 // Loaded synchronously (no defer/async) as the very first thing in
 // <head>, before styles or other scripts, so the redirect — when it
@@ -19,8 +19,8 @@
   // tag on every gated page) and sets this when it's already sending an
   // unauthenticated visit to lock.html. Don't fire a second, later
   // location change in the same task that could supersede that pending
-  // navigation and send the visit to index.html instead -- skipping the
-  // passcode gate entirely.
+  // navigation and send the visit to dashboard.html instead -- skipping
+  // the passcode gate entirely.
   if (window.__eqAuthRedirecting) return;
 
   // Never hijack an OAuth redirect back into this page. WHOOP's own
@@ -45,9 +45,13 @@
 
   // A reload of this exact page, or arriving with no same-origin
   // referrer at all, both count as "opening the site" — send them to
-  // the landing page. Normal in-app navigation (referrer is another
-  // page on this site, type 'navigate') is left alone.
-  if (navType === 'reload' || !cameFromThisSite) {
-    window.location.replace('index.html');
+  // the dashboard. Normal in-app navigation (referrer is another
+  // page on this site, type 'navigate') is left alone. Already being
+  // on dashboard.html itself is a no-op, not a redirect -- it's the
+  // most-refreshed page in the app now that it doubles as the landing
+  // page, so this avoids a pointless extra reload on every hard refresh.
+  var alreadyOnDashboard = /(^|\/)dashboard\.html$/.test(window.location.pathname);
+  if (!alreadyOnDashboard && (navType === 'reload' || !cameFromThisSite)) {
+    window.location.replace('dashboard.html');
   }
 })();

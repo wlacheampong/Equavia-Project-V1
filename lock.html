@@ -35,8 +35,8 @@ html, body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
-/* Same ambient backdrop as index.html/dashboard.html, so this reads as
-   part of the same app rather than a bolted-on login page. */
+/* Same ambient backdrop as dashboard.html, so this reads as part of the
+   same app rather than a bolted-on login page. */
 body::before {
   content: '';
   position: fixed; inset: 0;
@@ -124,7 +124,7 @@ body::before {
 <script>
 (function () {
   var KNOWN_PAGES = [
-    'index.html', 'dashboard.html', 'health.html', 'gym.html', 'planner.html',
+    'dashboard.html', 'health.html', 'gym.html', 'planner.html',
     'interactions.html', 'finance.html',
     'settings.html', 'ask.html',
     'privacy.html',

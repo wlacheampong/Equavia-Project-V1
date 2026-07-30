@@ -4,5 +4,8 @@
     { "source": "/api/mcp/authorize", "destination": "/api/mcp-oauth?action=authorize" },
     { "source": "/api/mcp/token", "destination": "/api/mcp-oauth?action=token" },
     { "source": "/api/mcp/register", "destination": "/api/mcp-oauth?action=register" }
+  ],
+  "redirects": [
+    { "source": "/", "destination": "/dashboard.html", "permanent": false }
   ]
 }

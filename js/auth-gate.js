@@ -61,8 +61,8 @@
   // <script> tag on the same page): without this, a second location
   // change fired later in the same task could supersede the redirect
   // below before the browser actually navigates, sending an unauthenticated
-  // visit to index.html instead of the lock screen -- skipping the gate
-  // entirely. (An earlier version tried window.stop() to prevent this
+  // visit to dashboard.html instead of the lock screen -- skipping the
+  // gate entirely. (An earlier version tried window.stop() to prevent this
   // instead; that left headless/automated navigation-completion checks
   // hanging indefinitely, so a cooperative flag is used instead.)
   window.__eqAuthRedirecting = true;
