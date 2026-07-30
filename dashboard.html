@@ -424,7 +424,7 @@ a { color: inherit; text-decoration: none; }
           </span>
         </div>
       </div>
-      <div class="greet-quote" id="greetQuote"></div>
+      <div class="greet-quote" id="greetQuote">Domination is a matter of course. Perfection is not the enemy.</div>
       <svg class="greet-spark" viewBox="0 0 300 40" preserveAspectRatio="none">
         <path id="greetSparkPath" fill="none" stroke="var(--eq-text-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
@@ -873,24 +873,6 @@ a { color: inherit; text-decoration: none; }
   // ============================================================
   // Greeting
   // ============================================================
-  const GREET_QUOTES = [
-    'Domination is a matter of course. Perfection is not the enemy.',
-    'Discipline is choosing between what you want now and what you want most.',
-    'Small steps, taken daily, outrun big plans taken never.',
-    'The obstacle is the way.',
-    'What gets measured gets managed.',
-    'Done is better than perfect.',
-    'Consistency compounds.',
-    'Show up, especially when it is inconvenient.',
-  ];
-  // Stable for the whole day (day-of-year modulo), not re-randomised on
-  // every reload -- purely decorative copy, not a data source.
-  function pickDailyQuote() {
-    const now = new Date();
-    const start = new Date(now.getFullYear(), 0, 0);
-    const dayOfYear = Math.floor((now - start) / 86400000);
-    return GREET_QUOTES[dayOfYear % GREET_QUOTES.length];
-  }
   // Real 7-day productivity trend (same tasks-done/total % renderProductivity()
   // computes for today), not a fabricated decorative squiggle -- an earlier
   // round deliberately left this out because there was no real data source
@@ -924,7 +906,6 @@ a { color: inherit; text-decoration: none; }
     const clockSplit = clockStr.lastIndexOf(' ');
     document.getElementById('greetClockTime').textContent = clockStr.slice(0, clockSplit);
     document.getElementById('greetClockAmpm').textContent = clockStr.slice(clockSplit + 1);
-    document.getElementById('greetQuote').textContent = pickDailyQuote();
     renderGreetingSparkline();
   }
 
