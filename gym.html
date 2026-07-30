@@ -10,7 +10,7 @@
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Project Equavia">
-<title>Progressive Overload Coach — Project Equavia</title>
+<title>Training — Project Equavia</title>
 <script src="js/assistant-tools.js"></script>
 <script src="js/topbar.js" defer></script>
 <script src="js/collapsible.js" defer></script>
@@ -118,7 +118,7 @@ const CONFIG = {
   --border: var(--eq-border);
   --border-strong: var(--eq-border-strong);
   --accent: var(--eq-accent);
-  --good: var(--eq-success);
+  --good: var(--eq-accent); /* was --eq-success (green) -- unified onto the site's real accent, same as .tp-root's own --mint already does */
   --warn: var(--eq-warning);
   --bad: var(--eq-danger);
   --font: var(--eq-font-family);
@@ -368,7 +368,7 @@ img, video, canvas, svg { max-width: 100%; }
   .daytitle { font-family: var(--serif); font-style:italic; font-weight:500; font-size:33px; line-height:1; letter-spacing:-0.01em; cursor:pointer; display:inline-flex; align-items:baseline; gap:7px; padding:9px 6px; margin:-9px -6px; border-radius:10px; transition: background .15s; }
   .daytitle:hover, .daytitle:focus-visible, .daytitle:active { background: rgba(255,255,255,.045); }
   .daytitle:focus-visible { outline:1px solid var(--mint); outline-offset:1px; }
-  .daytitle:hover .nameTxt, .daytitle:focus-visible .nameTxt, .daytitle:active .nameTxt { text-decoration: underline; text-decoration-color: rgba(110,231,183,.45); text-underline-offset:4px; }
+  .daytitle:hover .nameTxt, .daytitle:focus-visible .nameTxt, .daytitle:active .nameTxt { text-decoration: underline; text-decoration-color: rgba(224,118,88,.45); text-underline-offset:4px; }
   .daytitle .editIcon { width:15px; height:15px; align-self:center; color: var(--muted); flex:none; opacity:0; transition: opacity .15s; }
   .daytitle:hover .editIcon, .daytitle:focus-visible .editIcon, .daytitle:active .editIcon { opacity:.75; }
   .daytitleInput { font-family: var(--serif); font-style:italic; font-weight:500; font-size:33px; line-height:1; letter-spacing:-0.01em; color: var(--text); background:transparent; border:none; border-bottom:1px solid var(--mint); outline:none; padding:0 0 2px; min-width:2ch; max-width:min(60vw,420px); }
@@ -380,7 +380,7 @@ img, video, canvas, svg { max-width: 100%; }
   .daypill.vol { border-color: var(--hair); color: var(--muted-strong); }
   .moonbtn { margin-left:auto; align-self:center; margin-bottom:3px; display:inline-flex; align-items:center; gap:7px; background:none; border:1px solid var(--line); color:var(--muted); border-radius:999px; padding:7px 12px; font-size:12px; font-weight:500; cursor:pointer; transition: color .18s, border-color .18s, background .18s; }
   .moonbtn:hover { color: var(--muted-strong); border-color: var(--hair); }
-  .moonbtn.on { color: var(--mint); border-color: var(--mint); background: rgba(110,231,183,.06); }
+  .moonbtn.on { color: var(--mint); border-color: var(--mint); background: rgba(224,118,88,.06); }
   .moonbtn svg { width:14px; height:14px; fill: currentColor; }
 
   /* overall progress */
@@ -410,8 +410,8 @@ img, video, canvas, svg { max-width: 100%; }
   .exEye:hover { color: var(--mint); }
   .exEye svg { width:21px; height:21px; stroke: currentColor; fill:none; stroke-width:1.5; }
   .exName { font-family: var(--serif); font-style:italic; font-weight:400; font-size:25px; line-height:1.05; letter-spacing:-0.01em; color: var(--text); flex:1; min-width:0; border:none; background:none; text-align:left; cursor:pointer; padding:0; display:inline-flex; align-items:baseline; gap:7px; word-break:break-word; }
-  .exName:hover .nameTxt { text-decoration: underline; text-decoration-color: rgba(110,231,183,.5); text-underline-offset:3px; }
-  .exInfo { display:inline-flex; align-items:center; justify-content:center; width:18px; height:18px; font-family: var(--serif); font-style:italic; font-size:12px; font-weight:600; color: var(--mint); background: rgba(110,231,183,.05); border:1px solid rgba(110,231,183,.25); border-radius:50%; line-height:1; align-self:center; flex:none; }
+  .exName:hover .nameTxt { text-decoration: underline; text-decoration-color: rgba(224,118,88,.5); text-underline-offset:3px; }
+  .exInfo { display:inline-flex; align-items:center; justify-content:center; width:18px; height:18px; font-family: var(--serif); font-style:italic; font-size:12px; font-weight:600; color: var(--mint); background: rgba(224,118,88,.05); border:1px solid rgba(224,118,88,.25); border-radius:50%; line-height:1; align-self:center; flex:none; }
   .pinBtn { flex:none; background:none; border:none; cursor:pointer; color: rgba(255,255,255,.22); font-size:17px; line-height:1; padding:4px; transition: color .15s, transform .15s var(--spring); }
   .pinBtn:hover { color: var(--muted); } .pinBtn:active { transform: scale(.85); }
   .pinBtn.on { color: var(--mint); }
@@ -430,8 +430,8 @@ img, video, canvas, svg { max-width: 100%; }
     /* .shell has no side margin below 920px, so reserve room for the fixed Quick Capture FAB (52px + offset) in the bottom-right corner */
     .exActions { padding-right: 76px; }
   }
-  .actionPill { display:inline-flex; align-items:center; gap:6px; padding:6px 12px; font-size:12px; color: var(--mint); background: rgba(110,231,183,.04); border:1px solid rgba(110,231,183,.25); border-radius: var(--radius-pill); cursor:pointer; white-space:nowrap; box-shadow: 0 0 16px rgba(110,231,183,.10); transition: color .15s, border-color .15s, background .15s, box-shadow .48s var(--ease), transform .15s var(--spring); }
-  .actionPill:hover { color: #fff; border-color: var(--mint); background: rgba(110,231,183,.12); box-shadow: 0 0 22px rgba(110,231,183,.20); transform: translateY(-1px); }
+  .actionPill { display:inline-flex; align-items:center; gap:6px; padding:6px 12px; font-size:12px; color: var(--mint); background: rgba(224,118,88,.04); border:1px solid rgba(224,118,88,.25); border-radius: var(--radius-pill); cursor:pointer; white-space:nowrap; box-shadow: 0 0 16px rgba(224,118,88,.10); transition: color .15s, border-color .15s, background .15s, box-shadow .48s var(--ease), transform .15s var(--spring); }
+  .actionPill:hover { color: #fff; border-color: var(--mint); background: rgba(224,118,88,.12); box-shadow: 0 0 22px rgba(224,118,88,.20); transform: translateY(-1px); }
   .actionPill:active { transform: scale(.96); }
   .actionPill svg { width:13px; height:13px; stroke: currentColor; fill:none; stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round; }
   .actionPill .pl { font-family: var(--serif); font-style:italic; letter-spacing:.01em; font-size:13px; }
@@ -448,7 +448,7 @@ img, video, canvas, svg { max-width: 100%; }
   .pillInput { background:transparent; border:none; outline:none; color:inherit; font:inherit; font-weight:600; font-variant-numeric: tabular-nums; text-align:center; -moz-appearance:textfield; appearance:textfield; min-width:1.7ch; width:2.6ch; padding:0 1px; border-bottom:1px solid transparent; transition: border-color .15s, color .15s; }
   .pillInput.r { width:1.9ch; }
   .pillInput::-webkit-outer-spin-button, .pillInput::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
-  .pill:hover .pillInput { border-bottom-color: rgba(110,231,183,.22); }
+  .pill:hover .pillInput { border-bottom-color: rgba(224,118,88,.22); }
   .pillInput:focus { color: var(--mint); border-bottom-color: var(--mint); }
   .pillSpacer { flex:1; }
   .pillActions { display:inline-flex; align-items:center; gap:9px; }
@@ -460,7 +460,7 @@ img, video, canvas, svg { max-width: 100%; }
   .pillReset { background:none; border:none; cursor:pointer; padding:6px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; color:currentColor; opacity:.55; transition: opacity .15s, background .15s; }
   .pillReset svg { width:13px; height:13px; stroke:currentColor; fill:none; stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round; }
   .pillReset:hover { opacity:1; background: rgba(0,0,0,.12); }
-  .pill.done { background: var(--mint); border-color: var(--mint); color:#000; box-shadow: 0 0 22px rgba(110,231,183,.28); }
+  .pill.done { background: var(--mint); border-color: var(--mint); color:#000; box-shadow: 0 0 22px rgba(224,118,88,.28); }
   .pill.done .pillIdx, .pill.done .pillTimes, .pill.done .pillUnit { color: rgba(0,0,0,.5); }
   .pill.done .pillInput { color:#000; }
   .pill.done .pillHit, .pill.done .pillStatus { color:#000; font-weight:600; }
@@ -478,7 +478,7 @@ img, video, canvas, svg { max-width: 100%; }
 
   /* rest timer */
   .restSlot:empty { display:none; }
-  .restbar { display:flex; align-items:center; justify-content:center; gap:13px; margin-top:16px; margin-left:29px; padding:9px 13px; border:1px solid var(--mint); border-radius:999px; background: rgba(110,231,183,.06); }
+  .restbar { display:flex; align-items:center; justify-content:center; gap:13px; margin-top:16px; margin-left:29px; padding:9px 13px; border:1px solid var(--mint); border-radius:999px; background: rgba(224,118,88,.06); }
   .restbar.over { border-color: var(--gold); }
   .restStep { background:none; border:1px solid var(--hair); color: var(--text); border-radius:999px; padding:5px 11px; cursor:pointer; font-size:12px; font-variant-numeric: tabular-nums; transition: border-color .15s; }
   .restStep:hover { border-color: var(--mint); }
@@ -492,7 +492,7 @@ img, video, canvas, svg { max-width: 100%; }
   /* add a lift + rest-day panel */
   .addLift { display:flex; flex-direction:column; align-items:center; gap:9px; margin:8px auto 0; background:none; border:none; cursor:pointer; padding:18px; width:100%; }
   .addLiftRing { width:42px; height:42px; border-radius:50%; border:1px solid var(--mint); display:grid; place-items:center; color: var(--mint); transition: background .2s, transform .15s var(--spring); }
-  .addLift:hover .addLiftRing { background: rgba(110,231,183,.08); }
+  .addLift:hover .addLiftRing { background: rgba(224,118,88,.08); }
   .addLift:active .addLiftRing { transform: scale(.92); }
   .addLiftRing svg { width:18px; height:18px; stroke: currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; }
   .addLiftLabel { font-family: var(--serif); font-style:italic; font-size:15px; color: var(--mint); }
@@ -509,7 +509,7 @@ img, video, canvas, svg { max-width: 100%; }
   .finishBtn { width:100%; border:none; border-radius:14px; padding:15px; font-family: var(--sans); font-size:15px; font-weight:600; cursor:pointer; background: var(--mint); color: var(--ink); transition: transform .18s var(--spring), opacity .2s; }
   .finishBtn:active { transform: scale(.99); }
   .finishBtn:disabled { opacity:.4; cursor:default; }
-  .finishBtn.locked { background: rgba(110,231,183,.12); color: var(--mint); border:1px solid var(--mint); }
+  .finishBtn.locked { background: rgba(224,118,88,.12); color: var(--mint); border:1px solid var(--mint); }
   .freshbtn { display:block; margin: 13px auto 0; background:none; border:none; color: var(--muted); font-family: var(--sans); font-size:12.5px; font-weight:500; cursor:pointer; padding:8px 12px; border-radius:9px; transition: color .18s; }
   .freshbtn:hover { color: var(--text); } .freshbtn.arm { color: var(--fail); font-weight:600; }
   .store-note { text-align:center; color: var(--muted); font-size:11.5px; font-weight:500; margin-top:6px; opacity:.85; }
@@ -574,7 +574,7 @@ img, video, canvas, svg { max-width: 100%; }
   .secLbl { font-family: var(--vt-mono); font-size:10px; letter-spacing:.16em; text-transform:uppercase; color: var(--muted); margin:20px 0 10px; }
   .swapList { display:flex; flex-direction:column; gap:8px; }
   .swapItem { display:flex; align-items:center; gap:12px; padding:13px 14px; border:1px solid var(--line); border-radius:13px; background:none; cursor:pointer; text-align:left; transition: border-color .15s, background .15s; width:100%; color:inherit; }
-  .swapItem:hover { border-color: var(--mint); background: rgba(110,231,183,.05); }
+  .swapItem:hover { border-color: var(--mint); background: rgba(224,118,88,.05); }
   .swapItem .nm { font-family: var(--serif); font-style:italic; font-size:17px; }
   .swapItem .mu { font-family: var(--vt-mono); font-size:10px; letter-spacing:.1em; text-transform:uppercase; color: var(--muted); margin-top:3px; }
   .swapItem .arr { margin-left:auto; color: var(--muted); } .swapItem:hover .arr { color: var(--mint); }
@@ -818,7 +818,7 @@ img, video, canvas, svg { max-width: 100%; }
   border: 1px solid var(--border);
   position: relative;
 }
-.po-rx-card.po-rx-up   { background: linear-gradient(180deg, rgba(110,231,183,0.08), rgba(255,255,255,0.025)); border-color: rgba(110,231,183,0.18); }
+.po-rx-card.po-rx-up   { background: linear-gradient(180deg, rgba(224,118,88,0.08), rgba(255,255,255,0.025)); border-color: rgba(224,118,88,0.18); }
 .po-rx-card.po-rx-down { background: linear-gradient(180deg, rgba(255,138,138,0.08), rgba(255,255,255,0.025)); border-color: rgba(255,138,138,0.18); }
 .po-rx-label {
   font-size: 10.5px; color: var(--text-3); font-weight: 700;
@@ -836,7 +836,7 @@ img, video, canvas, svg { max-width: 100%; }
   background: rgba(255,255,255,0.06); color: var(--text-2);
   margin-bottom: 10px;
 }
-.po-rx-tag.up   { background: rgba(110,231,183,0.14); color: var(--good); }
+.po-rx-tag.up   { background: rgba(224,118,88,0.14); color: var(--good); }
 .po-rx-tag.down { background: rgba(255,138,138,0.14); color: var(--bad); }
 .po-rx-tag.hold { background: rgba(251,191,36,0.14); color: var(--warn); }
 .po-rx-reason {
@@ -1001,8 +1001,8 @@ img, video, canvas, svg { max-width: 100%; }
   transition: border-color 0.15s, background 0.15s;
 }
 .rot-row.is-today {
-  background: linear-gradient(180deg, rgba(110,231,183,0.10), rgba(255,255,255,0.025));
-  border-color: rgba(110,231,183,0.30);
+  background: linear-gradient(180deg, rgba(224,118,88,0.10), rgba(255,255,255,0.025));
+  border-color: rgba(224,118,88,0.30);
 }
 .rot-row-num {
   font-size: 11px; color: var(--text-3);
@@ -1025,7 +1025,7 @@ img, video, canvas, svg { max-width: 100%; }
 .rot-row .rot-today-tag {
   font-size: 8px; font-weight: 800; letter-spacing: 0.10em;
   color: var(--good); padding: 2px 6px; border-radius: 999px;
-  background: rgba(110,231,183,0.16);
+  background: rgba(224,118,88,0.16);
 }
 .rot-row .rot-today-btn {
   background: rgba(255,255,255,0.04);
@@ -1035,7 +1035,7 @@ img, video, canvas, svg { max-width: 100%; }
   cursor: pointer; text-transform: uppercase;
   -webkit-tap-highlight-color: transparent;
 }
-.rot-row .rot-today-btn:hover { color: var(--good); border-color: rgba(110,231,183,0.30); }
+.rot-row .rot-today-btn:hover { color: var(--good); border-color: rgba(224,118,88,0.30); }
 
 @media (max-width: 480px) {
   /* === Mobile / iPhone polish === */
@@ -1141,7 +1141,7 @@ img, video, canvas, svg { max-width: 100%; }
 .po-tw-done-btn:hover { transform: translateY(-1px); }
 .po-tw-done-btn:active { transform: scale(0.98); }
 .po-tw-done-btn.is-done {
-  background: rgba(110,231,183,0.16);
+  background: rgba(224,118,88,0.16);
   color: var(--good);
 }
 .po-tw-list {
@@ -1217,7 +1217,7 @@ img, video, canvas, svg { max-width: 100%; }
 }
 .po-tw-past-day-done {
   display: inline-block; padding: 2px 7px; border-radius: 999px;
-  background: rgba(110,231,183,0.14); color: var(--good);
+  background: rgba(224,118,88,0.14); color: var(--good);
   font-size: 9px; font-weight: 800; letter-spacing: 0.08em;
 }
 .po-tw-past-empty {
@@ -1238,7 +1238,7 @@ img, video, canvas, svg { max-width: 100%; }
   font-family: inherit; font-size: 16px; font-weight: 500;
   padding: 11px 13px; width: 100%; outline: none;
 }
-.wt-input:focus { border-color: rgba(110,231,183,0.4); }
+.wt-input:focus { border-color: rgba(224,118,88,0.4); }
 .wt-unit-static { color: var(--text-3); font-size: 13px; }
 /* Subdued on purpose -- these are small inline field-saves, not the page's
    primary action (.btn-primary, e.g. "Log set"). A solid saturated fill
@@ -1254,7 +1254,7 @@ img, video, canvas, svg { max-width: 100%; }
 /* Goal weight */
 .wt-goal-card {
   background: var(--bg-card);
-  border: 1px solid rgba(110,231,183,0.10);
+  border: 1px solid rgba(224,118,88,0.10);
   border-radius: 16px;
   padding: 16px 18px;
   margin-top: 12px;
@@ -1278,7 +1278,7 @@ img, video, canvas, svg { max-width: 100%; }
 .wt-progress-link {
   display: flex; align-items: center; justify-content: space-between;
   background: var(--bg-card);
-  border: 1px solid rgba(110,231,183,0.10);
+  border: 1px solid rgba(224,118,88,0.10);
   border-radius: 16px;
   padding: 18px 20px;
   color: var(--text-1);
@@ -1287,7 +1287,7 @@ img, video, canvas, svg { max-width: 100%; }
   transition: border-color 0.2s, transform 0.15s;
   -webkit-tap-highlight-color: transparent;
 }
-.wt-progress-link:hover { border-color: rgba(110,231,183,0.25); }
+.wt-progress-link:hover { border-color: rgba(224,118,88,0.25); }
 .wt-progress-link:active { transform: scale(0.99); }
 .wt-progress-label {
   font-size: 11px; letter-spacing: 0.20em; font-weight: 600;
@@ -1353,7 +1353,7 @@ img, video, canvas, svg { max-width: 100%; }
   position: relative; aspect-ratio: 3 / 4;
   border-radius: 12px; overflow: hidden;
   background: linear-gradient(135deg, #1a1a24, #0a0f0a);
-  cursor: pointer; border: 1px solid rgba(110,231,183,0.08);
+  cursor: pointer; border: 1px solid rgba(224,118,88,0.08);
   font-family: inherit;
   -webkit-tap-highlight-color: transparent;
 }
@@ -1440,8 +1440,8 @@ img, video, canvas, svg { max-width: 100%; }
 .wt-viewer-close { color: var(--text-1); }
 .wt-viewer-delete { color: var(--bad); border-color: rgba(248,113,113,0.3); }
 .wt-viewer-delete.is-confirm { background: rgba(248,113,113,0.10); }
-.wt-viewer-compare { color: var(--good); border-color: rgba(110,231,183,0.30); }
-.wt-viewer-back    { color: var(--good); border-color: rgba(110,231,183,0.30); }
+.wt-viewer-compare { color: var(--good); border-color: rgba(224,118,88,0.30); }
+.wt-viewer-back    { color: var(--good); border-color: rgba(224,118,88,0.30); }
 
 /* Mode toggle: hide the inactive mode */
 .wt-viewer .wt-viewer-single,
@@ -1478,7 +1478,7 @@ img, video, canvas, svg { max-width: 100%; }
   font-variant-numeric: tabular-nums;
 }
 .wt-compare-other { cursor: pointer; -webkit-tap-highlight-color: transparent; }
-.wt-compare-other:hover img { outline: 1px solid rgba(110,231,183,0.30); }
+.wt-compare-other:hover img { outline: 1px solid rgba(224,118,88,0.30); }
 .wt-compare-headline {
   text-align: center; padding: 14px 8px 12px;
   font-size: 14px; font-weight: 600;
@@ -1614,171 +1614,26 @@ img, video, canvas, svg { max-width: 100%; }
     </div>
 
   </div>
-
-  <div class="po-header">
-    <h1 class="po-title" id="appTitle">Progressive Overload Coach</h1>
-    <button class="po-icon-btn" id="settingsBtn" title="Settings" aria-label="Settings">
-      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-    </button>
-  </div>
-
-  <div class="card">
-    <!-- Filters -->
-    <div class="po-filters">
-      <div class="po-seg-row">
-        <span class="po-seg-label">Gym</span>
-        <div class="po-seg-control" id="gymSeg"></div>
-      </div>
-      <div class="po-seg-row">
-        <span class="po-seg-label">Day</span>
-        <div class="po-seg-control" id="daySeg"></div>
-        <span id="planSyncDot" title="" style="display:none;width:7px;height:7px;border-radius:50%;margin-left:6px;vertical-align:middle"></span>
-      </div>
-    </div>
-
-    <!-- Exercise -->
-    <div class="po-sub-section">
-      <div class="section-title">Exercise</div>
-      <div class="po-exercise-bar">
-        <select class="po-ex-select" id="exSelect"></select>
-        <button class="po-btn-icon" id="addExBtn" title="Add exercise" aria-label="Add">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        </button>
-        <button class="po-btn-icon" id="editExBtn" title="Edit / delete" aria-label="Edit">
-          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
-        </button>
-      </div>
-      <div class="po-no-ex" id="noExMsg" style="display:none">No exercises here yet. Tap <strong>+</strong> to add one.</div>
-    </div>
-
-    <!-- Log a set -->
-    <div class="po-sub-section">
-      <div class="section-title">Log today's top set</div>
-      <div class="po-bw-banner" id="bwBanner">Bodyweight — log reps only</div>
-      <div class="po-last-set" id="lastSet">
-        <span class="po-last-label">Last time</span>
-        <span class="po-last-value" id="lastSetValue"></span>
-        <span class="po-last-meta" id="lastSetMeta"></span>
-      </div>
-      <div class="po-log-grid" id="logGrid">
-        <div class="po-field" id="weightField">
-          <label id="weightLabel">Weight (kg)</label>
-          <div class="po-weight-row">
-            <button class="po-w-btn" id="weightDownBtn" type="button">−</button>
-            <input type="number" id="weightInput" step="0.5" inputmode="decimal" placeholder="0">
-            <button class="po-w-btn" id="weightUpBtn" type="button">+</button>
-          </div>
-        </div>
-        <div class="po-field">
-          <label>Reps</label>
-          <div class="po-reps-row" id="repsRow" data-value="8">
-            <button type="button" class="po-reps-pill" data-v="4">4</button>
-            <button type="button" class="po-reps-pill" data-v="5">5</button>
-            <button type="button" class="po-reps-pill" data-v="6">6</button>
-            <button type="button" class="po-reps-pill" data-v="7">7</button>
-            <button type="button" class="po-reps-pill active" data-v="8">8</button>
-            <button type="button" class="po-reps-pill" data-v="9">9</button>
-            <button type="button" class="po-reps-pill" data-v="10">10</button>
-            <button type="button" class="po-reps-pill" data-v="11">11</button>
-            <button type="button" class="po-reps-pill" data-v="12">12</button>
-          </div>
-        </div>
-      </div>
-      <button class="btn-primary" id="logBtn">Log set</button>
-    </div>
-
-    <!-- Prescription -->
-    <div class="po-sub-section">
-      <div class="section-title">Next session</div>
-      <div id="rxWrap"></div>
-    </div>
-
-    <!-- Stats -->
-    <div class="po-sub-section">
-      <div class="section-title">Stats</div>
-      <div class="po-stats-row">
-        <div class="po-stat-box">
-          <div class="po-stat-label" id="oneRmLabel">Est. 1RM</div>
-          <div class="po-stat-val" id="oneRm">—<span class="po-unit" id="oneRmUnit">kg</span></div>
-        </div>
-        <div class="po-stat-box">
-          <div class="po-stat-label">Best set</div>
-          <div class="po-stat-val" id="bestSet">—</div>
-        </div>
-        <div class="po-stat-box">
-          <div class="po-stat-label">Sessions</div>
-          <div class="po-stat-val" id="sessionCount">—</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Trend -->
-    <div class="po-sub-section">
-      <div class="section-title">Trend (last 10 sessions)</div>
-      <div class="po-spark-caption">Tracking top set per session</div>
-      <div class="po-spark-wrap">
-        <svg class="po-spark-svg" id="sparkline" viewBox="0 0 300 60" preserveAspectRatio="none">
-          <defs>
-            <linearGradient id="sparkGrad" x1="0" x2="0" y1="0" y2="1">
-              <stop offset="0%" stop-color="rgba(255,255,255,0.18)"/>
-              <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
-            </linearGradient>
-          </defs>
-        </svg>
-        <div class="po-spark-empty" id="sparkEmpty">Need 2+ sessions for trend</div>
-      </div>
-    </div>
-
-    <!-- History -->
-    <div class="po-sub-section">
-      <div class="section-title">History</div>
-      <div id="historyCard">
-        <div class="po-empty">No logs yet.</div>
-      </div>
-    </div>
-
-    <!-- Today's Workout — every set logged today, grouped by exercise.
-         "Mark done" stamps the day so the past-workouts list shows it
-         as a completed session. The volume here also feeds the
-         composition estimate at the top of the page. -->
-    <div class="po-sub-section">
-      <div class="section-title">Today's workout</div>
-      <div class="po-tw" id="poTw">
-        <div class="po-tw-head">
-          <div>
-            <div class="po-tw-eyebrow" id="poTwDateLabel">TODAY</div>
-            <div class="po-tw-summary">
-              <span class="po-tw-summary-num" id="poTwSetCount">0</span>
-              <span class="po-tw-summary-label">sets</span>
-              <span class="po-tw-summary-sep">·</span>
-              <span class="po-tw-summary-vol" id="poTwTotalVol">0 kg lifted</span>
-            </div>
-          </div>
-          <button class="po-tw-done-btn" id="poTwDoneBtn" type="button">Mark workout done</button>
-        </div>
-        <ul class="po-tw-list" id="poTwList"></ul>
-        <div class="po-tw-empty" id="poTwEmpty">No sets logged today — log one above and it'll appear here.</div>
-      </div>
-
-      <button type="button" class="po-tw-past-toggle" id="poTwPastToggle" aria-expanded="false">
-        <span>Past workouts <span class="po-tw-past-count" id="poTwPastCount">0</span></span>
-        <span class="po-tw-past-arrow" id="poTwPastArrow">▾</span>
-      </button>
-      <div class="po-tw-past-body" id="poTwPastBody" style="display:none"></div>
-    </div>
-  </div>
 </div>
 
 <!-- =========================================================
      TRAINING PLAN — the retired Train page, ported in whole.
-     Markup and behaviour are the original's; only its backdrop and
-     page chrome are gone, and it now persists into this page's single
-     workout log rather than its own separate store.
-     ========================================================= -->
-<div class="po-wrap tp-wrap" data-eq-collapse="fitness:training-plan">
-  <div class="section-title" data-eq-collapse-keep data-eq-collapse-trigger>
-    Training plan<span class="eq-collapse-chevron"></span>
-  </div>
+       Markup and behaviour are the original's; only its backdrop and
+       page chrome are gone, and it now persists into this page's single
+       workout log rather than its own separate store. (The classic
+       Progressive Overload Coach section -- Exercise dropdown/Log-a-set/
+       Prescription/Stats/Trend/History/Today's Workout -- was removed;
+       this Training Plan card is now the page's only workout-logging UI,
+       with a Progression tab on each exercise reusing that classic
+       system's math via window.PoCoach, see script A below.)
+       ========================================================= -->
+  <div class="po-wrap tp-wrap" data-eq-collapse="fitness:training-plan">
+    <div class="section-title" data-eq-collapse-keep data-eq-collapse-trigger>
+      Training plan<span class="eq-collapse-chevron"></span>
+      <button class="po-icon-btn tp-settings-btn" id="settingsBtn" title="Settings" aria-label="Settings">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
+    </div>
   <div class="tp-root">
   <div class="sheet" id="sheet">
     <div class="eyebrow">Today's session</div>
@@ -1808,52 +1663,6 @@ img, video, canvas, svg { max-width: 100%; }
     <div class="tap">tap to close</div>
   </div>
 </div>
-  </div>
-</div>
-
-<!-- Add / Edit Exercise Modal -->
-<div class="po-modal-bg" id="exModalBg">
-  <div class="po-modal">
-    <h3 id="exModalTitle">Add exercise</h3>
-    <div class="po-field">
-      <label style="font-size:11px;color:var(--text-3);font-weight:700;letter-spacing:0.04em;text-transform:uppercase">Name</label>
-      <input type="text" id="exName" placeholder="e.g. Incline DB press">
-    </div>
-    <div class="po-field">
-      <label style="font-size:11px;color:var(--text-3);font-weight:700;letter-spacing:0.04em;text-transform:uppercase">Gym</label>
-      <div class="po-modal-seg" id="exGymSeg"></div>
-    </div>
-    <div class="po-field">
-      <label style="font-size:11px;color:var(--text-3);font-weight:700;letter-spacing:0.04em;text-transform:uppercase">Day</label>
-      <div class="po-modal-seg" id="exDaySeg"></div>
-    </div>
-    <label class="po-bw-toggle">
-      <input type="checkbox" id="exBw">
-      Bodyweight (track reps only, no weight)
-    </label>
-    <div class="po-field" id="exStartWeightField">
-      <label style="font-size:11px;color:var(--text-3);font-weight:700;letter-spacing:0.04em;text-transform:uppercase">Starting weight</label>
-      <input type="number" id="exStartWeight" step="0.5" placeholder="20" value="20">
-    </div>
-    <div class="po-log-grid" id="exNumFields">
-      <div class="po-field">
-        <label style="font-size:11px;color:var(--text-3);font-weight:700;letter-spacing:0.04em;text-transform:uppercase">Reps min</label>
-        <input type="number" id="exRepMin" value="6">
-      </div>
-      <div class="po-field">
-        <label style="font-size:11px;color:var(--text-3);font-weight:700;letter-spacing:0.04em;text-transform:uppercase">Reps max</label>
-        <input type="number" id="exRepMax" value="8">
-      </div>
-    </div>
-    <div class="po-field" id="exStepField">
-      <label style="font-size:11px;color:var(--text-3);font-weight:700;letter-spacing:0.04em;text-transform:uppercase">Increment</label>
-      <input type="number" id="exStep" step="0.5" value="2.5">
-    </div>
-    <div class="po-modal-actions">
-      <button class="po-btn-secondary" id="exModalCancel">Cancel</button>
-      <button class="btn-primary" id="exModalSave">Save</button>
-    </div>
-    <span class="po-delete-link" id="exDelete" style="display:none">Delete this exercise</span>
   </div>
 </div>
 
@@ -1985,7 +1794,9 @@ img, video, canvas, svg { max-width: 100%; }
   }
   let planSync = null;
   let state = loadState();
-  document.getElementById('appTitle').textContent = CONFIG.appTitle || 'Progressive Overload Coach';
+  // The page's own H1 (#appTitle, set from CONFIG.appTitle) lived in the
+  // now-removed classic po-header -- the Training Plan section's own
+  // "Training plan" title is this page's only heading now.
 
   // ============================================================
   // HELPERS
@@ -1997,19 +1808,6 @@ img, video, canvas, svg { max-width: 100%; }
   function dayName(id) { const d = state.days.find(x => x.id === id); return d ? d.name : id; }
   function estimate1RM(w, r) { if (r < 2) return w; return w * (1 + r / 30); }
   function roundToStep(v, s) { return Math.round(v / s) * s; }
-  function getFiltered() {
-    return state.exercises.filter(e =>
-      (e.gym === state.filterGym || e.gym === 'both') && e.day === state.filterDay);
-  }
-  function getCurrentEx() {
-    const f = getFiltered();
-    if (!f.length) return null;
-    let ex = f.find(e => e.id === state.currentEx);
-    if (!ex) { ex = f[0]; state.currentEx = ex.id; saveState(); }
-    return ex;
-  }
-  function getLogs() { return (state.logs[state.currentEx] || []).slice(); }
-
   // Prescription engine — "what should I do next session?"
   // Upgrade trigger: hits CONFIG.upgradeAtReps (default 8) OR the
   // exercise's repMax, whichever fires first. So a 5-8 lifter hits
@@ -2038,139 +1836,8 @@ img, video, canvas, svg { max-width: 100%; }
     if (reps >= repMin && reps < upgradeAt) return { type: 'hold', weight: weight, reps: reps + 1, tag: 'Add a rep', reason: reps + ' reps in target. Stay at ' + weight + unit() + ', push for ' + (reps + 1) + '.' };
     return { type: 'hold', weight: weight, reps: repMin, tag: 'Repeat', reason: reps + ' reps short of ' + repMin + '-' + upgradeAt + '. Repeat ' + weight + unit() + ' until you hit ' + repMin + '+ clean.' };
   }
-
-  // ============================================================
-  // RENDER
-  // ============================================================
-  function renderFilters() {
-    $('gymSeg').innerHTML = state.gyms.map(g =>
-      '<button class="po-seg-btn ' + (g.id === state.filterGym ? 'active' : '') + '" data-gym="' + g.id + '">' + escape(g.name) + '</button>'
-    ).join('');
-    $('daySeg').innerHTML = state.days.map(d =>
-      '<button class="po-seg-btn ' + (d.id === state.filterDay ? 'active' : '') + '" data-day="' + d.id + '">' + escape(d.name) + '</button>'
-    ).join('');
-    $('gymSeg').querySelectorAll('.po-seg-btn').forEach(b => {
-      b.addEventListener('click', () => { state.filterGym = b.dataset.gym; state.currentEx = null; saveState(); renderAll(); });
-    });
-    $('daySeg').querySelectorAll('.po-seg-btn').forEach(b => {
-      b.addEventListener('click', () => {
-        state.filterDay = b.dataset.day;
-        state.currentEx = null;
-        // User has now manually picked a day — stop auto-overriding to today's split.
-        state._userPickedDay = true;
-        saveState(); renderAll();
-      });
-    });
-  }
-  function renderSelect() {
-    const sel = $('exSelect');
-    const f = getFiltered();
-    const noMsg = $('noExMsg');
-    const editBtn = $('editExBtn');
-    const logBtn = $('logBtn');
-    if (!f.length) {
-      sel.innerHTML = '<option>—</option>';
-      sel.disabled = true; editBtn.disabled = true; logBtn.disabled = true;
-      noMsg.style.display = 'block'; state.currentEx = null;
-      return;
-    }
-    sel.disabled = false; editBtn.disabled = false; logBtn.disabled = false;
-    noMsg.style.display = 'none';
-    if (!f.find(e => e.id === state.currentEx)) state.currentEx = f[0].id;
-    sel.innerHTML = f.map(e => {
-      const wLbl = e.bw ? ' · BW' : (e.startWeight ? ' · ' + e.startWeight + unit() : '');
-      const sh = e.gym === 'both' ? ' ★' : '';
-      return '<option value="' + e.id + '"' + (e.id === state.currentEx ? ' selected' : '') + '>' + escape(e.name) + wLbl + sh + '</option>';
-    }).join('');
-  }
-  function renderForm() {
-    const ex = getCurrentEx();
-    const banner = $('bwBanner');
-    const wField = $('weightField');
-    const oneRmLbl = $('oneRmLabel');
-    const grid = $('logGrid');
-    $('weightLabel').textContent = 'Weight (' + unit() + ')';
-    if (ex && ex.bw) {
-      banner.classList.add('show');
-      wField.style.display = 'none';
-      grid.classList.add('po-bw-mode');
-      oneRmLbl.textContent = 'Best reps';
-    } else {
-      banner.classList.remove('show');
-      wField.style.display = '';
-      grid.classList.remove('po-bw-mode');
-      oneRmLbl.textContent = 'Est. 1RM';
-    }
-  }
-  function renderLastSet() {
-    const wrap = $('lastSet');
-    const v = $('lastSetValue');
-    const m = $('lastSetMeta');
-    const ex = getCurrentEx();
-    const logs = ex ? getLogs() : [];
-    if (!ex || !logs.length) { wrap.classList.remove('show'); return; }
-    const last = logs[logs.length - 1];
-    const setStr = ex.bw ? (last.reps + ' reps') : (last.weight + unit() + ' × ' + last.reps);
-    const d = new Date(last.date);
-    const da = Math.floor((Date.now() - d.getTime()) / 86400000);
-    const ago = da === 0 ? 'today' : da === 1 ? 'yesterday' : da + ' days ago';
-    v.textContent = setStr;
-    m.textContent = ago;
-    wrap.classList.add('show');
-  }
-  function renderRx() {
-    const wrap = $('rxWrap');
-    const ex = getCurrentEx();
-    if (!ex) { wrap.innerHTML = '<div class="po-rx-empty">Pick a gym and day above.</div>'; return; }
-    const logs = getLogs();
-    const rx = getRx(ex, logs);
-    if (!rx) {
-      const sw = ex.startWeight, sr = ex.repMin;
-      const head = ex.bw
-        ? '<span class="po-accent">' + sr + '</span> reps'
-        : '<span class="po-accent">' + (sw || 0) + unit() + '</span> × ' + sr + ' reps';
-      const reason = ex.bw
-        ? 'Aim for ' + ex.repMin + '-' + ex.repMax + ' clean reps. Once you hit ' + ex.repMax + '+, push for more.'
-        : 'Hit ' + ex.repMin + '-' + ex.repMax + ' reps. Once logged, the coach will start prescribing.';
-      wrap.innerHTML = '<div class="po-rx-card"><div class="po-rx-label">' + escape(ex.name) + ' · starting point</div><div class="po-rx-headline">' + head + '</div><span class="po-rx-tag hold">Start here</span><p class="po-rx-reason">' + reason + '</p></div>';
-      return;
-    }
-    const head = rx.bw
-      ? '<span class="po-accent">' + rx.reps + '</span> reps'
-      : '<span class="po-accent">' + rx.weight + unit() + '</span> × ' + rx.reps + ' reps';
-    wrap.innerHTML = '<div class="po-rx-card po-rx-' + rx.type + '"><div class="po-rx-label">' + escape(ex.name) + '</div><div class="po-rx-headline">' + head + '</div><span class="po-rx-tag ' + rx.type + '">' + rx.tag + '</span><p class="po-rx-reason">' + rx.reason + '</p></div>';
-  }
-  function renderStats() {
-    const ex = getCurrentEx();
-    const logs = ex ? getLogs() : [];
-    if (!logs.length) {
-      $('oneRm').innerHTML = '—<span class="po-unit">' + unit() + '</span>';
-      $('bestSet').textContent = '—';
-      $('sessionCount').textContent = '—';
-      return;
-    }
-    if (ex.bw) {
-      const br = Math.max.apply(null, logs.map(l => l.reps));
-      $('oneRm').innerHTML = br + '<span class="po-unit">reps</span>';
-    } else {
-      const orm = Math.max.apply(null, logs.map(l => estimate1RM(l.weight, l.reps)));
-      $('oneRm').innerHTML = Math.round(orm) + '<span class="po-unit">' + unit() + '</span>';
-    }
-    let best = logs[0];
-    logs.forEach(l => {
-      const cur = ex.bw ? l.reps : estimate1RM(l.weight, l.reps);
-      const bestVal = ex.bw ? best.reps : estimate1RM(best.weight, best.reps);
-      if (cur > bestVal) best = l;
-    });
-    $('bestSet').textContent = ex.bw ? (best.reps + 'r') : (best.weight + '×' + best.reps);
-    $('sessionCount').textContent = logs.length;
-  }
-  // Batch-2 fix #5: the trend line was plotting every logged SET, which
-  // makes a multi-set session's own backoff sets drag the line around --
-  // noisy and misleading versus the session's real top-set strength. This
-  // is a render-time filter only (getLogs()/state.logs are untouched, so
-  // every set is still there for the session detail/history list below;
-  // only the chart's own data source changes).
+  // Kept verbatim from the removed classic card -- script B's Progression
+  // popup calls these two through the window.PoCoach bridge below.
   function scoreForLog(ex, l) { return ex.bw ? l.reps : estimate1RM(l.weight, l.reps); }
   function topSetPerDay(ex, logs) {
     const byDay = {};
@@ -2186,67 +1853,7 @@ img, video, canvas, svg { max-width: 100%; }
     });
     return Object.keys(byDay).sort().map((k) => byDay[k]);
   }
-  function renderSparkline() {
-    const svg = $('sparkline');
-    const empty = $('sparkEmpty');
-    const ex = getCurrentEx();
-    const logs = ex ? topSetPerDay(ex, getLogs()).slice(-10) : [];
-    if (logs.length < 2) {
-      svg.style.display = 'none'; empty.style.display = 'block';
-      return;
-    }
-    svg.style.display = 'block'; empty.style.display = 'none';
-    const vals = logs.map(l => ex.bw ? l.reps : estimate1RM(l.weight, l.reps));
-    const min = Math.min.apply(null, vals);
-    const max = Math.max.apply(null, vals);
-    const range = max - min || 1;
-    const W = 300, H = 60, pad = 4;
-    const pts = vals.map((v, i) => {
-      const x = pad + (W - pad * 2) * (i / (vals.length - 1));
-      const y = H - pad - (H - pad * 2) * ((v - min) / range);
-      return [x, y];
-    });
-    const linePath = pts.map((p, i) => (i === 0 ? 'M' : 'L') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ');
-    const fillPath = linePath + ' L' + pts[pts.length - 1][0].toFixed(1) + ' ' + H + ' L' + pts[0][0].toFixed(1) + ' ' + H + ' Z';
-    // Keep <defs> in place; replace any prior paths
-    const defsHTML = '<defs><linearGradient id="sparkGrad" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="rgba(255,255,255,0.18)"/><stop offset="100%" stop-color="rgba(255,255,255,0)"/></linearGradient></defs>';
-    svg.innerHTML = defsHTML
-      + '<path class="po-spark-fill" d="' + fillPath + '"/>'
-      + '<path class="po-spark-line" d="' + linePath + '"/>';
-  }
-  function renderHistory() {
-    const wrap = $('historyCard');
-    const ex = getCurrentEx();
-    const logs = ex ? getLogs().slice().reverse() : [];
-    if (!logs.length) {
-      wrap.innerHTML = '<div class="po-empty">No logs yet.</div>';
-      return;
-    }
-    wrap.innerHTML = logs.slice(0, 12).map((l, i) => {
-      const d = new Date(l.date);
-      const dStr = (d.getMonth() + 1) + '/' + d.getDate();
-      const setStr = ex.bw ? (l.reps + ' reps') : (l.weight + unit() + ' × ' + l.reps);
-      const realIdx = logs.length - 1 - i; // since we reversed
-      return '<div class="po-hist-row">'
-        + '<div class="po-hist-date">' + dStr + '</div>'
-        + '<div class="po-hist-set">' + setStr + '</div>'
-        + '<button class="po-hist-del" data-idx="' + realIdx + '" aria-label="Delete">×</button>'
-        + '</div>';
-    }).join('');
-    wrap.querySelectorAll('.po-hist-del').forEach(b => {
-      b.addEventListener('click', () => {
-        if (!confirm('Delete this log?')) return;
-        const realIdx = parseInt(b.dataset.idx, 10);
-        const arr = state.logs[state.currentEx] || [];
-        // realIdx is index in REVERSED list; map back to original
-        const origIdx = arr.length - 1 - realIdx;
-        arr.splice(origIdx, 1);
-        if (!arr.length) delete state.logs[state.currentEx];
-        else state.logs[state.currentEx] = arr;
-        saveState(); renderAll();
-      });
-    });
-  }
+
   // Compute today's split from state.splitRotation + state.splitAnchor.
   // Returns the rotation entry name (e.g. "Push" or "Rest") AND the index.
   function todaySplit() {
@@ -2282,39 +1889,6 @@ img, video, canvas, svg { max-width: 100%; }
     splitEl.classList.toggle('is-rest', isRestName(split.name));
   }
 
-  // Build the rep buttons based on the current exercise's repMin/repMax.
-  // Always spans repMin → repMax + 2 (a small buffer for over-performing
-  // sets that trigger the upgrade signal), capped at 16 buttons total so
-  // wide ranges don't break the mobile layout.
-  function renderRepsRow() {
-    const row = document.getElementById('repsRow');
-    if (!row) return;
-    const ex = getCurrentEx();
-    let repMin, repMax;
-    if (ex) {
-      repMin = Math.max(1, parseInt(ex.repMin, 10) || 1);
-      repMax = Math.max(repMin, parseInt(ex.repMax, 10) || repMin);
-    } else {
-      repMin = 4; repMax = 12;
-    }
-    const upper = Math.max(repMax + 2, repMin + 5);
-    const end = Math.min(upper, repMin + 15);
-
-    // Preserve the previously-selected rep if it still fits in the new
-    // range; otherwise default to the target (repMax).
-    const prev = parseInt(row.dataset.value, 10);
-    const active = (prev >= repMin && prev <= end) ? prev : repMax;
-
-    let html = '';
-    for (let i = repMin; i <= end; i++) {
-      html += '<button type="button" class="po-reps-pill' +
-        (i === active ? ' active' : '') +
-        '" data-v="' + i + '">' + i + '</button>';
-    }
-    row.innerHTML = html;
-    row.dataset.value = String(active);
-  }
-
   // The Training Plan section (merged in from the old Train page) lives in
   // its own script block but must not keep a second copy of this state --
   // two independent load/save cycles over po_coach_v1 would each clobber
@@ -2335,348 +1909,7 @@ img, video, canvas, svg { max-width: 100%; }
 
   function renderAll() {
     renderDayPill();
-    renderFilters(); renderSelect(); renderForm(); renderLastSet();
-    renderRepsRow();
-    renderRx(); renderStats(); renderSparkline(); renderHistory();
-    renderTodaysWorkout();
-    renderPastWorkouts();
-    // Pre-fill weight input with last logged weight (or starting weight)
-    const ex = getCurrentEx();
-    if (ex && !ex.bw) {
-      const logs = getLogs();
-      const w = logs.length ? logs[logs.length - 1].weight : (ex.startWeight || 0);
-      $('weightInput').value = w;
-    }
   }
-
-  // ============================================================
-  // TODAY'S WORKOUT + PAST WORKOUTS
-  //
-  // Reads state.logs, groups by date, surfaces:
-  //  - Today: every set logged today, per exercise, with set count + total
-  //    volume (kg lifted = sum of weight × reps across all working sets).
-  //  - Past: every previous workout day, sorted newest-first, with the
-  //    same summary numbers + a DONE badge if the user marked that day.
-  //
-  // The total volume here is what the composition-estimate uses (combined
-  // with the 1RM trend) — more weekly volume + strength gain = more of
-  // recent body-weight delta gets attributed to muscle.
-  // ============================================================
-  const WORKOUT_DONE_KEY = 'po_coach_workout_done';
-  function loadDoneDays() {
-    try { const raw = localStorage.getItem(WORKOUT_DONE_KEY); return raw ? JSON.parse(raw) : {}; }
-    catch (e) { return {}; }
-  }
-  function saveDoneDays(d) {
-    try { localStorage.setItem(WORKOUT_DONE_KEY, JSON.stringify(d)); } catch (e) {}
-  }
-  let doneDays = loadDoneDays();
-
-  function logsByDay() {
-    const byDay = {};
-    state.exercises.forEach(ex => {
-      (state.logs[ex.id] || []).forEach(l => {
-        const dk = l.date.slice(0, 10);
-        if (!byDay[dk]) byDay[dk] = [];
-        byDay[dk].push({ ex, log: l });
-      });
-    });
-    return byDay;
-  }
-
-  function fmtPastDate(dk) {
-    const [y, m, d] = dk.split('-').map(Number);
-    const dt = new Date(y, m - 1, d);
-    const dows = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
-    const mons = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
-    return dows[dt.getDay()] + ' ' + mons[dt.getMonth()] + ' ' + dt.getDate();
-  }
-
-  function summarizeDay(daySets) {
-    // daySets: [{ex, log}]. Group by exercise, return {sets: N, vol: kg, perEx: [...]}.
-    const byEx = {};
-    daySets.forEach(({ex, log}) => {
-      if (!byEx[ex.id]) byEx[ex.id] = { ex, sets: [], vol: 0 };
-      byEx[ex.id].sets.push(log);
-      byEx[ex.id].vol += (log.weight || 0) * (log.reps || 0);
-    });
-    const perEx = Object.values(byEx);
-    const totalSets = perEx.reduce((s, e) => s + e.sets.length, 0);
-    const totalVol = perEx.reduce((s, e) => s + e.vol, 0);
-    return { perEx, totalSets, totalVol };
-  }
-
-  function renderTodaysWorkout() {
-    const todayKey = wtDateKey(new Date());
-    const all = logsByDay();
-    const todaySets = all[todayKey] || [];
-    const sum = summarizeDay(todaySets);
-    const u = state.units;
-
-    const eyebrow = $('poTwDateLabel');
-    const dows = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
-    const mons = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
-    const d = new Date();
-    eyebrow.textContent = 'TODAY · ' + dows[d.getDay()] + ', ' + mons[d.getMonth()] + ' ' + d.getDate();
-
-    $('poTwSetCount').textContent = sum.totalSets;
-    $('poTwTotalVol').textContent = Math.round(sum.totalVol).toLocaleString() + ' ' + u + ' lifted';
-
-    const list = $('poTwList');
-    const empty = $('poTwEmpty');
-    if (sum.totalSets === 0) {
-      list.innerHTML = '';
-      empty.classList.remove('hidden');
-    } else {
-      empty.classList.add('hidden');
-      list.innerHTML = sum.perEx.map(e => {
-        const top = e.ex.bw
-          ? 'top ' + Math.max.apply(null, e.sets.map(s => s.reps)) + ' reps'
-          : 'top ' + Math.max.apply(null, e.sets.map(s => s.weight)) + u;
-        const meta = e.ex.bw
-          ? (e.sets.length + ' set' + (e.sets.length === 1 ? '' : 's') + ' · ' + top)
-          : (e.sets.length + ' set' + (e.sets.length === 1 ? '' : 's') + ' · ' + top + ' · ' + Math.round(e.vol) + u + ' total');
-        return '<li class="po-tw-row">'
-          + '<span class="po-tw-row-name">' + escape(e.ex.name) + '</span>'
-          + '<span class="po-tw-row-meta">' + meta + '</span>'
-          + '</li>';
-      }).join('');
-    }
-
-    // Done button state
-    const btn = $('poTwDoneBtn');
-    const isDone = !!doneDays[todayKey];
-    btn.textContent = isDone ? '✓ Done' : 'Mark workout done';
-    btn.classList.toggle('is-done', isDone);
-    btn.disabled = sum.totalSets === 0 && !isDone;
-    btn.style.opacity = btn.disabled ? '0.4' : '';
-  }
-
-  function renderPastWorkouts() {
-    const todayKey = wtDateKey(new Date());
-    const all = logsByDay();
-    const past = Object.entries(all)
-      .filter(([dk]) => dk !== todayKey)
-      .sort((a, b) => b[0].localeCompare(a[0]));
-    $('poTwPastCount').textContent = past.length;
-    const body = $('poTwPastBody');
-    if (!past.length) {
-      body.innerHTML = '<div class="po-tw-past-empty">No past workouts yet.</div>';
-      return;
-    }
-    const u = state.units;
-    body.innerHTML = past.slice(0, 30).map(([dk, sets]) => {
-      const sum = summarizeDay(sets);
-      const isDone = !!doneDays[dk];
-      const exNames = sum.perEx.map(e => e.ex.name).slice(0, 3).join(', ')
-        + (sum.perEx.length > 3 ? '…' : '');
-      return '<div class="po-tw-past-day">'
-        + '<div class="po-tw-past-day-h">'
-        +   '<span class="po-tw-past-day-date">' + fmtPastDate(dk) + '</span>'
-        +   '<span class="po-tw-past-day-summary">'
-        +     sum.totalSets + ' sets · ' + Math.round(sum.totalVol).toLocaleString() + ' ' + u
-        +     (isDone ? ' <span class="po-tw-past-day-done">DONE</span>' : '')
-        +   '</span>'
-        + '</div>'
-        + '<div class="po-tw-past-day-summary" style="margin-top:6px; font-size:11px; color:var(--text-3);">'
-        +   escape(exNames)
-        + '</div>'
-        + '</div>';
-    }).join('');
-  }
-
-  $('poTwDoneBtn').addEventListener('click', () => {
-    const todayKey = wtDateKey(new Date());
-    if (doneDays[todayKey]) {
-      delete doneDays[todayKey];
-    } else {
-      doneDays[todayKey] = new Date().toISOString();
-    }
-    saveDoneDays(doneDays);
-    renderTodaysWorkout();
-    renderPastWorkouts();
-  });
-  $('poTwPastToggle').addEventListener('click', () => {
-    const body = $('poTwPastBody');
-    const toggle = $('poTwPastToggle');
-    const open = body.style.display !== 'none';
-    body.style.display = open ? 'none' : 'flex';
-    body.style.flexDirection = 'column';
-    toggle.setAttribute('aria-expanded', open ? 'false' : 'true');
-  });
-
-  // ============================================================
-  // EVENT WIRING
-  // ============================================================
-  // Tap the day pill → opens the rotation editor so you can rename /
-  // reorder / add / delete entries (e.g. switch Push/Pull/Legs/Rest to
-  // Legs/Arms/Back/Chest). Long-press isn't a thing on web reliably so
-  // this is the only action — the day filter still auto-snaps on load.
-  $('dayPill').addEventListener('click', () => openRotationModal());
-
-  // First-load nicety: if today's split matches one of the day filters
-  // by name (case-insensitive) and the user hasn't manually picked one,
-  // pre-select that day.
-  (function autoSelectTodaySplit() {
-    const s = todaySplit();
-    if (!s.name || isRestName(s.name) || state._userPickedDay) return;
-    const match = state.days.find(d => d.name.toLowerCase() === s.name.toLowerCase());
-    if (match) state.filterDay = match.id;
-  })();
-
-  $('exSelect').addEventListener('change', e => {
-    state.currentEx = e.target.value; saveState(); renderAll();
-  });
-  $('weightDownBtn').addEventListener('click', () => {
-    const ex = getCurrentEx(); if (!ex || ex.bw) return;
-    const w = parseFloat($('weightInput').value) || 0;
-    $('weightInput').value = Math.max(0, w - (ex.step || 2.5));
-  });
-  $('weightUpBtn').addEventListener('click', () => {
-    const ex = getCurrentEx(); if (!ex || ex.bw) return;
-    const w = parseFloat($('weightInput').value) || 0;
-    $('weightInput').value = w + (ex.step || 2.5);
-  });
-  // Delegated click handler — reps row is regenerated per exercise via
-  // renderRepsRow(), so we listen on the container rather than the
-  // individual buttons.
-  $('repsRow').addEventListener('click', (e) => {
-    const p = e.target.closest('.po-reps-pill');
-    if (!p) return;
-    $('repsRow').querySelectorAll('.po-reps-pill').forEach(x => x.classList.remove('active'));
-    p.classList.add('active');
-    $('repsRow').dataset.value = p.dataset.v;
-  });
-  $('logBtn').addEventListener('click', () => {
-    const ex = getCurrentEx();
-    if (!ex) return;
-    const reps = parseInt($('repsRow').dataset.value, 10) || 0;
-    if (reps <= 0) { alert('Pick a rep count.'); return; }
-    const w = ex.bw ? 0 : (parseFloat($('weightInput').value) || 0);
-    if (!ex.bw && w <= 0) { alert('Enter a weight.'); return; }
-    const arr = state.logs[ex.id] || [];
-    arr.push({ weight: w, reps: reps, date: new Date().toISOString() });
-    state.logs[ex.id] = arr;
-    saveState(); renderAll();
-    // Strength changed → composition estimate may shift
-    if (typeof wtRender === 'function') wtRender();
-    if (typeof publishFitnessSummary === 'function') publishFitnessSummary();
-    // 6.4: rest timer auto-starts on every logged set.
-    if (typeof startRestTimer === 'function') startRestTimer(trainRestSecondsFor(ex));
-    // Tiny pulse on the button so the user feels the save
-    const btn = $('logBtn');
-    btn.style.transition = 'transform 0.15s';
-    btn.style.transform = 'scale(0.96)';
-    setTimeout(() => { btn.style.transform = ''; }, 160);
-  });
-
-  // ============================================================
-  // EXERCISE MODAL (add / edit)
-  // ============================================================
-  let editingExId = null;
-  let modalGym = null, modalDay = null;
-  function renderModalSegs() {
-    $('exGymSeg').innerHTML = state.gyms.map(g =>
-      '<button data-gym="' + g.id + '" class="' + (modalGym === g.id ? 'active' : '') + '">' + escape(g.name) + '</button>'
-    ).join('') + '<button data-gym="both" class="' + (modalGym === 'both' ? 'active' : '') + '">Both</button>';
-    $('exDaySeg').innerHTML = state.days.map(d =>
-      '<button data-day="' + d.id + '" class="' + (modalDay === d.id ? 'active' : '') + '">' + escape(d.name) + '</button>'
-    ).join('');
-    $('exGymSeg').querySelectorAll('button').forEach(b => {
-      b.addEventListener('click', () => {
-        modalGym = b.dataset.gym;
-        $('exGymSeg').querySelectorAll('button').forEach(x => x.classList.remove('active'));
-        b.classList.add('active');
-      });
-    });
-    $('exDaySeg').querySelectorAll('button').forEach(b => {
-      b.addEventListener('click', () => {
-        modalDay = b.dataset.day;
-        $('exDaySeg').querySelectorAll('button').forEach(x => x.classList.remove('active'));
-        b.classList.add('active');
-      });
-    });
-  }
-  function openExModal(mode, ex) {
-    editingExId = mode === 'edit' ? ex.id : null;
-    $('exModalTitle').textContent = mode === 'edit' ? 'Edit exercise' : 'Add exercise';
-    $('exDelete').style.display = mode === 'edit' ? 'block' : 'none';
-    if (mode === 'edit') {
-      $('exName').value = ex.name;
-      modalGym = ex.gym;
-      modalDay = ex.day;
-      $('exBw').checked = !!ex.bw;
-      $('exStartWeight').value = ex.startWeight || 0;
-      $('exRepMin').value = ex.repMin;
-      $('exRepMax').value = ex.repMax;
-      $('exStep').value = ex.step;
-    } else {
-      $('exName').value = '';
-      modalGym = state.filterGym;
-      modalDay = state.filterDay;
-      $('exBw').checked = false;
-      $('exStartWeight').value = 20;
-      $('exRepMin').value = 6;
-      $('exRepMax').value = 8;
-      $('exStep').value = 2.5;
-    }
-    renderModalSegs();
-    toggleBwFields();
-    $('exModalBg').classList.add('show');
-    setTimeout(() => $('exName').focus(), 60);
-  }
-  function toggleBwFields() {
-    const isBw = $('exBw').checked;
-    $('exStartWeightField').style.display = isBw ? 'none' : '';
-    $('exStepField').style.display = isBw ? 'none' : '';
-  }
-  $('exBw').addEventListener('change', toggleBwFields);
-  $('addExBtn').addEventListener('click', () => openExModal('add'));
-  $('editExBtn').addEventListener('click', () => {
-    const ex = getCurrentEx();
-    if (ex) openExModal('edit', ex);
-  });
-  $('exModalCancel').addEventListener('click', () => $('exModalBg').classList.remove('show'));
-  $('exModalSave').addEventListener('click', () => {
-    const name = $('exName').value.trim();
-    if (!name) { alert('Name is required.'); return; }
-    if (!modalGym) { alert('Pick a gym.'); return; }
-    if (!modalDay) { alert('Pick a day.'); return; }
-    const isBw = $('exBw').checked;
-    const repMin = parseInt($('exRepMin').value, 10) || 6;
-    const repMax = parseInt($('exRepMax').value, 10) || 8;
-    const data = {
-      name, gym: modalGym, day: modalDay,
-      bw: isBw,
-      startWeight: isBw ? 0 : (parseFloat($('exStartWeight').value) || 0),
-      repMin, repMax,
-      step: isBw ? 1 : (parseFloat($('exStep').value) || 2.5)
-    };
-    if (editingExId) {
-      const ex = state.exercises.find(e => e.id === editingExId);
-      if (ex) Object.assign(ex, data);
-    } else {
-      const ex = Object.assign({ id: uid() }, data);
-      state.exercises.push(ex);
-      state.currentEx = ex.id;
-      state.filterGym = (modalGym === 'both') ? state.filterGym : modalGym;
-      state.filterDay = modalDay;
-    }
-    saveState();
-    $('exModalBg').classList.remove('show');
-    renderAll();
-  });
-  $('exDelete').addEventListener('click', () => {
-    if (!editingExId) return;
-    if (!confirm('Delete this exercise and all its logs?')) return;
-    state.exercises = state.exercises.filter(e => e.id !== editingExId);
-    delete state.logs[editingExId];
-    if (state.currentEx === editingExId) state.currentEx = null;
-    editingExId = null;
-    saveState();
-    $('exModalBg').classList.remove('show');
-    renderAll();
-  });
 
   // ============================================================
   // ROTATION EDITOR (tap the day pill)

@@ -3187,6 +3187,13 @@ tr.hab-row-selected > td { background: rgba(255,255,255,0.045); }
     const list = getLongtermGoals().filter(g => !g.archived);
     wrap.innerHTML = '';
     renderGoalHistory();
+    // Run before the empty-state early-return below -- these read
+    // getLongtermGoals() fresh themselves and must stay in sync with it
+    // even when the last remaining goal just got archived (list.length
+    // dropping to 0 here shouldn't leave a stale goal option sitting in
+    // the Projects filter/select dropdowns until the next full reload).
+    renderProjGoalFilterOptions();
+    renderProjGoalSelectOptions();
 
     if (list.length === 0) {
       const empty = document.createElement('div');
@@ -3208,9 +3215,6 @@ tr.hab-row-selected > td { background: rgba(255,255,255,0.045); }
       goalsInRank.forEach(g => group.appendChild(buildGoalCard(g)));
       wrap.appendChild(group);
     });
-
-    renderProjGoalFilterOptions();
-    renderProjGoalSelectOptions();
   }
 
   function showGoalArchiveStatus(msg, isError) {
@@ -4488,7 +4492,7 @@ tr.hab-row-selected > td { background: rgba(255,255,255,0.045); }
   function renderProjGoalFilterOptions() {
     const sel = document.getElementById('projGoalFilter');
     if (!sel) return;
-    const goals = getLongtermGoals();
+    const goals = getLongtermGoals().filter(g => !g.archived);
     const prev = projGoalFilter;
     sel.innerHTML = '<option value="all">All Projects</option><option value="unassigned">Unassigned</option>';
     appendGoalOptions(sel, goals);
@@ -4497,7 +4501,7 @@ tr.hab-row-selected > td { background: rgba(255,255,255,0.045); }
   }
 
   function renderProjGoalSelectOptions() {
-    const goals = getLongtermGoals();
+    const goals = getLongtermGoals().filter(g => !g.archived);
     const addSel = document.getElementById('projGoalInput');
     if (!addSel) return;
     addSel.innerHTML = '<option value="">No linked goal</option>';
@@ -4508,7 +4512,17 @@ tr.hab-row-selected > td { background: rgba(255,255,255,0.045); }
     const card = document.createElement('div');
     card.className = 'proj-card proj-card-editing';
     card.dataset.status = p.status;
-    const goals = getLongtermGoals();
+    // Archived goals are excluded as NEW choices, but if this project is
+    // already linked to one, keep it in the list (labeled) so opening and
+    // saving the edit form without touching the dropdown doesn't silently
+    // unlink it -- .value = p.goalId would otherwise match nothing and fall
+    // back to "No linked goal".
+    const allGoals = getLongtermGoals();
+    const goals = allGoals.filter(g => !g.archived);
+    if (p.goalId && !goals.some(g => g.id === p.goalId)) {
+      const archivedLinked = allGoals.find(g => g.id === p.goalId);
+      if (archivedLinked) goals.push(Object.assign({}, archivedLinked, { title: archivedLinked.title + ' (archived)' }));
+    }
     card.innerHTML =
       '<div class="proj-add-form" style="display:flex; margin-top:0;">' +
         '<input type="text" class="proj-edit-title" placeholder="Project title…">' +
@@ -4785,7 +4799,7 @@ tr.hab-row-selected > td { background: rgba(255,255,255,0.045); }
       const goalId = document.getElementById('projGoalInput').value || null;
       const list = getProjects();
       const id = uniqueIdFromTitle(title, new Set(list.map(x => x.id)), 'project-');
-      list.push({ id, title, status, priority, value: status === 'done' ? 100 : 0, goalId, archived: false, obsidian: null, completedAt: status === 'done' ? new Date().toISOString() : null });
+      list.push({ id, title, status, priority, value: status === 'done' ? 100 : 0, goalId, archived: false, obsidian: null, completedAt: status === 'done' ? new Date().toISOString() : null, createdAt: new Date().toISOString() });
       setProjectsList(list);
       titleEl.value = '';
       addForm.style.display = 'none';
@@ -4845,6 +4859,30 @@ tr.hab-row-selected > td { background: rgba(255,255,255,0.045); }
   initCalendar();
   initProjects();
   initSuggestSlot();
+
+  // A same-tab "planner.html#projects" link (e.g. the dashboard's Project
+  // card long-press) should reliably show the kanban, not just scroll to a
+  // collapsed header -- collapsible.js has no public expand(), so drive it
+  // via its own trigger element instead of reaching into its private state.
+  // js/collapsible.js is loaded with `defer`, so it hasn't run yet at this
+  // point in the parse (this inline script runs synchronously, inline
+  // scripts always run before deferred ones) -- the section has neither
+  // its eq-collapsed class nor the trigger's click listener attached yet.
+  // Deferring this check to DOMContentLoaded guarantees collapsible.js's
+  // own boot() has already run first.
+  function expandProjectsIfLinkedViaHash() {
+    if (window.location.hash !== '#projects') return;
+    const projSection = document.getElementById('projects');
+    if (projSection && projSection.classList.contains('eq-collapsed')) {
+      const trigger = projSection.querySelector('[data-eq-collapse-trigger]');
+      if (trigger) trigger.click();
+    }
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', expandProjectsIfLinkedViaHash, { once: true });
+  } else {
+    expandProjectsIfLinkedViaHash();
+  }
 
   window.addEventListener('storage', () => {
     loadToday(); loadTomorrow(); renderStreak(); renderLongtermGoals(); renderChecklists(); renderProjects(); renderYesterdayPanel();

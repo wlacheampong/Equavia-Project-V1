@@ -24,7 +24,7 @@
       icon: '<path d="M3 11 12 4l9 7"/><path d="M5 10v9a1 1 0 0 0 1 1h3v-6h6v6h3a1 1 0 0 0 1-1v-9"/>' },
     { key: 'health',  href: 'health.html',    label: 'Health',
       icon: '<rect x="3" y="3" width="18" height="18" rx="4"/><path d="M12 8v8M8 12h8"/>' },
-    { key: 'fitness', href: 'gym.html',       label: 'Fitness',
+    { key: 'fitness', href: 'gym.html',       label: 'Training',
       icon: '<path d="M6.5 9v6M17.5 9v6M3 10.5v3M21 10.5v3M6.5 12h11"/>' },
     // Planner + the old Ability page, merged and renamed: tasks/goals/
     // calendar now sit alongside habits, skills, books and Learn Hub.

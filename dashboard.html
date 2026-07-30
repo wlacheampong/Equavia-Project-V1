@@ -233,6 +233,7 @@ a { color: inherit; text-decoration: none; }
 /* Project */
 .proj-title { font-size: 16px; font-weight: 700; color: var(--eq-text-primary); margin-bottom: 6px; }
 .proj-status { font-size: 12px; color: var(--eq-text-muted); text-transform: capitalize; }
+.proj-row + .proj-row { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--eq-border); }
 
 /* Day-ring edit modal */
 .dr-modal-bg {
@@ -271,15 +272,15 @@ a { color: inherit; text-decoration: none; }
 .cal-label { font-size: 13.5px; font-weight: 700; color: var(--eq-text-primary); min-width: 120px; }
 .cal-view-toggle { display: flex; align-items: center; gap: 2px; border: 1px solid var(--eq-border); border-radius: 10px; padding: 3px; }
 .cal-view-btn { border: 0; background: transparent; padding: 6px 12px; border-radius: 7px; font-family: var(--eq-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--eq-text-muted); cursor: pointer; transition: background 0.2s, color 0.2s; }
-.cal-view-btn.is-active { background: rgba(224,118,88,0.16); color: var(--eq-accent); }
+.cal-view-btn.is-active { background: rgba(255,255,255,0.10); color: var(--eq-text-primary); }
 .cal-toolbar-right { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .cal-nav { display: flex; align-items: center; gap: 4px; }
 .cal-nav-btn { border: 1px solid var(--eq-border); background: transparent; color: var(--eq-text-secondary); width: 26px; height: 26px; border-radius: 7px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 13px; line-height: 1; }
 .cal-nav-btn:hover { border-color: var(--eq-border-strong); color: var(--eq-text-primary); }
 .cal-nav-today { border: 1px solid var(--eq-border); background: transparent; color: var(--eq-text-secondary); padding: 5px 12px; border-radius: 7px; font-family: var(--eq-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; }
 .cal-nav-today:hover { color: var(--eq-text-primary); border-color: var(--eq-border-strong); }
-.cal-connect-btn { padding: 6px 14px; border-radius: 999px; border: 1px solid rgba(224,118,88,0.35); background: rgba(224,118,88,0.1); color: var(--eq-accent); font-family: inherit; font-size: 11.5px; font-weight: 700; cursor: pointer; }
-.cal-connect-btn:hover { background: rgba(224,118,88,0.18); }
+.cal-connect-btn { padding: 6px 14px; border-radius: 999px; border: 1px solid var(--eq-border-strong); background: rgba(255,255,255,0.06); color: var(--eq-text-primary); font-family: inherit; font-size: 11.5px; font-weight: 700; cursor: pointer; }
+.cal-connect-btn:hover { background: rgba(255,255,255,0.12); }
 .cal-connect-btn.is-connected { border-color: var(--eq-border-strong); background: rgba(255,255,255,0.04); color: var(--eq-text-secondary); }
 .cal-status { font-size: 11px; color: var(--eq-text-muted); margin: -6px 0 12px; min-height: 14px; }
 .cal-status.cal-status-error { color: var(--eq-danger); }
@@ -288,7 +289,7 @@ a { color: inherit; text-decoration: none; }
 .cal-day-head { padding: 10px 8px 8px; text-align: center; border-bottom: 1px solid var(--eq-border); }
 .cal-day-name { font-family: var(--eq-font-mono); font-size: 9.5px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--eq-text-muted); }
 .cal-day-num { margin: 4px auto 0; font-size: 15px; font-weight: 700; color: var(--eq-text-primary); width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
-.cal-day-col.is-today .cal-day-num { background: var(--eq-accent); color: #050506; }
+.cal-day-col.is-today .cal-day-num { background: var(--eq-text-primary); color: #050506; }
 .cal-day-events { flex: 1; padding: 6px; display: flex; flex-direction: column; gap: 4px; overflow-y: auto; max-height: 640px; }
 .cal-event { padding: 5px 7px; border-radius: 7px; background: rgba(224,118,88,0.12); border-left: 2px solid var(--eq-accent); font-size: 10.5px; line-height: 1.3; color: var(--eq-text-primary); overflow: hidden; }
 .cal-event-time { display: block; font-family: var(--eq-font-mono); font-size: 9px; color: var(--eq-accent); margin-bottom: 1px; }
@@ -300,7 +301,7 @@ a { color: inherit; text-decoration: none; }
 .cal-month-cell:hover { background: rgba(255,255,255,0.03); }
 .cal-month-cell.is-outside { opacity: 0.32; }
 .cal-month-num { flex-shrink: 0; font-size: 12px; font-weight: 600; color: var(--eq-text-primary); width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
-.cal-month-cell.is-today .cal-month-num { background: var(--eq-accent); color: #050506; }
+.cal-month-cell.is-today .cal-month-num { background: var(--eq-text-primary); color: #050506; }
 .cal-month-events { width: 100%; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .cal-month-event { width: 100%; font-size: 9.5px; line-height: 1.35; padding: 1px 5px; border-radius: 4px; background: rgba(224,118,88,0.14); border-left: 2px solid var(--eq-accent); color: var(--eq-text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cal-month-more { font-size: 9px; color: var(--eq-text-muted); padding-left: 5px; }
@@ -436,10 +437,10 @@ a { color: inherit; text-decoration: none; }
   </div>
 
   <div class="grid grid-4">
-    <a class="card card-link" href="planner.html">
+    <div class="card card-link" id="habitCard" style="cursor:pointer;user-select:none;" title="Press and hold for the Habit Tracker page">
       <div class="card-title"><span>Habit Tracker</span><span class="card-title-more">This Week</span></div>
       <div class="habit-bars" id="habitBars"></div>
-    </a>
+    </div>
 
     <a class="card card-link" href="health.html">
       <div class="card-title">
@@ -513,11 +514,10 @@ a { color: inherit; text-decoration: none; }
       </div>
     </a>
 
-    <a class="card card-link" href="planner.html">
+    <div class="card card-link" id="projectCard" style="cursor:pointer;user-select:none;" title="Press and hold to jump to Projects">
       <div class="card-title" style="margin-bottom:14px;"><span>Project</span></div>
-      <div class="proj-title" id="projectTitle">No active projects</div>
-      <div class="proj-status" id="projectStatus"></div>
-    </a>
+      <div id="projectList"><div class="proj-title">No active projects</div></div>
+    </div>
   </div>
 
 </div>
@@ -1497,6 +1497,30 @@ a { color: inherit; text-decoration: none; }
   });
 
   // ============================================================
+  // Card long-press navigation -- short tap keeps a card's normal
+  // nav target; a ~500ms press-and-hold jumps to a secondary page/
+  // anchor instead. Same timer shape as the Checklist header cycle.
+  // ============================================================
+  function wireCardLongPressNav(cardId, shortHref, longHref) {
+    const el = document.getElementById(cardId);
+    if (!el) return;
+    const LONGPRESS_MS = 500;
+    let timer = null, fired = false;
+    const start = () => { fired = false; timer = setTimeout(() => { fired = true; window.location.href = longHref; }, LONGPRESS_MS); };
+    const cancel = () => { if (timer) { clearTimeout(timer); timer = null; } };
+    el.addEventListener('pointerdown', start);
+    el.addEventListener('pointerup', cancel);
+    el.addEventListener('pointerleave', cancel);
+    el.addEventListener('pointercancel', cancel);
+    el.addEventListener('click', (e) => {
+      if (fired) { e.preventDefault(); return; }
+      window.location.href = shortHref;
+    });
+  }
+  wireCardLongPressNav('habitCard', 'planner.html', 'habits.html');
+  wireCardLongPressNav('projectCard', 'planner.html', 'planner.html#projects');
+
+  // ============================================================
   // Finance -- net worth recomputed from raw category arrays
   // (there is no published eq.finance.summary key). Play Money =
   // net worth x the 'play' allocation bucket %, genuinely derived.
@@ -1555,18 +1579,27 @@ a { color: inherit; text-decoration: none; }
   }
 
   // ============================================================
-  // Project -- title + status only (no fabricated progress/due
-  // date; those fields don't exist in projects_v1's schema).
+  // Project -- up to 3 in-progress projects, most recently created
+  // first (no createdAt sorts last, never fabricated). value% is
+  // real project-progress data, so it's shown alongside status now
+  // that more than one project can appear at once.
   // ============================================================
   function renderProjectCard() {
-    const list = (storeGet('projects_v1') || []).filter((p) => !p.archived && p.status !== 'completed' && p.status !== 'done');
-    const titleEl = document.getElementById('projectTitle');
-    const statusEl = document.getElementById('projectStatus');
-    if (!list.length) { titleEl.textContent = 'No active projects'; statusEl.textContent = ''; return; }
-    const sorted = list.slice().sort((a, b) => (a.priority === 'P1' ? -1 : 0) - (b.priority === 'P1' ? -1 : 0));
-    const top = sorted[0];
-    titleEl.textContent = top.title || 'Untitled project';
-    statusEl.textContent = top.status || '';
+    const list = (storeGet('projects_v1') || []).filter((p) => !p.archived && p.status === 'in-progress');
+    const listEl = document.getElementById('projectList');
+    if (!list.length) { listEl.innerHTML = '<div class="proj-title">No active projects</div>'; return; }
+    const sorted = list.slice().sort((a, b) => {
+      if (!a.createdAt && !b.createdAt) return 0;
+      if (!a.createdAt) return 1;
+      if (!b.createdAt) return -1;
+      return new Date(b.createdAt) - new Date(a.createdAt);
+    });
+    listEl.innerHTML = sorted.slice(0, 3).map((p) =>
+      '<div class="proj-row">' +
+        '<div class="proj-title">' + esc(p.title || 'Untitled project') + '</div>' +
+        '<div class="proj-status">In progress' + (typeof p.value === 'number' ? ' · ' + p.value + '%' : '') + '</div>' +
+      '</div>'
+    ).join('');
   }
 
   // ============================================================

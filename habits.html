@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<script src="js/landing-guard.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0a0a0b">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="icon" type="image/webp" href="images/Index Landing Page.webp">
+<link rel="apple-touch-icon" href="images/apple-touch-icon.png">
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Project Equavia">
+<title>Habits — Project Equavia</title>
+<link rel="stylesheet" href="css/equavia-core.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/sync.js" defer></script>
+<script src="js/obsidian-sync.js"></script>
+<script src="js/daily-report.js" defer></script>
+<script src="js/assistant-tools.js"></script>
+<script src="js/topbar.js" defer></script>
+<script src="js/collapsible.js" defer></script>
+<style>
+:root {
+  --bg: var(--eq-bg-primary);
+  --bg-deep: var(--eq-bg-primary);
+  --bg-card: var(--eq-bg-card);
+  --glass-bg: var(--eq-bg-card);
+  --glass-border: transparent;
+  --glass-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.06) inset,
+    0 12px 40px rgba(0, 0, 0, 0.45),
+    0 1px 2px rgba(0, 0, 0, 0.25);
+  --text-primary: var(--eq-text-primary);
+  --text-secondary: var(--eq-text-secondary);
+  --text-tertiary: var(--eq-text-muted);
+  --text-quaternary: var(--eq-text-muted);
+  --accent: var(--eq-accent);
+  --success: var(--eq-success);
+  --warning: var(--eq-warning);
+  --danger: var(--eq-danger);
+  --radius-lg: var(--eq-card-radius-lg);
+  --font: var(--eq-font-family);
+  --font-mono: var(--eq-font-mono);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100%;
+  scrollbar-width: none; -ms-overflow-style: none;
+}
+*::-webkit-scrollbar { width: 0 !important; height: 0 !important; display: none !important; }
+body::before {
+  content: ''; position: fixed; inset: -10%; z-index: -2;
+  background:
+    radial-gradient(60% 45% at 82% 14%, rgba(224, 118, 88, 0.16) 0%, transparent 55%),
+    radial-gradient(55% 45% at 18% 90%, rgba(180, 180, 200, 0.06) 0%, transparent 55%),
+    linear-gradient(180deg, #0A0A0B 0%, #050506 100%);
+  filter: blur(40px) saturate(1.05);
+  pointer-events: none;
+}
+body::after {
+  content: ''; position: fixed; inset: 0; z-index: -1;
+  background-image: radial-gradient(rgba(255,255,255,0.014) 1px, transparent 1px);
+  background-size: 3px 3px; opacity: 0.7; pointer-events: none;
+}
+.shell { max-width: 880px; margin: 0 auto; padding: 24px 16px 60px; }
+.section { margin-bottom: 18px; scroll-margin-top: 18px; }
+.card {
+  background: var(--glass-bg); border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg); padding: 18px 20px; margin-bottom: 10px;
+  backdrop-filter: blur(24px) saturate(1.2); -webkit-backdrop-filter: blur(24px) saturate(1.2);
+  box-shadow: var(--glass-shadow); position: relative; overflow: hidden;
+}
+.card::before {
+  content: ''; position: absolute; top: 0; left: 14px; right: 14px; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.16), transparent);
+  pointer-events: none;
+}
+.empty-state {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.10em; text-transform: uppercase;
+  color: var(--text-tertiary); text-align: center; padding: 16px 0; font-family: var(--font-mono);
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.empty-state::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--text-quaternary); flex-shrink: 0; }
+
+/* Shared add-row / input styling (Habit + Book Tracker) */
+.hab-add-row { display: flex; gap: 6px; align-items: stretch; padding: 4px; background: rgba(0, 0, 0, 0.30); border-radius: 12px; margin-bottom: 14px; }
+.hab-input { flex: 1; min-width: 0; background: transparent; border: none; outline: none; color: var(--text-primary); padding: 9px 12px; font-family: inherit; font-size: 16px; -moz-appearance: textfield; }
+.hab-input:focus { box-shadow: inset 0 -2px 0 rgba(255,255,255,0.4); }
+.hab-input::-webkit-outer-spin-button, .hab-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.hab-input::placeholder { color: var(--text-tertiary); }
+.hab-add-btn { padding: 0 16px; background: rgba(255,255,255,0.06); border: none; color: var(--text-secondary); border-radius: 9px; font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+.hab-add-btn:hover { background: rgba(255,255,255,0.12); color: var(--text-primary); }
+.hab-add-btn:active { transform: scale(0.97); }
+
+/* Habit Tracker */
+.hab-goal-input { max-width: 68px; flex: 0 0 68px; text-align: center; }
+.hab-del { background: transparent; border: 1px solid rgba(255,255,255,0.08); color: var(--text-tertiary); cursor: pointer; font-size: 13px; padding: 2px 7px; border-radius: 6px; font-family: inherit; line-height: 1.4; flex-shrink: 0; }
+.hab-del:hover { color: var(--danger); }
+.hab-overview { display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start; margin-bottom: 18px; }
+.hab-cal-select { display: flex; gap: 18px; flex-shrink: 0; }
+.hab-cal-field { display: flex; flex-direction: column; gap: 4px; }
+.hab-cal-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-tertiary); font-weight: 700; }
+.hab-cal-field select { background: transparent; border: none; outline: none; color: var(--text-primary); font-family: inherit; font-size: 15px; font-weight: 700; padding: 0; cursor: pointer; }
+.hab-cal-field select:focus { box-shadow: inset 0 -2px 0 rgba(255,255,255,0.4); }
+.hab-chart-wrap { flex: 1 1 180px; min-width: 160px; align-self: center; }
+.hab-overview-chart { width: 100%; height: 56px; display: block; }
+.hab-side { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 14px; min-width: 150px; }
+.hab-progress-ring { position: relative; width: 90px; height: 90px; flex-shrink: 0; }
+.hab-progress-ring svg { position: absolute; inset: 0; }
+.hab-progress-ring-label { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.hab-progress-ring-pct { font-size: 17px; font-weight: 800; color: var(--text-primary); }
+.hab-progress-ring-sub { font-size: 8.5px; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 2px; }
+.hab-top-list { width: 100%; }
+.hab-top-heading { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 6px; }
+.hab-top-row { display: flex; justify-content: space-between; gap: 10px; font-size: 12.5px; padding: 3px 0; }
+.hab-top-name { color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hab-top-pct { color: var(--accent); font-weight: 700; font-family: var(--font-mono); flex-shrink: 0; }
+.hab-top-empty { font-size: 11.5px; color: var(--text-tertiary); font-style: italic; }
+.hab-grid-wrap { overflow-x: auto; padding-bottom: 4px; }
+.hab-month-table { border-collapse: separate; border-spacing: 4px; width: max-content; min-width: 100%; }
+.hab-month-table thead th { font-size: 10.5px; color: var(--text-tertiary); font-weight: 600; padding: 0 2px 6px; text-align: center; font-family: var(--font-mono); }
+.hab-th-name { text-align: left !important; min-width: 150px; }
+.hab-th-goal { min-width: 40px; }
+.hab-td-goal { text-align: center; font-family: var(--font-mono); font-size: 12px; color: var(--text-secondary); }
+.hab-row-name { display: flex; align-items: center; gap: 6px; }
+.hab-row-name-text { font-size: 13px; font-weight: 600; color: var(--text-primary); cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 170px; }
+.hab-row-name-text:hover { color: var(--accent); }
+.hab-row-name-text.is-selected { color: var(--accent); }
+tr.hab-row-selected > td { background: rgba(255,255,255,0.045); }
+.hab-day { width: 20px; height: 20px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.02); cursor: pointer; padding: 0; display: flex; align-items: center; justify-content: center; color: var(--text-primary); transition: background 0.15s, border-color 0.15s; }
+.hab-day:hover:not(:disabled) { border-color: rgba(255,255,255,0.32); }
+.hab-day.is-done { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.28); }
+.hab-day.is-today { box-shadow: 0 0 0 1.5px var(--accent); }
+.hab-day:disabled { opacity: 0.3; cursor: default; }
+.hab-footer-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 16px; }
+.hab-footer-head:empty { display: none; margin-top: 0; }
+.hab-footer-scope-label { font-size: 11.5px; color: var(--text-tertiary); }
+.hab-footer-scope-label b { color: var(--text-primary); font-weight: 700; }
+.hab-footer-scope-clear { background: none; border: none; color: var(--accent); font-size: 11px; font-weight: 700; cursor: pointer; padding: 2px 4px; font-family: inherit; }
+.hab-footer-scope-clear:hover { text-decoration: underline; }
+.hab-footer-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 8px; }
+.hab-footer-head:empty + .hab-footer-stats { margin-top: 16px; }
+.hab-stat-card { background: rgba(255,255,255,0.03); border-radius: 12px; padding: 12px 14px; }
+.hab-stat-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-tertiary); font-weight: 700; margin-bottom: 6px; }
+.hab-stat-value { font-size: 18px; font-weight: 800; color: var(--text-primary); }
+.hab-progress-bar-wrap { height: 6px; border-radius: 3px; background: rgba(255,255,255,0.08); overflow: hidden; margin-bottom: 6px; }
+.hab-progress-bar { height: 100%; border-radius: 3px; background: var(--accent); transition: width 0.3s; }
+.hab-stat-pct { font-size: 13px; font-weight: 700; color: var(--text-secondary); }
+.hab-year-modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 200; padding: 20px; }
+.hab-year-modal-bg.show { display: flex; }
+.hab-year-modal { background: var(--bg); border-radius: 16px; padding: 20px; max-width: 640px; width: 100%; max-height: 80vh; overflow-y: auto; border: 1px solid rgba(255,255,255,0.06); }
+.hab-year-modal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+.hab-year-modal-title { font-size: 15px; font-weight: 700; color: var(--text-primary); }
+.hab-year-modal-close { background: transparent; border: none; color: var(--text-tertiary); font-size: 22px; line-height: 1; cursor: pointer; padding: 4px; }
+.hab-year-modal-close:hover { color: var(--text-primary); }
+.hab-year-modal-pct { font-size: 12px; color: var(--text-tertiary); margin-bottom: 14px; }
+.hab-year-modal-grid-wrap { overflow-x: auto; padding-bottom: 8px; }
+.hab-year-modal-grid { display: grid; grid-template-rows: repeat(7, 1fr); grid-auto-flow: column; gap: 3px; width: max-content; }
+.hab-year-modal-cell { width: 11px; height: 11px; border-radius: 2px; }
+.hab-year-modal-cell.is-done { background: var(--success); }
+.hab-year-modal-cell.is-missed { background: rgba(255,107,107,0.55); }
+.hab-year-modal-cell.is-grey { background: rgba(255,255,255,0.06); }
+.hab-year-modal-cell.is-today { box-shadow: 0 0 0 1.5px rgba(255,255,255,0.6); }
+.hab-year-legend { display: flex; gap: 14px; margin-top: 12px; font-size: 10px; color: var(--text-tertiary); }
+.hab-year-legend-item { display: flex; align-items: center; gap: 5px; }
+.hab-year-legend-dot { width: 9px; height: 9px; border-radius: 2px; }
+
+/* Book Tracker */
+.book-year-stat { font-family: var(--font-mono); font-size: 11px; color: var(--text-tertiary); margin-bottom: 12px; }
+.book-year-stat b { color: var(--text-primary); font-weight: 700; }
+.book-add-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: stretch; padding: 4px; background: rgba(0, 0, 0, 0.30); border-radius: 12px; margin-bottom: 16px; }
+.book-add-row .hab-input { flex: 1.4; min-width: 120px; }
+.book-add-row .book-author-input { flex: 1; min-width: 100px; }
+.book-shelf { margin-bottom: 16px; }
+.book-shelf:last-child { margin-bottom: 0; }
+.book-shelf-title { font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.10em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 8px; }
+.book-row { padding: 12px 14px; background: rgba(255,255,255,0.025); border-radius: 12px; margin-bottom: 8px; }
+.book-row:hover { background: rgba(255,255,255,0.04); }
+.book-row-top { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 8px; }
+.book-titles { flex: 1; min-width: 0; }
+.book-title { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+.book-author { font-size: 12px; color: var(--text-tertiary); margin-top: 1px; }
+.book-status-select { background: rgba(255,255,255,0.06); border: none; color: var(--text-secondary); border-radius: 7px; padding: 5px 8px; font-family: inherit; font-size: 11px; font-weight: 700; cursor: pointer; flex-shrink: 0; }
+.book-del { background: transparent; border: 1px solid rgba(255,255,255,0.08); color: var(--text-tertiary); cursor: pointer; font-size: 13px; padding: 4px 8px; border-radius: 6px; font-family: inherit; line-height: 1; flex-shrink: 0; }
+.book-del:hover { color: var(--danger); }
+.book-meta-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
+.book-stars { display: inline-flex; gap: 6px; }
+.book-star { background: transparent; border: none; cursor: pointer; font-size: 15px; color: var(--text-quaternary); padding: 0; line-height: 1; position: relative; }
+.book-star::before { content: ''; position: absolute; inset: -8px; }
+.book-star.is-filled { color: var(--warning); }
+.book-finished-date { font-family: var(--font-mono); font-size: 11px; color: var(--text-tertiary); }
+.book-notes-input { width: 100%; display: block; background: rgba(0,0,0,0.25); border: 1px solid transparent; border-radius: 8px; color: var(--text-secondary); font-family: inherit; font-size: 12px; padding: 7px 9px; resize: none; }
+.book-notes-input::placeholder { color: var(--text-quaternary); }
+.book-notes-input:focus { outline: none; border-color: rgba(255,255,255,0.14); color: var(--text-primary); }
+
+@media (max-width: 480px) {
+  .hab-day { width: 17px; height: 17px; }
+  .hab-footer-stats { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- ===== HABIT TRACKER ===== -->
+<div class="section" data-section="habits" id="habit-tracker" data-eq-collapse="habitspage:habits">
+  <div class="section-title" data-eq-collapse-keep data-eq-collapse-trigger>
+    <span class="section-title-text">HABIT TRACKER<span class="eq-collapse-chevron"></span></span>
+  </div>
+  <div class="card">
+    <div class="hab-add-row">
+      <input type="text" class="hab-input" id="habNameInput" placeholder="New habit…">
+      <input type="number" class="hab-input hab-goal-input" id="habGoalInput" placeholder="Goal" min="1">
+      <button type="button" class="hab-add-btn" id="habAddBtn">+ Add</button>
+    </div>
+
+    <div class="hab-overview" id="habOverviewWrap">
+      <div class="hab-cal-select">
+        <div class="hab-cal-field">
+          <span class="hab-cal-label">Year</span>
+          <select id="habYearSelect" aria-label="Year"></select>
+        </div>
+        <div class="hab-cal-field">
+          <span class="hab-cal-label">Month</span>
+          <select id="habMonthSelect" aria-label="Month"></select>
+        </div>
+      </div>
+      <div class="hab-chart-wrap">
+        <svg class="hab-overview-chart" id="habOverviewChart" viewBox="0 0 300 56" preserveAspectRatio="none"></svg>
+      </div>
+      <div class="hab-side">
+        <div class="hab-progress-ring" id="habProgressRing"></div>
+        <div class="hab-top-list" id="habTopList"></div>
+      </div>
+    </div>
+
+    <div class="hab-grid-wrap">
+      <table class="hab-month-table" id="habMonthTable">
+        <thead><tr id="habMonthTableHead"></tr></thead>
+        <tbody id="habMonthTableBody"></tbody>
+      </table>
+    </div>
+    <div class="empty-state" id="habEmptyState" style="display:none;">No habits yet — add one above.</div>
+
+    <div class="hab-footer-head" id="habFooterHead"></div>
+    <div class="hab-footer-stats" id="habFooterStats">
+      <div class="hab-stat-card">
+        <div class="hab-stat-label">Completed</div>
+        <div class="hab-stat-value" id="habStatCompleted">0 / 0</div>
+      </div>
+      <div class="hab-stat-card">
+        <div class="hab-stat-label">Progress</div>
+        <div class="hab-progress-bar-wrap"><div class="hab-progress-bar" id="habProgressBar" style="width:0%;"></div></div>
+        <div class="hab-stat-pct" id="habProgressPct">0%</div>
+      </div>
+      <div class="hab-stat-card">
+        <div class="hab-stat-label">Longest Streak</div>
+        <div class="hab-stat-value" id="habStatStreak">0 days</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== BOOK TRACKER ===== -->
+<div class="section" data-section="books" id="book-tracker" data-eq-collapse="habitspage:books">
+  <div class="section-title" data-eq-collapse-keep data-eq-collapse-trigger>
+    <span class="section-title-text">BOOK TRACKER<span class="eq-collapse-chevron"></span></span>
+  </div>
+  <div class="card">
+    <div class="book-year-stat" id="bookYearStat"></div>
+    <div class="book-add-row">
+      <input type="text" class="hab-input" id="bookTitleInput" placeholder="Book title…">
+      <input type="text" class="hab-input book-author-input" id="bookAuthorInput" placeholder="Author…">
+      <button type="button" class="hab-add-btn" id="bookAddBtn">+ Add</button>
+    </div>
+    <div id="bookShelves"></div>
+    <div class="empty-state" id="bookEmptyState" style="display:none;">No books yet — add one above.</div>
+  </div>
+</div>
+
+</div>
+
+<div class="hab-year-modal-bg" id="habYearModalBg">
+  <div class="hab-year-modal">
+    <div class="hab-year-modal-head">
+      <span class="hab-year-modal-title" id="habYearModalTitle">Habit</span>
+      <button type="button" class="hab-year-modal-close" id="habYearModalClose" aria-label="Close">&times;</button>
+    </div>
+    <div class="hab-year-modal-pct" id="habYearModalPct"></div>
+    <div class="hab-year-modal-grid-wrap">
+      <div class="hab-year-modal-grid" id="habYearModalGrid"></div>
+    </div>
+    <div class="hab-year-legend">
+      <span class="hab-year-legend-item"><span class="hab-year-legend-dot" style="background:var(--success)"></span>Done</span>
+      <span class="hab-year-legend-item"><span class="hab-year-legend-dot" style="background:rgba(255,107,107,0.55)"></span>Missed</span>
+      <span class="hab-year-legend-item"><span class="hab-year-legend-dot" style="background:rgba(255,255,255,0.06)"></span>Not tracked yet</span>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  // ---------- storage helpers (same interface as dashboard.html/planner.html) ----------
+  function storeGet(key) {
+    try { const raw = localStorage.getItem(key); return raw == null ? null : JSON.parse(raw); }
+    catch (e) { return null; }
+  }
+  function storeSet(key, value) {
+    try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) {}
+  }
+
+  function pad2(n) { return String(n).padStart(2, '0'); }
+  function dateKey(d) { return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); }
+  function addDays(d, n) { const x = new Date(d); x.setDate(x.getDate() + n); return x; }
+
+  // ============================================================
+  // HABIT TRACKER -- identical implementation to planner.html/Ability's
+  // own copy (same habits_v1 key, same shared Supabase 'habits' channel),
+  // duplicated here per the user's explicit choice rather than replaced.
+  // ============================================================
+  const HABITS_KEY = 'habits_v1';
+  const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  function getHabits() { const v = storeGet(HABITS_KEY); return Array.isArray(v) ? v : []; }
+  function setHabits(list) { storeSet(HABITS_KEY, list); }
+
+  const habCursor = (() => { const t = new Date(); return { y: t.getFullYear(), m: t.getMonth() }; })();
+  let habSelectedId = null;
+  function daysInMonth(y, m) { return new Date(y, m + 1, 0).getDate(); }
+
+  function computeHabitMonthStats(habit, y, m) {
+    const days = daysInMonth(y, m);
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const start = habitStartBoundary(habit);
+    let done = 0, tracked = 0;
+    for (let day = 1; day <= days; day++) {
+      const d = new Date(y, m, day);
+      if (d > today) break;
+      if (d < start) continue;
+      tracked++;
+      if (habit.history && habit.history[dateKey(d)]) done++;
+    }
+    return { done, tracked, pct: tracked > 0 ? Math.round((done / tracked) * 100) : 0 };
+  }
+
+  function computeLongestStreakEver(history) {
+    const keys = Object.keys(history || {}).filter((k) => history[k]).sort();
+    if (!keys.length) return 0;
+    let longest = 1, current = 1;
+    for (let i = 1; i < keys.length; i++) {
+      const diffDays = Math.round((new Date(keys[i]) - new Date(keys[i - 1])) / 86400000);
+      current = diffDays === 1 ? current + 1 : 1;
+      if (current > longest) longest = current;
+    }
+    return longest;
+  }
+
+  function habitStartBoundary(habit) {
+    if (habit.createdAt) {
+      const t = new Date(habit.createdAt);
+      t.setHours(0, 0, 0, 0);
+      return t;
+    }
+    const keys = Object.keys(habit.history || {}).sort();
+    if (keys.length) {
+      const p = keys[0].split('-').map(Number);
+      return new Date(p[0], p[1] - 1, p[2]);
+    }
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return today;
+  }
+
+  function habitYearCells(habit) {
+    const history = habit.history || {};
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const start = habitStartBoundary(habit);
+    const cells = [];
+    let doneCount = 0, trackedDays = 0;
+    for (let i = 364; i >= 0; i--) {
+      const d = addDays(today, -i);
+      const key = dateKey(d);
+      const isToday = i === 0;
+      let state;
+      if (d < start) {
+        state = 'grey';
+      } else if (history[key]) {
+        state = 'done'; doneCount++; trackedDays++;
+      } else if (isToday) {
+        state = 'grey';
+      } else {
+        state = 'missed'; trackedDays++;
+      }
+      cells.push({ dateKey: key, state, isToday });
+    }
+    return { cells, pct: trackedDays > 0 ? Math.round((doneCount / trackedDays) * 100) : null };
+  }
+
+  function openHabitYearModal(habit) {
+    const { cells, pct } = habitYearCells(habit);
+    document.getElementById('habYearModalTitle').textContent = habit.name;
+    document.getElementById('habYearModalPct').textContent = (pct == null ? 'No tracked days yet' : pct + '% success over the last year');
+    const grid = document.getElementById('habYearModalGrid');
+    grid.innerHTML = '';
+    cells.forEach(c => {
+      const cell = document.createElement('span');
+      cell.className = 'hab-year-modal-cell is-' + c.state + (c.isToday ? ' is-today' : '');
+      cell.title = c.dateKey + (c.isToday ? ' (today)' : '');
+      grid.appendChild(cell);
+    });
+    document.getElementById('habYearModalBg').classList.add('show');
+  }
+  function closeHabitYearModal() {
+    document.getElementById('habYearModalBg').classList.remove('show');
+  }
+  function initHabitYearModal() {
+    document.getElementById('habYearModalClose').addEventListener('click', closeHabitYearModal);
+    document.getElementById('habYearModalBg').addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) closeHabitYearModal();
+    });
+  }
+
+  function buildProgressRing(pct) {
+    const size = 90, stroke = 8, r = (size - stroke) / 2, c = 2 * Math.PI * r;
+    const offset = c * (1 - Math.max(0, Math.min(100, pct)) / 100);
+    return (
+      '<svg width="' + size + '" height="' + size + '" viewBox="0 0 ' + size + ' ' + size + '">' +
+        '<circle cx="' + size / 2 + '" cy="' + size / 2 + '" r="' + r + '" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="' + stroke + '"/>' +
+        '<circle cx="' + size / 2 + '" cy="' + size / 2 + '" r="' + r + '" fill="none" stroke="var(--accent)" stroke-width="' + stroke + '" stroke-linecap="round" stroke-dasharray="' + c.toFixed(2) + '" stroke-dashoffset="' + offset.toFixed(2) + '" transform="rotate(-90 ' + (size / 2) + ' ' + (size / 2) + ')"/>' +
+      '</svg>' +
+      '<div class="hab-progress-ring-label"><span class="hab-progress-ring-pct">' + pct + '%</span><span class="hab-progress-ring-sub">Total Progress</span></div>'
+    );
+  }
+
+  function renderHabitOverviewChart(points) {
+    const svg = document.getElementById('habOverviewChart');
+    const valid = points.filter((p) => p.v != null);
+    if (valid.length < 2) { svg.innerHTML = ''; return; }
+    const vals = valid.map((p) => p.v);
+    const min = Math.min.apply(null, vals), max = Math.max.apply(null, vals);
+    const w = 300, h = 56, pad = 4;
+    const stepX = points.length > 1 ? (w - pad * 2) / (points.length - 1) : 0;
+    const scaleY = (v) => (max === min) ? h / 2 : (h - pad) - ((v - min) / (max - min)) * (h - pad * 2);
+    let path = '', started = false;
+    points.forEach((p, i) => {
+      if (p.v == null) { started = false; return; }
+      const x = pad + i * stepX, y = scaleY(p.v);
+      path += (started ? 'L' : 'M') + x.toFixed(1) + ',' + y.toFixed(1) + ' ';
+      started = true;
+    });
+    svg.innerHTML = '<path d="' + path.trim() + '" fill="none" stroke="var(--text-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>';
+  }
+
+  function computeMonthStats(y, m) {
+    const habits = getHabits();
+    const days = daysInMonth(y, m);
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    let totalDone = 0, totalTracked = 0;
+    const dailyPct = [];
+    const perHabit = habits.map((h) => ({ habit: h, done: 0, tracked: 0 }));
+
+    for (let day = 1; day <= days; day++) {
+      const d = new Date(y, m, day);
+      if (d > today) break;
+      const key = dateKey(d);
+      let dayDone = 0, dayTracked = 0;
+      habits.forEach((h, idx) => {
+        const start = habitStartBoundary(h);
+        if (d < start) return;
+        dayTracked++;
+        const done = !!(h.history && h.history[key]);
+        if (done) dayDone++;
+        perHabit[idx].tracked++;
+        if (done) perHabit[idx].done++;
+      });
+      totalDone += dayDone; totalTracked += dayTracked;
+      dailyPct.push({ v: dayTracked > 0 ? Math.round((dayDone / dayTracked) * 100) : null });
+    }
+
+    const pct = totalTracked > 0 ? Math.round((totalDone / totalTracked) * 100) : 0;
+    const topHabits = perHabit
+      .filter((p) => p.tracked > 0)
+      .map((p) => ({ name: p.habit.name, pct: Math.round((p.done / p.tracked) * 100) }))
+      .sort((a, b) => b.pct - a.pct)
+      .slice(0, 4);
+
+    return { totalDone, totalTracked, pct, dailyPct, topHabits };
+  }
+
+  function populateMonthYearSelects() {
+    const yearSel = document.getElementById('habYearSelect');
+    const monthSel = document.getElementById('habMonthSelect');
+    if (!monthSel.options.length) {
+      MONTH_NAMES.forEach((name, i) => {
+        const opt = document.createElement('option');
+        opt.value = String(i); opt.textContent = name;
+        monthSel.appendChild(opt);
+      });
+    }
+    const curYear = new Date().getFullYear();
+    let minYear = curYear;
+    getHabits().forEach((h) => {
+      const y = habitStartBoundary(h).getFullYear();
+      if (y < minYear) minYear = y;
+    });
+    const wantedCount = curYear - minYear + 1;
+    if (yearSel.options.length !== wantedCount) {
+      yearSel.innerHTML = '';
+      for (let y = curYear; y >= minYear; y--) {
+        const opt = document.createElement('option');
+        opt.value = String(y); opt.textContent = String(y);
+        yearSel.appendChild(opt);
+      }
+    }
+    yearSel.value = String(habCursor.y);
+    monthSel.value = String(habCursor.m);
+  }
+
+  function renderTopHabitsList(topHabits) {
+    const wrap = document.getElementById('habTopList');
+    wrap.innerHTML = '';
+    const heading = document.createElement('div');
+    heading.className = 'hab-top-heading';
+    heading.textContent = 'Top Habits';
+    wrap.appendChild(heading);
+    if (!topHabits.length) {
+      const empty = document.createElement('div');
+      empty.className = 'hab-top-empty';
+      empty.textContent = 'No data yet';
+      wrap.appendChild(empty);
+      return;
+    }
+    topHabits.forEach((t) => {
+      const row = document.createElement('div');
+      row.className = 'hab-top-row';
+      const name = document.createElement('span');
+      name.className = 'hab-top-name';
+      name.textContent = t.name;
+      const pctEl = document.createElement('span');
+      pctEl.className = 'hab-top-pct';
+      pctEl.textContent = t.pct + '%';
+      row.appendChild(name); row.appendChild(pctEl);
+      wrap.appendChild(row);
+    });
+  }
+
+  function toggleHabitSelection(id) {
+    habSelectedId = habSelectedId === id ? null : id;
+    renderHabits();
+  }
+
+  function renderHabitFooterStats() {
+    const habits = getHabits();
+    const selected = habSelectedId ? habits.find((h) => h.id === habSelectedId) : null;
+
+    const head = document.getElementById('habFooterHead');
+    head.innerHTML = '';
+    if (selected) {
+      const label = document.createElement('span');
+      label.className = 'hab-footer-scope-label';
+      label.textContent = 'Showing ';
+      const nameEl = document.createElement('b');
+      nameEl.textContent = selected.name;
+      label.appendChild(nameEl);
+      const clearBtn = document.createElement('button');
+      clearBtn.type = 'button'; clearBtn.className = 'hab-footer-scope-clear';
+      clearBtn.textContent = 'Show all habits';
+      clearBtn.addEventListener('click', () => { habSelectedId = null; renderHabits(); });
+      head.appendChild(label); head.appendChild(clearBtn);
+    }
+
+    let footer;
+    if (selected) {
+      const s = computeHabitMonthStats(selected, habCursor.y, habCursor.m);
+      footer = { done: s.done, tracked: s.tracked, pct: s.pct, longest: computeLongestStreakEver(selected.history || {}) };
+    } else {
+      const stats = computeMonthStats(habCursor.y, habCursor.m);
+      footer = {
+        done: stats.totalDone,
+        tracked: stats.totalTracked,
+        pct: stats.pct,
+        longest: habits.reduce((max, h) => Math.max(max, computeLongestStreakEver(h.history || {})), 0),
+      };
+    }
+    document.getElementById('habStatCompleted').textContent = footer.done + ' / ' + footer.tracked;
+    document.getElementById('habProgressPct').textContent = footer.pct + '%';
+    document.getElementById('habProgressBar').style.width = footer.pct + '%';
+    document.getElementById('habStatStreak').textContent = footer.longest + (footer.longest === 1 ? ' day' : ' days');
+  }
+
+  function renderHabitOverview() {
+    const stats = computeMonthStats(habCursor.y, habCursor.m);
+    renderHabitOverviewChart(stats.dailyPct);
+    document.getElementById('habProgressRing').innerHTML = buildProgressRing(stats.pct);
+    renderTopHabitsList(stats.topHabits);
+    renderHabitFooterStats();
+  }
+
+  function toggleHabitDay(habitId, key) {
+    const list = getHabits();
+    const idx = list.findIndex((h) => h.id === habitId);
+    if (idx === -1) return;
+    const hist = Object.assign({}, list[idx].history || {});
+    if (hist[key]) delete hist[key]; else hist[key] = true;
+    list[idx] = Object.assign({}, list[idx], { history: hist });
+    setHabits(list);
+    renderHabits();
+  }
+
+  function renderHabitMonthTable() {
+    const habits = getHabits();
+    const days = daysInMonth(habCursor.y, habCursor.m);
+    const todayKey = dateKey(new Date());
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+
+    const head = document.getElementById('habMonthTableHead');
+    head.innerHTML = '';
+    const nameTh = document.createElement('th'); nameTh.className = 'hab-th-name'; nameTh.textContent = 'Habits';
+    const goalTh = document.createElement('th'); goalTh.className = 'hab-th-goal'; goalTh.textContent = 'Goal';
+    head.appendChild(nameTh); head.appendChild(goalTh);
+    for (let day = 1; day <= days; day++) {
+      const th = document.createElement('th'); th.textContent = String(day);
+      head.appendChild(th);
+    }
+
+    const body = document.getElementById('habMonthTableBody');
+    body.innerHTML = '';
+    habits.forEach((habit) => {
+      const tr = document.createElement('tr');
+      const start = habitStartBoundary(habit);
+      const isSelected = habit.id === habSelectedId;
+      if (isSelected) tr.classList.add('hab-row-selected');
+
+      const nameTd = document.createElement('td'); nameTd.className = 'hab-th-name';
+      const nameWrap = document.createElement('div'); nameWrap.className = 'hab-row-name';
+      const nameText = document.createElement('span');
+      nameText.className = 'hab-row-name-text' + (isSelected ? ' is-selected' : '');
+      nameText.textContent = habit.name;
+      nameText.title = 'Click to show ' + habit.name + '’s stats below • double-click for full year view';
+      nameText.addEventListener('click', () => toggleHabitSelection(habit.id));
+      nameText.addEventListener('dblclick', (e) => { e.stopPropagation(); openHabitYearModal(habit); });
+      const delBtn = document.createElement('button');
+      delBtn.type = 'button'; delBtn.className = 'hab-del'; delBtn.textContent = '×';
+      delBtn.setAttribute('aria-label', 'Delete habit');
+      delBtn.addEventListener('click', () => {
+        if (habSelectedId === habit.id) habSelectedId = null;
+        setHabits(getHabits().filter((h) => h.id !== habit.id));
+        renderHabits();
+      });
+      nameWrap.appendChild(nameText); nameWrap.appendChild(delBtn);
+      nameTd.appendChild(nameWrap);
+
+      const goalTd = document.createElement('td'); goalTd.className = 'hab-td-goal';
+      goalTd.textContent = habit.goal ? String(habit.goal) : '';
+
+      tr.appendChild(nameTd); tr.appendChild(goalTd);
+
+      for (let day = 1; day <= days; day++) {
+        const d = new Date(habCursor.y, habCursor.m, day);
+        const key = dateKey(d);
+        const td = document.createElement('td');
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        const isDone = !!(habit.history && habit.history[key]);
+        const isFuture = d > today;
+        const isBeforeStart = d < start;
+        btn.className = 'hab-day' + (isDone ? ' is-done' : '') + (key === todayKey ? ' is-today' : '');
+        btn.disabled = isFuture || isBeforeStart;
+        btn.setAttribute('aria-label', habit.name + ' ' + key + (isDone ? ' done' : ' not done'));
+        if (isDone) {
+          btn.innerHTML = '<svg viewBox="0 0 16 16" width="11" height="11"><path d="M3 8.5L6.5 12L13 4.5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+        }
+        if (!btn.disabled) {
+          btn.addEventListener('click', () => toggleHabitDay(habit.id, key));
+        }
+        td.appendChild(btn);
+        tr.appendChild(td);
+      }
+      body.appendChild(tr);
+    });
+  }
+
+  function renderHabits() {
+    const list = getHabits();
+    const hasHabits = list.length > 0;
+    document.getElementById('habEmptyState').style.display = hasHabits ? 'none' : '';
+    document.getElementById('habMonthTable').style.display = hasHabits ? '' : 'none';
+    document.getElementById('habOverviewWrap').style.display = hasHabits ? '' : 'none';
+    document.getElementById('habFooterStats').style.display = hasHabits ? '' : 'none';
+    if (!hasHabits) { habSelectedId = null; return; }
+    if (habSelectedId && !list.some((h) => h.id === habSelectedId)) habSelectedId = null;
+    populateMonthYearSelects();
+    renderHabitMonthTable();
+    renderHabitOverview();
+  }
+
+  function initHabitAddForm() {
+    document.getElementById('habAddBtn').addEventListener('click', () => {
+      const input = document.getElementById('habNameInput');
+      const name = input.value.trim();
+      if (!name) return;
+      const goalInput = document.getElementById('habGoalInput');
+      const goalRaw = goalInput.value.trim();
+      const goal = goalRaw ? Math.max(1, parseInt(goalRaw, 10)) : null;
+      const list = getHabits();
+      list.push({ id: 'hb' + Date.now() + Math.random().toString(36).slice(2, 7), name, history: {}, createdAt: new Date().toISOString(), goal });
+      setHabits(list);
+      input.value = '';
+      goalInput.value = '';
+      renderHabits();
+    });
+  }
+
+  function initHabitMonthControls() {
+    document.getElementById('habYearSelect').addEventListener('change', (e) => {
+      habCursor.y = parseInt(e.target.value, 10);
+      renderHabits();
+    });
+    document.getElementById('habMonthSelect').addEventListener('change', (e) => {
+      habCursor.m = parseInt(e.target.value, 10);
+      renderHabits();
+    });
+  }
+
+  // ============================================================
+  // BOOK TRACKER -- identical implementation to planner.html/Ability's
+  // own copy (same books_v1 key).
+  // ============================================================
+  const BOOKS_KEY = 'books_v1';
+  const BOOK_SHELVES = [
+    { status: 'want',    label: 'Want to Read' },
+    { status: 'reading', label: 'Reading' },
+    { status: 'read',    label: 'Read' }
+  ];
+
+  function getBooks() { const v = storeGet(BOOKS_KEY); return Array.isArray(v) ? v : []; }
+  function setBooks(list) { storeSet(BOOKS_KEY, list); }
+
+  const BOOKS_TARGET_KEY = 'books_yearly_target_v1';
+  const DEFAULT_BOOKS_TARGET = 6;
+  function getBooksTarget() { const v = storeGet(BOOKS_TARGET_KEY); return (typeof v === 'number' && v > 0) ? v : DEFAULT_BOOKS_TARGET; }
+
+  function renderBookYearStat() {
+    const el = document.getElementById('bookYearStat');
+    if (!el) return;
+    const year = new Date().getFullYear();
+    const count = getBooks().filter(b => b.status === 'read' && b.finishedAt && new Date(b.finishedAt).getFullYear() === year).length;
+    const target = getBooksTarget();
+    el.innerHTML = '<b>' + count + '</b> / ' + target + ' book' + (target === 1 ? '' : 's') + ' finished in ' + year;
+  }
+
+  function buildBookRow(book) {
+    const row = document.createElement('div');
+    row.className = 'book-row';
+    row.dataset.id = book.id;
+
+    const top = document.createElement('div');
+    top.className = 'book-row-top';
+    top.innerHTML =
+      '<div class="book-titles">' +
+        '<div class="book-title"></div>' +
+        '<div class="book-author"></div>' +
+      '</div>' +
+      '<select class="book-status-select">' +
+        BOOK_SHELVES.map(s => '<option value="' + s.status + '">' + s.label + '</option>').join('') +
+      '</select>' +
+      '<button type="button" class="book-del" aria-label="Delete book">×</button>';
+    top.querySelector('.book-title').textContent = book.title;
+    top.querySelector('.book-author').textContent = book.author || '';
+    const statusSel = top.querySelector('.book-status-select');
+    statusSel.value = book.status;
+    statusSel.addEventListener('change', () => {
+      const list = getBooks();
+      const idx = list.findIndex(b => b.id === book.id);
+      if (idx === -1) return;
+      const next = Object.assign({}, list[idx], { status: statusSel.value });
+      if (statusSel.value === 'read' && !next.finishedAt) next.finishedAt = new Date().toISOString();
+      if (statusSel.value !== 'read') next.finishedAt = null;
+      list[idx] = next;
+      setBooks(list);
+      renderBooks();
+    });
+    top.querySelector('.book-del').addEventListener('click', () => {
+      setBooks(getBooks().filter(b => b.id !== book.id));
+      renderBooks();
+    });
+    row.appendChild(top);
+
+    if (book.status === 'read') {
+      const meta = document.createElement('div');
+      meta.className = 'book-meta-row';
+      const stars = document.createElement('div');
+      stars.className = 'book-stars';
+      for (let i = 1; i <= 5; i++) {
+        const starBtn = document.createElement('button');
+        starBtn.type = 'button';
+        starBtn.className = 'book-star' + ((book.rating || 0) >= i ? ' is-filled' : '');
+        starBtn.textContent = '★';
+        starBtn.setAttribute('aria-label', 'Rate ' + i + ' star' + (i === 1 ? '' : 's'));
+        starBtn.addEventListener('click', () => {
+          const list = getBooks();
+          const idx = list.findIndex(b => b.id === book.id);
+          if (idx === -1) return;
+          const newRating = list[idx].rating === i ? 0 : i;
+          list[idx] = Object.assign({}, list[idx], { rating: newRating });
+          setBooks(list);
+          renderBooks();
+        });
+        stars.appendChild(starBtn);
+      }
+      meta.appendChild(stars);
+      if (book.finishedAt) {
+        const dateEl = document.createElement('span');
+        dateEl.className = 'book-finished-date';
+        dateEl.textContent = 'Finished ' + new Date(book.finishedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+        meta.appendChild(dateEl);
+      }
+      row.appendChild(meta);
+    }
+
+    const notes = document.createElement('textarea');
+    notes.className = 'book-notes-input';
+    notes.rows = 1;
+    notes.placeholder = 'Notes…';
+    notes.value = book.notes || '';
+    notes.addEventListener('change', () => {
+      const list = getBooks();
+      const idx = list.findIndex(b => b.id === book.id);
+      if (idx === -1) return;
+      list[idx] = Object.assign({}, list[idx], { notes: notes.value.trim() });
+      setBooks(list);
+    });
+    row.appendChild(notes);
+
+    return row;
+  }
+
+  function renderBooks() {
+    const wrap = document.getElementById('bookShelves');
+    const emptyState = document.getElementById('bookEmptyState');
+    if (!wrap) return;
+    const list = getBooks();
+    wrap.innerHTML = '';
+    emptyState.style.display = list.length ? 'none' : '';
+    BOOK_SHELVES.forEach(shelf => {
+      const items = list.filter(b => b.status === shelf.status);
+      if (!items.length) return;
+      const section = document.createElement('div');
+      section.className = 'book-shelf';
+      const title = document.createElement('div');
+      title.className = 'book-shelf-title';
+      title.textContent = shelf.label + ' (' + items.length + ')';
+      section.appendChild(title);
+      items.forEach(b => section.appendChild(buildBookRow(b)));
+      wrap.appendChild(section);
+    });
+    renderBookYearStat();
+  }
+
+  function initBookAddForm() {
+    document.getElementById('bookAddBtn').addEventListener('click', () => {
+      const titleInput = document.getElementById('bookTitleInput');
+      const authorInput = document.getElementById('bookAuthorInput');
+      const title = titleInput.value.trim();
+      if (!title) return;
+      const list = getBooks();
+      list.push({
+        id: 'bk' + Date.now() + Math.random().toString(36).slice(2, 7),
+        title, author: authorInput.value.trim(),
+        status: 'want', rating: 0, notes: '', finishedAt: null,
+        addedAt: new Date().toISOString()
+      });
+      setBooks(list);
+      titleInput.value = '';
+      authorInput.value = '';
+      renderBooks();
+    });
+  }
+
+  // ---------- Boot ----------
+  initHabitMonthControls();
+  renderHabits();
+  initHabitAddForm();
+  initHabitYearModal();
+  renderBooks();
+  initBookAddForm();
+
+  window.addEventListener('storage', () => { renderHabits(); renderBooks(); });
+})();
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  if (typeof initCloudSync !== 'function') return;
+  // Same appKey/syncedKeys as planner.html's own habits sync -- both pages
+  // share the one live Supabase channel for habits_v1, same proven pattern
+  // as dashboard.html/planner.html sharing the 'goals' channel.
+  initCloudSync({
+    appKey: 'habits',
+    syncedKeys: ['habits_v1'],
+    onApplied: function () { window.dispatchEvent(new Event('storage')); }
+  });
+});
+</script>
+</body>
+</html>
