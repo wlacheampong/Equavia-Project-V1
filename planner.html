@@ -1805,6 +1805,10 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
   font-family: inherit; font-size: 11px; font-weight: 700;
   cursor: pointer; flex-shrink: 0;
 }
+/* Phase 02.6: three-state colour coding per docs/files/02-dashboard-tiles.md */
+.book-status-select[data-status="want"] { color: var(--eq-text-muted); }
+.book-status-select[data-status="reading"] { color: var(--eq-accent); }
+.book-status-select[data-status="read"] { color: var(--eq-positive); }
 .book-del {
   background: transparent; border: 1px solid rgba(var(--eq-text-primary-rgb), 0.08);
   color: var(--text-tertiary);
@@ -5488,7 +5492,9 @@ document.addEventListener('DOMContentLoaded', function () {
     top.querySelector('.book-author').textContent = book.author || '';
     const statusSel = top.querySelector('.book-status-select');
     statusSel.value = book.status;
+    statusSel.dataset.status = book.status;
     statusSel.addEventListener('change', () => {
+      statusSel.dataset.status = statusSel.value;
       const list = getBooks();
       const idx = list.findIndex(b => b.id === book.id);
       if (idx === -1) return;

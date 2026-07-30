@@ -187,6 +187,10 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
 .book-title { font-size: 14px; font-weight: 600; color: var(--text-primary); }
 .book-author { font-size: 12px; color: var(--text-tertiary); margin-top: 1px; }
 .book-status-select { background: rgba(var(--eq-text-primary-rgb), 0.06); border: none; color: var(--text-secondary); border-radius: 7px; padding: 5px 8px; font-family: inherit; font-size: 11px; font-weight: 700; cursor: pointer; flex-shrink: 0; }
+/* Phase 02.6: three-state colour coding per docs/files/02-dashboard-tiles.md */
+.book-status-select[data-status="want"] { color: var(--eq-text-muted); }
+.book-status-select[data-status="reading"] { color: var(--eq-accent); }
+.book-status-select[data-status="read"] { color: var(--eq-positive); }
 .book-del { background: transparent; border: 1px solid rgba(var(--eq-text-primary-rgb), 0.08); color: var(--text-tertiary); cursor: pointer; font-size: 13px; padding: 4px 8px; border-radius: 6px; font-family: inherit; line-height: 1; flex-shrink: 0; }
 .book-del:hover { color: var(--danger); }
 .book-meta-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
@@ -777,7 +781,9 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
     top.querySelector('.book-author').textContent = book.author || '';
     const statusSel = top.querySelector('.book-status-select');
     statusSel.value = book.status;
+    statusSel.dataset.status = book.status;
     statusSel.addEventListener('change', () => {
+      statusSel.dataset.status = statusSel.value;
       const list = getBooks();
       const idx = list.findIndex(b => b.id === book.id);
       if (idx === -1) return;

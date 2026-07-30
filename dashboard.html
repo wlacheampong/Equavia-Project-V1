@@ -142,8 +142,19 @@ a { color: inherit; text-decoration: none; }
 .task-status.is-p1 { color: var(--eq-danger); }
 .empty-note { font-size: var(--eq-font-sm); color: var(--eq-text-muted); }
 
-/* Inline add row (Tasks/Goals cards) */
+/* Card-title row actions (Phase 02: neutral "+" reveals the add-row that
+   used to sit permanently visible under Tasks/Goals) */
+.card-title-actions { display: flex; align-items: center; gap: 10px; }
+.card-add-btn {
+  background: transparent; border: none; color: var(--eq-text-secondary);
+  font-size: 16px; font-weight: 700; line-height: 1; cursor: pointer; padding: 2px 4px;
+  -webkit-tap-highlight-color: transparent;
+}
+.card-add-btn:hover { color: var(--eq-text-primary); }
+
+/* Inline add row (Tasks/Goals cards) -- hidden until the "+" is pressed */
 .add-row { display: flex; gap: 6px; margin-top: 10px; }
+.add-row[hidden] { display: none; }
 .add-row input {
   flex: 1; min-width: 0; background: var(--eq-bg-input); border: 1px solid var(--eq-border);
   border-radius: 8px; color: var(--eq-text-primary); font-family: inherit; font-size: var(--eq-font-md);
@@ -160,7 +171,10 @@ a { color: inherit; text-decoration: none; }
 .goal-row:last-child { margin-bottom: 0; }
 .goal-row-top { display: flex; justify-content: space-between; font-size: 12.5px; margin-bottom: 4px; }
 .goal-row-top span:first-child { color: var(--eq-text-primary); }
+.goal-row-bar-track { height: 4px; border-radius: 2px; background: var(--eq-border); overflow: hidden; margin-bottom: 4px; }
+.goal-row-bar-fill { height: 100%; border-radius: 2px; background: var(--eq-text-primary); }
 .goal-row-top span:last-child { color: var(--eq-text-muted); }
+.goal-row-countdown { font-size: 11px; color: var(--eq-text-muted); }
 
 /* Day view */
 .dayview-slot { display: flex; gap: 10px; padding: 7px 0; border-top: 1px solid var(--eq-border); align-items: flex-start; }
@@ -267,6 +281,27 @@ a { color: inherit; text-decoration: none; }
 .dr-field input:focus, .dr-field textarea:focus { outline: none; border-color: rgba(var(--eq-text-primary-rgb), 0.4); }
 
 /* ===== Calendar grid (ported from planner.html) ===== */
+/* Compact dashboard tile (Phase 02.4): fixed footprint, its own content
+   scrolls rather than growing the tile. #calContent (toolbar+grids) lives
+   here by default and gets relocated into .cal-expand-modal on "Expand". */
+.cal-tile-expand-btn { background: transparent; border: none; cursor: pointer; font: inherit; }
+.cal-tile-body { max-height: 260px; overflow-y: auto; cursor: pointer; }
+/* The tile is a live preview, not an interactive calendar -- every control
+   inside it (view toggle, nav, connect, event chips) is visual-only here;
+   any click anywhere in the tile pops out the real, fully-interactive
+   calendar instead. Avoids sorting out click-propagation between "toggle
+   the mini view" and "expand the tile" for a dozen different inner
+   controls -- simple on purpose, see the TODO above #calExpandModalBg. */
+.cal-tile-body .cal-content { pointer-events: none; }
+.cal-expand-modal {
+  background: var(--eq-bg-elevated); border: 1px solid var(--eq-border-strong); border-radius: var(--eq-card-radius-lg);
+  padding: 52px 22px 22px; width: 100%; max-width: 880px; max-height: 86vh; overflow-y: auto; position: relative;
+}
+.cal-expand-close {
+  position: absolute; top: 14px; right: 14px; width: 32px; height: 32px; border-radius: 50%;
+  background: rgba(var(--eq-text-primary-rgb), 0.06); border: none; color: var(--eq-text-primary);
+  font-size: 18px; line-height: 1; cursor: pointer;
+}
 .cal-toolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; }
 .cal-toolbar-left { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
 .cal-label { font-size: 13.5px; font-weight: 700; color: var(--eq-text-primary); min-width: 120px; }
@@ -387,53 +422,84 @@ a { color: inherit; text-decoration: none; }
     </div>
   </div>
 
-  <div class="grid grid-2">
+  <div class="grid grid-3">
     <div class="card">
-      <div class="card-title"><span>Tasks</span><a class="card-title-more" href="planner.html">Planner ›</a></div>
+      <div class="card-title">
+        <span>Tasks</span>
+        <div class="card-title-actions">
+          <a class="card-title-more" href="planner.html">Planner ›</a>
+          <button type="button" class="card-add-btn" id="taskAddToggle" aria-label="Add a task" aria-expanded="false">+</button>
+        </div>
+      </div>
       <div id="taskList"></div>
-      <div class="add-row">
+      <div class="add-row" id="taskAddRow" hidden>
         <input type="text" id="taskAddInput" placeholder="Add a task…">
         <button type="button" id="taskAddBtn" aria-label="Add task">+</button>
       </div>
     </div>
 
     <div class="card">
-      <div class="card-title"><span>Goals</span><a class="card-title-more" href="planner.html">Planner ›</a></div>
+      <div class="card-title">
+        <span>Goals</span>
+        <div class="card-title-actions">
+          <a class="card-title-more" href="planner.html">Planner ›</a>
+          <button type="button" class="card-add-btn" id="goalAddToggle" aria-label="Add a goal" aria-expanded="false">+</button>
+        </div>
+      </div>
       <div id="goalsList"></div>
-      <div class="add-row">
+      <div class="add-row" id="goalAddRow" hidden>
         <input type="text" id="goalAddInput" placeholder="Add a goal…">
         <input type="date" id="goalAddDeadline" class="add-row-date" aria-label="Deadline (optional)">
         <button type="button" id="goalAddBtn" aria-label="Add goal">+</button>
       </div>
     </div>
+
+    <div class="card cal-tile" id="calTile">
+      <div class="card-title">
+        <span>Calendar</span>
+        <button type="button" class="card-title-more cal-tile-expand-btn" id="calTileExpandBtn">Expand ›</button>
+      </div>
+      <div class="cal-tile-body" id="calTileBody">
+        <div class="cal-content" id="calContent">
+          <div class="cal-toolbar">
+            <div class="cal-toolbar-left">
+              <span class="cal-label" id="calLabel">—</span>
+              <div class="cal-view-toggle">
+                <button type="button" class="cal-view-btn is-active" data-cal-view="day">Day</button>
+                <button type="button" class="cal-view-btn" data-cal-view="week">Week</button>
+                <button type="button" class="cal-view-btn" data-cal-view="month">Month</button>
+              </div>
+            </div>
+            <div class="cal-toolbar-right">
+              <div class="cal-nav">
+                <button type="button" class="cal-nav-btn" id="calPrevBtn" aria-label="Previous">‹</button>
+                <button type="button" class="cal-nav-today" id="calTodayBtn">Today</button>
+                <button type="button" class="cal-nav-btn" id="calNextBtn" aria-label="Next">›</button>
+              </div>
+              <button type="button" class="cal-connect-btn" id="calConnectBtn">Connect Google Calendar</button>
+            </div>
+          </div>
+          <div class="cal-status" id="calStatus"></div>
+          <div class="cal-day-grid" id="calDayGrid">
+            <div class="cal-day-allday" id="calDayAllDay"></div>
+            <div class="cal-day-timeline" id="calDayTimeline"></div>
+          </div>
+          <div class="cal-week-grid" id="calWeekGrid" style="display:none;"></div>
+          <div class="cal-month-grid" id="calMonthGrid" style="display:none;"></div>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <div class="card">
-    <div class="cal-toolbar">
-      <div class="cal-toolbar-left">
-        <span class="cal-label" id="calLabel">—</span>
-        <div class="cal-view-toggle">
-          <button type="button" class="cal-view-btn" data-cal-view="day">Day</button>
-          <button type="button" class="cal-view-btn is-active" data-cal-view="week">Week</button>
-          <button type="button" class="cal-view-btn" data-cal-view="month">Month</button>
-        </div>
-      </div>
-      <div class="cal-toolbar-right">
-        <div class="cal-nav">
-          <button type="button" class="cal-nav-btn" id="calPrevBtn" aria-label="Previous">‹</button>
-          <button type="button" class="cal-nav-today" id="calTodayBtn">Today</button>
-          <button type="button" class="cal-nav-btn" id="calNextBtn" aria-label="Next">›</button>
-        </div>
-        <button type="button" class="cal-connect-btn" id="calConnectBtn">Connect Google Calendar</button>
-      </div>
+  <!-- Calendar pop-out -- #calContent (whole toolbar+grids subtree) moves in
+       here on expand and back into #calTileBody on close, so there's one
+       live copy of the calendar, not two kept in sync. Simple on purpose,
+       per docs/files/01-design-tokens.md's Phase 02 note: refactor onto
+       Phase 03's shared expand primitive once that exists -- TODO. -->
+  <div class="dr-modal-bg" id="calExpandModalBg">
+    <div class="cal-expand-modal" id="calExpandModal">
+      <button type="button" class="cal-expand-close" id="calExpandCloseBtn" aria-label="Close expanded calendar">×</button>
     </div>
-    <div class="cal-status" id="calStatus"></div>
-    <div class="cal-day-grid" id="calDayGrid" style="display:none;">
-      <div class="cal-day-allday" id="calDayAllDay"></div>
-      <div class="cal-day-timeline" id="calDayTimeline"></div>
-    </div>
-    <div class="cal-week-grid" id="calWeekGrid"></div>
-    <div class="cal-month-grid" id="calMonthGrid" style="display:none;"></div>
   </div>
 
   <div class="grid grid-4">
@@ -834,6 +900,28 @@ a { color: inherit; text-decoration: none; }
   document.getElementById('taskAddBtn').addEventListener('click', addTaskFromInput);
   document.getElementById('taskAddInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') addTaskFromInput(); });
 
+  // ============================================================
+  // Card-title "+" reveal (Phase 02.1) -- Tasks/Goals inputs are hidden
+  // until pressed. Dismiss on Escape, on blur while empty (unless focus
+  // moved to another field in the same row, e.g. tabbing from the goal
+  // title into its date picker), or pressing "+" again.
+  // ============================================================
+  function wireAddRowToggle(toggleBtnId, rowId, inputId) {
+    const toggleBtn = document.getElementById(toggleBtnId);
+    const row = document.getElementById(rowId);
+    const input = document.getElementById(inputId);
+    function open() { row.hidden = false; toggleBtn.setAttribute('aria-expanded', 'true'); input.focus(); }
+    function close() { row.hidden = true; toggleBtn.setAttribute('aria-expanded', 'false'); }
+    toggleBtn.addEventListener('click', () => { row.hidden ? open() : close(); });
+    input.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); });
+    input.addEventListener('blur', (e) => {
+      if (input.value.trim()) return;
+      if (e.relatedTarget && row.contains(e.relatedTarget)) return;
+      close();
+    });
+  }
+  wireAddRowToggle('taskAddToggle', 'taskAddRow', 'taskAddInput');
+
   const PROD_RING_C = 2 * Math.PI * 36;
   function renderProductivity() {
     const list = getGoals(todayKey());
@@ -850,9 +938,12 @@ a { color: inherit; text-decoration: none; }
   }
 
   // ============================================================
-  // Goals card (longterm_goals_v1) -- title + deadline countdown
-  // only. No completion % shown: the schema has no progress field
-  // (flagged as a data gap to revisit, not fabricated here).
+  // Goals card (longterm_goals_v1) -- title, percentage, and a progress
+  // bar (Phase 02.5). Corrects an earlier assumption here that the
+  // schema had no progress field -- it does (g.value, the same 0-100
+  // slider planner.html's own Goals section already edits), it just
+  // wasn't being read on this card. Deadline countdown is real data
+  // too, so it's kept as a small subtitle rather than dropped.
   // ============================================================
   function renderGoalsCard() {
     const goals = getLongtermGoals().filter((g) => !g.archived);
@@ -868,7 +959,12 @@ a { color: inherit; text-decoration: none; }
     wrap.innerHTML = sorted.map((g) => {
       const ms = goalDeadlineMs(g);
       const countdown = ms != null ? formatCountdown(ms - Date.now()) : '';
-      return '<div class="goal-row"><div class="goal-row-top"><span>' + esc(g.title) + '</span><span>' + esc(countdown) + '</span></div></div>';
+      const pct = Math.max(0, Math.min(100, Number(g.value) || 0));
+      return '<div class="goal-row">' +
+        '<div class="goal-row-top"><span>' + esc(g.title) + '</span><span>' + pct + '%</span></div>' +
+        '<div class="goal-row-bar-track"><div class="goal-row-bar-fill" style="width:' + pct + '%;"></div></div>' +
+        (countdown ? '<div class="goal-row-countdown">' + esc(countdown) + '</div>' : '') +
+      '</div>';
     }).join('');
   }
   function addGoalFromInput() {
@@ -885,6 +981,7 @@ a { color: inherit; text-decoration: none; }
   }
   document.getElementById('goalAddBtn').addEventListener('click', addGoalFromInput);
   document.getElementById('goalAddInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') addGoalFromInput(); });
+  wireAddRowToggle('goalAddToggle', 'goalAddRow', 'goalAddInput');
 
   // ============================================================
   // Habit tracker -- current week Mon-Sun, bar height = % of
@@ -1064,7 +1161,7 @@ a { color: inherit; text-decoration: none; }
   function calIsSameDay(a, b) { return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate(); }
   function calDateKey(d) { return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); }
 
-  let calView = 'week';
+  let calView = 'day'; // Phase 02.4: tile defaults to Day so "scroll to current hour" has somewhere to land
   let calAnchor = calMidnight(new Date());
 
   function showCalStatus(msg, isError) {
@@ -1224,11 +1321,23 @@ a { color: inherit; text-decoration: none; }
       timeLabel.textContent = formatHourLabel(hour);
       const slot = document.createElement('div');
       slot.className = 'cal-day-row-slot';
-      slot.addEventListener('click', () => openCalEventModal('create', { dateKey, time: pad2(hour) + ':00' }));
+      slot.addEventListener('click', (e) => { e.stopPropagation(); openCalEventModal('create', { dateKey, time: pad2(hour) + ':00' }); });
       timedItems.filter((i) => i.start.getHours() === hour).forEach((item) => slot.appendChild(buildDayEventChip(item)));
       row.appendChild(timeLabel); row.appendChild(slot);
       timeline.appendChild(row);
     }
+    scrollToCurrentHour();
+  }
+  // Phase 02.4: land on the current hour rather than midnight -- a no-op
+  // when today's own day isn't showing, or outside Day view. Also called
+  // when the calendar tile expands/collapses: relocating #calContent to a
+  // new parent (tile <-> modal) changes which element is the scrollable
+  // ancestor, so a scroll position set on the old one doesn't carry over
+  // and needs re-establishing against the new one.
+  function scrollToCurrentHour() {
+    if (calView !== 'day' || !calIsSameDay(calAnchor, new Date())) return;
+    const curRow = document.querySelector('.cal-day-row.is-current-hour');
+    if (curRow) curRow.scrollIntoView({ block: 'center' });
   }
   function renderWeekGrid(events) {
     const grid = document.getElementById('calWeekGrid');
@@ -1379,6 +1488,33 @@ a { color: inherit; text-decoration: none; }
       loadCalendar();
     }, { passive: true });
     loadCalendar();
+  }
+
+  // ============================================================
+  // Calendar tile pop-out (Phase 02.4) -- #calContent (the whole
+  // toolbar+grids subtree) physically relocates between the compact
+  // tile and the expanded modal, so there is exactly one live copy of
+  // the calendar rather than two that could drift out of sync.
+  // ============================================================
+  function isCalExpanded() { return document.getElementById('calExpandModalBg').classList.contains('show'); }
+  function expandCalTile() {
+    if (isCalExpanded()) return;
+    document.getElementById('calExpandModal').appendChild(document.getElementById('calContent'));
+    document.getElementById('calExpandModalBg').classList.add('show');
+    requestAnimationFrame(scrollToCurrentHour); // new scroll parent (the modal) -- re-establish position on it
+  }
+  function collapseCalTile() {
+    if (!isCalExpanded()) return;
+    document.getElementById('calTileBody').appendChild(document.getElementById('calContent'));
+    document.getElementById('calExpandModalBg').classList.remove('show');
+    requestAnimationFrame(scrollToCurrentHour); // back to the tile's own scroll container
+  }
+  function initCalTileExpand() {
+    document.getElementById('calTileBody').addEventListener('click', expandCalTile);
+    document.getElementById('calTileExpandBtn').addEventListener('click', expandCalTile);
+    document.getElementById('calExpandCloseBtn').addEventListener('click', collapseCalTile);
+    document.getElementById('calExpandModalBg').addEventListener('click', (e) => { if (e.target === e.currentTarget) collapseCalTile(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && isCalExpanded()) collapseCalTile(); });
   }
 
   // ============================================================
@@ -1711,6 +1847,7 @@ a { color: inherit; text-decoration: none; }
   renderYesterdayAlert();
   renderWhoopRecovery();
   initCalendar();
+  initCalTileExpand();
   renderUpcomingEvents();
 
   setInterval(() => { updateDayRing(); updateGreeting(); }, 60 * 1000);
