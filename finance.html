@@ -490,6 +490,108 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
 .fin-hold-detail-table-row-val { font-weight: 600; color: var(--text-primary); font-variant-numeric: tabular-nums; flex-shrink: 0; text-align: right; }
 .fin-hold-detail-table-row-sub { font-size: 11px; color: var(--text-tertiary); flex-shrink: 0; }
 
+/* ==========================================================================
+   Phase 06 -- Income calendar. Personal pay-day / incoming-money tracker,
+   not a market earnings calendar (see 00-OVERVIEW.md open decision #5 --
+   the phase doc's own body already commits to income-only throughout,
+   framing company earnings data as opt-in/out-of-scope by default, and
+   it isn't buildable anyway without 5.1's stock data source). Income
+   only, not outgoing bills -- those already live in Budget's Expenses
+   card (05.3); duplicating that entry surface here isn't warranted.
+   ========================================================================== */
+/* .cal-view-toggle/.cal-view-btn reused VERBATIM from dashboard.html's
+   Phase 02 calendar tile per 06.2's explicit "same component, not a
+   second implementation" instruction -- identical property values. */
+.cal-view-toggle { display: flex; align-items: center; gap: 2px; border: 1px solid var(--eq-border); border-radius: 10px; padding: 3px; }
+.cal-view-btn { border: 0; background: transparent; padding: 6px 12px; border-radius: 7px; font-family: var(--eq-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--eq-text-muted); cursor: pointer; transition: background 0.2s, color 0.2s; }
+.cal-view-btn.is-active { background: rgba(var(--eq-text-primary-rgb), 0.10); color: var(--eq-text-primary); }
+
+.inc-add-card { margin-bottom: 16px; }
+.inc-add-eyebrow { font-size: 10px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 10px; }
+.inc-add-grid { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.inc-input { padding: 8px 10px; border: 1px solid var(--eq-border); border-radius: var(--eq-input-radius); background: var(--eq-bg-input); color: var(--text-primary); font-size: 13px; font-family: inherit; }
+.inc-input-name { flex: 1.6; min-width: 140px; }
+.inc-input-amt { flex: 1; min-width: 90px; max-width: 110px; }
+.inc-input-ccy { max-width: 85px; }
+.inc-input-recur { min-width: 140px; }
+.inc-input-custom { max-width: 110px; }
+.inc-add-btn { padding: 8px 16px; border-radius: var(--eq-btn-radius); border: 0; background: var(--eq-accent); color: #1a0f08; font-weight: 700; font-size: 13px; cursor: pointer; font-family: inherit; }
+
+.inc-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 18px 0 10px; flex-wrap: wrap; }
+.inc-toolbar-label { font-size: 15px; font-weight: 700; color: var(--text-primary); }
+.inc-nav-row { display: flex; gap: 8px; margin-bottom: 14px; }
+.inc-nav-btn { padding: 6px 14px; font-size: 13px; }
+
+/* Month grid -- 7 columns (Mon-Sun; personal pay days aren't gated by
+   market hours the way the reference's stock calendar is, so unlike that
+   reference this includes weekends), fixed cell height so the grid never
+   reflows as events are added -- overflow uses an "N more" row instead. */
+.inc-month-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: var(--eq-border); border: 1px solid var(--eq-border); border-radius: var(--eq-card-radius); overflow: hidden; }
+.inc-month-dow { background: rgba(var(--eq-text-primary-rgb), 0.03); padding: 6px 4px; font-size: 9.5px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-tertiary); text-align: center; }
+.inc-month-cell { background: var(--eq-bg-primary); min-height: 92px; max-height: 92px; padding: 5px 5px 3px; overflow: hidden; display: flex; flex-direction: column; }
+.inc-month-cell.is-other-month { opacity: 0.35; }
+.inc-month-cell.is-past .inc-month-date { color: var(--text-tertiary); }
+.inc-month-cell.is-today { background: rgba(var(--eq-text-primary-rgb), 0.06); }
+.inc-month-date { font-size: 11px; font-weight: 700; color: var(--text-primary); margin-bottom: 3px; flex-shrink: 0; }
+.inc-month-today-label { font-size: 8.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; color: var(--eq-accent); }
+.inc-month-events { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; gap: 1px; }
+.inc-event-row { display: flex; justify-content: space-between; gap: 3px; font-size: 9.5px; line-height: 1.3; white-space: nowrap; overflow: hidden; }
+.inc-event-row-label { overflow: hidden; text-overflow: ellipsis; }
+.inc-event-row-amt { flex-shrink: 0; font-weight: 700; font-variant-numeric: tabular-nums; }
+.inc-event-row.is-expected { color: var(--eq-highlight-est); }
+.inc-event-row.is-confirmed .inc-event-row-amt { color: var(--eq-positive); }
+.inc-month-more { font-size: 9px; color: var(--text-tertiary); margin-top: 1px; }
+@media (max-width: 480px) {
+  .inc-month-cell { min-height: 64px; max-height: 64px; }
+  .inc-event-row { font-size: 8.5px; }
+}
+
+/* Week grid -- same cell language, 7 wide columns instead of a 5-6 row month */
+.inc-week-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: var(--eq-border); border: 1px solid var(--eq-border); border-radius: var(--eq-card-radius); overflow: hidden; }
+.inc-week-cell { background: var(--eq-bg-primary); min-height: 160px; padding: 8px 6px; }
+.inc-week-cell.is-today { background: rgba(var(--eq-text-primary-rgb), 0.06); }
+.inc-week-dow { font-size: 9.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-tertiary); }
+.inc-week-date { font-size: 15px; font-weight: 700; color: var(--text-primary); margin: 2px 0 8px; }
+.inc-week-cell.is-past .inc-week-date { color: var(--text-tertiary); }
+
+/* Day view -- two-column split per 06.2 (list left, mini-cal + detail
+   right); collapses to a single stacked column below the tablet
+   breakpoint -- "list-then-detail navigation, not side-by-side". */
+.inc-day-split { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(240px, 1fr); gap: 16px; align-items: start; }
+@media (max-width: 767px) { .inc-day-split { grid-template-columns: 1fr; } }
+.inc-day-list { display: flex; flex-direction: column; gap: 8px; }
+.inc-day-event-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 14px; border: 1px solid var(--eq-border); border-radius: var(--eq-card-radius); cursor: pointer; background: transparent; text-align: left; font-family: inherit; width: 100%; transition: background 0.15s, border-color 0.15s; }
+.inc-day-event-row:hover, .inc-day-event-row.is-selected { background: rgba(var(--eq-text-primary-rgb), 0.04); border-color: var(--eq-border-strong); }
+.inc-day-event-name { font-size: 13.5px; font-weight: 600; color: var(--text-primary); }
+.inc-day-event-status { font-size: 11px; color: var(--text-tertiary); margin-top: 2px; }
+.inc-day-event-amt { font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; flex-shrink: 0; }
+.inc-day-event-amt.is-expected { color: var(--eq-highlight-est); }
+.inc-day-event-amt.is-confirmed { color: var(--eq-positive); }
+
+.inc-day-side { display: flex; flex-direction: column; gap: 14px; }
+.inc-minical { border: 1px solid var(--eq-border); border-radius: var(--eq-card-radius); padding: 10px; }
+.inc-minical-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; font-size: 11px; font-weight: 700; color: var(--text-primary); }
+.inc-minical-nav { background: transparent; border: 0; color: var(--text-tertiary); cursor: pointer; font-size: 13px; padding: 2px 6px; font-family: inherit; }
+.inc-minical-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+.inc-minical-dow { font-size: 8px; text-align: center; color: var(--text-tertiary); font-weight: 700; }
+.inc-minical-day { font-size: 10.5px; text-align: center; padding: 4px 0; border-radius: 5px; cursor: pointer; color: var(--text-primary); background: transparent; border: 0; font-family: inherit; }
+.inc-minical-day.is-other-month { opacity: 0.3; }
+.inc-minical-day.is-today { outline: 1px solid var(--eq-accent); outline-offset: -1px; }
+.inc-minical-day.is-selected { background: var(--eq-accent); color: #1a0f08; font-weight: 700; }
+.inc-minical-day.has-events:not(.is-selected)::after { content: ''; display: block; width: 3px; height: 3px; border-radius: 50%; background: var(--eq-positive); margin: 2px auto 0; }
+
+.inc-day-detail { border: 1px solid var(--eq-border); border-radius: var(--eq-card-radius); padding: 16px; }
+.inc-day-detail-name { font-size: 17px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
+.inc-day-detail-amt { font-size: 20px; font-weight: 700; margin-bottom: 14px; font-variant-numeric: tabular-nums; }
+.inc-day-detail-amt.is-expected { color: var(--eq-highlight-est); }
+.inc-day-detail-amt.is-confirmed { color: var(--eq-positive); }
+.inc-day-detail-row { display: flex; justify-content: space-between; padding: 9px 0; border-top: 1px solid var(--eq-border); font-size: 12.5px; }
+.inc-day-detail-row:first-of-type { border-top: 0; }
+.inc-day-detail-row span:first-child { color: var(--text-tertiary); }
+.inc-day-detail-row span:last-child { color: var(--text-primary); font-weight: 600; }
+.inc-confirm-btn { margin-top: 14px; width: 100%; padding: 9px; border-radius: var(--eq-btn-radius); border: 1px solid var(--eq-border-strong); background: transparent; color: var(--text-primary); font-weight: 700; font-size: 12.5px; cursor: pointer; font-family: inherit; }
+.inc-confirm-btn.is-confirmed { border-color: rgba(var(--eq-success-rgb), 0.4); color: var(--eq-positive); }
+
 /* Stock-style net-worth chart */
 .nw-chart-wrap {
   margin: 14px 0 18px;
@@ -1929,6 +2031,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
       </div>
       <div id="bgtIncCount" style="font-size:11px;color:var(--text-tertiary)"></div>
     </div>
+    <div id="bgtIncCalNote" style="display:none;font-size:11px;color:var(--text-tertiary);margin:-4px 0 10px"></div>
     <div id="bgtIncList" class="nw-list"></div>
     <div class="empty-state" id="bgtIncEmpty">No income sources logged yet</div>
     <div class="quick-add">
@@ -2100,6 +2203,61 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   <div class="card" style="padding:0;overflow:hidden">
     <div id="finRecentList"></div>
     <div class="fin-recent-empty" id="finRecentEmpty">No recent activity yet — changes to net worth, subscriptions, and orders will show up here.</div>
+  </div>
+</div>
+
+<!-- ===== INCOME CALENDAR (Phase 06) — planned pay days / incoming money, not company earnings ===== -->
+<div class="section" data-section="earnings" data-eq-collapse="finance:earnings">
+  <div class="section-title" data-eq-collapse-keep data-eq-collapse-trigger>
+    <span class="section-title-text">INCOME CALENDAR<span class="eq-collapse-chevron"></span></span>
+  </div>
+
+  <div class="card inc-add-card">
+    <div class="inc-add-eyebrow">+ NEW INCOME EVENT</div>
+    <div class="inc-add-grid">
+      <input type="text" id="incName" placeholder="Source (e.g. Shift pay)" class="inc-input inc-input-name">
+      <input type="number" id="incAmount" placeholder="Amount" step="0.01" class="inc-input inc-input-amt">
+      <select id="incCurrency" class="inc-input inc-input-ccy">
+        <option value="GBP">GBP</option>
+        <option value="USD">USD</option>
+        <option value="EUR">EUR</option>
+        <option value="CHF">CHF</option>
+      </select>
+      <label class="date-field inc-input-date" title="First / next date"><span class="date-emoji" aria-hidden="true">📅</span><input type="date" id="incDate"></label>
+      <select id="incRecurrence" class="inc-input inc-input-recur" title="How often this repeats">
+        <option value="none">Doesn't repeat</option>
+        <option value="weekly">Weekly</option>
+        <option value="fortnightly">Fortnightly</option>
+        <option value="monthly">Monthly</option>
+        <option value="custom">Custom interval</option>
+      </select>
+      <input type="number" id="incCustomDays" placeholder="Every N days" min="1" class="inc-input inc-input-custom" style="display:none">
+      <button type="button" class="inc-add-btn" id="incAddBtn">+ Add</button>
+    </div>
+  </div>
+
+  <div class="inc-toolbar">
+    <div class="inc-toolbar-label" id="incToolbarLabel">—</div>
+    <div class="cal-view-toggle" id="incViewToggle">
+      <button type="button" class="cal-view-btn" data-cal-view="day">Day</button>
+      <button type="button" class="cal-view-btn" data-cal-view="week">Week</button>
+      <button type="button" class="cal-view-btn is-active" data-cal-view="month">Month</button>
+    </div>
+  </div>
+  <div class="inc-nav-row">
+    <button type="button" class="btn inc-nav-btn" id="incPrevBtn" aria-label="Previous">‹</button>
+    <button type="button" class="btn inc-nav-btn" id="incTodayBtn">Today</button>
+    <button type="button" class="btn inc-nav-btn" id="incNextBtn" aria-label="Next">›</button>
+  </div>
+
+  <div id="incMonthView" class="inc-month-grid"></div>
+  <div id="incWeekView" class="inc-week-grid" style="display:none"></div>
+  <div id="incDayView" class="inc-day-split" style="display:none">
+    <div class="inc-day-list" id="incDayList"></div>
+    <div class="inc-day-side">
+      <div class="inc-minical" id="incMiniCal"></div>
+      <div class="inc-day-detail" id="incDayDetail"><div class="fin-graph-empty">Select an event to see detail.</div></div>
+    </div>
   </div>
 </div>
 
@@ -3893,12 +4051,13 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     { key: 'incoming', label: 'Incoming Orders' },
     { key: 'wish',     label: 'Wishlist' },
     { key: 'recent',   label: 'Recent' },
+    { key: 'earnings', label: 'Income Calendar' },
   ];
   // Sections with no list/graph split at all -- Phase 05.4's Recent tab is
   // a single activity feed (a lens across the other sections' data, not
   // its own independent store), so the toggle is hidden rather than
   // wired to a no-op.
-  const FIN_SECTIONS_NO_TOGGLE = ['recent'];
+  const FIN_SECTIONS_NO_TOGGLE = ['recent', 'earnings']; // earnings has its own Day/Week/Month toggle instead
   const FIN_SECTION_KEY = 'eq.finance.activeSection_v1';
   const FIN_VIEWMODE_KEY = 'eq.finance.viewMode_v1';
 
@@ -4192,6 +4351,376 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   wireFinChartHold('subsGraphWrap', buildSubsDetail);
   wireFinChartHold('ordGraphWrap', buildOrdersDetail);
   wireFinChartHold('wishGraphWrap', buildWishDetail);
+
+  // ============================================================
+  // Phase 06 — Income calendar. See the CSS block's own header comment
+  // for the income-only / personal-not-market scoping rationale.
+  // Recurring events are stored as ONE rule each and occurrences are
+  // computed on demand for whatever range is visible -- never
+  // materialized into individual rows.
+  // ============================================================
+  const INCOME_EVENTS_KEY = 'fin:income_events';
+  const INC_VIEW_KEY = 'eq.finance.calView_v1';
+  const DOW_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+  function getIncomeEvents() { return storeGet(INCOME_EVENTS_KEY) || []; }
+  function setIncomeEvents(list) { storeSet(INCOME_EVENTS_KEY, list); }
+  function incGenId() { return 'inc_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8); }
+
+  function incFmtDateKey(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  function incParseDateKey(s) { const p = s.split('-').map(Number); return new Date(p[0], p[1] - 1, p[2]); }
+  function incAddDays(d, n) { const r = new Date(d); r.setDate(r.getDate() + n); return r; }
+  function incAddMonthsClamped(d, n) {
+    const day = d.getDate();
+    const first = new Date(d.getFullYear(), d.getMonth() + n, 1);
+    const lastDay = new Date(first.getFullYear(), first.getMonth() + 1, 0).getDate();
+    first.setDate(Math.min(day, lastDay));
+    return first;
+  }
+  // Monday-first day-of-week index (0=Mon..6=Sun) -- JS's native getDay() is Sunday-first.
+  function incMondayDow(d) { return (d.getDay() + 6) % 7; }
+
+  // Walks a recurrence rule forward and returns every occurrence date
+  // (as 'YYYY-MM-DD' keys) that falls within [rangeStartKey, rangeEndKey].
+  // Bounded loops (not truly unbounded) -- 3000 steps covers ~58 years of
+  // a weekly rule, ample for a personal finance calendar.
+  function incOccurrencesInRange(event, rangeStartKey, rangeEndKey) {
+    const out = [];
+    const anchorKey = event.startDate;
+    if (event.recurrence === 'none' || !event.recurrence) {
+      if (anchorKey >= rangeStartKey && anchorKey <= rangeEndKey) out.push(anchorKey);
+      return out;
+    }
+    const rangeStart = incParseDateKey(rangeStartKey);
+    const rangeEnd = incParseDateKey(rangeEndKey);
+    const anchor = incParseDateKey(anchorKey);
+
+    // Monthly is handled separately: each occurrence is computed as
+    // (anchor month + N), clamped to that month's own last day, ALWAYS
+    // relative to the fixed anchor day-of-month -- never compounded from
+    // the previous occurrence. A generic stepFn(prev) => +1 month would
+    // silently lose the original day once any one short month clamped it
+    // (e.g. a 31st-of-the-month rule hitting a 30-day June would
+    // permanently downgrade to "the 30th" every month after, instead of
+    // trying the 31st again in July).
+    if (event.recurrence === 'monthly') {
+      const anchorDay = anchor.getDate();
+      const startOffset = Math.max(0, (rangeStart.getFullYear() - anchor.getFullYear()) * 12 + (rangeStart.getMonth() - anchor.getMonth()) - 1);
+      let guard = 0;
+      for (let n = startOffset; guard < 1200; n++, guard++) {
+        const first = new Date(anchor.getFullYear(), anchor.getMonth() + n, 1);
+        const lastDay = new Date(first.getFullYear(), first.getMonth() + 1, 0).getDate();
+        first.setDate(Math.min(anchorDay, lastDay));
+        if (first > rangeEnd) break;
+        if (first >= anchor) {
+          const key = incFmtDateKey(first);
+          if (key >= rangeStartKey && key <= rangeEndKey) out.push(key);
+        }
+      }
+      return out;
+    }
+
+    const stepFn = event.recurrence === 'weekly' ? (d) => incAddDays(d, 7)
+      : event.recurrence === 'fortnightly' ? (d) => incAddDays(d, 14)
+      : (d) => incAddDays(d, Math.max(1, Number(event.customIntervalDays) || 30));
+    let cur = anchor;
+    let guard = 0;
+    while (cur < rangeStart && guard < 3000) { cur = stepFn(cur); guard++; }
+    guard = 0;
+    while (cur <= rangeEnd && guard < 500) {
+      const key = incFmtDateKey(cur);
+      if (key >= rangeStartKey && key <= rangeEndKey) out.push(key);
+      cur = stepFn(cur);
+      guard++;
+    }
+    return out;
+  }
+  function incIsConfirmed(event, dateKey) { return !!(event.confirmedDates && event.confirmedDates[dateKey]); }
+  function incSetConfirmed(eventId, dateKey, confirmed) {
+    const list = getIncomeEvents();
+    const ev = list.find((e) => e.id === eventId);
+    if (!ev) return;
+    if (!ev.confirmedDates) ev.confirmedDates = {};
+    if (confirmed) ev.confirmedDates[dateKey] = true; else delete ev.confirmedDates[dateKey];
+    setIncomeEvents(list);
+  }
+  // Flat, date-sorted occurrence list for a range: [{event, dateKey, confirmed}]
+  function incOccurrencesForRange(startKey, endKey) {
+    const events = getIncomeEvents();
+    const out = [];
+    events.forEach((ev) => {
+      incOccurrencesInRange(ev, startKey, endKey).forEach((dateKey) => {
+        out.push({ event: ev, dateKey: dateKey, confirmed: incIsConfirmed(ev, dateKey) });
+      });
+    });
+    out.sort((a, b) => a.dateKey !== b.dateKey ? a.dateKey.localeCompare(b.dateKey) : (a.event.label || '').localeCompare(b.event.label || ''));
+    return out;
+  }
+
+  // ---- view state ----
+  let incView = (function () { const v = storeGet(INC_VIEW_KEY); return ['day', 'week', 'month'].indexOf(v) !== -1 ? v : 'month'; })();
+  let incFocusDate = new Date(); // always opens on today -- not persisted, unlike the view mode
+  let incSelectedEventKey = null; // "eventId::dateKey" of the day-view's selected occurrence
+  let incMiniCalMonth = new Date();
+
+  function incSetView(v) {
+    incView = v;
+    storeSet(INC_VIEW_KEY, v);
+    document.querySelectorAll('#incViewToggle .cal-view-btn').forEach((b) => b.classList.toggle('is-active', b.getAttribute('data-cal-view') === v));
+    const monthEl = document.getElementById('incMonthView'), weekEl = document.getElementById('incWeekView'), dayEl = document.getElementById('incDayView');
+    if (monthEl) monthEl.style.display = v === 'month' ? '' : 'none';
+    if (weekEl) weekEl.style.display = v === 'week' ? '' : 'none';
+    if (dayEl) dayEl.style.display = v === 'day' ? '' : 'none';
+    renderIncomeCalendar();
+  }
+  function renderIncomeCalendar() {
+    if (!document.getElementById('incMonthView')) return;
+    if (incView === 'month') renderIncMonth();
+    else if (incView === 'week') renderIncWeek();
+    else renderIncDay();
+  }
+
+  function incEventRowHtml(o) {
+    return '<div class="inc-event-row ' + (o.confirmed ? 'is-confirmed' : 'is-expected') + '">'
+      + '<span class="inc-event-row-label">' + escapeHtml(o.event.label) + '</span>'
+      + '<span class="inc-event-row-amt">' + fmtMoney(o.event.amountGBP) + '</span>'
+      + '</div>';
+  }
+
+  function renderIncMonth() {
+    const grid = document.getElementById('incMonthView');
+    const label = document.getElementById('incToolbarLabel');
+    if (!grid) return;
+    const year = incFocusDate.getFullYear(), month = incFocusDate.getMonth();
+    if (label) label.textContent = MONTH_NAMES[month] + ' ' + year;
+
+    const firstOfMonth = new Date(year, month, 1);
+    const gridStart = incAddDays(firstOfMonth, -incMondayDow(firstOfMonth));
+    const totalCells = 42; // 6 rows x 7 cols, fixed -- covers any month/offset combo without reflow
+    const startKey = incFmtDateKey(gridStart), endKey = incFmtDateKey(incAddDays(gridStart, totalCells - 1));
+    const occByDate = {};
+    incOccurrencesForRange(startKey, endKey).forEach((o) => { (occByDate[o.dateKey] = occByDate[o.dateKey] || []).push(o); });
+
+    const todayKey = incFmtDateKey(new Date());
+    let html = DOW_LABELS.map((d) => '<div class="inc-month-dow">' + d + '</div>').join('');
+    for (let i = 0; i < totalCells; i++) {
+      const cellDate = incAddDays(gridStart, i);
+      const key = incFmtDateKey(cellDate);
+      const isOtherMonth = cellDate.getMonth() !== month;
+      const isToday = key === todayKey;
+      const isPast = key < todayKey;
+      const occs = occByDate[key] || [];
+      const maxShow = 3;
+      const shown = occs.slice(0, maxShow);
+      const moreCount = occs.length - shown.length;
+      html += '<div class="inc-month-cell' + (isOtherMonth ? ' is-other-month' : '') + (isToday ? ' is-today' : '') + (isPast ? ' is-past' : '') + '">'
+        + '<div class="inc-month-date">' + cellDate.getDate() + (isToday ? ' <span class="inc-month-today-label">Today</span>' : '') + '</div>'
+        + '<div class="inc-month-events">' + shown.map(incEventRowHtml).join('')
+        + (moreCount > 0 ? '<div class="inc-month-more">+' + moreCount + ' more</div>' : '')
+        + '</div></div>';
+    }
+    grid.innerHTML = html;
+  }
+
+  function renderIncWeek() {
+    const grid = document.getElementById('incWeekView');
+    const label = document.getElementById('incToolbarLabel');
+    if (!grid) return;
+    const weekStart = incAddDays(incFocusDate, -incMondayDow(incFocusDate));
+    const weekEnd = incAddDays(weekStart, 6);
+    if (label) {
+      const sameMonth = weekStart.getMonth() === weekEnd.getMonth();
+      label.textContent = sameMonth
+        ? MONTH_NAMES[weekStart.getMonth()] + ' ' + weekStart.getDate() + '–' + weekEnd.getDate() + ', ' + weekStart.getFullYear()
+        : MONTH_NAMES[weekStart.getMonth()] + ' ' + weekStart.getDate() + ' – ' + MONTH_NAMES[weekEnd.getMonth()] + ' ' + weekEnd.getDate() + ', ' + weekEnd.getFullYear();
+    }
+    const startKey = incFmtDateKey(weekStart), endKey = incFmtDateKey(weekEnd);
+    const occByDate = {};
+    incOccurrencesForRange(startKey, endKey).forEach((o) => { (occByDate[o.dateKey] = occByDate[o.dateKey] || []).push(o); });
+    const todayKey = incFmtDateKey(new Date());
+    let html = '';
+    for (let i = 0; i < 7; i++) {
+      const cellDate = incAddDays(weekStart, i);
+      const key = incFmtDateKey(cellDate);
+      const isToday = key === todayKey;
+      const isPast = key < todayKey;
+      html += '<div class="inc-week-cell' + (isToday ? ' is-today' : '') + (isPast ? ' is-past' : '') + '">'
+        + '<div class="inc-week-dow">' + DOW_LABELS[i] + '</div>'
+        + '<div class="inc-week-date">' + cellDate.getDate() + (isToday ? ' · Today' : '') + '</div>'
+        + (occByDate[key] || []).map(incEventRowHtml).join('')
+        + '</div>';
+    }
+    grid.innerHTML = html;
+  }
+
+  function renderIncDay() {
+    const list = document.getElementById('incDayList');
+    const label = document.getElementById('incToolbarLabel');
+    if (!list) return;
+    if (label) label.textContent = DAY_NAMES[incFocusDate.getDay()] + ', ' + MONTH_NAMES[incFocusDate.getMonth()] + ' ' + incFocusDate.getDate();
+
+    const dayKey = incFmtDateKey(incFocusDate);
+    const occs = incOccurrencesForRange(dayKey, dayKey);
+    if (!occs.length) {
+      list.innerHTML = '<div class="fin-graph-empty">No income events on this day.</div>';
+      incSelectedEventKey = null;
+    } else {
+      if (!occs.some((o) => (o.event.id + '::' + o.dateKey) === incSelectedEventKey)) {
+        incSelectedEventKey = occs[0].event.id + '::' + occs[0].dateKey;
+      }
+      list.innerHTML = occs.map((o) => {
+        const evKey = o.event.id + '::' + o.dateKey;
+        return '<button type="button" class="inc-day-event-row' + (evKey === incSelectedEventKey ? ' is-selected' : '') + '" data-ev-key="' + evKey + '">'
+          + '<span><span class="inc-day-event-name">' + escapeHtml(o.event.label) + '</span>'
+          + '<div class="inc-day-event-status">' + (o.confirmed ? 'Confirmed' : 'Expected') + (o.event.recurrence && o.event.recurrence !== 'none' ? ' · ' + o.event.recurrence : '') + '</div></span>'
+          + '<span class="inc-day-event-amt ' + (o.confirmed ? 'is-confirmed' : 'is-expected') + '">' + fmtMoney(o.event.amountGBP) + '</span>'
+          + '</button>';
+      }).join('');
+      list.querySelectorAll('.inc-day-event-row').forEach((btn) => {
+        btn.addEventListener('click', () => { incSelectedEventKey = btn.getAttribute('data-ev-key'); renderIncDay(); });
+      });
+    }
+    renderIncDayDetail();
+    renderIncMiniCal();
+  }
+
+  function renderIncDayDetail() {
+    const el = document.getElementById('incDayDetail');
+    if (!el) return;
+    if (!incSelectedEventKey) { el.innerHTML = '<div class="fin-graph-empty">Select an event to see detail.</div>'; return; }
+    const sep = incSelectedEventKey.lastIndexOf('::');
+    const eventId = incSelectedEventKey.slice(0, sep), dateKey = incSelectedEventKey.slice(sep + 2);
+    const ev = getIncomeEvents().find((e) => e.id === eventId);
+    if (!ev) { el.innerHTML = '<div class="fin-graph-empty">Select an event to see detail.</div>'; return; }
+    const confirmed = incIsConfirmed(ev, dateKey);
+    const recurLabel = { none: "Doesn't repeat", weekly: 'Weekly', fortnightly: 'Fortnightly', monthly: 'Monthly', custom: 'Every ' + (ev.customIntervalDays || '?') + ' days' }[ev.recurrence] || ev.recurrence;
+    el.innerHTML =
+      '<div class="inc-day-detail-name">' + escapeHtml(ev.label) + '</div>'
+      + '<div class="inc-day-detail-amt ' + (confirmed ? 'is-confirmed' : 'is-expected') + '">' + fmtMoney(ev.amountGBP) + '</div>'
+      + '<div class="inc-day-detail-row"><span>Date</span><span>' + dateKey + '</span></div>'
+      + '<div class="inc-day-detail-row"><span>Recurrence</span><span>' + escapeHtml(recurLabel) + '</span></div>'
+      + '<div class="inc-day-detail-row"><span>Status</span><span>' + (confirmed ? 'Confirmed' : 'Expected') + '</span></div>'
+      + '<button type="button" class="inc-confirm-btn' + (confirmed ? ' is-confirmed' : '') + '" id="incConfirmBtn">' + (confirmed ? '✓ Confirmed — tap to unconfirm' : 'Mark as confirmed') + '</button>';
+    const btn = document.getElementById('incConfirmBtn');
+    if (btn) btn.addEventListener('click', () => {
+      incSetConfirmed(eventId, dateKey, !confirmed);
+      renderIncomeCalendar();
+      refreshBudgetIncomeCalendarNote();
+    });
+  }
+
+  function renderIncMiniCal() {
+    const el = document.getElementById('incMiniCal');
+    if (!el) return;
+    const year = incMiniCalMonth.getFullYear(), month = incMiniCalMonth.getMonth();
+    const firstOfMonth = new Date(year, month, 1);
+    const gridStart = incAddDays(firstOfMonth, -incMondayDow(firstOfMonth));
+    const startKey = incFmtDateKey(gridStart), endKey = incFmtDateKey(incAddDays(gridStart, 41));
+    const occDates = {};
+    incOccurrencesForRange(startKey, endKey).forEach((o) => { occDates[o.dateKey] = true; });
+    const todayKey = incFmtDateKey(new Date());
+    const focusKey = incFmtDateKey(incFocusDate);
+    let html = '<div class="inc-minical-head"><button type="button" class="inc-minical-nav" id="incMiniPrev">‹</button><span>' + MONTH_NAMES[month] + ' ' + year + '</span><button type="button" class="inc-minical-nav" id="incMiniNext">›</button></div>';
+    html += '<div class="inc-minical-grid">' + DOW_LABELS.map((d) => '<div class="inc-minical-dow">' + d[0] + '</div>').join('');
+    for (let i = 0; i < 42; i++) {
+      const d = incAddDays(gridStart, i);
+      const key = incFmtDateKey(d);
+      const cls = ['inc-minical-day'];
+      if (d.getMonth() !== month) cls.push('is-other-month');
+      if (key === todayKey) cls.push('is-today');
+      if (key === focusKey) cls.push('is-selected');
+      if (occDates[key]) cls.push('has-events');
+      html += '<button type="button" class="' + cls.join(' ') + '" data-day-key="' + key + '">' + d.getDate() + '</button>';
+    }
+    html += '</div>';
+    el.innerHTML = html;
+    el.querySelectorAll('.inc-minical-day').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        incFocusDate = incParseDateKey(btn.getAttribute('data-day-key'));
+        incSelectedEventKey = null;
+        renderIncDay();
+      });
+    });
+    const prevBtn = document.getElementById('incMiniPrev'), nextBtn = document.getElementById('incMiniNext');
+    if (prevBtn) prevBtn.addEventListener('click', () => { incMiniCalMonth = incAddMonthsClamped(incMiniCalMonth, -1); renderIncMiniCal(); });
+    if (nextBtn) nextBtn.addEventListener('click', () => { incMiniCalMonth = incAddMonthsClamped(incMiniCalMonth, 1); renderIncMiniCal(); });
+  }
+
+  function incNavStep(dir) {
+    if (incView === 'month') incFocusDate = incAddMonthsClamped(incFocusDate, dir);
+    else if (incView === 'week') incFocusDate = incAddDays(incFocusDate, dir * 7);
+    else incFocusDate = incAddDays(incFocusDate, dir);
+    incSelectedEventKey = null;
+    renderIncomeCalendar();
+  }
+
+  // Phase 06.4 -- informational only inside Budget's Income card; doesn't
+  // alter Budget's own editable income list/total, so there's no risk of
+  // silently double-counting if the same income is entered in both
+  // places for their respective purposes (projection input vs. a real
+  // dated/recurring event).
+  function refreshBudgetIncomeCalendarNote() {
+    const el = document.getElementById('bgtIncCalNote');
+    if (!el) return;
+    const now = new Date();
+    const monthStart = incFmtDateKey(new Date(now.getFullYear(), now.getMonth(), 1));
+    const monthEnd = incFmtDateKey(new Date(now.getFullYear(), now.getMonth() + 1, 0));
+    const occs = incOccurrencesForRange(monthStart, monthEnd);
+    if (!occs.length) { el.style.display = 'none'; return; }
+    const confirmedTotal = occs.filter((o) => o.confirmed).reduce((s, o) => s + o.event.amountGBP, 0);
+    const expectedTotal = occs.reduce((s, o) => s + o.event.amountGBP, 0);
+    el.style.display = '';
+    el.textContent = 'Income Calendar this month: ' + fmtMoney(confirmedTotal) + ' confirmed'
+      + (expectedTotal > confirmedTotal ? ', ' + fmtMoney(expectedTotal) + ' total expected' : '');
+  }
+
+  function wireIncomeCalendar() {
+    if (!document.getElementById('incMonthView')) return;
+    document.querySelectorAll('#incViewToggle .cal-view-btn').forEach((btn) => {
+      btn.addEventListener('click', () => incSetView(btn.getAttribute('data-cal-view')));
+    });
+    const prevBtn = document.getElementById('incPrevBtn'), nextBtn = document.getElementById('incNextBtn'), todayBtn = document.getElementById('incTodayBtn');
+    if (prevBtn) prevBtn.addEventListener('click', () => incNavStep(-1));
+    if (nextBtn) nextBtn.addEventListener('click', () => incNavStep(1));
+    if (todayBtn) todayBtn.addEventListener('click', () => { incFocusDate = new Date(); incMiniCalMonth = new Date(); incSelectedEventKey = null; renderIncomeCalendar(); });
+
+    const recurSel = document.getElementById('incRecurrence');
+    const customInput = document.getElementById('incCustomDays');
+    if (recurSel) recurSel.addEventListener('change', () => {
+      if (customInput) customInput.style.display = recurSel.value === 'custom' ? '' : 'none';
+    });
+
+    const addBtn = document.getElementById('incAddBtn');
+    if (addBtn) addBtn.addEventListener('click', () => {
+      const nameEl = document.getElementById('incName'), amtEl = document.getElementById('incAmount'), ccyEl = document.getElementById('incCurrency'), dateEl = document.getElementById('incDate');
+      const name = (nameEl.value || '').trim();
+      const amtRaw = parseFloat(amtEl.value);
+      const dateVal = dateEl.value;
+      if (!name || isNaN(amtRaw) || !dateVal) { nameEl.focus(); return; }
+      const ccy = ccyEl ? ccyEl.value : 'GBP';
+      const rate = exchangeRates[ccy] || 1;
+      const amountGBP = amtRaw / rate;
+      const recurrence = recurSel ? recurSel.value : 'none';
+      const customDays = recurrence === 'custom' ? Math.max(1, parseInt(customInput.value, 10) || 30) : null;
+      const list = getIncomeEvents();
+      list.push({
+        id: incGenId(), label: name, amountGBP: amountGBP, entered_currency: ccy, entered_amount: amtRaw,
+        startDate: dateVal, recurrence: recurrence, customIntervalDays: customDays, confirmedDates: {},
+      });
+      setIncomeEvents(list);
+      nameEl.value = ''; amtEl.value = ''; dateEl.value = '';
+      if (recurSel) recurSel.value = 'none';
+      if (customInput) { customInput.value = ''; customInput.style.display = 'none'; }
+      renderIncomeCalendar();
+      refreshBudgetIncomeCalendarNote();
+    });
+
+    incSetView(incView); // applies the persisted view mode and does the first render
+  }
+  wireIncomeCalendar();
+  refreshBudgetIncomeCalendarNote();
 
 })();
 </script>
