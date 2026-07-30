@@ -185,7 +185,7 @@ body.has-eq-dock { padding-bottom: calc(72px + env(safe-area-inset-bottom)) !imp
 
 html, body { -webkit-text-size-adjust: 100%; }
 @media (max-width: 768px) {
-  html { touch-action: pan-y; }
+  html { touch-action: pan-y pinch-zoom; }
   ::-webkit-scrollbar { width: 0; height: 0; display: none; }
   html, body { scrollbar-width: none; -ms-overflow-style: none; }
 }
@@ -556,11 +556,14 @@ body.topbar-modal-open { overflow: hidden; touch-action: none; }
     wireAiBar();
   }
 
-  function blockGesture(e) { e.preventDefault(); }
-  function lockGestures() {
-    document.addEventListener('gesturestart', blockGesture, { passive: false });
-    document.addEventListener('gesturechange', blockGesture, { passive: false });
-    document.addEventListener('gestureend', blockGesture, { passive: false });
+  // Double-tap-to-zoom is still blocked (an accidental double-tap on a
+  // button/checkbox shouldn't zoom the page) -- pinch-zoom itself is NOT
+  // blocked here; that's handled by touch-action: pan-y pinch-zoom above
+  // for standard browsers. An earlier version also called preventDefault()
+  // on Safari's proprietary gesturestart/gesturechange/gestureend events,
+  // which blocked pinch-zoom specifically on iOS regardless of touch-action
+  // -- removed so pinch-zoom actually works there too.
+  function blockDoubleTapZoom() {
     let lastTouch = 0;
     document.addEventListener('touchend', (e) => {
       const now = Date.now();
@@ -595,7 +598,7 @@ body.topbar-modal-open { overflow: hidden; touch-action: none; }
   function boot() {
     runMigrations();
     injectStyleAndHTML();
-    lockGestures();
+    blockDoubleTapZoom();
     startModalLock();
     registerServiceWorker();
     if (!isEmbedded()) { runObsidianSync(false); runWeeklyAutoBackup(); }
