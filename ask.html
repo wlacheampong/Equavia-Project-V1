@@ -16,6 +16,7 @@
 <script src="js/obsidian-sync.js"></script>
 <script src="js/daily-report.js" defer></script>
 <script src="js/assistant-tools.js"></script>
+<script src="js/expand-primitives.js"></script>
 <style>
 :root {
   --bg: var(--eq-bg-primary);
@@ -111,12 +112,14 @@ body {
   padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
   display: flex; justify-content: center;
 }
-/* topbar.js's mobile bottom tab bar is also fixed to the true viewport
-   bottom (64px tall, plus the safe-area inset) -- without this the input
-   bar sits underneath it instead of above it. Matches topbar.js's own
-   767px breakpoint and its body.has-bottombar padding convention. */
-@media (max-width: 767px) {
-  body.has-bottombar .ask-input-bar { bottom: calc(64px + env(safe-area-inset-bottom)); }
+/* topbar.js's floating dock is also fixed to the true viewport bottom, at
+   every breakpoint now (Phase 04) -- without this the input bar sits
+   underneath it instead of above it. Matches topbar.js's own
+   body.has-eq-dock footprint (72px, 62px under its 480px compact
+   breakpoint), both plus the safe-area inset. */
+body.has-eq-dock .ask-input-bar { bottom: calc(72px + env(safe-area-inset-bottom)); }
+@media (max-width: 480px) {
+  body.has-eq-dock .ask-input-bar { bottom: calc(62px + env(safe-area-inset-bottom)); }
 }
 .ask-input-row {
   width: 100%; max-width: 688px; display: flex; gap: 8px; align-items: flex-end;
@@ -1016,6 +1019,81 @@ body {
     return el;
   }
 
+  // Phase 04.3: after a turn that included one or more silent actions,
+  // group them into one panel (the Phase 03 shared shell) instead of
+  // leaving the user to notice each one inline in the transcript.
+  // Deliberately scoped to the SILENT/auto-executed path only (the
+  // role:'action' messages renderActionEl already renders inline) --
+  // gated tools already get an explicit Confirm/Decline card before they
+  // run (renderProposalEl), so there's nothing to surface after the fact
+  // for those. This panel is a grouped VIEW of the existing
+  // undoAssistantActivity()/activityId mechanism, not a second
+  // reversibility mechanism -- each row's Undo does exactly what the
+  // inline one does, including keeping the main transcript in sync.
+  function buildChangesPanelRow(m) {
+    const row = document.createElement('div');
+    row.className = 'eq-changes-row';
+    const text = document.createElement('div');
+    text.className = 'eq-changes-row-text';
+    text.textContent = (m.actionOk === false ? '⚠️ ' : '') + m.summary;
+    row.appendChild(text);
+
+    const slot = document.createElement('div');
+    slot.className = 'eq-changes-row-action';
+    if (m.undone) {
+      slot.textContent = 'Undone';
+      slot.classList.add('is-undone');
+    } else if (m.activityId && m.actionOk !== false) {
+      const undoBtn = document.createElement('button');
+      undoBtn.type = 'button'; undoBtn.className = 'eq-changes-undo-btn'; undoBtn.textContent = 'Undo';
+      undoBtn.addEventListener('click', async () => {
+        undoBtn.disabled = true;
+        const ok = await undoAssistantActivity(m.activityId);
+        if (ok) {
+          m.undone = true;
+          const list = getMessages();
+          const msg = list.find((x) => x.activityId === m.activityId);
+          if (msg) { msg.undone = true; setMessages(list); }
+          renderMessages(); // keep the main transcript's own copy of this row in sync too
+          slot.innerHTML = '';
+          slot.textContent = 'Undone';
+          slot.classList.add('is-undone');
+        } else {
+          undoBtn.disabled = false;
+        }
+      });
+      slot.appendChild(undoBtn);
+    }
+    row.appendChild(slot);
+    return row;
+  }
+
+  function maybeShowChangesPanel(actions) {
+    if (!actions || !actions.length || !window.EqExpand) return;
+    const wrap = document.createElement('div');
+    wrap.className = 'eq-changes-panel';
+
+    const title = document.createElement('div');
+    title.className = 'eq-changes-panel-title';
+    title.textContent = actions.length === 1 ? 'Equavia 0 made 1 change' : 'Equavia 0 made ' + actions.length + ' changes';
+    wrap.appendChild(title);
+
+    const list = document.createElement('div');
+    list.className = 'eq-changes-panel-list';
+    actions.forEach((m) => list.appendChild(buildChangesPanelRow(m)));
+    wrap.appendChild(list);
+
+    const footer = document.createElement('div');
+    footer.className = 'eq-changes-panel-footer';
+    const closeBtn = document.createElement('button');
+    closeBtn.type = 'button'; closeBtn.className = 'btn'; closeBtn.textContent = 'Close';
+    footer.appendChild(closeBtn);
+    wrap.appendChild(footer);
+
+    const handle = window.EqExpand.openDetached({ content: wrap, layout: 'lowbox' });
+    closeBtn.addEventListener('click', () => handle.close());
+  }
+
   function renderMessages() {
     const list = getMessages();
     $('askEmpty').style.display = (list.length || onboardingActive) ? 'none' : '';
@@ -1175,11 +1253,13 @@ body {
   // (returns without finishing) the instant a confirm-gated tool comes up,
   // since that has to wait on a real click, which can't happen inside this
   // call stack. resolvePendingAction resumes the loop from that point later.
-  async function runTurn(apiMessages, systemContext, tools, depth) {
+  async function runTurn(apiMessages, systemContext, tools, depth, actions) {
+    actions = actions || []; // accumulates this turn's silent actions across the recursion, for maybeShowChangesPanel at whichever terminal point below is hit
     if (depth >= MAX_TOOL_ROUNDS) {
       const list = getMessages();
       list.push({ role: 'error', content: 'Stopped after ' + MAX_TOOL_ROUNDS + ' tool calls in a row — ask again if it didn\'t finish.', at: new Date().toISOString() });
       setMessages(list);
+      maybeShowChangesPanel(actions);
       return;
     }
     const res = await fetch('/api/chat', {
@@ -1202,25 +1282,29 @@ body {
       }
       if (toolNeedsConfirm(toolName, input)) {
         addPendingAction(data.toolUse, data.rawContent, apiMessages, systemContext);
+        maybeShowChangesPanel(actions);
         return;
       }
       let result;
       try { result = await TOOL_REGISTRY[toolName].execute(input); }
       catch (e) { result = { ok: false, summary: 'Failed: ' + (e.message || 'unknown error') }; }
+      const actionMsg = { role: 'action', tool: toolName, summary: result.summary, actionOk: result.ok !== false, activityId: result.activityId || null, undone: false, at: new Date().toISOString() };
       const list2 = getMessages();
-      list2.push({ role: 'action', tool: toolName, summary: result.summary, actionOk: result.ok !== false, activityId: result.activityId || null, undone: false, at: new Date().toISOString() });
+      list2.push(actionMsg);
       setMessages(list2);
       renderMessages();
+      actions.push(actionMsg);
       const nextMessages = apiMessages.concat([
         { role: 'assistant', content: data.rawContent },
         { role: 'user', content: [{ type: 'tool_result', tool_use_id: data.toolUse.id, content: result.summary }] },
       ]);
-      return runTurn(nextMessages, systemContext, tools, depth + 1);
+      return runTurn(nextMessages, systemContext, tools, depth + 1, actions);
     }
     const list = getMessages();
     const sources = extractSources(data.rawContent);
     list.push({ role: 'assistant', content: data.reply || '(empty response)', sources: sources.length ? sources : undefined, at: new Date().toISOString() });
     setMessages(list);
+    maybeShowChangesPanel(actions);
   }
 
   function addPendingAction(toolUse, rawContent, apiMessagesSnapshot, systemContextSnapshot) {

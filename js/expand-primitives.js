@@ -10,6 +10,15 @@
 //     Below the mobile breakpoint every panel becomes a full-screen
 //     sheet instead -- there is no "left" on a phone.
 //
+//   window.EqExpand.openDetached({ content, layout, onClose, returnFocusTo })
+//     Opens `content` in the shared shell with no click-triggering source --
+//     for panels a script opens on its own (e.g. Phase 04.3's post-action
+//     changes summary), not in response to the user clicking something.
+//     `layout` is 'left'|'right'|'center'|'lowbox' (default 'center');
+//     `returnFocusTo`, if given, gets focus back on close (openShell already
+//     treats a missing/null triggerEl as "don't bother", so this is optional).
+//     Returns { close }.
+//
 //   window.EqExpand.holdToDetail({ target, threshold, renderDetail })
 //     Wires a press-and-hold on `target` (Pointer Events, one code
 //     path for mouse+touch) to open renderDetail()'s content in the
@@ -135,6 +144,20 @@
     });
   }
 
+  // ---- openDetached --------------------------------------------------
+  function openDetached(config) {
+    config = config || {};
+    const content = config.content;
+    const contentEl = typeof content === 'function' ? content() : content;
+    if (!contentEl) return { close: function () {} };
+    return openShell({
+      contentEl: contentEl,
+      triggerEl: config.returnFocusTo || null,
+      onClose: config.onClose,
+      layout: config.layout || 'center',
+    });
+  }
+
   // ---- holdToDetail --------------------------------------------------
   function holdToDetail(config) {
     const target = config.target;
@@ -200,5 +223,5 @@
     return { openViaClick: openViaClick };
   }
 
-  window.EqExpand = { expandPanel: expandPanel, holdToDetail: holdToDetail };
+  window.EqExpand = { expandPanel: expandPanel, holdToDetail: holdToDetail, openDetached: openDetached };
 })();

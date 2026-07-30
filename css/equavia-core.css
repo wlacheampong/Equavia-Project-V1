@@ -285,6 +285,19 @@ button:focus-visible, a:focus-visible, [tabindex]:focus-visible {
   transform: scale(0.96); opacity: 0;
 }
 .eq-shell-backdrop.eq-shell-open .eq-shell-center { transform: scale(1); opacity: 1; }
+/* lowbox: Phase 04.3's changes-summary panel -- "wide overlay panel
+   anchored low, with a persistent action bar at its foot" per
+   refs/13-settings-page-with-referral-panel.png. Horizontally centred via
+   the same flex auto-margin trick as .eq-shell-center, but only the
+   bottom margin is fixed -- top stays auto so the box sits low instead
+   of dead-centre. */
+.eq-shell-lowbox {
+  width: min(640px, 92vw); max-height: 72vh;
+  margin: auto auto max(6vh, 24px);
+  border-radius: var(--eq-card-radius-lg); border: 1px solid var(--eq-border-strong);
+  transform: translateY(24px) scale(0.98); opacity: 0;
+}
+.eq-shell-backdrop.eq-shell-open .eq-shell-lowbox { transform: translateY(0) scale(1); opacity: 1; }
 /* sheet: mobile degrade for every layout -- no "left" on a phone */
 .eq-shell-sheet {
   width: 100%; height: 100%;
@@ -306,6 +319,44 @@ button:focus-visible, a:focus-visible, [tabindex]:focus-visible {
   scrollbar-width: none; -ms-overflow-style: none;
 }
 .eq-shell-body::-webkit-scrollbar { display: none; width: 0; height: 0; }
+
+/* ==========================================================================
+   Phase 04.3 changes-summary panel content (ask.html). Sits inside an
+   .eq-shell-lowbox via EqExpand.openDetached(). The row/undo styling
+   mirrors ask.html's own inline .ask-action-undo treatment so a row looks
+   the same whether it's seen in the transcript or grouped in this panel.
+   ========================================================================== */
+.eq-changes-panel-title {
+  font-size: var(--eq-font-lg); font-weight: 700; margin-bottom: var(--eq-space-md);
+}
+.eq-changes-panel-list { display: flex; flex-direction: column; }
+.eq-changes-row {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--eq-space-md);
+  padding: var(--eq-space-md) 0; border-top: 1px solid var(--eq-border);
+}
+.eq-changes-row:first-child { border-top: 0; }
+.eq-changes-row-text { font-size: var(--eq-font-sm); color: var(--eq-text-primary); }
+.eq-changes-row-action { flex-shrink: 0; }
+.eq-changes-row-action.is-undone { font-size: var(--eq-font-xs); color: var(--eq-text-muted); font-style: italic; }
+.eq-changes-undo-btn {
+  background: transparent; border: 1px solid var(--eq-border-strong); color: var(--eq-text-secondary);
+  border-radius: var(--eq-btn-radius); padding: 5px 12px; font-size: var(--eq-font-xs); font-weight: 600;
+  font-family: inherit; cursor: pointer; transition: color 0.15s, border-color 0.15s;
+}
+.eq-changes-undo-btn:hover { color: var(--eq-text-primary); border-color: var(--eq-text-secondary); }
+.eq-changes-undo-btn:disabled { opacity: 0.5; cursor: default; }
+/* Sticky footer, "at its foot" per spec -- position:sticky inside
+   .eq-shell-body (the shell's own scroll container). The negative side/
+   bottom margins cancel .eq-shell-body's 28px padding on those three
+   edges so the footer's own background spans full-bleed to the panel's
+   real edges once stuck, instead of leaving a gap of bare padding below
+   it; its own padding then re-adds equivalent inset for the button. */
+.eq-changes-panel-footer {
+  display: flex; justify-content: flex-end;
+  margin: var(--eq-space-lg) -28px -28px; padding: var(--eq-space-lg) 28px 28px;
+  border-top: 1px solid var(--eq-border-strong);
+  position: sticky; bottom: 0; background: var(--eq-bg-primary);
+}
 
 /* holdToDetail() visual feedback while pressed -- "a subtle scale or
    progress hint, so it doesn't feel unresponsive" (spec). */

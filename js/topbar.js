@@ -1,14 +1,11 @@
 // =============================================================
 // Single shared site nav. Drop this on any page with:
 //     <script src="topbar.js" defer></script>
-// Renders from one page list into two presentations:
-//   - Desktop (>=768px): a top row showing all pages, in-flow at
-//     the start of <body> (the former per-page "cat-tabs" row,
-//     now defined once instead of copy-pasted onto every page).
-//   - Mobile (<768px): a fixed bottom tab bar with the 5 core
-//     pages plus a pinned
-//     "More" tab (always visible, never scrolls away) that opens
-//     a small sheet for the remaining pages.
+// Phase 04: renders one floating pill dock (all 7 non-Ask destinations,
+// icon-only, same markup at every viewport) plus a detached circular
+// button that expands into the Equavia 0 AI command bar. Replaces the
+// former two-presentation cat-tabs (desktop)/bottombar+More-sheet
+// (mobile) design -- one dock, one behaviour, all breakpoints.
 // Skipped entirely inside iframes -- an embedded page has no business
 // rendering the site's own nav chrome.
 // =============================================================
@@ -32,147 +29,159 @@
       icon: '<rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1"/><path d="M9 12l2 2 4-4"/>' },
     { key: 'finance', href: 'finance.html',   label: 'Finance',
       icon: '<path d="M3 7a2 2 0 0 1 2-2h13a1 1 0 0 1 1 1v3"/><path d="M3 7v10a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1H6a2 2 0 0 1-2-2"/><circle cx="17" cy="13" r="1.4"/>' },
-    // "More" on mobile only — desktop shows these inline with everything else.
-    { key: 'ask',      href: 'ask.html',       label: 'Equavia 0', more: true,
+    // Ask is intentionally excluded from DOCK_PAGES below (Phase 04.2 --
+    // the dock's own search button is now the entry point to Equavia 0),
+    // but stays in PAGES so currentPageKey() still resolves correctly
+    // when the user is actually on ask.html (drives the search button's
+    // own active state).
+    { key: 'ask',      href: 'ask.html',       label: 'Equavia 0',
       icon: '<path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>' },
     // Interactions + the old News page, merged: the news feed and weekly
     // digest are now a section on this page rather than a tab of their own.
-    { key: 'interactions', href: 'interactions.html', label: 'Social', more: true,
+    { key: 'interactions', href: 'interactions.html', label: 'Social',
       icon: '<circle cx="9" cy="8" r="3.2"/><path d="M3.5 20a5.5 5.5 0 0 1 11 0"/><circle cx="17.5" cy="7" r="2.4"/><path d="M15 12.5a4.2 4.2 0 0 1 6.5 3.5"/>' },
-    { key: 'settings', href: 'settings.html',  label: 'Settings', more: true,
+    { key: 'settings', href: 'settings.html',  label: 'Settings',
       icon: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1-1.55 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.55-1 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34h.09a1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55h.09a1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87v.09a1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.55 1z"/>' }
   ];
-  const CORE_PAGES = PAGES.filter((p) => !p.more);
-  const MORE_PAGES = PAGES.filter((p) => p.more);
-  const BREAKPOINT = 768;
+  // The dock shows every destination except Ask (7 icons) -- matches the
+  // Fey reference's flat 7-icon pill with no nested overflow menu, and
+  // keeps "Out of scope: changing what any nav destination contains"
+  // true (Social/Settings stay one tap away, just no longer behind a
+  // second-level "More" sheet).
+  const DOCK_PAGES = PAGES.filter((p) => p.key !== 'ask');
+  const COMPACT_BREAKPOINT = 480; // below this, dock/search shrink further to stay clear of phone-width edges
 
   // -------- CSS --------
   const css = `
 .eq-nav-icon svg { width: 100%; height: 100%; display: block; }
 
-/* ---- Desktop top nav (>=${BREAKPOINT}px) ---- */
-.cat-tabs {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 32px;
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: max(22px, env(safe-area-inset-top)) 20px 20px;
+/* ---- Floating dock (same markup at every viewport) ---- */
+.eq-dock-wrap {
+  position: fixed; left: 50%; bottom: max(18px, calc(10px + env(safe-area-inset-bottom)));
+  transform: translateX(-50%);
+  z-index: 40;
+  display: flex; align-items: center; gap: 10px;
+  max-width: calc(100vw - 16px);
 }
-.cat-tab {
-  display: flex; flex-direction: column; align-items: center;
-  gap: 6px;
-  padding: 2px;
-  border: 0;
-  background: transparent;
+.eq-dock {
+  display: flex; align-items: center;
+  background: rgba(24, 25, 28, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  padding: 5px;
+  -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  max-width: 100%;
+  overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none;
+}
+.eq-dock::-webkit-scrollbar { width: 0; height: 0; display: none; }
+.eq-dock-item {
+  position: relative; flex: 0 0 auto;
+  display: flex; align-items: center; justify-content: center;
+  width: 44px; height: 44px;
+  border-radius: 12px; /* "rounded-square" active fill per spec, not a full circle */
   color: rgba(255, 255, 255, 0.45);
-  font-family: inherit;
   text-decoration: none;
-  cursor: pointer;
-  transition: color 0.2s;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 0.15s, background 0.15s;
 }
-.cat-tab:hover { color: rgba(255, 255, 255, 0.75); }
-.cat-tab.is-active { color: #FAFAFA; }
-.cat-tab .eq-nav-icon { width: 22px; height: 22px; }
-.cat-tab-label {
-  font-size: 11px; font-weight: 600;
-  line-height: 1.25;
-  text-align: center;
-  white-space: nowrap;
-}
-@media (max-width: 480px) {
-  .cat-tabs { gap: 18px; }
-  .cat-tab-label { font-size: 10px; }
-}
-@media (max-width: ${BREAKPOINT - 1}px) {
-  .cat-tabs { display: none; }
+.eq-dock-item .eq-nav-icon { width: 20px; height: 20px; }
+.eq-dock-item:hover { color: rgba(255, 255, 255, 0.75); }
+.eq-dock-item.is-active { color: #FAFAFA; background: rgba(255, 255, 255, 0.10); }
+
+/* Hover tooltip -- shared by dock items and the search button, both use
+   data-tip. Desktop/pointer devices only; mobile relies on icon legibility
+   per the spec's own "must work without labels on mobile" requirement.
+   Centred by default, but the first/last dock item and the search button
+   sit close enough to the dock-wrap's own edge that a centred tooltip can
+   run past the viewport on a narrow window -- those three pin to the near
+   edge of their own trigger instead and grow inward (the reference image
+   itself shows the search button's tooltip right-aligned above it, not
+   centred, so this also matches the source more closely). */
+@media (hover: hover) and (pointer: fine) {
+  .eq-dock-item[data-tip], .eq-dock-search[data-tip] { position: relative; }
+  .eq-dock-item[data-tip]::after, .eq-dock-search[data-tip]::after {
+    content: attr(data-tip);
+    position: absolute; bottom: calc(100% + 12px); left: 50%;
+    transform: translateX(-50%) translateY(4px);
+    background: #1c1d20; color: #FAFAFA; font-size: 11px; font-weight: 600;
+    padding: 5px 10px; border-radius: 6px; white-space: nowrap;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.15s, transform 0.15s;
+  }
+  .eq-dock-item:hover[data-tip]::after, .eq-dock-search:hover[data-tip]::after {
+    opacity: 1; transform: translateX(-50%) translateY(0);
+  }
+  .eq-dock-item:first-child[data-tip]::after {
+    left: 0; transform: translateX(0) translateY(4px);
+  }
+  .eq-dock-item:first-child:hover[data-tip]::after { transform: translateX(0) translateY(0); }
+  .eq-dock-item:last-child[data-tip]::after, .eq-dock-search[data-tip]::after {
+    left: auto; right: 0; transform: translateX(0) translateY(4px);
+  }
+  .eq-dock-item:last-child:hover[data-tip]::after, .eq-dock-search:hover[data-tip]::after {
+    transform: translateX(0) translateY(0);
+  }
 }
 
-/* ---- Mobile bottom bar (<${BREAKPOINT}px) ---- */
-.bottombar {
-  display: none;
-  position: fixed; bottom: 0; left: 0; right: 0; z-index: 40;
-  background: #0a0a0b;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
-  padding-bottom: env(safe-area-inset-bottom);
-}
-@media (max-width: ${BREAKPOINT - 1}px) {
-  .bottombar { display: grid; grid-template-columns: minmax(0, 1fr) auto; }
-}
-.bottombar-scroll {
-  display: flex;
-  min-width: 0;
-  overflow-x: auto;
-  overflow-y: hidden;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-.bottombar-scroll::-webkit-scrollbar { width: 0; height: 0; display: none; }
-.bottombar-tab, .bottombar-more-btn {
+.eq-dock-search {
   flex: 0 0 auto;
-  min-width: 62px;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 3px; padding: 6px 8px 4px; text-decoration: none;
-  color: rgba(255, 255, 255, 0.45);
-  font-size: 10px; font-weight: 600; letter-spacing: 0.02em;
-  background: transparent; border: 0; border-left: 1px solid transparent;
-  font-family: inherit; cursor: pointer;
-  -webkit-tap-highlight-color: transparent; transition: color 0.15s;
+  display: flex; align-items: center; justify-content: center;
+  width: 54px; height: 54px;
+  border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(24, 25, 28, 0.92);
+  color: rgba(255, 255, 255, 0.7);
+  -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  cursor: pointer; padding: 0;
+  font-family: inherit;
+  transition: color 0.15s, background 0.15s, border-color 0.15s;
 }
-.bottombar-more-btn {
-  border-left: 1px solid rgba(255, 255, 255, 0.08);
-  min-width: 56px;
-}
-.bottombar-tab .eq-nav-icon, .bottombar-more-btn .eq-nav-icon {
-  width: 22px; height: 22px;
-  filter: grayscale(100%) brightness(1.2); opacity: 0.6;
-  transition: opacity 0.15s, filter 0.15s, transform 0.10s;
-}
-.bottombar-tab.is-active, .bottombar-more-btn.is-active { color: #FAFAFA; }
-.bottombar-tab.is-active .eq-nav-icon, .bottombar-more-btn.is-active .eq-nav-icon {
-  filter: grayscale(100%) brightness(1.6); opacity: 1;
-}
-.bottombar-tab:active .eq-nav-icon, .bottombar-more-btn:active .eq-nav-icon { transform: scale(0.92); }
-body.has-bottombar {
-  padding-bottom: calc(64px + env(safe-area-inset-bottom)) !important;
-}
-@media (min-width: ${BREAKPOINT}px) {
-  body.has-bottombar { padding-bottom: 0 !important; }
+.eq-dock-search svg { width: 20px; height: 20px; }
+.eq-dock-search:hover, .eq-dock-search.is-engaged { color: #FAFAFA; background: rgba(42, 43, 48, 0.94); }
+.eq-dock-search.is-active { border-color: rgba(var(--eq-accent-rgb, 255, 152, 96), 0.5); }
+
+body.has-eq-dock { padding-bottom: calc(72px + env(safe-area-inset-bottom)) !important; }
+
+@media (max-width: ${COMPACT_BREAKPOINT}px) {
+  .eq-dock-wrap { gap: 8px; bottom: max(14px, calc(8px + env(safe-area-inset-bottom))); }
+  .eq-dock { padding: 4px; }
+  .eq-dock-item { width: 40px; height: 40px; }
+  .eq-dock-item .eq-nav-icon { width: 19px; height: 19px; }
+  .eq-dock-search { width: 46px; height: 46px; }
+  .eq-dock-search svg { width: 18px; height: 18px; }
+  body.has-eq-dock { padding-bottom: calc(62px + env(safe-area-inset-bottom)) !important; }
 }
 
-/* ---- "More" sheet (mobile only) ---- */
-.eq-more-overlay {
-  position: fixed; inset: 0; z-index: 50;
-  background: rgba(0, 0, 0, 0.55);
-  display: none;
-  align-items: flex-end;
+/* ---- AI command bar (Phase 04.2) -- expands above the dock ---- */
+.eq-ai-bar {
+  position: fixed; left: 50%; bottom: calc(84px + env(safe-area-inset-bottom));
+  transform: translateX(-50%) translateY(8px) scale(0.96);
+  width: min(560px, calc(100vw - 32px));
+  z-index: 41;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.2s, transform 0.2s;
 }
-.eq-more-overlay.is-open { display: flex; }
-.eq-more-sheet {
-  width: 100%;
-  background: #0e0e11;
-  border-top: 1px solid rgba(255, 255, 255, 0.10);
-  border-radius: 16px 16px 0 0;
-  padding: 10px 16px calc(20px + env(safe-area-inset-bottom));
+.eq-ai-bar.is-open { opacity: 1; pointer-events: auto; transform: translateX(-50%) translateY(0) scale(1); }
+.eq-ai-form {
+  display: flex; align-items: center; gap: 10px;
+  background: rgba(20, 21, 24, 0.97); border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px; padding: 13px 18px;
+  -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
 }
-.eq-more-sheet-title {
-  font-size: 10.5px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.4);
-  text-align: center;
-  padding: 8px 0 14px;
+.eq-ai-form-icon { width: 18px; height: 18px; flex-shrink: 0; color: rgba(255, 255, 255, 0.4); }
+.eq-ai-input {
+  flex: 1; min-width: 0; background: transparent; border: none; outline: none;
+  color: #FAFAFA; font-family: inherit; font-size: 15px; padding: 0;
 }
-.eq-more-row {
-  display: flex; align-items: center; gap: 14px;
-  padding: 13px 6px;
-  color: #FAFAFA;
-  text-decoration: none;
-  font-size: 15px; font-weight: 600;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+.eq-ai-input::placeholder { color: rgba(255, 255, 255, 0.35); }
+@media (max-width: ${COMPACT_BREAKPOINT}px) {
+  .eq-ai-bar { bottom: calc(70px + env(safe-area-inset-bottom)); }
 }
-.eq-more-row:first-of-type { border-top: 0; }
-.eq-more-row .eq-nav-icon { width: 22px; height: 22px; opacity: 0.8; }
+@media (prefers-reduced-motion: reduce) {
+  .eq-ai-bar { transition: opacity 0.01s linear; }
+}
 
 html, body { -webkit-text-size-adjust: 100%; }
 @media (max-width: 768px) {
@@ -215,74 +224,102 @@ body.topbar-modal-open { overflow: hidden; touch-action: none; }
     return '<span class="eq-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + page.icon + '</svg></span>';
   }
 
-  function buildCatTabs(activeKey) {
+  const SEARCH_ICON_PATH = '<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>';
+  const AI_BAR_PLACEHOLDER = 'Ask Equavia 0 to log, plan, or explain anything…';
+
+  function buildDockWrap(activeKey) {
     const wrap = document.createElement('div');
-    wrap.className = 'cat-tabs';
-    wrap.id = 'catTabs';
-    wrap.setAttribute('role', 'tablist');
-    wrap.setAttribute('aria-label', 'Site sections');
-    wrap.innerHTML = PAGES.map((p) => {
+    wrap.className = 'eq-dock-wrap';
+    wrap.id = 'eqDockWrap';
+
+    const dock = document.createElement('nav');
+    dock.className = 'eq-dock';
+    dock.id = 'eqDock';
+    dock.setAttribute('role', 'navigation');
+    dock.setAttribute('aria-label', 'Main');
+    dock.innerHTML = DOCK_PAGES.map((p) => {
       const active = p.key === activeKey;
-      return '<a class="cat-tab' + (active ? ' is-active' : '') + '" href="' + p.href + '"' + (active ? ' aria-current="page"' : '') + '>'
+      return '<a class="eq-dock-item' + (active ? ' is-active' : '') + '" href="' + p.href + '" data-tip="' + p.label + '"'
+        + (active ? ' aria-current="page"' : '') + ' aria-label="' + p.label + '">'
         + iconSpan(p)
-        + '<span class="cat-tab-label">' + p.label + '</span>'
         + '</a>';
     }).join('');
+    wrap.appendChild(dock);
+
+    const searchBtn = document.createElement('button');
+    searchBtn.type = 'button';
+    searchBtn.className = 'eq-dock-search' + (activeKey === 'ask' ? ' is-active' : '');
+    searchBtn.id = 'eqDockSearchBtn';
+    searchBtn.setAttribute('data-tip', 'Ask Equavia 0 · /');
+    searchBtn.setAttribute('aria-label', 'Ask Equavia 0');
+    searchBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + SEARCH_ICON_PATH + '</svg>';
+    wrap.appendChild(searchBtn);
+
     return wrap;
   }
 
-  function buildBottomBar(activeKey) {
-    const nav = document.createElement('nav');
-    nav.className = 'bottombar';
-    nav.id = 'bottombar';
-    nav.setAttribute('role', 'navigation');
-    nav.setAttribute('aria-label', 'Main tabs');
-
-    const scroll = document.createElement('div');
-    scroll.className = 'bottombar-scroll';
-    scroll.innerHTML = CORE_PAGES.map((p) => {
-      const active = p.key === activeKey;
-      return '<a class="bottombar-tab' + (active ? ' is-active' : '') + '" href="' + p.href + '" data-page="' + p.key + '">'
-        + iconSpan(p)
-        + '<span>' + p.label + '</span>'
-        + '</a>';
-    }).join('');
-    nav.appendChild(scroll);
-
-    const moreActive = MORE_PAGES.some((p) => p.key === activeKey);
-    const moreBtn = document.createElement('button');
-    moreBtn.type = 'button';
-    moreBtn.className = 'bottombar-more-btn' + (moreActive ? ' is-active' : '');
-    moreBtn.id = 'bottombarMoreBtn';
-    moreBtn.innerHTML = '<span class="eq-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="19" cy="12" r="1.4"/></svg></span><span>More</span>';
-    nav.appendChild(moreBtn);
-
-    return nav;
+  function buildAiBar() {
+    const bar = document.createElement('div');
+    bar.className = 'eq-ai-bar';
+    bar.id = 'eqAiBar';
+    bar.setAttribute('aria-hidden', 'true');
+    bar.innerHTML =
+      '<form id="eqAiForm" class="eq-ai-form" autocomplete="off">'
+      + '<svg class="eq-ai-form-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + SEARCH_ICON_PATH + '</svg>'
+      + '<input type="text" id="eqAiInput" class="eq-ai-input" placeholder="' + AI_BAR_PLACEHOLDER + '" aria-label="Ask Equavia 0">'
+      + '</form>';
+    return bar;
   }
 
-  function buildMoreSheet(activeKey) {
-    const overlay = document.createElement('div');
-    overlay.className = 'eq-more-overlay';
-    overlay.id = 'eqMoreOverlay';
-    const sheet = document.createElement('div');
-    sheet.className = 'eq-more-sheet';
-    sheet.innerHTML = '<div class="eq-more-sheet-title">More</div>'
-      + MORE_PAGES.map((p) => {
-        const active = p.key === activeKey;
-        return '<a class="eq-more-row" href="' + p.href + '"' + (active ? ' aria-current="page"' : '') + '>' + iconSpan(p) + '<span>' + p.label + '</span></a>';
-      }).join('');
-    overlay.appendChild(sheet);
-    overlay.addEventListener('click', (e) => { if (e.target === overlay) closeMoreSheet(); });
-    return overlay;
+  // ---- AI command bar behaviour (Phase 04.2) ----
+  let aiBarOpen = false;
+  function isEditableTarget(el) {
+    if (!el || !el.tagName) return false;
+    const tag = el.tagName.toLowerCase();
+    return tag === 'input' || tag === 'textarea' || tag === 'select' || el.isContentEditable;
   }
-
-  function openMoreSheet() {
-    const overlay = document.getElementById('eqMoreOverlay');
-    if (overlay) overlay.classList.add('is-open');
+  function openAiBar() {
+    const bar = document.getElementById('eqAiBar');
+    const btn = document.getElementById('eqDockSearchBtn');
+    if (!bar || aiBarOpen) return;
+    aiBarOpen = true;
+    bar.classList.add('is-open');
+    bar.setAttribute('aria-hidden', 'false');
+    if (btn) btn.classList.add('is-engaged');
+    const input = document.getElementById('eqAiInput');
+    if (input) { input.value = ''; setTimeout(() => input.focus(), 10); }
   }
-  function closeMoreSheet() {
-    const overlay = document.getElementById('eqMoreOverlay');
-    if (overlay) overlay.classList.remove('is-open');
+  function closeAiBar(returnFocus) {
+    const bar = document.getElementById('eqAiBar');
+    const btn = document.getElementById('eqDockSearchBtn');
+    if (!bar || !aiBarOpen) return;
+    aiBarOpen = false;
+    bar.classList.remove('is-open');
+    bar.setAttribute('aria-hidden', 'true');
+    if (btn) { btn.classList.remove('is-engaged'); if (returnFocus) btn.focus(); }
+  }
+  function submitAiBar(promptText) {
+    const trimmed = (promptText || '').trim();
+    if (!trimmed) return;
+    window.location.href = 'ask.html?prompt=' + encodeURIComponent(trimmed);
+  }
+  function wireAiBar() {
+    const btn = document.getElementById('eqDockSearchBtn');
+    const form = document.getElementById('eqAiForm');
+    const input = document.getElementById('eqAiInput');
+    if (btn) btn.addEventListener('click', () => { if (aiBarOpen) closeAiBar(false); else openAiBar(); });
+    if (form) form.addEventListener('submit', (e) => { e.preventDefault(); submitAiBar(input ? input.value : ''); });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && aiBarOpen) { closeAiBar(true); return; }
+      if (e.key === '/' && !aiBarOpen && !isEditableTarget(e.target)) { e.preventDefault(); openAiBar(); }
+    });
+    document.addEventListener('pointerdown', (e) => {
+      if (!aiBarOpen) return;
+      const bar = document.getElementById('eqAiBar');
+      if (bar && bar.contains(e.target)) return;
+      if (btn && btn.contains(e.target)) return;
+      closeAiBar(false);
+    });
   }
 
   // ============================================================
@@ -503,7 +540,7 @@ body.topbar-modal-open { overflow: hidden; touch-action: none; }
   }
 
   function injectStyleAndHTML() {
-    if (document.getElementById('bottombar') || document.getElementById('catTabs')) return;
+    if (document.getElementById('eqDockWrap')) return;
     if (!shouldShowChrome()) return;
     const style = document.createElement('style');
     style.id = 'topbar-style';
@@ -512,13 +549,11 @@ body.topbar-modal-open { overflow: hidden; touch-action: none; }
 
     const active = currentPageKey();
 
-    document.body.insertBefore(buildCatTabs(active), document.body.firstChild);
-    document.body.appendChild(buildBottomBar(active));
-    document.body.appendChild(buildMoreSheet(active));
-    document.body.classList.add('has-bottombar');
+    document.body.appendChild(buildDockWrap(active));
+    document.body.appendChild(buildAiBar());
+    document.body.classList.add('has-eq-dock');
 
-    const moreBtn = document.getElementById('bottombarMoreBtn');
-    if (moreBtn) moreBtn.addEventListener('click', openMoreSheet);
+    wireAiBar();
   }
 
   function blockGesture(e) { e.preventDefault(); }
