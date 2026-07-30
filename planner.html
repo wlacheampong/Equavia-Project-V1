@@ -1849,10 +1849,35 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
   .hab-day { width: 17px; height: 17px; }
   .hab-footer-stats { grid-template-columns: 1fr; }
 }
+
+/* ==========================================================================
+   Section picker -- same dropdown-per-section pattern as Finance's 05.3,
+   applied here on direct request. One dropdown shows exactly one of this
+   page's 9 real sections at a time; every section already carried a
+   data-section attribute from earlier work, unused until now. Uses
+   --eq-border-strong directly rather than this page's own --border/
+   --border-soft aliases (both deliberately transparent here -- this
+   page's cards separate via the glass/blur treatment, not hairlines).
+   ========================================================================== */
+.plan-view-controls { margin-bottom: 16px; }
+.plan-section-select {
+  width: 100%; max-width: 320px;
+  padding: 10px 12px; font-weight: 700; font-size: 14px;
+  background: var(--eq-bg-input);
+  color: var(--text-primary);
+  border: 1px solid var(--eq-border-strong);
+  border-radius: var(--radius-md);
+  font-family: inherit; cursor: pointer;
+}
+.plan-section-select:focus-visible { outline: 2px solid var(--eq-accent); outline-offset: 2px; }
 </style>
 </head>
 <body>
 <div class="shell shell-wide">
+
+<div class="plan-view-controls">
+  <select class="plan-section-select" id="planSectionSelect" aria-label="Ability section"></select>
+</div>
 
 <!-- ===== TASKS ===== -->
 <div class="section" data-section="tasks" id="tasks" data-eq-collapse="planner:tasks">
@@ -5957,6 +5982,93 @@ document.addEventListener('DOMContentLoaded', function () {
     onApplied: function () { window.dispatchEvent(new Event('storage')); }
   });
 });
+</script>
+
+<script>
+// ============================================================
+// Section picker -- same dropdown-per-section pattern as Finance's 05.3,
+// applied here on direct request. Standalone/self-contained (unlike
+// finance.html's single big IIFE, this page is several independent
+// script blocks per section, so this doesn't hook into any of them --
+// it only ever needs plain DOM + localStorage, never another section's
+// internal functions). Runs at the very end of the body, after every
+// .section[data-section] element above it already exists, so (unlike
+// scripts earlier in the document) it doesn't need to wait for
+// DOMContentLoaded for its own DOM to be ready.
+// ============================================================
+(function () {
+  'use strict';
+  const PLANNER_SECTIONS = [
+    { key: 'tasks',      label: 'Tasks' },
+    { key: 'goals',      label: 'Goals' },
+    { key: 'calendar',   label: 'Calendar' },
+    { key: 'checklists', label: 'Checklists' },
+    { key: 'projects',   label: 'Projects' },
+    { key: 'shopping',   label: 'Shopping List' },
+    { key: 'habits',     label: 'Habit Tracker' },
+    { key: 'books',      label: 'Book Tracker' },
+    { key: 'learn',      label: 'Learn Hub' },
+  ];
+  const SECTION_KEY = 'eq.planner.activeSection_v1';
+
+  function storeGet(key) { try { return JSON.parse(localStorage.getItem(key)); } catch (e) { return null; } }
+  function storeSet(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) {} }
+
+  function getActiveSection() {
+    const v = storeGet(SECTION_KEY);
+    return PLANNER_SECTIONS.some((s) => s.key === v) ? v : 'tasks';
+  }
+  function setActiveSection(key) { storeSet(SECTION_KEY, key); }
+
+  function applyPlannerSectionView() {
+    const active = getActiveSection();
+    document.querySelectorAll('.section[data-section]').forEach((el) => {
+      el.style.display = (el.getAttribute('data-section') === active) ? '' : 'none';
+    });
+    const sel = document.getElementById('planSectionSelect');
+    if (sel && sel.value !== active) sel.value = active;
+  }
+
+  function wirePlannerViewControls() {
+    const sel = document.getElementById('planSectionSelect');
+    if (!sel) return;
+    sel.innerHTML = PLANNER_SECTIONS.map((s) => '<option value="' + s.key + '">' + s.label + '</option>').join('');
+    sel.addEventListener('change', () => {
+      setActiveSection(sel.value);
+      applyPlannerSectionView();
+      // Jumping sections should land the user at the top of the newly
+      // shown one, not wherever the page happened to be scrolled to.
+      const target = document.querySelector('.section[data-section="' + sel.value + '"]');
+      if (target) target.scrollIntoView({ behavior: 'instant', block: 'start' });
+    });
+  }
+
+  // A hash link (e.g. dashboard.html's Project-card long-press ->
+  // "planner.html#projects") must win over whatever section was last
+  // persisted -- otherwise arriving via that link would silently show
+  // Tasks (or whatever's active) with Projects hidden behind it, and
+  // the existing collapse-expand-on-hash logic elsewhere in this file
+  // would have nothing visible to expand. Resolved via the hash
+  // target's OWN data-section attribute, not a string match against the
+  // hash itself -- several sections' `id` (e.g. "shopping-list",
+  // "habit-tracker") don't equal their `data-section` ("shopping",
+  // "habits"), only #projects happens to match both today.
+  function sectionKeyFromHash() {
+    const hashId = (window.location.hash || '').replace('#', '');
+    if (!hashId) return null;
+    const el = document.getElementById(hashId);
+    return (el && el.classList.contains('section') && el.hasAttribute('data-section')) ? el.getAttribute('data-section') : null;
+  }
+
+  wirePlannerViewControls();
+  const hashSection = sectionKeyFromHash();
+  if (hashSection) setActiveSection(hashSection);
+  applyPlannerSectionView();
+  if (hashSection) {
+    const target = document.querySelector('.section[data-section="' + hashSection + '"]');
+    if (target) target.scrollIntoView({ behavior: 'instant', block: 'start' });
+  }
+})();
 </script>
 
 </body>
