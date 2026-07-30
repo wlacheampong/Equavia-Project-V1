@@ -414,7 +414,7 @@ a { color: inherit; text-decoration: none; }
       <div class="greet-row">
         <div>
           <div class="greet-label">Greetings,</div>
-          <div class="greet-text" id="dashGreeting">—</div>
+          <div class="greet-text" id="dashGreeting">MAHINO</div>
         </div>
         <div class="greet-right">
           <span class="whoop-pill" id="whoopPill" style="display:none;"></span>
@@ -920,9 +920,6 @@ a { color: inherit; text-decoration: none; }
   }
   function updateGreeting() {
     const now = new Date();
-    const h = now.getHours();
-    const part = h < 12 ? 'morning' : (h < 18 ? 'afternoon' : 'evening');
-    document.getElementById('dashGreeting').textContent = 'Good ' + part;
     const clockStr = formatClock(now);
     const clockSplit = clockStr.lastIndexOf(' ');
     document.getElementById('greetClockTime').textContent = clockStr.slice(0, clockSplit);
