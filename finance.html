@@ -15,6 +15,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/sync.js" defer></script>
 <script src="js/assistant-tools.js"></script>
+<script src="js/expand-primitives.js"></script>
 <script src="js/topbar.js" defer></script>
 <script src="js/collapsible.js" defer></script>
 <script src="js/obsidian-sync.js"></script>
@@ -418,13 +419,76 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
 /* Reusable cost-breakdown bar graph -- Subscriptions/Incoming/Wishlist don't
    have a pre-existing chart the way Net Worth/Budget do, so their "graph"
    mode reuses this one component rather than three bespoke chart types. */
-.fin-bar-graph { padding: 4px 0; }
+.fin-bar-graph { padding: 34px 0 4px; position: relative; } /* top clearance for the Phase 05.5 hold-expand corner button */
 .fin-bar-row { display: grid; grid-template-columns: minmax(0, 1fr) 2fr auto; align-items: center; gap: 12px; padding: 7px 0; }
 .fin-bar-row-label { font-size: 12.5px; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .fin-bar-row-track { height: 8px; border-radius: 4px; background: rgba(var(--eq-text-primary-rgb), 0.07); overflow: hidden; }
 .fin-bar-row-fill { height: 100%; border-radius: 4px; background: var(--eq-chart-1); transition: width 0.3s ease; }
 .fin-bar-row-val { font-size: 12px; font-weight: 600; color: var(--text-primary); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .fin-graph-empty { font-size: 12px; color: var(--text-tertiary); font-style: italic; padding: 20px 0; text-align: center; }
+
+/* ==========================================================================
+   Phase 05.4 -- Recent tab. A single scrollable list (not a bespoke
+   permanent two-column layout); clicking a row opens phase 03's
+   expandPanel(side:'right') for detail, which is what actually produces
+   the "list visible, detail panel over most of the right side" effect,
+   and degrades to a full sheet on mobile on its own.
+   ========================================================================== */
+.fin-recent-row {
+  display: flex; align-items: center; gap: 12px; width: 100%;
+  padding: 12px 14px; border: 0; border-top: 1px solid var(--eq-border);
+  background: transparent; font-family: inherit; text-align: left; cursor: pointer;
+  transition: background 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.fin-recent-row:first-child { border-top: 0; }
+.fin-recent-row:hover, .fin-recent-row:focus-visible { background: rgba(var(--eq-text-primary-rgb), 0.04); }
+.fin-recent-row-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.fin-recent-row-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.fin-recent-row-name { font-size: 13.5px; font-weight: 600; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fin-recent-row-meta { font-size: 11px; color: var(--text-tertiary); }
+.fin-recent-row-amt { font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; flex-shrink: 0; }
+.fin-recent-row-amt.up { color: var(--eq-success); }
+.fin-recent-row-amt.down { color: var(--eq-danger); }
+.fin-recent-row-date { font-size: 11px; color: var(--text-tertiary); flex-shrink: 0; width: 42px; text-align: right; }
+.fin-recent-empty { font-size: 12px; color: var(--text-tertiary); font-style: italic; padding: 24px 14px; text-align: center; }
+
+.fin-recent-detail-name { font-size: 20px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; }
+.fin-recent-detail-amt { font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; margin-bottom: 22px; }
+.fin-recent-detail-amt.up { color: var(--eq-success); }
+.fin-recent-detail-amt.down { color: var(--eq-danger); }
+.fin-recent-detail-row { display: flex; justify-content: space-between; gap: 12px; padding: 11px 0; border-top: 1px solid var(--eq-border); font-size: 13px; }
+.fin-recent-detail-row:first-of-type { border-top: 0; }
+.fin-recent-detail-row span:first-child { color: var(--text-tertiary); }
+.fin-recent-detail-row span:last-child { color: var(--text-primary); font-weight: 600; text-align: right; }
+
+/* ==========================================================================
+   Phase 05.5 -- hold-to-detail on every finance chart/graph. Scoped to the
+   6 chart-like visualizations (net worth line + donut, budget line, the 3
+   Phase 05.3 bar graphs) -- the item lists (accounts, subs, orders,
+   wishlist rows) already show every row in full with nothing compacted,
+   so expanding them wouldn't reveal anything new the way expanding a
+   chart does. Matches Phase 03's own original framing ("hold a GRAPH").
+   ========================================================================== */
+.fin-hold-expand-btn {
+  position: absolute; top: 10px; right: 10px; z-index: 2;
+  width: 28px; height: 28px; border-radius: 50%;
+  background: rgba(var(--eq-text-primary-rgb), 0.08); border: none; color: var(--text-primary);
+  font-size: 14px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.fin-hold-expand-btn:hover { background: rgba(var(--eq-text-primary-rgb), 0.18); }
+.fin-hold-detail-title { font-size: 20px; font-weight: 700; color: var(--text-primary); margin-bottom: 16px; }
+.fin-hold-detail-stats { display: flex; gap: 22px; flex-wrap: wrap; margin-bottom: 18px; padding-bottom: 18px; border-bottom: 1px solid var(--eq-border-strong); }
+.fin-hold-stat-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-tertiary); margin-bottom: 4px; }
+.fin-hold-stat-val { font-size: 17px; font-weight: 700; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+.fin-hold-detail-table-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 0; border-top: 1px solid var(--eq-border); font-size: 13px; }
+.fin-hold-detail-table-row:first-child { border-top: 0; }
+.fin-hold-detail-table-row-label { display: flex; align-items: center; gap: 8px; color: var(--text-primary); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fin-hold-detail-table-row-label .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.fin-hold-detail-table-row-val { font-weight: 600; color: var(--text-primary); font-variant-numeric: tabular-nums; flex-shrink: 0; text-align: right; }
+.fin-hold-detail-table-row-sub { font-size: 11px; color: var(--text-tertiary); flex-shrink: 0; }
 
 /* Stock-style net-worth chart */
 .nw-chart-wrap {
@@ -441,6 +505,7 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
   justify-content: space-between;
   align-items: center;
   margin-bottom: 8px;
+  padding-right: 34px; /* clearance for the Phase 05.5 hold-expand corner button, shared by both .nw-chart-wrap and .nw-donut-wrap */
   font-size: 9.5px;
   font-weight: 800;
   letter-spacing: 0.16em;
@@ -1593,7 +1658,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .bgt-total-val { font-size: 26px; font-weight: 700; color: var(--text-primary); line-height: 1.1; margin-top: 2px; font-variant-numeric: tabular-nums; }
 
 .bgt-chart-card { padding: 18px 20px 14px; }
-.bgt-chart-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+.bgt-chart-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; padding-right: 34px; } /* clearance for the Phase 05.5 hold-expand corner button */
 .bgt-chart-title { font-size: 9.5px; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; color: var(--text-tertiary); font-family: var(--font-mono); }
 .bgt-chart-delta { font-family: var(--font-mono); font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; }
 .bgt-chart-delta.up { color: var(--eq-success); }
@@ -1719,7 +1784,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
         <div class="nw-chart-empty" id="nwChartEmpty">Add or edit an asset to start tracking your net worth over time.</div>
       </div>
 
-      <div class="nw-donut-wrap">
+      <div class="nw-donut-wrap" id="nwDonutWrap">
         <div class="nw-chart-head">
           <span class="nw-chart-label">Allocation</span>
           <span class="nw-chart-delta" id="nwDonutCount">—</span>
@@ -2027,6 +2092,17 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   </div>
 </div>
 
+<!-- ===== RECENT (Phase 05.4) — cross-section activity feed, tap a row for detail ===== -->
+<div class="section" data-section="recent" data-eq-collapse="finance:recent">
+  <div class="section-title" data-eq-collapse-keep data-eq-collapse-trigger>
+    <span class="section-title-text">RECENT<span class="eq-collapse-chevron"></span></span>
+  </div>
+  <div class="card" style="padding:0;overflow:hidden">
+    <div id="finRecentList"></div>
+    <div class="fin-recent-empty" id="finRecentEmpty">No recent activity yet — changes to net worth, subscriptions, and orders will show up here.</div>
+  </div>
+</div>
+
 </div>
 
 <script>
@@ -2304,6 +2380,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     renderAllocationDonut(sliceTotals, grand);
     renderAllocation(grand);
     renderActivity();
+    if (typeof renderRecentList === 'function') renderRecentList();
     if (typeof renderWishlist === 'function') renderWishlist();
     if (typeof renderOrders   === 'function') renderOrders();
     if (typeof updateOrdPreview === 'function') updateOrdPreview();
@@ -3815,7 +3892,13 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     { key: 'subs',     label: 'Subscriptions' },
     { key: 'incoming', label: 'Incoming Orders' },
     { key: 'wish',     label: 'Wishlist' },
+    { key: 'recent',   label: 'Recent' },
   ];
+  // Sections with no list/graph split at all -- Phase 05.4's Recent tab is
+  // a single activity feed (a lens across the other sections' data, not
+  // its own independent store), so the toggle is hidden rather than
+  // wired to a no-op.
+  const FIN_SECTIONS_NO_TOGGLE = ['recent'];
   const FIN_SECTION_KEY = 'eq.finance.activeSection_v1';
   const FIN_VIEWMODE_KEY = 'eq.finance.viewMode_v1';
 
@@ -3850,6 +3933,8 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     document.querySelectorAll('.fin-view-toggle-btn').forEach((btn) => {
       btn.classList.toggle('is-active', btn.getAttribute('data-view-btn') === mode);
     });
+    const toggle = document.querySelector('.fin-view-toggle');
+    if (toggle) toggle.style.display = FIN_SECTIONS_NO_TOGGLE.indexOf(active) === -1 ? '' : 'none';
   }
 
   // Shared "graph" renderer for the three sections with no pre-existing
@@ -3858,13 +3943,26 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   function renderCostBarGraph(containerId, items, emptyMsg) {
     const container = document.getElementById(containerId);
     if (!container) return;
+    // Render into a dedicated inner wrapper, not the container's own
+    // innerHTML directly -- the container also hosts Phase 05.5's
+    // hold-expand corner button (a sibling, appended once), and this
+    // function is re-invoked on every underlying data change (including
+    // async ones like loadExchangeRates() resolving well after boot). A
+    // blanket container.innerHTML= here would silently delete that
+    // button on the very next re-render.
+    let rows = container.querySelector('.fin-bar-graph-rows');
+    if (!rows) {
+      rows = document.createElement('div');
+      rows.className = 'fin-bar-graph-rows';
+      container.appendChild(rows);
+    }
     if (!items.length) {
-      container.innerHTML = '<div class="fin-graph-empty">' + emptyMsg + '</div>';
+      rows.innerHTML = '<div class="fin-graph-empty">' + emptyMsg + '</div>';
       return;
     }
     const sorted = items.slice().sort((a, b) => b.amount - a.amount);
     const max = sorted[0].amount || 1;
-    container.innerHTML = sorted.map((it) => {
+    rows.innerHTML = sorted.map((it) => {
       const pct = Math.max(2, Math.round((it.amount / max) * 100));
       return '<div class="fin-bar-row">'
         + '<div class="fin-bar-row-label">' + escapeHtml(it.name) + '</div>'
@@ -3884,6 +3982,67 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   function renderWishGraph() {
     const items = (storeGet('wishlist') || []).map((it) => ({ name: it.name, amount: Number(it.amount) || 0 }));
     renderCostBarGraph('wishGraphWrap', items, 'No wishes yet.');
+  }
+
+  // ============================================================
+  // Phase 05.4 — Recent tab. Reuses nw:activity (ACTIVITY_KEY), the same
+  // real, already-timestamped add/edit/delete log the Net Worth section's
+  // own activity feed reads (see logActivity()/renderActivity() above) --
+  // deliberately NOT a second/parallel event-logging mechanism. Covers
+  // net worth adds/edits/deletes directly, plus subscription and order
+  // auto-deductions (both call logActivity against the net-worth account
+  // they drew from) -- budget list edits and subscription/wishlist
+  // additions aren't logged anywhere today, so they don't appear here;
+  // extending logActivity to those call sites is real scope beyond a
+  // "recent view of finance," not something this pass invented.
+  function buildRecentDetailEl(entry) {
+    const meta = NW_SLICE_META[entry.cat] || { name: entry.cat, color: 'var(--eq-text-primary)' };
+    const sign = entry.delta >= 0 ? '+' : '-';
+    const cls = entry.delta >= 0 ? 'up' : 'down';
+    const kind = entry.kind === 'edit' ? 'Edited' : (entry.kind === 'delete' ? 'Removed' : 'Added');
+    const fullDate = new Date(entry.ts).toLocaleString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+    const el = document.createElement('div');
+    el.className = 'fin-recent-detail';
+    el.innerHTML =
+      '<div class="fin-recent-detail-name">' + escapeHtml(entry.name || '(unnamed)') + '</div>'
+      + '<div class="fin-recent-detail-amt ' + cls + '">' + sign + fmtMoney(Math.abs(entry.delta)) + '</div>'
+      + '<div class="fin-recent-detail-row"><span>Category</span><span>' + escapeHtml(meta.name) + '</span></div>'
+      + '<div class="fin-recent-detail-row"><span>Action</span><span>' + kind + '</span></div>'
+      + '<div class="fin-recent-detail-row"><span>When</span><span>' + escapeHtml(fullDate) + '</span></div>';
+    return el;
+  }
+  function renderRecentList() {
+    const list = document.getElementById('finRecentList');
+    const empty = document.getElementById('finRecentEmpty');
+    if (!list) return;
+    const arr = (storeGet(ACTIVITY_KEY) || []).slice().sort((a, b) => b.ts - a.ts).slice(0, 40);
+    list.innerHTML = '';
+    if (!arr.length) {
+      if (empty) empty.style.display = '';
+      return;
+    }
+    if (empty) empty.style.display = 'none';
+    arr.forEach((e) => {
+      const meta = NW_SLICE_META[e.cat] || { name: e.cat, color: 'var(--eq-text-primary)' };
+      const sign = e.delta >= 0 ? '+' : '-';
+      const cls = e.delta >= 0 ? 'up' : 'down';
+      const kind = e.kind === 'edit' ? 'Edited' : (e.kind === 'delete' ? 'Removed' : 'Added');
+      const row = document.createElement('button');
+      row.type = 'button';
+      row.className = 'fin-recent-row';
+      row.innerHTML =
+        '<span class="fin-recent-row-dot" style="background:' + meta.color + '"></span>'
+        + '<span class="fin-recent-row-info">'
+        +   '<span class="fin-recent-row-name">' + escapeHtml(e.name || '(unnamed)') + '</span>'
+        +   '<span class="fin-recent-row-meta">' + escapeHtml(meta.name) + ' · ' + kind + '</span>'
+        + '</span>'
+        + '<span class="fin-recent-row-amt ' + cls + '">' + sign + fmtMoney(Math.abs(e.delta)) + '</span>'
+        + '<span class="fin-recent-row-date">' + fmtActivityDate(e.ts) + '</span>';
+      list.appendChild(row);
+      if (window.EqExpand) {
+        window.EqExpand.expandPanel({ source: row, side: 'right', content: () => buildRecentDetailEl(e) });
+      }
+    });
   }
 
   function wireFinanceViewControls() {
@@ -3909,6 +4068,130 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   renderOrdersGraph();
   renderWishGraph();
   applyFinanceSectionView();
+
+  // ============================================================
+  // Phase 05.5 — hold-to-detail on every finance chart/graph. See the CSS
+  // block's own header comment for scoping (6 chart-like visualizations,
+  // not the already-fully-shown item lists). Each detail view surfaces
+  // real secondary data the compact view doesn't show -- full snapshot
+  // history, exact per-account allocation %, itemized expense/income
+  // rows, annual-equivalent subscription cost, % of net worth per order/
+  // wishlist item -- rather than just re-drawing the same chart bigger.
+  // ============================================================
+  function buildFinDetailShell(title, statsRows, tableRows) {
+    const el = document.createElement('div');
+    el.className = 'fin-hold-detail';
+    let html = '<div class="fin-hold-detail-title">' + escapeHtml(title) + '</div>';
+    if (statsRows && statsRows.length) {
+      html += '<div class="fin-hold-detail-stats">' + statsRows.map((s) =>
+        '<div><div class="fin-hold-stat-label">' + escapeHtml(s[0]) + '</div><div class="fin-hold-stat-val">' + escapeHtml(s[1]) + '</div></div>'
+      ).join('') + '</div>';
+    }
+    if (tableRows && tableRows.length) {
+      html += tableRows.map((r) =>
+        '<div class="fin-hold-detail-table-row">'
+        + '<span class="fin-hold-detail-table-row-label">' + (r.dot ? '<span class="dot" style="background:' + r.dot + '"></span>' : '') + escapeHtml(r.label) + '</span>'
+        + (r.sub ? '<span class="fin-hold-detail-table-row-sub">' + escapeHtml(r.sub) + '</span>' : '')
+        + '<span class="fin-hold-detail-table-row-val">' + escapeHtml(r.val) + '</span>'
+        + '</div>'
+      ).join('');
+    } else {
+      html += '<div class="fin-graph-empty">Not enough data yet.</div>';
+    }
+    el.innerHTML = html;
+    return el;
+  }
+  function buildNwChartDetail() {
+    const hist = (storeGet(NW_HISTORY_KEY) || []).slice().sort((a, b) => b.t - a.t);
+    const vals = hist.map((p) => p.v);
+    const stats = vals.length ? [
+      ['Current', fmtMoney(vals[0])],
+      ['All-time high', fmtMoney(Math.max.apply(null, vals))],
+      ['All-time low', fmtMoney(Math.min.apply(null, vals))],
+      ['Snapshots', String(vals.length)],
+    ] : [];
+    const rows = hist.slice(0, 60).map((p) => ({ label: new Date(p.t).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }), val: fmtMoney(p.v) }));
+    return buildFinDetailShell('Net worth — full history', stats, rows);
+  }
+  function buildNwDonutDetail() {
+    const slices = [];
+    NW_CATS.forEach((cat) => {
+      const meta = NW_SLICE_META[cat.key] || { color: 'var(--eq-text-primary)' };
+      const items = storeGet('nw:' + cat.key) || [];
+      items.forEach((it) => {
+        const v = Number(it.amount) || 0;
+        if (v > 0) slices.push({ name: String(it.name || '(unnamed)'), color: meta.color, value: v });
+      });
+    });
+    const subItems = storeGet('subs') || [];
+    const annualSubsGBP = subItems.reduce((s, it) => s + monthlyEquivalent(it) * 12, 0);
+    if (annualSubsGBP > 0) slices.push({ name: NW_SLICE_META.subs.name, color: NW_SLICE_META.subs.color, value: annualSubsGBP });
+    slices.sort((a, b) => b.value - a.value);
+    const total = slices.reduce((s, x) => s + x.value, 0);
+    const rows = slices.map((s) => ({ dot: s.color, label: s.name, sub: total > 0 ? ((s.value / total) * 100).toFixed(1) + '%' : '', val: fmtMoney(s.value) }));
+    return buildFinDetailShell('Allocation — full breakdown', [['Total', fmtMoney(total)], ['Slices', String(slices.length)]], rows);
+  }
+  function buildBudgetChartDetail() {
+    const proj = budgetProjection();
+    const stats = [
+      ['Daily rate', fmtSigned(proj.dailyRate) + '/day'],
+      ['Projected month-end', fmtSigned(proj.netGBP)],
+    ];
+    const inc = (storeGet('budget:income') || []).map((it) => ({ label: it.name, val: fmtMoney(it.amount) + '/mo', sub: 'Income' }));
+    const exp = (storeGet('budget:expenses') || []).map((it) => ({ label: it.name, val: fmtMoney(it.amount) + '/mo', sub: 'Expense' }));
+    return buildFinDetailShell('Cash flow — full breakdown', stats, inc.concat(exp));
+  }
+  function buildSubsDetail() {
+    const items = storeGet('subs') || [];
+    const rows = items.map((it) => {
+      const m = monthlyEquivalent(it);
+      return { label: it.name, sub: it.period, val: fmtMoney(m) + '/mo · ' + fmtMoney(m * 12) + '/yr' };
+    });
+    return buildFinDetailShell('Subscriptions — with annual cost', [], rows);
+  }
+  function buildOrdersDetail() {
+    const items = storeGet('incoming_orders') || [];
+    const grand = nwGrandGBP();
+    const rows = items.map((it) => {
+      const cost = Number(it.amount) || 0;
+      const pct = grand > 0 ? ((cost / grand) * 100).toFixed(2) + '% of NW' : '';
+      return { label: it.name, sub: it.date ? ordFmtArrival(it.date) : '', val: fmtMoney(cost) + (pct ? ' · ' + pct : '') };
+    });
+    return buildFinDetailShell('Incoming orders — with arrival + % of net worth', [], rows);
+  }
+  function buildWishDetail() {
+    const items = storeGet('wishlist') || [];
+    const grand = nwGrandGBP();
+    const rows = items.map((it) => {
+      const cost = Number(it.amount) || 0;
+      const pct = grand > 0 ? ((cost / grand) * 100).toFixed(2) + '% of NW' : '';
+      return { label: it.name, val: fmtMoney(cost) + (pct ? ' · ' + pct : '') };
+    });
+    return buildFinDetailShell('Wishlist — with % of net worth', [], rows);
+  }
+  function wireFinChartHold(targetId, renderDetailFn) {
+    if (!window.EqExpand) return;
+    const target = document.getElementById(targetId);
+    if (!target) return;
+    if (getComputedStyle(target).position === 'static') target.style.position = 'relative';
+    let btn = target.querySelector('.fin-hold-expand-btn');
+    if (!btn) {
+      btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'fin-hold-expand-btn';
+      btn.setAttribute('aria-label', 'Expand for more detail');
+      btn.innerHTML = '⤢';
+      target.appendChild(btn);
+    }
+    const hold = window.EqExpand.holdToDetail({ target: target, renderDetail: renderDetailFn });
+    btn.onclick = hold.openViaClick;
+  }
+  wireFinChartHold('nwChartWrap', buildNwChartDetail);
+  wireFinChartHold('nwDonutWrap', buildNwDonutDetail);
+  wireFinChartHold('bgtChartWrap', buildBudgetChartDetail);
+  wireFinChartHold('subsGraphWrap', buildSubsDetail);
+  wireFinChartHold('ordGraphWrap', buildOrdersDetail);
+  wireFinChartHold('wishGraphWrap', buildWishDetail);
 
 })();
 </script>
