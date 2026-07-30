@@ -248,6 +248,73 @@ button:focus-visible, a:focus-visible, [tabindex]:focus-visible {
   -webkit-overflow-scrolling: touch;
 }
 
+/* ==========================================================================
+   Phase 03 shared expand/hold-to-detail shell (js/expand-primitives.js).
+   One shell for both expandPanel() and holdToDetail() -- see that file's
+   own header comment for the full behavioural spec. Purely the visual
+   chrome lives here; open/close state and focus-trap logic is all JS.
+   ========================================================================== */
+.eq-shell-backdrop {
+  position: fixed; inset: 0; z-index: 500;
+  background: var(--eq-bg-elevated); /* near-black, no heavy blur, per spec */
+  opacity: 0; pointer-events: none;
+  transition: opacity 200ms ease-out;
+  display: flex; align-items: stretch;
+}
+.eq-shell-backdrop.eq-shell-open { opacity: 1; pointer-events: auto; }
+.eq-shell-panel {
+  position: relative;
+  background: var(--eq-bg-primary);
+  display: flex; flex-direction: column;
+  transition: transform 200ms ease-out, opacity 200ms ease-out;
+}
+/* left/right: anchored to that edge, rest of the backdrop stays visible
+   at the far side -- the "pushed/reflowed" reading of the PDF's wording. */
+.eq-shell-left, .eq-shell-right {
+  width: min(1100px, 82vw); height: 100%;
+  transform: translateX(-16px);
+}
+.eq-shell-left { margin-right: auto; border-right: 1px solid var(--eq-border-strong); }
+.eq-shell-right { margin-left: auto; border-left: 1px solid var(--eq-border-strong); transform: translateX(16px); }
+.eq-shell-backdrop.eq-shell-open .eq-shell-left,
+.eq-shell-backdrop.eq-shell-open .eq-shell-right { transform: translateX(0); }
+/* center: holdToDetail's expanded chart/table view */
+.eq-shell-center {
+  width: min(720px, 92vw); max-height: 84vh; margin: auto;
+  border-radius: var(--eq-card-radius-lg); border: 1px solid var(--eq-border-strong);
+  transform: scale(0.96); opacity: 0;
+}
+.eq-shell-backdrop.eq-shell-open .eq-shell-center { transform: scale(1); opacity: 1; }
+/* sheet: mobile degrade for every layout -- no "left" on a phone */
+.eq-shell-sheet {
+  width: 100%; height: 100%;
+  transform: translateY(24px); opacity: 0;
+}
+.eq-shell-backdrop.eq-shell-open .eq-shell-sheet { transform: translateY(0); opacity: 1; }
+@media (prefers-reduced-motion: reduce) {
+  .eq-shell-backdrop, .eq-shell-panel { transition: none; }
+}
+.eq-shell-close {
+  position: absolute; top: 14px; left: 14px; z-index: 1; /* top-LEFT per spec, not top-right */
+  width: 34px; height: 34px; border-radius: 50%;
+  background: rgba(var(--eq-text-primary-rgb), 0.08); border: none; color: var(--eq-text-primary);
+  font-size: 20px; line-height: 1; cursor: pointer;
+}
+.eq-shell-close:hover { background: rgba(var(--eq-text-primary-rgb), 0.14); }
+.eq-shell-body {
+  flex: 1; overflow-y: auto; padding: 60px 28px 28px;
+  scrollbar-width: none; -ms-overflow-style: none;
+}
+.eq-shell-body::-webkit-scrollbar { display: none; width: 0; height: 0; }
+
+/* holdToDetail() visual feedback while pressed -- "a subtle scale or
+   progress hint, so it doesn't feel unresponsive" (spec). */
+.eq-hold-active { transform: scale(0.98); transition: transform 150ms ease-out; }
+.eq-hold-fired { transform: scale(1.01); transition: transform 120ms ease-out; }
+@media (prefers-reduced-motion: reduce) {
+  .eq-hold-active, .eq-hold-fired { transform: none; transition: none; }
+}
+
 /* Hide on mobile / desktop utilities */
 @media (max-width: 767px) {
   .eq-desktop-only { display: none !important; }
