@@ -193,6 +193,16 @@ html, body { -webkit-text-size-adjust: 100%; }
   overscroll-behavior: contain;
 }
 body.topbar-modal-open { overflow: hidden; touch-action: none; }
+/* body.topbar-modal-open's touch-action:none blocks the PAGE from scrolling
+   behind an open modal -- but touch-action isn't simply inherited, so
+   without this, it also silently blocks touch-driven scrolling INSIDE the
+   modal's own overflow-y:auto content, since nothing re-enables it there.
+   A tall modal (e.g. gym.html's Settings, Units+Gyms+Days+Data stacked)
+   becomes impossible to scroll on a real touchscreen as a result -- any
+   action button below the fold (Done/Save/Cancel) is unreachable, even
+   though programmatic scrolling (and Playwright's .click(), which scrolls
+   via JS) still works, masking the bug in automated tests. */
+.modal, .po-modal { touch-action: pan-y; }
 @media (max-width: 480px) {
   .modal-bg, .po-modal-bg {
     padding: 0 !important;

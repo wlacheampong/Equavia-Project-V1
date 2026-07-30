@@ -346,7 +346,10 @@ img, video, canvas, svg { max-width: 100%; }
   .daytab.on { background: var(--mint); color: var(--ink); }
   .daytab .tnum { font-variant-numeric: tabular-nums; opacity:.6; font-size:10px; margin-left:5px; }
   .daytab.on .tnum { opacity:.55; }
-  /* long-press a tab to rename/delete it; the + tab always adds a new one */
+  /* dragging: cursor:grabbing plus a hint of lift, mirroring .ex.drag-ghost's
+     opacity treatment for the exercise-card reorder drag below */
+  .daytab.dragging { opacity:.6; cursor:grabbing; }
+  /* long-press a tab to rename/delete it; the + tab always adds a new one; press-and-drag reorders it */
   .daytab.addtab { flex:0 0 auto; width:34px; display:flex; align-items:center; justify-content:center; padding:9px 0; }
   .daytab.addtab svg { width:15px; height:15px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; }
   .daytab.addtab:hover { color: var(--mint); }
@@ -2665,18 +2668,67 @@ function render(){
   renderTabs(); renderDots(); renderHead(); renderProgress(); renderBody(); saveState();
 }
 const TAB_LONGPRESS_MS = 500;
+const TAB_DRAG_THRESHOLD = 10;
 function renderTabs(){
   const el = $('#daytabs');
   el.innerHTML = STATE.order.map(k=>{ const d=STATE.days[k]; if(!d) return ''; let suffix=''; if(!d.restDay){ const t=dayTotals(d); if(!d.off && t.total) suffix='<span class="tnum">'+t.logged+'/'+t.total+'</span>'; } return '<button class="daytab '+(k===STATE.active?'on':'')+'" data-k="'+k+'">'+escapeHtml(d.name)+suffix+'</button>'; }).join('')
     + '<button class="daytab addtab" id="addTabBtn" type="button" aria-label="Add a new tab" title="Add a new tab">'+svg('<path d="M12 5v14M5 12h14"/>',' fill="none" stroke="currentColor"')+'</button>';
+  // Tap selects, long-press (unchanged, 500ms) opens rename/delete -- drag
+  // to reorder is a THIRD gesture layered on the same button, since a tab
+  // has no separate handle the way exercise cards' .grip does: any
+  // horizontal movement past TAB_DRAG_THRESHOLD before the long-press timer
+  // fires cancels the timer and starts a reorder drag instead (mirrors
+  // wireDrag()'s exercise-card technique below, horizontal instead of
+  // vertical -- live-reorder via insertBefore on the real DOM nodes, commit
+  // STATE.order to match on drop).
   el.querySelectorAll('.daytab:not(.addtab)').forEach(b=>{
     const k = b.dataset.k;
-    let pressTimer=null, longPressed=false;
+    let pressTimer=null, longPressed=false, dragging=false, startX=0, startY=0;
     const clearPress=()=>{ if(pressTimer){ clearTimeout(pressTimer); pressTimer=null; } };
-    b.addEventListener('pointerdown', ()=>{ longPressed=false; pressTimer=setTimeout(()=>{ longPressed=true; openTabSettings(k); },TAB_LONGPRESS_MS); });
-    b.addEventListener('pointerup', ()=>{ clearPress(); if(!longPressed){ STATE.active=k; render(); } });
-    b.addEventListener('pointerleave', clearPress);
-    b.addEventListener('pointercancel', clearPress);
+    const onMove=(mev)=>{
+      if(!dragging){
+        if(longPressed) return; // rename/delete popup already open -- ignore further movement
+        const dx=mev.clientX-startX, dy=mev.clientY-startY;
+        if(Math.abs(dx)<TAB_DRAG_THRESHOLD || Math.abs(dx)<Math.abs(dy)) return; // not yet a clear horizontal drag
+        clearPress();
+        dragging=true;
+        b.classList.add('dragging');
+      }
+      mev.preventDefault();
+      const x=mev.clientX;
+      const others=[...el.querySelectorAll('.daytab:not(.addtab)')].filter(t=>t!==b);
+      let target=null;
+      others.forEach(t=>{ const r=t.getBoundingClientRect(); if(x>r.left && x<r.right) target=t; });
+      if(target){ const r=target.getBoundingClientRect(); const after=x>r.left+r.width/2; el.insertBefore(b, after?target.nextSibling:target); }
+    };
+    const endDrag=()=>{
+      document.removeEventListener('pointermove', onMove);
+      document.removeEventListener('pointerup', onUp);
+      document.removeEventListener('pointercancel', onCancel);
+      if(dragging){
+        b.classList.remove('dragging');
+        const ids=[...el.querySelectorAll('.daytab:not(.addtab)')].map(t=>t.dataset.k);
+        STATE.order.sort((a,c)=>ids.indexOf(a)-ids.indexOf(c));
+        saveState();
+      }
+      dragging=false;
+    };
+    const onUp=()=>{
+      clearPress();
+      const wasDragging=dragging;
+      endDrag();
+      if(!wasDragging && !longPressed){ STATE.active=k; render(); }
+    };
+    const onCancel=()=>{ clearPress(); endDrag(); }; // aborted gesture -- clean up only, never select/reorder-commit
+    b.addEventListener('pointerdown', (ev)=>{
+      longPressed=false; dragging=false;
+      startX=ev.clientX; startY=ev.clientY;
+      pressTimer=setTimeout(()=>{ longPressed=true; openTabSettings(k); },TAB_LONGPRESS_MS);
+      document.addEventListener('pointermove', onMove, { passive:false });
+      document.addEventListener('pointerup', onUp);
+      document.addEventListener('pointercancel', onCancel);
+    });
+    b.addEventListener('pointerleave', ()=>{ if(!dragging) clearPress(); });
   });
   $('#addTabBtn').onclick = addTab;
 }
