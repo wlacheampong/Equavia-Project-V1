@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<meta name="theme-color" content="#0a0a0b">
+<meta name="theme-color" content="#0d0d10">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="icon" type="image/webp" href="images/Index Landing Page.webp">
 <link rel="apple-touch-icon" href="images/apple-touch-icon.png">
@@ -28,7 +28,7 @@
   --text-primary: var(--eq-text-primary);
   --text-secondary: var(--eq-text-secondary);
   --text-tertiary: var(--eq-text-muted);
-  --text-quaternary: var(--eq-text-muted); /* was #4D4B47 (~2.3:1, failed AA) */
+  --text-quaternary: var(--eq-text-muted); /* was a dark gray that failed AA */
   --accent: var(--eq-accent);
   --success: var(--eq-success);
   --warning: var(--eq-warning);
@@ -49,7 +49,7 @@ body {
 .int-head-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .int-score-badge {
   flex-shrink: 0; display: flex; align-items: baseline; gap: 2px;
-  background: rgba(224,118,88,0.1); border: 1px solid rgba(224,118,88,0.3); border-radius: 12px;
+  background: rgba(var(--eq-accent-rgb), 0.1); border: 1px solid rgba(var(--eq-accent-rgb), 0.3); border-radius: 12px;
   padding: 8px 12px; margin-top: 2px;
 }
 .int-score-num { font-size: 19px; font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; }
@@ -61,17 +61,17 @@ body {
 /* ===== Inbox (5.5) ===== */
 .int-zone-tabs { display: flex; gap: 6px; margin-bottom: 16px; }
 .int-zone-tab {
-  flex: 1; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 10px;
+  flex: 1; background: rgba(var(--eq-text-primary-rgb), 0.04); border: 1px solid var(--border); border-radius: 10px;
   padding: 9px; font-family: inherit; font-size: 12.5px; font-weight: 700; color: var(--text-tertiary);
   cursor: pointer; position: relative;
 }
-.int-zone-tab.is-active { background: rgba(224,118,88,0.14); border-color: rgba(224,118,88,0.4); color: var(--accent); }
+.int-zone-tab.is-active { background: rgba(var(--eq-accent-rgb), 0.14); border-color: rgba(var(--eq-accent-rgb), 0.4); color: var(--accent); }
 .int-zone-badge {
   display: inline-flex; align-items: center; justify-content: center; min-width: 16px; height: 16px;
-  background: var(--danger); color: #2a0a0a; border-radius: 999px; font-size: 9.5px; font-weight: 800;
+  background: var(--danger); color: var(--eq-bg-primary); border-radius: 999px; font-size: 9.5px; font-weight: 800;
   margin-left: 6px; padding: 0 4px;
 }
-.inbox-tier-note { font-size: 11.5px; color: var(--text-tertiary); background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin-bottom: 16px; }
+.inbox-tier-note { font-size: 11.5px; color: var(--text-tertiary); background: rgba(var(--eq-text-primary-rgb), 0.03); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin-bottom: 16px; }
 .inbox-section { margin-bottom: 22px; }
 .inbox-quicklog-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
 .inbox-quicklog-row select { flex: 1; min-width: 100px; }
@@ -85,42 +85,42 @@ body {
 .inbox-msg-preview { font-size: 12px; color: var(--text-secondary); line-height: 1.4; }
 .inbox-msg-actions { display: flex; gap: 8px; margin-top: 6px; }
 .inbox-msg-actions button {
-  background: rgba(255,255,255,0.06); border: 1px solid var(--border-strong); border-radius: 8px;
+  background: rgba(var(--eq-text-primary-rgb), 0.06); border: 1px solid var(--border-strong); border-radius: 8px;
   padding: 5px 10px; font-family: inherit; font-size: 11px; font-weight: 600; color: var(--text-primary); cursor: pointer;
 }
 .inbox-msg-actions button:disabled { opacity: 0.5; cursor: default; }
-.inbox-msg-contact-chip { background: rgba(224,118,88,0.16); color: var(--accent); border-radius: 999px; padding: 2px 8px; font-size: 10px; font-weight: 700; }
+.inbox-msg-contact-chip { background: rgba(var(--eq-accent-rgb), 0.16); color: var(--accent); border-radius: 999px; padding: 2px 8px; font-size: 10px; font-weight: 700; }
 .int-search {
   flex: 1; background: var(--bg-input); border: 1px solid var(--border-strong); border-radius: 10px;
   padding: 9px 12px; color: var(--text-primary); font-family: inherit; font-size: 13.5px; outline: none;
 }
-.int-search:focus { border-color: rgba(255,255,255,0.3); }
+.int-search:focus { border-color: rgba(var(--eq-text-primary-rgb), 0.3); }
 .int-add-btn {
-  flex-shrink: 0; background: linear-gradient(180deg, #FFFFFF 0%, #E8E5DD 100%); color: #0A0A0B;
+  flex-shrink: 0; background: linear-gradient(180deg, var(--eq-text-primary) 0%, var(--eq-btn-primary-end) 100%); color: var(--eq-bg-primary);
   border: 0; border-radius: 10px; padding: 9px 16px; font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer;
 }
 .int-tier-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
 .int-chip {
   padding: 5px 12px; border-radius: 999px; border: 1px solid var(--border-strong);
-  background: rgba(255,255,255,0.03); color: var(--text-tertiary);
+  background: rgba(var(--eq-text-primary-rgb), 0.03); color: var(--text-tertiary);
   font-family: inherit; font-size: 11px; font-weight: 600; cursor: pointer;
   min-height: 44px; /* was ~23px tall */
 }
-.int-chip.is-on { background: rgba(224,118,88,0.14); border-color: rgba(224,118,88,0.4); color: var(--accent); }
+.int-chip.is-on { background: rgba(var(--eq-accent-rgb), 0.14); border-color: rgba(var(--eq-accent-rgb), 0.4); color: var(--accent); }
 
 .ct-row {
   display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 12px;
   background: var(--bg-card); margin-bottom: 6px; cursor: pointer; border: 1px solid transparent;
 }
 .ct-row:hover { border-color: var(--border-strong); }
-.ct-row.is-overdue { background: rgba(255, 107, 107, 0.08); }
-.ct-row.is-due { background: rgba(242, 192, 99, 0.07); }
-.ct-row.is-birthday-today { background: rgba(224, 118, 88, 0.14); }
+.ct-row.is-overdue { background: rgba(var(--eq-danger-rgb), 0.08); }
+.ct-row.is-due { background: rgba(var(--eq-warning-rgb), 0.07); }
+.ct-row.is-birthday-today { background: rgba(var(--eq-accent-rgb), 0.14); }
 .ct-row-main { flex: 1; min-width: 0; }
 .ct-row-name { font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .ct-tier-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 .ct-row-status { font-size: 11.5px; color: var(--text-tertiary); margin-top: 3px; }
-.ct-row-status.is-overdue { color: #FF8A8A; }
+.ct-row-status.is-overdue { color: var(--eq-danger); }
 .ct-row-status.is-due { color: var(--warning); }
 .ct-cake { font-size: 12px; }
 .ct-chevron { color: var(--text-quaternary); flex-shrink: 0; }
@@ -136,23 +136,23 @@ body {
 .ct-del-btn::before { content: ''; position: absolute; inset: -12px; } /* invisible tap-target expansion to ~44x44px */
 .ct-del-btn:hover { color: var(--danger); }
 .ct-profile-status { font-size: 12.5px; color: var(--text-tertiary); margin-bottom: 16px; }
-.ct-profile-status.is-overdue { color: #FF8A8A; }
+.ct-profile-status.is-overdue { color: var(--eq-danger); }
 .ct-profile-status.is-due { color: var(--warning); }
 .ct-actions-row { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
 .ct-action-btn {
-  background: rgba(255,255,255,0.06); color: var(--text-primary); border: 1px solid var(--border-strong);
+  background: rgba(var(--eq-text-primary-rgb), 0.06); color: var(--text-primary); border: 1px solid var(--border-strong);
   border-radius: 10px; padding: 8px 14px; font-family: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer;
   min-height: 44px; /* was ~31px tall */
 }
-.ct-action-btn.is-primary { background: var(--accent); color: #1a0f0a; border-color: transparent; }
+.ct-action-btn.is-primary { background: var(--accent); color: var(--eq-bg-primary); border-color: transparent; }
 /* ===== 6.7: web-search quick prompt, fueling social plans ===== */
 .int-websearch-btn {
   display: inline-flex; align-items: center; gap: 6px; margin-bottom: 16px;
-  background: rgba(255,255,255,0.05); color: var(--text-primary); border: 1px solid var(--border-strong);
+  background: rgba(var(--eq-text-primary-rgb), 0.05); color: var(--text-primary); border: 1px solid var(--border-strong);
   border-radius: 10px; padding: 8px 14px; font-family: inherit; font-size: 12.5px; font-weight: 600;
   text-decoration: none; cursor: pointer;
 }
-.int-websearch-btn:hover { background: rgba(255,255,255,0.09); }
+.int-websearch-btn:hover { background: rgba(var(--eq-text-primary-rgb), 0.09); }
 .ct-field { margin-bottom: 14px; }
 .ct-field label { display: block; font-size: 10.5px; font-weight: 700; color: var(--text-tertiary); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.05em; }
 .ct-field input[type="text"], .ct-field input[type="date"], .ct-field select, .ct-field textarea {
@@ -160,13 +160,13 @@ body {
   padding: 8px 10px; font-size: 16px; font-family: inherit; color: var(--text-primary); outline: none; /* font-size was 13px, also fixes iOS zoom-on-focus */
 }
 .ct-field input[type="text"]:focus, .ct-field input[type="date"]:focus, .ct-field select:focus, .ct-field textarea:focus {
-  border-color: var(--text-primary); box-shadow: 0 0 0 2px rgba(255,255,255,0.12); /* was outline:none with no replacement focus state */
+  border-color: var(--text-primary); box-shadow: 0 0 0 2px rgba(var(--eq-text-primary-rgb), 0.12); /* was outline:none with no replacement focus state */
 }
 .ct-field textarea { resize: vertical; min-height: 44px; }
 .ct-field-row { display: flex; gap: 10px; }
 .ct-field-row .ct-field { flex: 1; }
 .ct-tags-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
-.ct-tag-pill { background: rgba(255,255,255,0.06); border: 1px solid var(--border-strong); border-radius: 999px; padding: 4px 10px 4px 12px; font-size: 11.5px; display: flex; align-items: center; gap: 6px; }
+.ct-tag-pill { background: rgba(var(--eq-text-primary-rgb), 0.06); border: 1px solid var(--border-strong); border-radius: 999px; padding: 4px 10px 4px 12px; font-size: 11.5px; display: flex; align-items: center; gap: 6px; }
 .ct-tag-pill button { background: none; border: none; color: var(--text-quaternary); cursor: pointer; padding: 0; font-size: 13px; line-height: 1; position: relative; }
 .ct-tag-pill button::before {
   /* invisible tap-target expansion: pill row only has 6px gaps, so this is capped at the WCAG 24px minimum rather than the full 44px guideline */
@@ -185,7 +185,7 @@ body {
 .ct-thread-add-row { display: flex; gap: 8px; margin-top: 8px; }
 .ct-thread-add-row input { flex: 1; }
 .ct-topic-card {
-  background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 10px;
+  background: rgba(var(--eq-text-primary-rgb), 0.04); border: 1px solid var(--border); border-radius: 10px;
   padding: 10px 12px; margin-bottom: 8px; font-size: 12.5px; cursor: pointer; line-height: 1.4;
 }
 .ct-topic-card:hover { border-color: var(--accent); }
@@ -198,12 +198,12 @@ body {
 }
 .ct-reply-modes { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
 .ct-reply-mode-btn {
-  background: rgba(255,255,255,0.06); border: 1px solid var(--border-strong); border-radius: 999px;
+  background: rgba(var(--eq-text-primary-rgb), 0.06); border: 1px solid var(--border-strong); border-radius: 999px;
   padding: 6px 12px; font-family: inherit; font-size: 11.5px; font-weight: 600; color: var(--text-primary); cursor: pointer;
 }
 .ct-reply-mode-btn:disabled { opacity: 0.5; cursor: default; }
 .ct-reply-option {
-  background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 10px;
+  background: rgba(var(--eq-text-primary-rgb), 0.04); border: 1px solid var(--border); border-radius: 10px;
   padding: 10px 12px; margin-bottom: 8px; font-size: 12.5px; line-height: 1.5; cursor: pointer;
 }
 .ct-reply-option:hover { border-color: var(--accent); }
@@ -223,13 +223,13 @@ body {
   position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: flex-end; justify-content: center; z-index: 50;
 }
 .int-sheet {
-  width: 100%; max-width: 480px; background: #121214; border-radius: 20px 20px 0 0; padding: 20px 18px calc(20px + env(safe-area-inset-bottom));
+  width: 100%; max-width: 480px; background: var(--eq-bg-page-alt); border-radius: 20px 20px 0 0; padding: 20px 18px calc(20px + env(safe-area-inset-bottom));
   max-height: 85vh; overflow-y: auto;
 }
 .int-sheet h2 { font-size: 16px; margin: 0 0 14px; }
 .ct-channel-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
 .ct-channel-btn {
-  flex: 1; min-width: 80px; background: rgba(255,255,255,0.06); border: 1px solid var(--border-strong); border-radius: 10px;
+  flex: 1; min-width: 80px; background: rgba(var(--eq-text-primary-rgb), 0.06); border: 1px solid var(--border-strong); border-radius: 10px;
   padding: 12px 8px; font-family: inherit; font-size: 12.5px; font-weight: 600; color: var(--text-primary); cursor: pointer; text-align: center;
   min-height: 44px;
 }
@@ -246,10 +246,10 @@ body {
 .digest-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
 .digest-btn {
   padding: 8px 14px; border-radius: 9px; border: 1px solid var(--border-strong);
-  background: rgba(255,255,255,0.04); color: var(--text-secondary); font-family: inherit; font-size: 11.5px; font-weight: 600; cursor: pointer;
+  background: rgba(var(--eq-text-primary-rgb), 0.04); color: var(--text-secondary); font-family: inherit; font-size: 11.5px; font-weight: 600; cursor: pointer;
   min-height: 44px; /* was ~30px tall */
 }
-.digest-btn:hover { background: rgba(255,255,255,0.08); color: var(--text-primary); }
+.digest-btn:hover { background: rgba(var(--eq-text-primary-rgb), 0.08); color: var(--text-primary); }
 .digest-btn:disabled { opacity: 0.5; cursor: default; }
 .digest-empty { font-size: 12px; color: var(--text-quaternary); font-style: italic; }
 .digest-cat { margin-top: 14px; }
@@ -270,10 +270,10 @@ body {
 .cat-tabs-row { display: flex; gap: 6px; overflow-x: auto; margin-bottom: 14px; padding-bottom: 2px; }
 .cat-tab-btn {
   flex-shrink: 0; padding: 7px 13px; border-radius: 999px; border: 1px solid var(--border-strong);
-  background: rgba(255,255,255,0.04); color: var(--text-tertiary); font-family: inherit; font-size: 11.5px; font-weight: 700; cursor: pointer;
+  background: rgba(var(--eq-text-primary-rgb), 0.04); color: var(--text-tertiary); font-family: inherit; font-size: 11.5px; font-weight: 700; cursor: pointer;
   min-height: 44px; /* was ~28px tall */
 }
-.cat-tab-btn.is-active { background: rgba(224,118,88,0.16); border-color: rgba(224,118,88,0.45); color: var(--accent); }
+.cat-tab-btn.is-active { background: rgba(var(--eq-accent-rgb), 0.16); border-color: rgba(var(--eq-accent-rgb), 0.45); color: var(--accent); }
 .story-card { background: var(--bg-card); border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; }
 .story-card.is-seen { opacity: 0.45; }
 .story-title { font-size: 13.5px; font-weight: 700; line-height: 1.4; margin-bottom: 4px; }
@@ -333,7 +333,7 @@ body {
       <div id="inboxGmailConn" style="display:none;">
         <div id="inboxGmailList"></div>
         <div class="row-sub" id="inboxGmailEmpty" style="display:none;">No unread mail.</div>
-        <div class="row-sub" id="inboxGmailErr" style="display:none;color:#FF8A8A;"></div>
+        <div class="row-sub" id="inboxGmailErr" style="display:none;color:var(--eq-danger);"></div>
       </div>
     </div>
 
@@ -532,10 +532,10 @@ body {
   // duplicated in dashboard.html (x2), planner.html, ask.html, and this
   // file's own TIER_CADENCE below -- all six updated together.
   const TIER_DEFS = [
-    { key: 'inner', label: 'Inner', cadenceDays: 7, color: '#E07658' },
-    { key: 'close', label: 'Close', cadenceDays: 14, color: '#6BE3A4' },
-    { key: 'acquaintance', label: 'Acquaintance', cadenceDays: 45, color: '#F2C063' },
-    { key: 'networking', label: 'Networking', cadenceDays: 90, color: '#76746E' },
+    { key: 'inner', label: 'Inner', cadenceDays: 7, color: 'var(--eq-accent)' },
+    { key: 'close', label: 'Close', cadenceDays: 14, color: 'var(--eq-success)' },
+    { key: 'acquaintance', label: 'Acquaintance', cadenceDays: 45, color: 'var(--eq-warning)' },
+    { key: 'networking', label: 'Networking', cadenceDays: 90, color: 'var(--eq-text-muted)' },
   ];
   const TIER_MAP = {}; TIER_DEFS.forEach((t) => { TIER_MAP[t.key] = t; });
   const CHANNEL_LABELS = { call: 'Call', text: 'Text', 'in-person': 'In-person', other: 'Other' };

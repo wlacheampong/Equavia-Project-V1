@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#050506">
+<meta name="theme-color" content="#0d0d10">
 <link rel="icon" type="image/webp" href="images/Index Landing Page.webp">
 <link rel="apple-touch-icon" href="images/apple-touch-icon.png">
 <link rel="manifest" href="manifest.json">
@@ -20,7 +20,7 @@
   --border-strong: var(--eq-border-strong);
   --text-primary: var(--eq-text-primary);
   --text-secondary: var(--eq-text-secondary);
-  --text-tertiary: var(--eq-text-muted); /* was #76746E (~4.36:1, marginally failed AA) */
+  --text-tertiary: var(--eq-text-muted); /* was a mid-gray that marginally failed AA */
   --accent: var(--eq-accent);
   --danger: var(--eq-danger);
   --font: var(--eq-font-family);
@@ -41,8 +41,8 @@ body::before {
   content: '';
   position: fixed; inset: 0;
   background:
-    radial-gradient(circle at 82% 14%, rgba(224, 118, 88, 0.16), transparent 45%),
-    radial-gradient(circle at 18% 90%, rgba(180, 180, 200, 0.06), transparent 50%);
+    radial-gradient(circle at 82% 14%, rgba(var(--eq-accent-rgb), 0.16), transparent 45%),
+    radial-gradient(circle at 18% 90%, rgba(var(--eq-text-primary-rgb), 0.06), transparent 50%);
   filter: blur(40px);
   pointer-events: none;
   z-index: -1;
@@ -89,7 +89,7 @@ body::before {
   width: 100%;
   margin-top: 18px;
   background: var(--accent);
-  color: #1a0d08;
+  color: var(--eq-bg-primary);
   border: none;
   border-radius: 10px;
   font-family: var(--font);

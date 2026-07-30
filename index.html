@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#050506">
+<meta name="theme-color" content="#0d0d10">
 <link rel="icon" type="image/webp" href="images/Index Landing Page.webp">
 <link rel="apple-touch-icon" href="images/apple-touch-icon.png">
 <link rel="manifest" href="manifest.json">
@@ -36,8 +36,8 @@ body::before {
   content: '';
   position: fixed; inset: 0;
   background:
-    radial-gradient(circle at 82% 14%, rgba(224, 118, 88, 0.16), transparent 45%),
-    radial-gradient(circle at 18% 90%, rgba(180, 180, 200, 0.06), transparent 50%);
+    radial-gradient(circle at 82% 14%, rgba(var(--eq-accent-rgb), 0.16), transparent 45%),
+    radial-gradient(circle at 18% 90%, rgba(var(--eq-text-primary-rgb), 0.06), transparent 50%);
   filter: blur(40px);
   pointer-events: none;
   z-index: -1;
@@ -68,7 +68,7 @@ body::before {
   outline-offset: -6px;
   -webkit-tap-highlight-color: transparent;
 }
-.hero-link:focus-visible { outline: 2px solid rgba(255, 255, 255, 0.55); }
+.hero-link:focus-visible { outline: 2px solid rgba(var(--eq-text-primary-rgb), 0.55); }
 
 .hero-image {
   display: block;

@@ -5,39 +5,70 @@
    and the handful of shared utility classes (.eq-card, .eq-page-content,
    .eq-chart-wrap, .eq-desktop-only/.eq-mobile-only).
 
-   Token values below were reconciled from what was actually in use across
-   all 18 pages (see the 2026-07-22 UI audit): before this file existed,
-   every page hand-copied its own :root block, and at least three
-   incompatible color "dialects" had drifted apart (an orange-accent set on
-   planner/finance/ability/interactions/news/ask/settings/lock/privacy, a
-   mint-accent set on notes/brand/vitals, and a rgba-opacity-based set on
-   gym/po-water/train). This file keeps the orange as the one shared
-   --eq-accent (it was the more common "primary accent" naming) and folds
-   mint in as the semantic --eq-success color instead of a second accent.
+   Colors below are Phase 01 of docs/files/00-OVERVIEW.md's redesign --
+   values copied verbatim from docs/files/design-tokens.md (measured from
+   the Fey reference screenshots), replacing the 2026-07-22 audit's
+   reconciled-but-still-ad-hoc palette below each token. Kept the existing
+   --eq- names (rather than adopting design-tokens.md's bare names like
+   --bg-page/--text-primary) so every page's own local :root alias block
+   (e.g. `--text-primary: var(--eq-text-primary)`) keeps working unchanged
+   -- only the values move, not 18 pages' worth of alias declarations.
+
+   RGB-triplet variants (--eq-*-rgb) exist so rgba(var(--eq-accent-rgb),
+   0.16)-style translucent fills can still be built from these tokens --
+   a bare `--eq-accent: #ff9860` can't be dropped into an rgba() call.
    ========================================================================== */
 
 :root {
-  /* ---- Colors ---- */
-  --eq-bg-primary:        #050506; /* near-black page background */
-  --eq-bg-card:           rgba(255, 255, 255, 0.04); /* card/section background -- this exact value was already near-universal */
-  --eq-bg-input:          rgba(0, 0, 0, 0.28);
-  --eq-bg-elevated:       #131316; /* modals, popovers, dropdowns */
+  /* ---- Colors (docs/files/design-tokens.md) ---- */
+  --eq-bg-primary:        #0d0d10; /* near-black, faint cool cast */
+  --eq-bg-page-alt:       #121418; /* some screens sit slightly lighter -- optional, not used by default */
+  --eq-bg-card:           #0d0d10; /* same as --eq-bg-primary on purpose -- cards are NOT lifted; separation is the hairline border + padding only, never a lighter fill or a shadow */
+  --eq-bg-input:          #16181c;
+  --eq-bg-elevated:       #000000; /* full-screen overlays/modals go pure black, per design-tokens.md's --bg-modal */
 
-  --eq-border:            rgba(255, 255, 255, 0.06);
-  --eq-border-strong:     rgba(255, 255, 255, 0.14);
+  --eq-border:            #1e2024; /* the main separation device -- was a translucent white overlay, now a solid color */
+  --eq-border-strong:     #2a2d33;
 
-  --eq-text-primary:      #FAFAFA;
-  --eq-text-secondary:    #B8B6B0;
-  --eq-text-muted:        #8C8A91; /* replaces every page's own --text-tertiary; ~5.6:1 on --eq-bg-primary, passes AA (the old values across pages ranged #76746E/#84848c, several of which failed) */
-  --eq-text-placeholder:  #8C8A91; /* same value as muted -- confirmed >4.5:1 on --eq-bg-input too */
+  --eq-text-primary:      #f5f5f5; /* off-white, never pure #fff */
+  --eq-text-secondary:    #8a8d94;
+  --eq-text-muted:        #5a5d64;
+  --eq-text-placeholder:  #5a5d64; /* same value as muted */
 
-  --eq-accent:            #E07658; /* the more consistently-named "accent" across pages (planner/finance/ability/interactions/news/ask/settings/lock/privacy) */
-  --eq-danger:            #FF6B6B;
-  --eq-success:           #6BE3A4; /* was a second "accent" on notes/brand/vitals/gym/health/po-water/train -- folded in here as the semantic success color instead */
-  --eq-warning:           #F2C063;
+  --eq-accent:            #ff9860; /* coral-orange: toggles on, primary action. Use sparingly -- it reads as premium because it's rare (design-tokens.md), not on every button. */
+  --eq-danger:            #f01a28; /* vivid crimson */
+  --eq-success:           #6fa491; /* muted sage green -- deliberately not neon */
+  --eq-warning:           #F2C063; /* design-tokens.md has no warning/caution token -- left at its prior value, still a distinct semantic from danger/negative */
+
+  /* Same colors as --eq-danger/--eq-success, under design-tokens.md's own
+     names -- use these specifically for "this number went up/down" data
+     contexts (finance deltas, weight trend, goal progress), not for
+     generic success/error toasts (see design-tokens.md's own note on this). */
+  --eq-positive:          var(--eq-success);
+  --eq-negative:          var(--eq-danger);
+  --eq-highlight-est:     #e1e7ac; /* pale yellow-green: estimated/projected values */
+  --eq-btn-primary-end:   #e8e5dd; /* warm-white gradient stop for .btn-primary -- not in design-tokens.md, a pre-existing decorative detail kept as-is and just tokenized */
+  --eq-info:              #7BA7E2; /* not in design-tokens.md -- a genuine 4th categorical hue already in consistent use pre-Phase-01 (Planner's "in-progress" kanban column, goal-linked project tags), distinct from accent/success/danger/warning, kept rather than forced onto a semantically-wrong token */
+
+  /* ---- Chart series (in order: primary, 2nd, 3rd, 4th) ---- */
+  --eq-chart-1:    #ffffff;
+  --eq-chart-2:    #9580b3;
+  --eq-chart-3:    #c8102e;
+  --eq-chart-4:    #6b4c8a;
+  --eq-chart-grid: #1e2024;
+
+  /* ---- RGB triplets, for rgba(var(--eq-*-rgb), alpha) translucent fills ---- */
+  --eq-accent-rgb:        255, 152, 96;
+  --eq-danger-rgb:        240, 26, 40;
+  --eq-success-rgb:       111, 164, 145;
+  --eq-warning-rgb:       242, 192, 99;
+  --eq-text-primary-rgb:  245, 245, 245;
+  --eq-bg-primary-rgb:    13, 13, 16;
+  --eq-chart-2-rgb:       149, 128, 179;
+  --eq-info-rgb:          123, 167, 226;
 
   /* ---- Typography ---- */
-  --eq-font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --eq-font-family: Inter, "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --eq-font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   --eq-font-xs:   12px;
   --eq-font-sm:   13px;
@@ -57,8 +88,12 @@
   --eq-space-3xl:  40px;
 
   /* ---- Layout ---- */
+  /* Standardized to one card radius per Phase 01 (was 12/16px split) --
+     12px sits in design-tokens.md's observed 10-14px range. Both tokens
+     kept (rather than removing --eq-card-radius-lg) so no call site
+     needs touching; they just compute to the same value now. */
   --eq-card-radius:      12px;
-  --eq-card-radius-lg:   16px; /* larger cards/hero sections across several pages already used 16-18px */
+  --eq-card-radius-lg:   12px;
   --eq-input-radius:     8px;
   --eq-btn-radius:       10px;
   --eq-card-padding:  var(--eq-space-lg);
@@ -172,7 +207,7 @@ button:focus-visible, a:focus-visible, [tabindex]:focus-visible {
   content: '';
   flex: 1;
   height: 1px;
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.08), transparent);
+  background: linear-gradient(90deg, rgba(var(--eq-text-primary-rgb), 0.08), transparent);
 }
 .section-title-text { display: inline-flex; align-items: center; gap: 8px; }
 
@@ -180,7 +215,7 @@ button:focus-visible, a:focus-visible, [tabindex]:focus-visible {
    .po-btn-primary was already pixel-identical to .btn-primary, independently
    hand-rolled -- this removes that duplication rather than picking a side). */
 .btn {
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(var(--eq-text-primary-rgb), 0.06);
   color: var(--eq-text-primary);
   border: 1px solid var(--eq-border-strong);
   border-radius: var(--eq-btn-radius);
@@ -197,14 +232,14 @@ button:focus-visible, a:focus-visible, [tabindex]:focus-visible {
   white-space: nowrap;
   -webkit-tap-highlight-color: transparent;
 }
-.btn:hover { background: rgba(255, 255, 255, 0.10); }
+.btn:hover { background: rgba(var(--eq-text-primary-rgb), 0.10); }
 .btn-primary {
-  background: linear-gradient(180deg, #FFFFFF 0%, #E8E5DD 100%);
-  color: #0A0A0B;
+  background: linear-gradient(180deg, var(--eq-text-primary) 0%, var(--eq-btn-primary-end) 100%);
+  color: var(--eq-bg-primary);
   border: 0;
 }
 .btn-primary:hover { filter: brightness(1.05); }
-.btn-danger-outline { border-color: rgba(239, 68, 68, 0.4); color: #FF9B9B; }
+.btn-danger-outline { border-color: rgba(var(--eq-danger-rgb), 0.4); color: var(--eq-danger); }
 
 /* Responsive chart container */
 .eq-chart-wrap {

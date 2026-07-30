@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<meta name="theme-color" content="#0a0a0b">
+<meta name="theme-color" content="#0d0d10">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="icon" type="image/webp" href="images/Index Landing Page.webp">
 <link rel="apple-touch-icon" href="images/apple-touch-icon.png">
@@ -24,7 +24,7 @@
   --text-primary: var(--eq-text-primary);
   --text-secondary: var(--eq-text-secondary);
   --text-tertiary: var(--eq-text-muted);
-  --text-quaternary: var(--eq-text-muted); /* was #4D4B47 (~2.4:1, failed AA) */
+  --text-quaternary: var(--eq-text-muted); /* was a dark gray that failed AA */
   --accent: var(--eq-accent);
   --success: var(--eq-success);
   --warning: var(--eq-warning);
@@ -45,12 +45,12 @@ body {
 
 .ask-domains { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
 .ask-domain-chip {
-  padding: 5px 12px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.1);
-  background: rgba(255,255,255,0.03); color: var(--text-tertiary);
+  padding: 5px 12px; border-radius: 999px; border: 1px solid rgba(var(--eq-text-primary-rgb), 0.1);
+  background: rgba(var(--eq-text-primary-rgb), 0.03); color: var(--text-tertiary);
   font-family: inherit; font-size: 11px; font-weight: 600; cursor: pointer;
   min-height: 44px; display: inline-flex; align-items: center; justify-content: center; /* was ~23px tall */
 }
-.ask-domain-chip.is-on { background: rgba(224,118,88,0.14); border-color: rgba(224,118,88,0.4); color: var(--accent); }
+.ask-domain-chip.is-on { background: rgba(var(--eq-accent-rgb), 0.14); border-color: rgba(var(--eq-accent-rgb), 0.4); color: var(--accent); }
 .ask-context-size { font-size: 10.5px; color: var(--text-quaternary); font-family: var(--font-mono); margin-bottom: 18px; }
 
 .ask-empty { text-align: center; padding: 40px 20px; color: var(--text-tertiary); }
@@ -60,8 +60,8 @@ body {
 .ask-onboard { text-align: center; padding: 32px 20px; color: var(--text-tertiary); }
 .ask-onboard-q { font-size: 13.5px; color: var(--text-secondary); margin: 10px 0 14px; line-height: 1.5; }
 .ask-onboard-input {
-  width: 100%; max-width: 360px; box-sizing: border-box; background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: var(--text-primary);
+  width: 100%; max-width: 360px; box-sizing: border-box; background: rgba(var(--eq-text-primary-rgb), 0.05);
+  border: 1px solid rgba(var(--eq-text-primary-rgb), 0.1); border-radius: 10px; color: var(--text-primary);
   font-family: inherit; font-size: 14px; padding: 10px 13px; text-align: left;
 }
 .ask-onboard-actions { display: flex; justify-content: center; gap: 8px; margin: 14px 0 10px; }
@@ -69,26 +69,26 @@ body {
 
 .ask-messages { display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; }
 .ask-msg { max-width: 82%; padding: 10px 13px; border-radius: 14px; font-size: 13.5px; line-height: 1.5; white-space: pre-wrap; }
-.ask-msg-user { align-self: flex-end; background: var(--accent); color: #1a0f0a; border-bottom-right-radius: 4px; }
+.ask-msg-user { align-self: flex-end; background: var(--accent); color: var(--eq-bg-primary); border-bottom-right-radius: 4px; }
 .ask-msg-assistant { align-self: flex-start; background: var(--bg-card); color: var(--text-primary); border-bottom-left-radius: 4px; }
-.ask-msg-error { align-self: flex-start; background: rgba(255,107,107,0.1); border: 1px solid rgba(255,107,107,0.3); color: #FF8A8A; }
+.ask-msg-error { align-self: flex-start; background: rgba(var(--eq-danger-rgb), 0.1); border: 1px solid rgba(var(--eq-danger-rgb), 0.3); color: var(--eq-danger); }
 .ask-proposal { display: flex; flex-direction: column; gap: 4px; }
 .ask-proposal-title { font-weight: 700; font-size: 13.5px; }
 .ask-proposal-when { font-size: 12px; color: var(--text-secondary); }
 .ask-proposal-notes { font-size: 12px; color: var(--text-tertiary); }
 .ask-proposal-actions { display: flex; gap: 8px; margin-top: 6px; }
 .ask-proposal-btn { border: none; border-radius: 8px; padding: 6px 12px; font-family: inherit; font-size: 11.5px; font-weight: 600; cursor: pointer; }
-.ask-proposal-confirm { background: var(--accent); color: #1a0f0a; }
-.ask-proposal-decline { background: rgba(255,255,255,0.08); color: var(--text-secondary); }
+.ask-proposal-confirm { background: var(--accent); color: var(--eq-bg-primary); }
+.ask-proposal-decline { background: rgba(var(--eq-text-primary-rgb), 0.08); color: var(--text-secondary); }
 .ask-proposal-status { font-size: 11.5px; color: var(--text-tertiary); margin-top: 4px; }
 .ask-action { flex-direction: row; align-items: center; flex-wrap: wrap; gap: 8px; padding: 8px 13px; }
 .ask-action-line { font-size: 12.5px; }
-.ask-action-undo { border: none; background: rgba(255,255,255,0.08); color: var(--text-secondary); font-family: inherit; font-size: 10.5px; font-weight: 600; padding: 3px 9px; border-radius: 999px; cursor: pointer; }
+.ask-action-undo { border: none; background: rgba(var(--eq-text-primary-rgb), 0.08); color: var(--text-secondary); font-family: inherit; font-size: 10.5px; font-weight: 600; padding: 3px 9px; border-radius: 999px; cursor: pointer; }
 .ask-action-undo:disabled { opacity: 0.5; cursor: default; }
 .ask-action-undone { font-size: 10.5px; color: var(--text-quaternary); font-style: italic; }
 .ask-action .ask-msg-time { width: 100%; margin-top: 0; }
 .ask-msg-time { font-size: 9.5px; color: var(--text-quaternary); margin-top: 4px; font-family: var(--font-mono); }
-.ask-msg-user .ask-msg-time { color: rgba(26,15,10,0.55); }
+.ask-msg-user .ask-msg-time { color: rgba(var(--eq-bg-primary-rgb), 0.55); }
 .ask-typing { align-self: flex-start; display: flex; gap: 4px; padding: 12px 14px; background: var(--bg-card); border-radius: 14px; border-bottom-left-radius: 4px; }
 .ask-typing-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-tertiary); animation: askTyping 1.1s ease-in-out infinite; }
 .ask-typing-dot:nth-child(2) { animation-delay: 0.15s; }
@@ -120,7 +120,7 @@ body {
 }
 .ask-input-row {
   width: 100%; max-width: 688px; display: flex; gap: 8px; align-items: flex-end;
-  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(var(--eq-text-primary-rgb), 0.05); border: 1px solid rgba(var(--eq-text-primary-rgb), 0.1);
   border-radius: 16px; padding: 6px 6px 6px 14px;
 }
 .ask-input {
@@ -131,16 +131,16 @@ body {
 .ask-input::placeholder { color: var(--text-tertiary); }
 .ask-send-btn {
   flex-shrink: 0; width: 44px; height: 44px; border-radius: 12px; border: none; /* was 38px */
-  background: var(--accent); color: #1a0f0a; cursor: pointer;
+  background: var(--accent); color: var(--eq-bg-primary); cursor: pointer;
   display: flex; align-items: center; justify-content: center;
 }
 .ask-send-btn:disabled { opacity: 0.4; cursor: default; }
 .ask-mic-btn {
   flex-shrink: 0; width: 44px; height: 44px; border-radius: 12px; border: none; /* was 38px */
-  background: rgba(255,255,255,0.06); color: var(--text-secondary); cursor: pointer;
+  background: rgba(var(--eq-text-primary-rgb), 0.06); color: var(--text-secondary); cursor: pointer;
   display: flex; align-items: center; justify-content: center;
 }
-.ask-mic-btn.is-listening { background: var(--danger); color: #2a0a0a; }
+.ask-mic-btn.is-listening { background: var(--danger); color: var(--eq-bg-primary); }
 @media (prefers-reduced-motion: no-preference) {
   .ask-mic-btn.is-listening { animation: askMicPulse 1.2s ease-in-out infinite; }
   @keyframes askMicPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
@@ -149,18 +149,18 @@ body {
 /* ===== Web search toggle (6.7) ===== */
 .ask-web-row { width: 100%; max-width: 688px; margin: 0 auto 8px; display: flex; justify-content: flex-end; }
 .ask-web-toggle {
-  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(var(--eq-text-primary-rgb), 0.05); border: 1px solid rgba(var(--eq-text-primary-rgb), 0.1);
   color: var(--text-tertiary); font-family: var(--font-mono); font-size: 10.5px;
   font-weight: 700; letter-spacing: 0.03em; padding: 4px 10px; border-radius: 999px; cursor: pointer;
 }
-.ask-web-toggle.is-on { background: var(--accent); border-color: transparent; color: #1a0f0a; }
+.ask-web-toggle.is-on { background: var(--accent); border-color: transparent; color: var(--eq-bg-primary); }
 .ask-sources { margin-top: 6px; display: flex; flex-direction: column; gap: 3px; }
 .ask-sources-label { font-size: 10px; color: var(--text-quaternary); letter-spacing: 0.04em; text-transform: uppercase; }
 .ask-source-link { font-size: 11.5px; color: var(--text-secondary); text-decoration: none; }
 .ask-source-link:hover { text-decoration: underline; color: var(--text-primary); }
 .ask-server-warn {
-  font-size: 11px; color: var(--warning); background: rgba(242,192,99,0.08);
-  border: 1px solid rgba(242,192,99,0.25); border-radius: 10px; padding: 10px 12px; margin-bottom: 16px;
+  font-size: 11px; color: var(--warning); background: rgba(var(--eq-warning-rgb), 0.08);
+  border: 1px solid rgba(var(--eq-warning-rgb), 0.25); border-radius: 10px; padding: 10px 12px; margin-bottom: 16px;
   display: none;
 }
 </style>
