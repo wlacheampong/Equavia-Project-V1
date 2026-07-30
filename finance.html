@@ -382,6 +382,50 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
 .nw-alloc-bar { height: 4px; border-radius: 2px; background: rgba(var(--eq-text-primary-rgb), 0.06); margin-top: 4px; overflow: hidden; }
 .nw-alloc-bar-fill { height: 100%; border-radius: 2px; }
 
+/* ==========================================================================
+   Phase 05.3 -- section picker + list/graph toggle. One dropdown selects
+   which of the 5 real finance sections is visible (data-section on each
+   .section wrapper); the toggle beside it switches whichever section is
+   active between its [data-view="list"] and [data-view="graph"] groups.
+   ========================================================================== */
+.fin-view-controls {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  margin-bottom: 16px;
+}
+.fin-section-select {
+  flex: 1; max-width: 240px; min-width: 0;
+  font-weight: 600; cursor: pointer;
+}
+.fin-view-toggle {
+  display: flex; flex-shrink: 0;
+  background: rgba(var(--eq-text-primary-rgb), 0.05);
+  border: 1px solid var(--eq-border); border-radius: var(--eq-btn-radius);
+  padding: 3px;
+}
+.fin-view-toggle-btn {
+  background: transparent; border: 0; color: var(--text-tertiary);
+  font-size: 12px; font-weight: 600; font-family: inherit;
+  padding: 6px 14px; border-radius: calc(var(--eq-btn-radius) - 3px); cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.fin-view-toggle-btn.is-active { background: rgba(var(--eq-text-primary-rgb), 0.14); color: var(--text-primary); }
+@media (max-width: 480px) {
+  .fin-view-controls { flex-wrap: wrap; }
+  .fin-section-select { max-width: none; flex-basis: 100%; }
+}
+
+/* Reusable cost-breakdown bar graph -- Subscriptions/Incoming/Wishlist don't
+   have a pre-existing chart the way Net Worth/Budget do, so their "graph"
+   mode reuses this one component rather than three bespoke chart types. */
+.fin-bar-graph { padding: 4px 0; }
+.fin-bar-row { display: grid; grid-template-columns: minmax(0, 1fr) 2fr auto; align-items: center; gap: 12px; padding: 7px 0; }
+.fin-bar-row-label { font-size: 12.5px; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fin-bar-row-track { height: 8px; border-radius: 4px; background: rgba(var(--eq-text-primary-rgb), 0.07); overflow: hidden; }
+.fin-bar-row-fill { height: 100%; border-radius: 4px; background: var(--eq-chart-1); transition: width 0.3s ease; }
+.fin-bar-row-val { font-size: 12px; font-weight: 600; color: var(--text-primary); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.fin-graph-empty { font-size: 12px; color: var(--text-tertiary); font-style: italic; padding: 20px 0; text-align: center; }
+
 /* Stock-style net-worth chart */
 .nw-chart-wrap {
   margin: 14px 0 18px;
@@ -411,7 +455,7 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
   display: block;
   width: 100%;
   height: 200px;
-  color: var(--text-tertiary);
+  color: var(--eq-chart-1); /* neutral/flat state -- Phase 05.2. up/down still override via JS (semantic gain/loss, not a "series" color) */
   overflow: visible;
   transition: color 0.4s ease;
 }
@@ -1587,6 +1631,15 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   <div class="ticker-dots" id="tickerDots"></div>
 </div>
 
+<!-- ===== FINANCE VIEW CONTROLS (Phase 05.3) ===== -->
+<div class="fin-view-controls" id="finViewControls">
+  <select class="fin-section-select" id="finSectionSelect" aria-label="Finance section"></select>
+  <div class="fin-view-toggle" role="group" aria-label="List or graph view">
+    <button type="button" class="fin-view-toggle-btn" data-view-btn="list">List</button>
+    <button type="button" class="fin-view-toggle-btn" data-view-btn="graph">Graph</button>
+  </div>
+</div>
+
 <!-- ===== NET WORTH ===== -->
 <div class="section" data-section="net" data-eq-collapse="finance:net">
   <div class="section-title" data-eq-collapse-keep data-eq-collapse-trigger>
@@ -1620,7 +1673,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     </div>
 
     <!-- Overview row: stock-style line chart on the left, donut allocation chart on the right -->
-    <div class="nw-overview-grid">
+    <div class="nw-overview-grid" data-view="graph">
       <div class="nw-chart-wrap" id="nwChartWrap">
         <div class="nw-chart-head">
           <span class="nw-chart-label">All-time</span>
@@ -1684,6 +1737,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     </div>
 
     <!-- Activity log — every add / edit, newest first -->
+    <div class="nw-view-list" data-view="list">
     <div class="nw-activity" id="nwActivity">
       <div class="nw-activity-h">
         <span class="nw-chart-label">Recent activity</span>
@@ -1735,6 +1789,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
         </div>
       </div>
     </div>
+    </div>
   </div>
 </div>
 
@@ -1745,7 +1800,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   </div>
 
   <!-- Expenses (top) -->
-  <div class="card" style="background:linear-gradient(135deg, rgba(var(--eq-danger-rgb), 0.06), rgba(var(--eq-chart-2-rgb), 0.04));border:1px solid rgba(var(--eq-danger-rgb), 0.16)">
+  <div class="card" data-view="list" style="background:linear-gradient(135deg, rgba(var(--eq-danger-rgb), 0.06), rgba(var(--eq-chart-2-rgb), 0.04));border:1px solid rgba(var(--eq-danger-rgb), 0.16)">
     <div class="bgt-total-row">
       <div>
         <div class="bgt-total-label">Monthly expenses</div>
@@ -1763,7 +1818,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   </div>
 
   <!-- Cash-flow trend chart (middle) — connects Expenses above to Income below -->
-  <div class="card bgt-chart-card" id="bgtChartWrap">
+  <div class="card bgt-chart-card" id="bgtChartWrap" data-view="graph">
     <div class="bgt-chart-head">
       <span class="bgt-chart-title">Cash flow this month</span>
       <span class="bgt-chart-delta" id="bgtChartDelta">—</span>
@@ -1801,7 +1856,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   </div>
 
   <!-- Income (bottom) -->
-  <div class="card" style="background:linear-gradient(135deg, rgba(var(--eq-success-rgb), 0.06), rgba(var(--eq-chart-2-rgb), 0.04));border:1px solid rgba(var(--eq-success-rgb), 0.16)">
+  <div class="card" data-view="list" style="background:linear-gradient(135deg, rgba(var(--eq-success-rgb), 0.06), rgba(var(--eq-chart-2-rgb), 0.04));border:1px solid rgba(var(--eq-success-rgb), 0.16)">
     <div class="bgt-total-row">
       <div>
         <div class="bgt-total-label">Monthly income</div>
@@ -1819,7 +1874,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   </div>
 
   <!-- Tips -->
-  <div class="card bgt-tips-card" id="bgtTipsCard">
+  <div class="card bgt-tips-card" id="bgtTipsCard" data-view="list">
     <div class="bgt-tips-head">Tips</div>
     <div id="bgtTipsBody"></div>
   </div>
@@ -1839,6 +1894,8 @@ input[type="date"]::-webkit-calendar-picker-indicator {
       </div>
       <div id="subsCount" style="font-size:11px;color:var(--text-tertiary)"></div>
     </div>
+    <div data-view="graph" class="fin-bar-graph" id="subsGraphWrap"></div>
+    <div data-view="list">
     <div id="subsList"></div>
     <div class="empty-state" id="subsEmpty">No subscriptions yet</div>
     <div class="quick-add" style="flex-wrap:wrap;gap:6px">
@@ -1866,6 +1923,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
       </label>
       <button class="quick-add-btn" id="subAddBtn" onclick="window.__addSub && window.__addSub()">+ Add</button>
     </div>
+    </div>
   </div>
 </div>
 
@@ -1875,6 +1933,9 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     <span class="section-title-text">INCOMING ORDERS<span class="eq-collapse-chevron"></span></span>
   </div>
 
+  <div data-view="graph" class="fin-bar-graph" id="ordGraphWrap"></div>
+
+  <div data-view="list">
   <!-- Add card with cost + currency + from-category + arrival date -->
   <div class="card ord-add-card">
     <div class="ord-add-eyebrow">+ NEW ORDER</div>
@@ -1907,6 +1968,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     <div class="ord-empty-title">Nothing on the way</div>
     <div class="ord-empty-sub">Log an order above. Pick the account it comes out of, the expected arrival date, and the dashboard will show what % of your net worth it costs.</div>
   </div>
+  </div>
 </div>
 
 <!-- ===== WISHLIST ===== -->
@@ -1932,6 +1994,9 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     <div class="wish-hero-foot" id="wishPctOfNw">Add net worth first to see this as a %</div>
   </div>
 
+  <div data-view="graph" class="fin-bar-graph" id="wishGraphWrap"></div>
+
+  <div data-view="list">
   <!-- Add row -->
   <div class="card wish-add-card">
     <div class="wish-add-eyebrow">+ ADD AN ITEM</div>
@@ -1958,6 +2023,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     <div class="wish-empty-icon">🎯</div>
     <div class="wish-empty-title">No wishes yet</div>
     <div class="wish-empty-sub">Add anything you're saving for — the dashboard will calculate what % of your net worth it'd cost.</div>
+  </div>
   </div>
 </div>
 
@@ -2457,7 +2523,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     const last = hist[hist.length - 1].v;
     const change = last - first;
     const direction = Math.abs(change) < 0.005 ? 'flat' : (change > 0 ? 'up' : 'down');
-    const color = direction === 'up' ? 'var(--eq-success)' : direction === 'down' ? 'var(--eq-danger)' : 'var(--text-tertiary)';
+    const color = direction === 'up' ? 'var(--eq-success)' : direction === 'down' ? 'var(--eq-danger)' : 'var(--eq-chart-1)';
     svg.style.color = color;
     if (deltaEl) {
       deltaEl.classList.remove('up', 'down');
@@ -2717,7 +2783,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     areaPath.setAttribute('d', lineD + ' L' + points[points.length - 1].x + ',' + zeroY + ' L' + points[0].x + ',' + zeroY + ' Z');
     zeroLine.setAttribute('y1', zeroY); zeroLine.setAttribute('y2', zeroY);
 
-    const color = netGBP > 0.5 ? 'var(--eq-success)' : (netGBP < -0.5 ? 'var(--eq-danger)' : 'rgba(var(--eq-text-primary-rgb), 0.35)');
+    const color = netGBP > 0.5 ? 'var(--eq-success)' : (netGBP < -0.5 ? 'var(--eq-danger)' : 'var(--eq-chart-1)');
     svg.style.color = color;
 
     const todayX = xFor(todayDate), todayY = yFor(dailyRate * todayDate);
@@ -2815,6 +2881,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
   function renderSubs() {
     if (!subsList) return;
+    if (typeof renderSubsGraph === 'function') renderSubsGraph(); // Phase 05.3 -- keep the graph view in sync with every list change
     // Auto-deduct any matured renewals before painting
     processAutoDeductSubs();
     // Keep the From-account dropdown synced with current NW accounts
@@ -3151,6 +3218,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     const heroPctEl   = document.getElementById('wishPctOfNwHero');
     const heroFill    = document.getElementById('wishHeroFill');
     if (!wishList) return;
+    if (typeof renderWishGraph === 'function') renderWishGraph(); // Phase 05.3 -- keep the graph view in sync with every list change
     const items = storeGet('wishlist') || [];
     const grand = nwGrandGBP();
     let total = 0;
@@ -3335,6 +3403,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     const empty = document.getElementById('ordEmpty');
     const count = document.getElementById('ordCount');
     if (!list) return;
+    if (typeof renderOrdersGraph === 'function') renderOrdersGraph(); // Phase 05.3 -- keep the graph view in sync with every list change
     // Refresh the "From" dropdown so newly added/renamed/deleted NW accounts show up.
     populateOrdFromSelect();
     const items = storeGet('incoming_orders') || [];
@@ -3728,6 +3797,118 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   }
   safeRenderTicker();
   setInterval(safeRenderTicker, 1500);
+
+  // ============================================================
+  // Phase 05.3 — section picker + list/graph toggle. Real source PDF text:
+  // "drop down menu for my expenses budgets and all section that would
+  // make sense in finance, with a button at the top to switch between
+  // this view and graph" — read as ALL 5 real top-level sections (not the
+  // narrower 6-item list docs/files/05-finance-core.md paraphrases, which
+  // includes "Holdings", a section that doesn't exist without the
+  // stock-data-source decision blocking 5.1). Subs/Incoming/Wishlist never
+  // had a chart before, so their "graph" mode reuses one shared
+  // cost-breakdown bar component rather than three bespoke chart types.
+  // ============================================================
+  const FINANCE_SECTIONS = [
+    { key: 'net',      label: 'Net Worth' },
+    { key: 'budget',   label: 'Budget' },
+    { key: 'subs',     label: 'Subscriptions' },
+    { key: 'incoming', label: 'Incoming Orders' },
+    { key: 'wish',     label: 'Wishlist' },
+  ];
+  const FIN_SECTION_KEY = 'eq.finance.activeSection_v1';
+  const FIN_VIEWMODE_KEY = 'eq.finance.viewMode_v1';
+
+  function getActiveFinSection() {
+    const v = storeGet(FIN_SECTION_KEY);
+    return FINANCE_SECTIONS.some((s) => s.key === v) ? v : 'net';
+  }
+  function setActiveFinSection(key) { storeSet(FIN_SECTION_KEY, key); }
+  function getFinViewModes() { return storeGet(FIN_VIEWMODE_KEY) || {}; }
+  // Default 'list' for every section, not 'graph' -- list is the more
+  // functional view (add/edit forms live there), graph is a supplementary
+  // visualization layered on top, so a first-time visitor should land
+  // somewhere they can actually act, not a read-only chart.
+  function getFinViewMode(sectionKey) { return getFinViewModes()[sectionKey] === 'graph' ? 'graph' : 'list'; }
+  function setFinViewMode(sectionKey, mode) {
+    const m = getFinViewModes();
+    m[sectionKey] = mode;
+    storeSet(FIN_VIEWMODE_KEY, m);
+  }
+
+  function applyFinanceSectionView() {
+    const active = getActiveFinSection();
+    const mode = getFinViewMode(active);
+    document.querySelectorAll('.section[data-section]').forEach((el) => {
+      el.style.display = (el.getAttribute('data-section') === active) ? '' : 'none';
+    });
+    document.querySelectorAll('.section[data-section="' + active + '"] [data-view]').forEach((el) => {
+      el.style.display = (el.getAttribute('data-view') === mode) ? '' : 'none';
+    });
+    const sel = document.getElementById('finSectionSelect');
+    if (sel && sel.value !== active) sel.value = active;
+    document.querySelectorAll('.fin-view-toggle-btn').forEach((btn) => {
+      btn.classList.toggle('is-active', btn.getAttribute('data-view-btn') === mode);
+    });
+  }
+
+  // Shared "graph" renderer for the three sections with no pre-existing
+  // chart. items: [{name, amount}], sorted biggest-first; empty state
+  // shown instead of a placeholder chart (no data-less UI per acceptance).
+  function renderCostBarGraph(containerId, items, emptyMsg) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    if (!items.length) {
+      container.innerHTML = '<div class="fin-graph-empty">' + emptyMsg + '</div>';
+      return;
+    }
+    const sorted = items.slice().sort((a, b) => b.amount - a.amount);
+    const max = sorted[0].amount || 1;
+    container.innerHTML = sorted.map((it) => {
+      const pct = Math.max(2, Math.round((it.amount / max) * 100));
+      return '<div class="fin-bar-row">'
+        + '<div class="fin-bar-row-label">' + escapeHtml(it.name) + '</div>'
+        + '<div class="fin-bar-row-track"><div class="fin-bar-row-fill" style="width:' + pct + '%"></div></div>'
+        + '<div class="fin-bar-row-val">' + fmtMoney(it.amount) + '</div>'
+        + '</div>';
+    }).join('');
+  }
+  function renderSubsGraph() {
+    const items = (storeGet('subs') || []).map((it) => ({ name: it.name, amount: monthlyEquivalent(it) }));
+    renderCostBarGraph('subsGraphWrap', items, 'No subscriptions yet — add one to see the cost breakdown.');
+  }
+  function renderOrdersGraph() {
+    const items = (storeGet('incoming_orders') || []).map((it) => ({ name: it.name, amount: Number(it.amount) || 0 }));
+    renderCostBarGraph('ordGraphWrap', items, 'Nothing on the way yet.');
+  }
+  function renderWishGraph() {
+    const items = (storeGet('wishlist') || []).map((it) => ({ name: it.name, amount: Number(it.amount) || 0 }));
+    renderCostBarGraph('wishGraphWrap', items, 'No wishes yet.');
+  }
+
+  function wireFinanceViewControls() {
+    const sel = document.getElementById('finSectionSelect');
+    if (sel) {
+      sel.innerHTML = FINANCE_SECTIONS.map((s) => '<option value="' + s.key + '">' + s.label + '</option>').join('');
+      sel.value = getActiveFinSection();
+      sel.addEventListener('change', () => {
+        setActiveFinSection(sel.value);
+        applyFinanceSectionView();
+      });
+    }
+    document.querySelectorAll('.fin-view-toggle-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        setFinViewMode(getActiveFinSection(), btn.getAttribute('data-view-btn'));
+        applyFinanceSectionView();
+      });
+    });
+  }
+
+  wireFinanceViewControls();
+  renderSubsGraph();
+  renderOrdersGraph();
+  renderWishGraph();
+  applyFinanceSectionView();
 
 })();
 </script>
