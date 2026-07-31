@@ -1292,23 +1292,6 @@ img, video, canvas, svg { max-width: 100%; }
   </div>
 </div>
 
-<!-- Rotation editor modal -->
-<div class="po-modal-bg" id="rotModalBg">
-  <div class="po-modal">
-    <h3>Edit split rotation</h3>
-    <p style="font-size:12px;color:var(--text-3);margin:-6px 0 14px;line-height:1.45;">
-      Days cycle in this order, repeating forever. Today is whichever entry is highlighted.
-      Use <strong>Today is →</strong> to jump the cycle to a different starting day.
-    </p>
-    <div class="rot-list" id="rotList"></div>
-    <button class="po-add-row-btn" id="rotAddBtn">+ Add day</button>
-    <div class="po-modal-actions">
-      <button class="po-btn-secondary" id="rotCancel">Cancel</button>
-      <button class="btn-primary" id="rotSave">Save</button>
-    </div>
-  </div>
-</div>
-
 <!-- Settings Modal -->
 <div class="po-modal-bg" id="setModalBg">
   <div class="po-modal" style="max-width: 480px;">
@@ -1480,39 +1463,32 @@ img, video, canvas, svg { max-width: 100%; }
     return Object.keys(byDay).sort().map((k) => byDay[k]);
   }
 
-  // Compute today's split from state.splitRotation + state.splitAnchor.
-  // Returns the rotation entry name (e.g. "Push" or "Rest") AND the index.
-  function todaySplit() {
-    try {
-      const rot = state.splitRotation;
-      if (!rot || !rot.length) return { name: '—', index: 0 };
-      const a = new Date(state.splitAnchor.date);
-      const t = new Date();
-      a.setHours(0,0,0,0); t.setHours(0,0,0,0);
-      const diffDays = Math.round((t - a) / 86400000);
-      const idx = ((state.splitAnchor.index + diffDays) % rot.length + rot.length) % rot.length;
-      return { name: rot[idx], index: idx };
-    } catch (e) {
-      return { name: (state.splitRotation && state.splitRotation[0]) || '—', index: 0 };
-    }
-  }
   function todayDateLabel() {
     const d = new Date();
     const dows = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
     const mons = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
     return dows[d.getDay()] + ', ' + mons[d.getMonth()] + ' ' + d.getDate();
   }
-  function isRestName(name) { return /^rest\b/i.test(name || ''); }
-  function splitLabel(name) {
-    if (!name) return '—';
-    return (isRestName(name) ? 'REST DAY' : (name + ' DAY')).toUpperCase();
-  }
+  // Reads script B's STATE via the PoCoach.getPlanState() bridge -- one
+  // rotation (STATE.order/days/rotationAnchor), not the old separate
+  // state.splitRotation/splitAnchor free-text list. Uses the day-tab's own
+  // real `restDay` boolean instead of regex-matching the word "rest" in a
+  // name string, now that a real flag is available from the same source.
   function renderDayPill() {
-    const split = todaySplit();
     $('dayPillDate').textContent = todayDateLabel();
     const splitEl = $('dayPillSplit');
-    splitEl.textContent = splitLabel(split.name);
-    splitEl.classList.toggle('is-rest', isRestName(split.name));
+    const plan = window.PoCoach && window.PoCoach.getPlanState && window.PoCoach.getPlanState();
+    if (!plan || !plan.order || !plan.order.length) { splitEl.textContent = '—'; splitEl.classList.remove('is-rest'); return; }
+    const n = plan.order.length;
+    const anchor = plan.rotationAnchor || { date: new Date().toISOString().slice(0,10), index: 0 };
+    const a = new Date(anchor.date), t = new Date();
+    a.setHours(0,0,0,0); t.setHours(0,0,0,0);
+    const diffDays = Math.round((t - a) / 86400000);
+    const idx = ((anchor.index + diffDays) % n + n) % n;
+    const day = plan.days[plan.order[idx]];
+    const isRest = !!(day && day.restDay);
+    splitEl.textContent = day ? ((isRest ? 'REST DAY' : (day.name + ' DAY')).toUpperCase()) : '—';
+    splitEl.classList.toggle('is-rest', isRest);
   }
 
   // The Training Plan section (merged in from the old Train page) lives in
@@ -1538,106 +1514,11 @@ img, video, canvas, svg { max-width: 100%; }
   }
 
   // ============================================================
-  // ROTATION EDITOR (tap the day pill)
-  // Edit the split cycle in place: rename, reorder, add, delete.
-  // "Today is →" jumps the cycle anchor to any entry, so you can change
-  // both the order AND which day in that order is "today".
-  // ============================================================
-  let rotDraft = null;          // working copy while modal is open
-  let rotDraftTodayIdx = 0;     // which entry IS today in the draft
-
-  function openRotationModal() {
-    rotDraft = (state.splitRotation || []).slice();
-    if (!rotDraft.length) rotDraft = ['Push', 'Pull', 'Legs', 'Rest'];
-    rotDraftTodayIdx = todaySplit().index;
-    if (rotDraftTodayIdx >= rotDraft.length) rotDraftTodayIdx = 0;
-    renderRotList();
-    $('rotModalBg').classList.add('show');
-  }
-
-  function renderRotList() {
-    const list = $('rotList');
-    list.innerHTML = rotDraft.map((name, i) => {
-      const isToday = (i === rotDraftTodayIdx);
-      return '<div class="rot-row ' + (isToday ? 'is-today' : '') + '" data-i="' + i + '">'
-        + '<span class="rot-row-num">' + (i + 1) + '</span>'
-        + '<input type="text" value="' + escape(name) + '" placeholder="e.g. Arms" maxlength="30">'
-        + (isToday
-            ? '<span class="rot-today-tag">TODAY</span>'
-            : '<button type="button" class="rot-today-btn" data-action="today">Today is →</button>')
-        + '<button type="button" class="rot-mini" data-action="up"   aria-label="Move up">↑</button>'
-        + '<button type="button" class="rot-mini" data-action="down" aria-label="Move down">↓</button>'
-        + '<button type="button" class="rot-mini rot-mini-del" data-action="del" aria-label="Delete">×</button>'
-        + '</div>';
-    }).join('');
-    list.querySelectorAll('.rot-row').forEach(row => {
-      const i = parseInt(row.dataset.i, 10);
-      row.querySelector('input').addEventListener('input', e => { rotDraft[i] = e.target.value; });
-      const upBtn = row.querySelector('[data-action="up"]');
-      const dnBtn = row.querySelector('[data-action="down"]');
-      const delBtn = row.querySelector('[data-action="del"]');
-      const todayBtn = row.querySelector('[data-action="today"]');
-      if (upBtn) upBtn.addEventListener('click', () => {
-        if (i === 0) return;
-        [rotDraft[i-1], rotDraft[i]] = [rotDraft[i], rotDraft[i-1]];
-        if (rotDraftTodayIdx === i)   rotDraftTodayIdx = i - 1;
-        else if (rotDraftTodayIdx === i - 1) rotDraftTodayIdx = i;
-        renderRotList();
-      });
-      if (dnBtn) dnBtn.addEventListener('click', () => {
-        if (i >= rotDraft.length - 1) return;
-        [rotDraft[i+1], rotDraft[i]] = [rotDraft[i], rotDraft[i+1]];
-        if (rotDraftTodayIdx === i)   rotDraftTodayIdx = i + 1;
-        else if (rotDraftTodayIdx === i + 1) rotDraftTodayIdx = i;
-        renderRotList();
-      });
-      if (delBtn) delBtn.addEventListener('click', () => {
-        if (rotDraft.length <= 1) { alert('Need at least one day in the cycle.'); return; }
-        rotDraft.splice(i, 1);
-        if (rotDraftTodayIdx >= rotDraft.length) rotDraftTodayIdx = rotDraft.length - 1;
-        else if (i < rotDraftTodayIdx) rotDraftTodayIdx--;
-        renderRotList();
-      });
-      if (todayBtn) todayBtn.addEventListener('click', () => {
-        rotDraftTodayIdx = i;
-        renderRotList();
-      });
-    });
-  }
-
-  $('rotAddBtn').addEventListener('click', () => {
-    rotDraft.push('New day');
-    renderRotList();
-    // Focus the newly added input
-    setTimeout(() => {
-      const inputs = $('rotList').querySelectorAll('input');
-      const last = inputs[inputs.length - 1];
-      if (last) { last.focus(); last.select(); }
-    }, 30);
-  });
-  $('rotCancel').addEventListener('click', () => {
-    $('rotModalBg').classList.remove('show');
-    rotDraft = null;
-  });
-  $('rotSave').addEventListener('click', () => {
-    // Trim + drop empty entries
-    const cleaned = rotDraft.map(s => (s || '').trim()).filter(Boolean);
-    if (!cleaned.length) { alert('Need at least one day in the cycle.'); return; }
-    let newTodayIdx = rotDraftTodayIdx;
-    if (newTodayIdx >= cleaned.length) newTodayIdx = 0;
-    state.splitRotation = cleaned;
-    state.splitAnchor = {
-      date: new Date().toISOString().slice(0, 10),
-      index: newTodayIdx
-    };
-    saveState();
-    $('rotModalBg').classList.remove('show');
-    rotDraft = null;
-    renderAll();
-  });
-
-  // ============================================================
   // SETTINGS MODAL (gyms, days, units, data)
+  // Days (below) is the real Training Plan day list -- reorder and "Today
+  // is ->" (the old separate rotation editor's job) now live there too, via
+  // window.renderPlanDaysSettings() in script B. See that function's own
+  // comment for the retired "Edit split rotation" modal this replaced.
   // ============================================================
   function renderSettings() {
     $('setUnitsSeg').querySelectorAll('button').forEach(b => {
@@ -1649,12 +1530,12 @@ img, video, canvas, svg { max-width: 100%; }
       + '<button class="po-mini-btn" data-action="del" aria-label="Delete">×</button>'
       + '</div>'
     ).join('');
-    $('setDays').innerHTML = state.days.map((d, i) =>
-      '<div class="po-set-row" data-i="' + i + '">'
-      + '<input type="text" value="' + escape(d.name) + '" data-field="name" placeholder="Day name">'
-      + '<button class="po-mini-btn" data-action="del" aria-label="Delete">×</button>'
-      + '</div>'
-    ).join('');
+    // Days is the real Training Plan day list (STATE.days/order, script B's
+    // state) -- rendered/wired there via window.renderPlanDaysSettings(),
+    // not here, since reorder/"Today is" need STATE/render/saveState which
+    // only script B has in scope. See that function for why this replaced
+    // the old, disconnected state.days list this section used to edit.
+    if (window.renderPlanDaysSettings) window.renderPlanDaysSettings();
     $('setGyms').querySelectorAll('.po-set-row').forEach(row => {
       const i = parseInt(row.dataset.i, 10);
       row.querySelector('input').addEventListener('input', e => {
@@ -1666,20 +1547,6 @@ img, video, canvas, svg { max-width: 100%; }
         if (!confirm('Remove "' + state.gyms[i].name + '"? Exercises tagged to this gym will become invisible until you reassign them.')) return;
         state.gyms.splice(i, 1);
         if (!state.gyms.find(g => g.id === state.filterGym)) state.filterGym = state.gyms[0].id;
-        saveState(); renderSettings(); renderAll();
-      });
-    });
-    $('setDays').querySelectorAll('.po-set-row').forEach(row => {
-      const i = parseInt(row.dataset.i, 10);
-      row.querySelector('input').addEventListener('input', e => {
-        state.days[i].name = e.target.value;
-        saveState();
-      });
-      row.querySelector('[data-action="del"]').addEventListener('click', () => {
-        if (state.days.length <= 1) { alert('You need at least one day.'); return; }
-        if (!confirm('Remove "' + state.days[i].name + '"?')) return;
-        state.days.splice(i, 1);
-        if (!state.days.find(d => d.id === state.filterDay)) state.filterDay = state.days[0].id;
         saveState(); renderSettings(); renderAll();
       });
     });
@@ -1710,9 +1577,7 @@ img, video, canvas, svg { max-width: 100%; }
   $('setAddDay').addEventListener('click', () => {
     const name = (prompt('New day name:') || '').trim();
     if (!name) return;
-    const id = 'd_' + Date.now();
-    state.days.push({ id, name });
-    saveState(); renderSettings(); renderAll();
+    if (window.addPlanDayFromSettings) window.addPlanDayFromSettings(name);
   });
 
   // Export / Import / Reset
@@ -2583,6 +2448,26 @@ function buildState(){
 }
 /* STATE is filled by the async boot below once the dashboard bridge resolves. */
 let STATE = null;
+// Exposes STATE itself (not a copy) to script A -- read-only by convention,
+// mirroring PoCoach.getState()'s own one-object-one-writer contract in the
+// other direction, so #dayPill (script A) can show the same rotation
+// STATE.order/days/rotationAnchor drive here without a second copy drifting.
+if (window.PoCoach) window.PoCoach.getPlanState = () => STATE;
+// Which STATE.order entry is "today", computed the same way the old
+// state.splitRotation/splitAnchor date-math worked, just anchored into
+// STATE.order instead of a separate free-text list -- see the migration in
+// the boot IIFE below for how existing users' old rotation carries over.
+function todayRotationIndex(){
+  try {
+    const n = STATE.order.length;
+    if (!n) return 0;
+    const anchor = STATE.rotationAnchor || { date: new Date().toISOString().slice(0,10), index: 0 };
+    const a = new Date(anchor.date), t = new Date();
+    a.setHours(0,0,0,0); t.setHours(0,0,0,0);
+    const diffDays = Math.round((t - a) / 86400000);
+    return ((anchor.index + diffDays) % n + n) % n;
+  } catch (e) { return 0; }
+}
 /* Fire-and-forget persistence through the dashboard bridge (no device storage). */
 function saveState(){
   // Persisted inside po_coach_v1 as state.plan, and every exercise's
@@ -2785,6 +2670,84 @@ function confirmDeleteTab(key){
       };
     });
 }
+
+/* ---- Settings > Days: renames/reorders/adds/deletes STATE.days/order
+   directly (the real Training Plan day list), and sets STATE.rotationAnchor
+   ("Today is ->") -- exposed on window so script A's renderSettings() can
+   call it, same direction as PoCoach.getPlanState() above. Replaces the old
+   separate "Edit split rotation" modal, which edited a free-text list with
+   no connection to these tabs at all; reuses that modal's .rot-list/.rot-row
+   CSS since the row shape (name + today-tag/btn + up/down/del) is identical,
+   just backed by real STATE now instead of a draft array. Unlike the old
+   modal, changes commit immediately (no draft/cancel/save step), matching
+   how every other row in this Settings modal already behaves. */
+window.renderPlanDaysSettings = function(){
+  const list = document.getElementById('setDays');
+  if(!list || !STATE) return;
+  const todayIdx = todayRotationIndex();
+  list.className = 'rot-list';
+  list.innerHTML = STATE.order.map((key,i)=>{
+    const d = STATE.days[key] || {};
+    const isToday = (i===todayIdx);
+    return '<div class="rot-row'+(isToday?' is-today':'')+'" data-i="'+i+'">'
+      + '<span class="rot-row-num">'+(i+1)+'</span>'
+      + '<input type="text" value="'+escapeHtml(d.name||'')+'" placeholder="Day name" maxlength="24">'
+      + (isToday
+          ? '<span class="rot-today-tag">TODAY</span>'
+          : '<button type="button" class="rot-today-btn" data-action="today">Today is &rarr;</button>')
+      + '<button type="button" class="rot-mini" data-action="up" aria-label="Move up">&uarr;</button>'
+      + '<button type="button" class="rot-mini" data-action="down" aria-label="Move down">&darr;</button>'
+      + '<button type="button" class="rot-mini rot-mini-del" data-action="del" aria-label="Delete">&times;</button>'
+      + '</div>';
+  }).join('');
+  list.querySelectorAll('.rot-row').forEach(row=>{
+    const i = parseInt(row.dataset.i,10);
+    const key = STATE.order[i];
+    row.querySelector('input').addEventListener('input', e=>{
+      if(STATE.days[key]){ STATE.days[key].name = e.target.value; saveState(); }
+    });
+    const up = row.querySelector('[data-action="up"]');
+    if(up) up.addEventListener('click', ()=>{
+      if(i===0) return;
+      [STATE.order[i-1], STATE.order[i]] = [STATE.order[i], STATE.order[i-1]];
+      if(STATE.rotationAnchor.index===i) STATE.rotationAnchor.index = i-1;
+      else if(STATE.rotationAnchor.index===i-1) STATE.rotationAnchor.index = i;
+      saveState(); window.renderPlanDaysSettings(); render();
+    });
+    const down = row.querySelector('[data-action="down"]');
+    if(down) down.addEventListener('click', ()=>{
+      if(i>=STATE.order.length-1) return;
+      [STATE.order[i+1], STATE.order[i]] = [STATE.order[i], STATE.order[i+1]];
+      if(STATE.rotationAnchor.index===i) STATE.rotationAnchor.index = i+1;
+      else if(STATE.rotationAnchor.index===i+1) STATE.rotationAnchor.index = i;
+      saveState(); window.renderPlanDaysSettings(); render();
+    });
+    const del = row.querySelector('[data-action="del"]');
+    if(del) del.addEventListener('click', ()=>{
+      if(STATE.order.length<=1){ alert('You need at least one day.'); return; }
+      if(!confirm('Remove "'+((STATE.days[key]||{}).name||key)+'"? This also removes its logged history.')) return;
+      (((STATE.days[key]||{}).ex)||[]).forEach(e=>stopRest(e.id));
+      STATE.order.splice(i,1);
+      delete STATE.days[key];
+      if(STATE.rotationAnchor.index>=STATE.order.length) STATE.rotationAnchor.index = STATE.order.length-1;
+      else if(i<STATE.rotationAnchor.index) STATE.rotationAnchor.index--;
+      if(STATE.active===key) STATE.active = STATE.order[0];
+      saveState(); window.renderPlanDaysSettings(); render();
+    });
+    const today = row.querySelector('[data-action="today"]');
+    if(today) today.addEventListener('click', ()=>{
+      STATE.rotationAnchor = { date: new Date().toISOString().slice(0,10), index: i };
+      saveState(); window.renderPlanDaysSettings(); render();
+    });
+  });
+};
+window.addPlanDayFromSettings = function(name){
+  const key = newDayKey();
+  STATE.days[key] = { name, type:'', restDay:false, off:false, ex:[] };
+  STATE.order.push(key);
+  saveState();
+  if(window.renderPlanDaysSettings) window.renderPlanDaysSettings();
+};
 function renderDots(){
   const el=$('#daydots'); const d=curDay();
   if(d.restDay||d.off || !d.ex.length){ el.innerHTML=''; el.style.display='none'; return; }
@@ -3427,6 +3390,35 @@ function spawnParticles(root){
   STATE.order = STATE.order.filter(k=>STATE.days[k]);
   if(!STATE.order.length) STATE.order = Object.keys(STATE.days);
   if(!STATE.days[STATE.active]) STATE.active = STATE.order[0];
+  // One-time migration: carry the OLD, separate state.splitRotation/
+  // splitAnchor (free-text rotation, edited via the now-removed "Edit split
+  // rotation" modal) into STATE.rotationAnchor, which points into
+  // STATE.order/days instead -- one rotation, not two that can drift.
+  // Matches by NAME (case-insensitive) so an existing user's "today" stays
+  // "today" across the migration; falls back to index 0 if no tab matches.
+  if(!STATE.rotationAnchor){
+    let migratedIdx = 0, migratedDate = new Date().toISOString().slice(0,10);
+    try{
+      const classic = window.PoCoach && window.PoCoach.getState();
+      if(classic && classic.splitRotation && classic.splitRotation.length && classic.splitAnchor){
+        const anchorName = (classic.splitRotation[classic.splitAnchor.index] || '').trim().toLowerCase();
+        const matchIdx = STATE.order.findIndex(k => ((STATE.days[k]||{}).name||'').trim().toLowerCase() === anchorName);
+        if(matchIdx >= 0){ migratedIdx = matchIdx; migratedDate = classic.splitAnchor.date; }
+      }
+    }catch(e){}
+    STATE.rotationAnchor = { date: migratedDate, index: migratedIdx };
+  }
+  // Keep "Today's session" aligned with the date-based rotation once per
+  // calendar day -- runs once at boot per day, so it doesn't fight a manual
+  // tab switch made later that same day (see dayPill's click handler below
+  // for the same jump, available on demand at any time).
+  const todayDateKey = new Date().toISOString().slice(0,10);
+  if(STATE.lastAutoSyncDate !== todayDateKey){
+    const idx = todayRotationIndex();
+    const key = STATE.order[idx];
+    if(key) STATE.active = key;
+    STATE.lastAutoSyncDate = todayDateKey;
+  }
   if(window.PlanSync){
     planSync = window.PlanSync.init({
       plan: 'train',
@@ -3436,6 +3428,21 @@ function spawnParticles(root){
     });
   }
   render(); wireFresh();
+
+  // #dayPill lives in script A's markup (top of the page) but the rotation
+  // it jumps to is script B's -- wired here, where STATE/render/saveState
+  // are actually in scope, same reasoning as PoCoach.getPlanState() above.
+  // Fulfills the button's own title text ("tap to switch the day filter to
+  // today's split"), previously dead -- nothing called this before.
+  const dayPillEl = document.getElementById('dayPill');
+  if(dayPillEl) dayPillEl.addEventListener('click', () => {
+    const idx = todayRotationIndex();
+    const key = STATE.order[idx];
+    if(!key || STATE.active === key) return;
+    STATE.active = key;
+    STATE.lastAutoSyncDate = new Date().toISOString().slice(0,10);
+    render();
+  });
 
 })();
 })();

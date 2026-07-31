@@ -1610,19 +1610,26 @@ a { color: inherit; text-decoration: none; }
   }
 
   // ============================================================
-  // Fitness -- today's split ported from gym.html's todaySplit(),
-  // weight + trend from gym.html's published eq.fitness.summary.
+  // Fitness -- today's split ported from gym.html's todayRotationIndex(),
+  // weight + trend from gym.html's published eq.fitness.summary. Reads
+  // STATE.order/days/rotationAnchor (persisted at po_coach_v1.plan.*) --
+  // the real Training Plan day list, not the old separate free-text
+  // splitRotation/splitAnchor gym.html retired in favor of one shared
+  // rotation instead of two that could drift.
   // ============================================================
   function todaySplit() {
     try {
       const state = storeGet('po_coach_v1');
-      const rot = state && state.splitRotation;
-      if (!rot || !rot.length) return { name: '—', index: 0 };
-      const a = new Date(state.splitAnchor.date), t = new Date();
+      const plan = state && state.plan;
+      const order = plan && plan.order;
+      if (!order || !order.length) return { name: '—', index: 0 };
+      const anchor = plan.rotationAnchor || { date: new Date().toISOString().slice(0, 10), index: 0 };
+      const a = new Date(anchor.date), t = new Date();
       a.setHours(0, 0, 0, 0); t.setHours(0, 0, 0, 0);
       const diffDays = Math.round((t - a) / 86400000);
-      const idx = ((state.splitAnchor.index + diffDays) % rot.length + rot.length) % rot.length;
-      return { name: rot[idx], index: idx };
+      const idx = ((anchor.index + diffDays) % order.length + order.length) % order.length;
+      const day = plan.days[order[idx]];
+      return { name: day ? day.name : '—', index: idx };
     } catch (e) { return { name: '—', index: 0 }; }
   }
   function renderFitnessCard() {
