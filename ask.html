@@ -516,6 +516,131 @@ body.has-eq-dock .ask-input-bar { bottom: calc(72px + env(safe-area-inset-bottom
     };
   }
 
+  // ---------- Finance (budget:income / budget:expenses / subs) ----------
+  // finance.html's Income/Expenses are named recurring MONTHLY line items
+  // (GBP), not a dated transaction ledger -- its own manual-edit UI
+  // (beginBgtAmountEdit) already lets you tap an item and type "+50"/"-20"
+  // to adjust it or a plain number to replace it. These tools do the same
+  // find-or-create-by-name + signed-delta operation, just from chat, so a
+  // line added here is indistinguishable from one built up by hand.
+  function findBudgetItem(kind, name) {
+    const list = storeGet('budget:' + kind) || [];
+    const needle = (name || '').trim().toLowerCase();
+    return { list, item: list.find((x) => (x.name || '').trim().toLowerCase() === needle) };
+  }
+  function execLogBudgetDelta(kind, input) {
+    const { list, item } = findBudgetItem(kind, input.category);
+    const delta = Number(input.amount) || 0;
+    let prevAmount = null, created = false;
+    if (item) {
+      prevAmount = item.amount;
+      item.amount = Math.max(0, (Number(item.amount) || 0) + delta);
+    } else {
+      created = true;
+      list.push({ name: input.category, amount: Math.max(0, delta), source: 'assistant' });
+    }
+    storeSet('budget:' + kind, list);
+    const activityId = logAssistantActivity(
+      kind === 'income' ? 'log_income' : 'log_expense',
+      'Logged ' + kind + ' "' + input.category + '": ' + (delta >= 0 ? '+' : '') + delta,
+      async () => {
+        const cur = storeGet('budget:' + kind) || [];
+        if (created) {
+          storeSet('budget:' + kind, cur.filter((x) => (x.name || '').trim().toLowerCase() !== input.category.trim().toLowerCase()));
+        } else {
+          const found = cur.find((x) => (x.name || '').trim().toLowerCase() === input.category.trim().toLowerCase());
+          if (found) { found.amount = prevAmount; storeSet('budget:' + kind, cur); }
+        }
+      }
+    );
+    const finalItem = (storeGet('budget:' + kind) || []).find((x) => (x.name || '').trim().toLowerCase() === input.category.trim().toLowerCase());
+    return {
+      ok: true,
+      summary: (created ? 'Created ' : 'Updated ') + kind + ' "' + input.category + '": now GBP ' + Math.round(finalItem.amount).toLocaleString('en-US') + '/mo.',
+      activityId,
+    };
+  }
+  const LOG_EXPENSE_TOOL = {
+    name: 'log_expense',
+    description: 'Add to (or reduce) a named monthly expense category, e.g. "£42 spent on groceries" (add 42 to the Groceries category, creating it if it doesn\'t exist yet) or "-£76 on expenses" (reduce an existing category by 76). Categories are recurring monthly budget lines, matched case-insensitively -- not one-off dated purchases.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        category: { type: 'string', description: 'The expense category name, e.g. "Groceries", "Rent".' },
+        amount: { type: 'number', description: 'Signed GBP delta. Positive increases the category (a spend); negative decreases it. The category total never goes below 0.' },
+      },
+      required: ['category', 'amount'],
+    },
+  };
+  async function exec_log_expense(input) { return execLogBudgetDelta('expenses', input); }
+  const LOG_INCOME_TOOL = {
+    name: 'log_income',
+    description: 'Add to (or reduce) a named monthly income category, e.g. "+£300 on income" (add 300 to an Income category, creating it if it doesn\'t exist yet). Categories are recurring monthly budget lines, matched case-insensitively.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        category: { type: 'string', description: 'The income category name, e.g. "Salary", "Freelance".' },
+        amount: { type: 'number', description: 'Signed GBP delta. Positive increases the category; negative decreases it. Never goes below 0.' },
+      },
+      required: ['category', 'amount'],
+    },
+  };
+  async function exec_log_income(input) { return execLogBudgetDelta('income', input); }
+
+  const SUB_PERIODS = ['monthly', 'yearly'];
+  const ADD_SUBSCRIPTION_TOOL = {
+    name: 'add_subscription',
+    description: 'Add a recurring subscription/purchase, e.g. "£34 recurring purchase for Netflix" or "add a £9.99/month Spotify subscription". Matched by name case-insensitively -- if one with this name already exists, its price/period/renewal are updated (re-quoting a subscription means the price changed, not a duplicate).',
+    input_schema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string', description: 'The subscription/service name, e.g. "Netflix".' },
+        amount: { type: 'number', description: 'GBP amount per period (defaults to monthly).' },
+        period: { type: 'string', enum: SUB_PERIODS, description: 'Billing period. Defaults to monthly.' },
+        renewal: { type: 'string', description: 'Optional ISO renewal date, YYYY-MM-DD.' },
+      },
+      required: ['name', 'amount'],
+    },
+  };
+  async function exec_add_subscription(input) {
+    const list = storeGet('subs') || [];
+    const needle = (input.name || '').trim().toLowerCase();
+    const period = SUB_PERIODS.indexOf(input.period) !== -1 ? input.period : 'monthly';
+    const existing = list.find((x) => (x.name || '').trim().toLowerCase() === needle);
+    let prev = null, created = false;
+    if (existing) {
+      prev = { amount: existing.amount, period: existing.period, renewal: existing.renewal };
+      existing.amount = Number(input.amount) || 0;
+      existing.period = period;
+      existing.renewal = input.renewal || existing.renewal || null;
+      existing.entered_amount = existing.amount;
+      existing.entered_currency = 'GBP';
+    } else {
+      created = true;
+      list.push({
+        name: input.name, amount: Number(input.amount) || 0, period,
+        renewal: input.renewal || null, entered_amount: Number(input.amount) || 0,
+        entered_currency: 'GBP', fromCat: null, fromAccount: null,
+        autoDeduct: false, lastDeductedAt: null, source: 'assistant',
+      });
+    }
+    storeSet('subs', list);
+    const activityId = logAssistantActivity('add_subscription', (created ? 'Added subscription "' : 'Updated subscription "') + input.name + '": GBP ' + (Number(input.amount) || 0) + '/' + period, async () => {
+      const cur = storeGet('subs') || [];
+      if (created) {
+        storeSet('subs', cur.filter((x) => (x.name || '').trim().toLowerCase() !== needle));
+      } else {
+        const found = cur.find((x) => (x.name || '').trim().toLowerCase() === needle);
+        if (found && prev) { found.amount = prev.amount; found.period = prev.period; found.renewal = prev.renewal; storeSet('subs', cur); }
+      }
+    });
+    return {
+      ok: true,
+      summary: (created ? 'Added subscription "' : 'Updated subscription "') + input.name + '": GBP ' + (Number(input.amount) || 0) + '/' + period + (input.renewal ? ', renews ' + input.renewal : '') + '.',
+      activityId,
+    };
+  }
+
   // 11 tools moved to assistant-tools.js in Phase 4.2 (see the comment
   // above AT's destructure) -- add_task, complete_task,
   // push_task_to_tomorrow, log_weight, log_sleep, log_contact,
@@ -640,6 +765,9 @@ body.has-eq-dock .ask-input-bar { bottom: calc(72px + env(safe-area-inset-bottom
     // confirmMode 'never' -- including calendar writes.
     add_calendar_event: { schema: ADD_CALENDAR_EVENT_TOOL, confirmMode: 'never', execute: exec_add_calendar_event },
     add_goal: { schema: ADD_GOAL_TOOL, confirmMode: 'never', execute: exec_add_goal },
+    log_expense: { schema: LOG_EXPENSE_TOOL, confirmMode: 'never', execute: exec_log_expense },
+    log_income: { schema: LOG_INCOME_TOOL, confirmMode: 'never', execute: exec_log_income },
+    add_subscription: { schema: ADD_SUBSCRIPTION_TOOL, confirmMode: 'never', execute: exec_add_subscription },
     get_data: { schema: GET_DATA_TOOL, confirmMode: 'never', execute: exec_get_data },
   });
   // Exposed for testability, same reasoning as window.EqRunObsidianSync /
@@ -820,7 +948,15 @@ body.has-eq-dock .ask-input-bar { bottom: calc(72px + env(safe-area-inset-bottom
     + 'User: "What is today\'s itinerary?"\n'
     + 'You: [reports the day\'s calendar events and today\'s tasks as two short lists, nothing else]\n\n'
     + 'User: "How is my weight going?"\n'
-    + 'You: "Latest 82.9kg (2026-07-28). 7-day average 83.2kg." — and stop. No assessment of whether that is good.\n\n';
+    + 'You: "Latest 82.9kg (2026-07-28). 7-day average 83.2kg." — and stop. No assessment of whether that is good.\n\n'
+    + 'User: "£42 spent on groceries."\n'
+    + 'You: [calls log_expense with category="Groceries", amount=42] "Updated expenses \'Groceries\': now GBP 42/mo."\n\n'
+    + 'User: "-£76 on rent, landlord refunded me."\n'
+    + 'You: [calls log_expense with category="Rent", amount=-76] "Updated expenses \'Rent\': now GBP [new total]/mo."\n\n'
+    + 'User: "+£300 on income, freelance job."\n'
+    + 'You: [calls log_income with category="Freelance", amount=300] "Updated income \'Freelance\': now GBP [new total]/mo."\n\n'
+    + 'User: "Add a £34 recurring purchase for Netflix."\n'
+    + 'You: [calls add_subscription with name="Netflix", amount=34] "Added subscription \'Netflix\': GBP 34/monthly."\n\n';
 
   async function assembleContext(query) {
     const domains = getDomains();
@@ -1561,6 +1697,12 @@ body.has-eq-dock .ask-input-bar { bottom: calc(72px + env(safe-area-inset-bottom
     initCloudSync({
       appKey: 'po-coach',
       syncedKeys: ['po_coach_v1', 'po_coach_workout_done', 'po_coach_weights', 'po_coach_goal_weight', 'calorie_log_v1'],
+      onApplied: function () { window.dispatchEvent(new Event('storage')); }
+    });
+    initCloudSync({
+      appKey: 'finance',
+      syncedKeys: ['subs', 'wishlist', 'incoming_orders'],
+      syncedPrefixes: ['nw:', 'budget:'],
       onApplied: function () { window.dispatchEvent(new Event('storage')); }
     });
   });
