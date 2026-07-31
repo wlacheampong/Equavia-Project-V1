@@ -16,8 +16,7 @@ onboarding. One user, one dataset.
   cross-device sync
 - Obsidian vault integration via Local REST API
 - Nav: tabs — Main · Health · Train · Planner · Finance
-- AI assistant ("Equavia 0", Roman retainer persona) routed through the
-  Anthropic API
+- AI Assistant (formerly "Equavia 0") routed through the Anthropic API
 
 ## Conventions
 

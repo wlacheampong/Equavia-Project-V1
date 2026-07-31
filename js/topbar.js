@@ -3,7 +3,7 @@
 //     <script src="topbar.js" defer></script>
 // Phase 04: renders one floating pill dock (all 7 non-Ask destinations,
 // icon-only, same markup at every viewport) plus a detached circular
-// button that expands into the Equavia 0 AI command bar. Replaces the
+// button that expands into the AI Assistant command bar. Replaces the
 // former two-presentation cat-tabs (desktop)/bottombar+More-sheet
 // (mobile) design -- one dock, one behaviour, all breakpoints.
 // Skipped entirely inside iframes -- an embedded page has no business
@@ -30,11 +30,11 @@
     { key: 'finance', href: 'finance.html',   label: 'Finance',
       icon: '<path d="M3 7a2 2 0 0 1 2-2h13a1 1 0 0 1 1 1v3"/><path d="M3 7v10a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1H6a2 2 0 0 1-2-2"/><circle cx="17" cy="13" r="1.4"/>' },
     // Ask is intentionally excluded from DOCK_PAGES below (Phase 04.2 --
-    // the dock's own search button is now the entry point to Equavia 0),
+    // the dock's own search button is now the entry point to AI Assistant),
     // but stays in PAGES so currentPageKey() still resolves correctly
     // when the user is actually on ask.html (drives the search button's
     // own active state).
-    { key: 'ask',      href: 'ask.html',       label: 'Equavia 0',
+    { key: 'ask',      href: 'ask.html',       label: 'AI Assistant',
       icon: '<path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>' },
     // Interactions + the old News page, merged: the news feed and weekly
     // digest are now a section on this page rather than a tab of their own.
@@ -183,6 +183,63 @@ body.has-eq-dock { padding-bottom: calc(72px + env(safe-area-inset-bottom)) !imp
   .eq-ai-bar { transition: opacity 0.01s linear; }
 }
 
+/* ---- AI sheet -- opens in place over the current page instead of
+   navigating to ask.html. A centered, fully-rounded floating card over a
+   dimmed backdrop (matches the Fey reference dialog: rounded on all sides,
+   a small icon+label tab top-left, never edge-to-edge/full-bleed even on
+   mobile) -- kept as its own class names, not the page-local .modal/
+   .po-modal-bg convention, to avoid colliding with any page's own modal
+   styling. ---- */
+.eq-ai-sheet-bg {
+  position: fixed; inset: 0; z-index: 60;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.2s;
+}
+.eq-ai-sheet-bg.is-open { opacity: 1; pointer-events: auto; }
+.eq-ai-sheet {
+  width: min(720px, 100%);
+  height: min(85vh, 760px);
+  background: #0d0d10;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  transform: translateY(16px) scale(0.98);
+  transition: transform 0.25s ease, opacity 0.2s;
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+.eq-ai-sheet-bg.is-open .eq-ai-sheet { transform: translateY(0) scale(1); }
+.eq-ai-sheet-head {
+  flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 12px; border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+.eq-ai-sheet-tab {
+  display: flex; align-items: center; gap: 6px;
+  background: rgba(255, 255, 255, 0.06); border: none; border-radius: 999px;
+  padding: 6px 12px 6px 8px; color: rgba(255, 255, 255, 0.8);
+  font-family: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer;
+}
+.eq-ai-sheet-tab:hover { background: rgba(255, 255, 255, 0.1); color: #FAFAFA; }
+.eq-ai-sheet-tab svg { width: 14px; height: 14px; flex-shrink: 0; }
+.eq-ai-sheet-close {
+  width: 30px; height: 30px; border-radius: 999px; border: none; flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.06); color: rgba(255, 255, 255, 0.7);
+  display: flex; align-items: center; justify-content: center; cursor: pointer;
+}
+.eq-ai-sheet-close:hover { background: rgba(255, 255, 255, 0.12); color: #FAFAFA; }
+.eq-ai-sheet-frame { flex: 1 1 auto; border: none; width: 100%; height: 100%; background: transparent; }
+@media (max-width: 480px) {
+  .eq-ai-sheet-bg { padding: 12px; }
+  .eq-ai-sheet { height: min(88vh, 760px); border-radius: 18px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .eq-ai-sheet-bg { transition: opacity 0.01s linear; }
+  .eq-ai-sheet { transition: transform 0.01s linear; }
+}
+
 html, body { -webkit-text-size-adjust: 100%; }
 @media (max-width: 768px) {
   html { touch-action: pan-y pinch-zoom; }
@@ -235,7 +292,7 @@ body.topbar-modal-open { overflow: hidden; touch-action: none; }
   }
 
   const SEARCH_ICON_PATH = '<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>';
-  const AI_BAR_PLACEHOLDER = 'Ask Equavia 0 to log, plan, or explain anything…';
+  const AI_BAR_PLACEHOLDER = 'Ask AI Assistant to log, plan, or explain anything…';
 
   function buildDockWrap(activeKey) {
     const wrap = document.createElement('div');
@@ -260,8 +317,8 @@ body.topbar-modal-open { overflow: hidden; touch-action: none; }
     searchBtn.type = 'button';
     searchBtn.className = 'eq-dock-search' + (activeKey === 'ask' ? ' is-active' : '');
     searchBtn.id = 'eqDockSearchBtn';
-    searchBtn.setAttribute('data-tip', 'Ask Equavia 0 · /');
-    searchBtn.setAttribute('aria-label', 'Ask Equavia 0');
+    searchBtn.setAttribute('data-tip', 'Ask AI Assistant · /');
+    searchBtn.setAttribute('aria-label', 'Ask AI Assistant');
     searchBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + SEARCH_ICON_PATH + '</svg>';
     wrap.appendChild(searchBtn);
 
@@ -276,7 +333,7 @@ body.topbar-modal-open { overflow: hidden; touch-action: none; }
     bar.innerHTML =
       '<form id="eqAiForm" class="eq-ai-form" autocomplete="off">'
       + '<svg class="eq-ai-form-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + SEARCH_ICON_PATH + '</svg>'
-      + '<input type="text" id="eqAiInput" class="eq-ai-input" placeholder="' + AI_BAR_PLACEHOLDER + '" aria-label="Ask Equavia 0">'
+      + '<input type="text" id="eqAiInput" class="eq-ai-input" placeholder="' + AI_BAR_PLACEHOLDER + '" aria-label="Ask AI Assistant">'
       + '</form>';
     return bar;
   }
@@ -308,10 +365,58 @@ body.topbar-modal-open { overflow: hidden; touch-action: none; }
     bar.setAttribute('aria-hidden', 'true');
     if (btn) { btn.classList.remove('is-engaged'); if (returnFocus) btn.focus(); }
   }
+  // ---- AI sheet (replaces the old hard `window.location.href =
+  // 'ask.html?prompt=...'` redirect) -- submitting now opens ask.html in an
+  // iframe overlay on top of the current page instead of navigating away.
+  // ask.html's own topbar.js instance sees isEmbedded() === true inside that
+  // iframe and skips rendering its own dock/AI-bar chrome entirely, so there's
+  // no nested dock inside the sheet. ask.html persists its chat state to
+  // localStorage regardless of how it's opened, so reloading the iframe's src
+  // on every open is always safe (never loses in-progress conversation data).
+  let aiSheetOpen = false;
+  function buildAiSheet() {
+    const bg = document.createElement('div');
+    bg.className = 'eq-ai-sheet-bg';
+    bg.id = 'eqAiSheetBg';
+    bg.innerHTML =
+      '<div class="eq-ai-sheet" id="eqAiSheet" role="dialog" aria-modal="true" aria-label="AI Assistant">'
+      + '<div class="eq-ai-sheet-head">'
+      + '<button type="button" class="eq-ai-sheet-tab" id="eqAiSheetBack" aria-label="Close">'
+      + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>'
+      + '<span>AI Assistant</span>'
+      + '</button>'
+      + '<button type="button" class="eq-ai-sheet-close" id="eqAiSheetClose" aria-label="Close">'
+      + '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>'
+      + '</button>'
+      + '</div>'
+      + '<iframe class="eq-ai-sheet-frame" id="eqAiSheetFrame" title="AI Assistant"></iframe>'
+      + '</div>';
+    document.body.appendChild(bg);
+    bg.addEventListener('pointerdown', (e) => { if (e.target === bg) closeAiSheet(); });
+    document.getElementById('eqAiSheetClose').addEventListener('click', () => closeAiSheet());
+    document.getElementById('eqAiSheetBack').addEventListener('click', () => closeAiSheet());
+    return bg;
+  }
+  function openAiSheet(promptText) {
+    const bg = document.getElementById('eqAiSheetBg') || buildAiSheet();
+    const frame = document.getElementById('eqAiSheetFrame');
+    frame.src = 'ask.html' + (promptText ? ('?prompt=' + encodeURIComponent(promptText)) : '');
+    aiSheetOpen = true;
+    bg.classList.add('is-open');
+    document.body.classList.add('topbar-modal-open');
+  }
+  function closeAiSheet() {
+    const bg = document.getElementById('eqAiSheetBg');
+    if (!bg || !aiSheetOpen) return;
+    aiSheetOpen = false;
+    bg.classList.remove('is-open');
+    document.body.classList.remove('topbar-modal-open');
+  }
   function submitAiBar(promptText) {
     const trimmed = (promptText || '').trim();
     if (!trimmed) return;
-    window.location.href = 'ask.html?prompt=' + encodeURIComponent(trimmed);
+    closeAiBar(false);
+    openAiSheet(trimmed);
   }
   function wireAiBar() {
     const btn = document.getElementById('eqDockSearchBtn');
@@ -320,8 +425,9 @@ body.topbar-modal-open { overflow: hidden; touch-action: none; }
     if (btn) btn.addEventListener('click', () => { if (aiBarOpen) closeAiBar(false); else openAiBar(); });
     if (form) form.addEventListener('submit', (e) => { e.preventDefault(); submitAiBar(input ? input.value : ''); });
     document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && aiSheetOpen) { closeAiSheet(); return; }
       if (e.key === 'Escape' && aiBarOpen) { closeAiBar(true); return; }
-      if (e.key === '/' && !aiBarOpen && !isEditableTarget(e.target)) { e.preventDefault(); openAiBar(); }
+      if (e.key === '/' && !aiBarOpen && !aiSheetOpen && !isEditableTarget(e.target)) { e.preventDefault(); openAiBar(); }
     });
     document.addEventListener('pointerdown', (e) => {
       if (!aiBarOpen) return;

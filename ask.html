@@ -10,8 +10,10 @@
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Project Equavia">
-<title>Equavia 0 — Project Equavia</title>
+<title>AI Assistant — Project Equavia</title>
 <link rel="stylesheet" href="css/equavia-core.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/sync.js" defer></script>
 <script src="js/topbar.js" defer></script>
 <script src="js/obsidian-sync.js"></script>
 <script src="js/daily-report.js" defer></script>
@@ -170,7 +172,7 @@ body.has-eq-dock .ask-input-bar { bottom: calc(72px + env(safe-area-inset-bottom
 </head>
 <body>
 <div class="shell">
-  <div class="section-title">Equavia 0</div>
+  <div class="section-title">AI Assistant</div>
   <h1 class="ask-title">Ask about your data</h1>
   <p class="ask-subtitle">Chats with Claude over whichever parts of your Project Equavia data you opt in below. Nothing is sent unless a domain chip is on, and the request only ever leaves your device for this one message.</p>
 
@@ -209,7 +211,7 @@ body.has-eq-dock .ask-input-bar { bottom: calc(72px + env(safe-area-inset-bottom
     <button type="button" class="ask-web-toggle" id="askWebToggle">Web: on</button>
   </div>
   <div class="ask-input-row">
-    <textarea class="ask-input" id="askInput" placeholder="Message Equavia 0…" rows="1"></textarea>
+    <textarea class="ask-input" id="askInput" placeholder="Message AI Assistant…" rows="1"></textarea>
     <button type="button" class="ask-mic-btn" id="askMicBtn" aria-label="Voice input" style="display:none;">
       <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1"/><path d="M12 18v4M9 22h6"/></svg>
     </button>
@@ -365,7 +367,7 @@ body.has-eq-dock .ask-input-bar { bottom: calc(72px + env(safe-area-inset-bottom
   function getStackItemsList() { return storeGet('stack:items') || []; }
 
   // ---------- Calendar (local_cal_events_v1 + Google) ----------
-  // Writes immediately -- Equavia 0 is a data-entry tool, so "add X to my
+  // Writes immediately -- AI Assistant is a data-entry tool, so "add X to my
   // calendar" creates X rather than drafting a card to approve.
   const ADD_CALENDAR_EVENT_TOOL = {
     name: 'add_calendar_event',
@@ -634,7 +636,7 @@ body.has-eq-dock .ask-input-bar { bottom: calc(72px + env(safe-area-inset-bottom
   // only make sense inside this page (Google Calendar OAuth state, chat
   // domain-context builders) -- see assistant-tools.js's own header comment.
   const TOOL_REGISTRY = Object.assign({}, AT.TOOL_REGISTRY, {
-    // Equavia 0 executes rather than proposes, so every tool here is
+    // AI Assistant executes rather than proposes, so every tool here is
     // confirmMode 'never' -- including calendar writes.
     add_calendar_event: { schema: ADD_CALENDAR_EVENT_TOOL, confirmMode: 'never', execute: exec_add_calendar_event },
     add_goal: { schema: ADD_GOAL_TOOL, confirmMode: 'never', execute: exec_add_goal },
@@ -784,7 +786,7 @@ body.has-eq-dock .ask-input-bar { bottom: calc(72px + env(safe-area-inset-bottom
     finance: buildFinanceContext, habits: buildHabitsContext, relationships: buildRelationshipsContext,
     notes: buildNotesContext, stack: buildStackContext, news: buildNewsContext,
   };
-  // Equavia 0 is a data-entry and retrieval interface, not an advisor. The
+  // AI Assistant is a data-entry and retrieval interface, not an advisor. The
   // previous build gave it a "loyal retainer" persona that volunteered
   // counsel, judgement and framing on top of every answer; that is
   // deliberately gone. It now does exactly three things: record what it is
@@ -794,7 +796,7 @@ body.has-eq-dock .ask-input-bar { bottom: calc(72px + env(safe-area-inset-bottom
   // Scoped to this page's chat only. Other assistant features (Morning
   // Brief, Weekly Audit, News digest) call api/chat.js with their own
   // separately-tuned prompts and are unaffected.
-  const EQUAVIA_PERSONA = 'You are Equavia 0, the command interface for this personal tracking app. You are a utility, not an assistant with opinions.\n\n'
+  const EQUAVIA_PERSONA = 'You are the AI Assistant, the command interface for this personal tracking app. You are a utility, not an assistant with opinions.\n\n'
     + 'YOUR ONLY JOBS:\n'
     + '1. Record data the user gives you, by calling the matching tool.\n'
     + '2. Perform app and calendar actions the user asks for, by calling the matching tool.\n'
@@ -892,9 +894,9 @@ body.has-eq-dock .ask-input-bar { bottom: calc(72px + env(safe-area-inset-bottom
   }
   function chatTranscriptMarkdown(list) {
     const firstUser = list.find(m => m.role === 'user');
-    const title = (firstUser ? firstUser.content : 'Equavia 0 chat').slice(0, 60).replace(/\s+/g, ' ').trim();
+    const title = (firstUser ? firstUser.content : 'AI Assistant chat').slice(0, 60).replace(/\s+/g, ' ').trim();
     let s = '---\ntitle: "' + title.replace(/"/g, '\\"') + '"\nupdated: ' + new Date().toISOString() + '\n---\n\n# ' + title + '\n\n';
-    list.forEach(m => { s += '**' + (m.role === 'user' ? 'You' : 'Equavia 0') + '** (' + fmtTime(m.at) + ')\n\n' + m.content + '\n\n'; });
+    list.forEach(m => { s += '**' + (m.role === 'user' ? 'You' : 'AI Assistant') + '** (' + fmtTime(m.at) + ')\n\n' + m.content + '\n\n'; });
     return s;
   }
 
@@ -1075,7 +1077,7 @@ body.has-eq-dock .ask-input-bar { bottom: calc(72px + env(safe-area-inset-bottom
 
     const title = document.createElement('div');
     title.className = 'eq-changes-panel-title';
-    title.textContent = actions.length === 1 ? 'Equavia 0 made 1 change' : 'Equavia 0 made ' + actions.length + ' changes';
+    title.textContent = actions.length === 1 ? 'AI Assistant made 1 change' : 'AI Assistant made ' + actions.length + ' changes';
     wrap.appendChild(title);
 
     const list = document.createElement('div');
@@ -1239,7 +1241,7 @@ body.has-eq-dock .ask-input-bar { bottom: calc(72px + env(safe-area-inset-bottom
       await runTurn(apiMessages, context, tools, 0);
     } catch (e) {
       const list = getMessages();
-      list.push({ role: 'error', content: 'Could not reach Equavia 0 — ' + (e.message || 'unknown error') + '.', at: new Date().toISOString() });
+      list.push({ role: 'error', content: 'Could not reach AI Assistant — ' + (e.message || 'unknown error') + '.', at: new Date().toISOString() });
       setMessages(list);
     } finally {
       setTyping(false);
@@ -1523,6 +1525,45 @@ body.has-eq-dock .ask-input-bar { bottom: calc(72px + env(safe-area-inset-bottom
   }
 
   init();
+
+  // Cross-device sync: this page writes into the same localStorage keys
+  // planner.html/habits.html/health.html/gym.html own, but (unlike those
+  // pages) never pushed any of it to Supabase -- so the next page the user
+  // navigated to would pull its own last-known-good cloud snapshot on load
+  // and silently overwrite/delete everything just added here. Joining the
+  // same channels those pages already register (identical configs, see
+  // js/sync.js) fixes that. gym.html's weight/workout channel is bespoke
+  // (not built on the shared initCloudSync helper) but reads/writes the
+  // same Supabase app_state row, so joining it here via the shared helper
+  // is safe -- the two never run in the same page at once.
+  document.addEventListener('DOMContentLoaded', function () {
+    if (typeof initCloudSync !== 'function') return;
+    initCloudSync({
+      appKey: 'goals',
+      syncedKeys: ['longterm_goals_v1', 'projects_v1', 'local_cal_events_v1'],
+      syncedPrefixes: ['goals:', 'checklist:items:', 'checklist:done:'],
+      onApplied: function () {
+        window.dispatchEvent(new CustomEvent('goals-changed'));
+        window.dispatchEvent(new Event('storage'));
+      }
+    });
+    initCloudSync({
+      appKey: 'habits',
+      syncedKeys: ['habits_v1'],
+      onApplied: function () { window.dispatchEvent(new Event('storage')); }
+    });
+    initCloudSync({
+      appKey: 'health',
+      syncedKeys: ['stack:items', 'stack:version', 'stack:low', 'eq.energy.logs_v1', 'eq.health.summary'],
+      syncedPrefixes: ['stack:taken:'],
+      onApplied: function () { window.dispatchEvent(new Event('storage')); }
+    });
+    initCloudSync({
+      appKey: 'po-coach',
+      syncedKeys: ['po_coach_v1', 'po_coach_workout_done', 'po_coach_weights', 'po_coach_goal_weight', 'calorie_log_v1'],
+      onApplied: function () { window.dispatchEvent(new Event('storage')); }
+    });
+  });
 })();
 </script>
 </body>
