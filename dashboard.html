@@ -731,9 +731,9 @@ a { color: inherit; text-decoration: none; }
   }
 
   // ============================================================
-  // Rollover + streak (ported as-is from the old dashboard --
-  // snapshots yesterday via AssistantTools before retiring old
-  // goals: keys; never silently merges undone tasks into today).
+  // Rollover (ported as-is from the old dashboard -- snapshots
+  // yesterday via AssistantTools before retiring old goals: keys;
+  // never silently merges undone tasks into today).
   // ============================================================
   function rollover() {
     if (window.AssistantTools) window.AssistantTools.ensureYesterdaySnapshot();
@@ -743,25 +743,6 @@ a { color: inherit; text-decoration: none; }
       if (dateStr >= todayDateStr) return;
       storeDelete(k);
     });
-  }
-  function loadStreak() {
-    const s = storeGet('goal_streak_v1');
-    if (s && typeof s.count === 'number') return s;
-    return { count: 0, lastProcessedDate: '' };
-  }
-  function processStreak() {
-    const s = loadStreak();
-    const todayDateStr = getActiveDateString();
-    const keys = storeListKeys('goals:').map((k) => k.slice('goals:'.length)).filter((d) => d < todayDateStr).sort();
-    keys.forEach((dateStr) => {
-      if (s.lastProcessedDate && dateStr <= s.lastProcessedDate) return;
-      const list = getGoals('goals:' + dateStr);
-      if (list.length === 0) { /* empty days don't break the streak */ }
-      else if (list.every((g) => g.done)) s.count += 1;
-      else s.count = 0;
-      s.lastProcessedDate = dateStr;
-    });
-    storeSet('goal_streak_v1', s);
   }
 
   // ============================================================
@@ -1912,7 +1893,6 @@ a { color: inherit; text-decoration: none; }
   // Boot
   // ============================================================
   rollover();
-  processStreak();
   updateDayRing();
   updateGreeting();
   renderTasks();

@@ -277,11 +277,9 @@ body.has-eq-dock .ask-input-bar { bottom: calc(72px + env(safe-area-inset-bottom
 
   function buildTasksContext() {
     const list = storeGet('goals:' + todayKeyLocal()) || [];
-    const streak = storeGet('goal_streak_v1');
     const longterm = (storeGet('longterm_goals_v1') || []).filter(g => !g.archived);
     let s = 'TASKS/GOALS:\n';
     s += list.length ? ('Today: ' + list.filter(g => g.done).length + '/' + list.length + ' done') : 'No tasks scheduled today.';
-    if (streak && streak.count) s += ' (' + streak.count + '-day streak)';
     s += '\n';
     if (list.length) s += list.map(g => '- [' + (g.done ? 'x' : ' ') + '] ' + g.text).join('\n') + '\n';
     if (longterm.length) s += 'Longterm goals: ' + longterm.slice(0, 8).map(g => g.title + ' (' + (g.value || 0) + '%)').join(', ') + '\n';
