@@ -7,7 +7,7 @@
 // Bump CACHE_NAME on any app-shell file change so clients pick up
 // the new list and drop the old cache on next activate.
 // =============================================================
-const CACHE_NAME = 'equavia-shell-v37';
+const CACHE_NAME = 'equavia-shell-v38';
 const APP_SHELL = [
   'lock.html',
   'dashboard.html',
@@ -19,6 +19,7 @@ const APP_SHELL = [
   'privacy.html',
   'settings.html',
   'ask.html',
+  'status.html',
   'manifest.json',
   'js/topbar.js',
   'js/landing-guard.js',
@@ -29,6 +30,8 @@ const APP_SHELL = [
   'js/sync.js',
   'js/collapsible.js',
   'js/dexie.min.js',
+  'js/status.js',
+  'docs/programme.json',
   'images/favicon.png',
   'images/icon-192.png',
   'images/icon-512.png',
@@ -61,16 +64,31 @@ self.addEventListener('fetch', (event) => {
   // this never masks a stale third-party script or a live data fetch.
   if (url.origin !== self.location.origin) return;
 
+  // Stale-while-revalidate: a cache hit is returned immediately (same speed
+  // as pure cache-first), but a network fetch always runs alongside it and
+  // refreshes the cache for next time. This bounds staleness to "one load
+  // behind" instead of "until CACHE_NAME is next bumped" -- CACHE_NAME
+  // still matters (see CLAUDE.md's APP_SHELL rule and the version-skew
+  // banner in topbar.js), this just stops a forgotten bump from meaning
+  // "forever."
   event.respondWith(
     caches.match(event.request).then((cached) => {
-      if (cached) return cached;
-      return fetch(event.request).then((response) => {
+      const networkFetch = fetch(event.request).then((response) => {
         if (response && response.status === 200) {
           const copy = response.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
         }
         return response;
-      }).catch(() => cached);
+      }).catch(() => null);
+
+      if (cached) {
+        // Don't await the network -- serve what's cached now, let the
+        // fetch finish in the background via waitUntil so the SW stays
+        // alive for it even after this response has already resolved.
+        event.waitUntil(networkFetch);
+        return cached;
+      }
+      return networkFetch.then((response) => response || Promise.reject(new Error('offline, nothing cached')));
     })
   );
 });
