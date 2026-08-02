@@ -8,15 +8,6 @@
   const SUPABASE_URL = 'https://ubhjdibldkknviezrjys.supabase.co';
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InViaGpkaWJsZGtrbnZpZXpyanlzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3NzAyNjEsImV4cCI6MjA5OTM0NjI2MX0.ODgzRHVYLEaDCUBXmmSd3oENXlSlarRYVERagHbVCK0';
 
-  // Reserved property inside the app_state row's `data` blob -- carries
-  // per-key bookkeeping (last-write-wins timestamps + tombstones) without
-  // needing a schema/table migration. Deliberately not shaped like a real
-  // synced value so it never collides with an actual localStorage key, and
-  // consumers that read row.data.<someKey> directly (e.g.
-  // scripts/migrate-orphaned-logs.js) are unaffected since they only ever
-  // look up specific known keys.
-  const META_KEY = '__sync_meta__';
-
   window.initCloudSync = function (config) {
     const appKey = config && config.appKey;
     const syncedKeys = (config && config.syncedKeys) || [];
@@ -44,43 +35,6 @@
       }
       return out;
     }
-
-    // ---- local per-key sync bookkeeping (timestamps + tombstones) ----
-    // Lives under its own, deliberately-unmatched localStorage key (per
-    // appKey, since one page can run initCloudSync for several appKeys --
-    // see ask.html) so it's never itself treated as a synced value. Read
-    // via the original unpatched localStorage methods to avoid any chance
-    // of recursing back into the setItem/removeItem hooks below.
-    const META_STORAGE_KEY = '__eq_sync_meta__' + appKey;
-    const origSet = localStorage.setItem.bind(localStorage);
-    const origRemove = localStorage.removeItem.bind(localStorage);
-    const origGet = localStorage.getItem.bind(localStorage);
-
-    function loadLocalMeta() {
-      try {
-        const v = JSON.parse(origGet(META_STORAGE_KEY));
-        if (v && typeof v === 'object') {
-          return { timestamps: v.timestamps || {}, tombstones: v.tombstones || {} };
-        }
-      } catch (e) {}
-      return { timestamps: {}, tombstones: {} };
-    }
-    function saveLocalMeta(meta) {
-      try { origSet(META_STORAGE_KEY, JSON.stringify(meta)); } catch (e) {}
-    }
-    function touchTimestamp(k) {
-      const meta = loadLocalMeta();
-      meta.timestamps[k] = Date.now();
-      delete meta.tombstones[k];
-      saveLocalMeta(meta);
-    }
-    function touchTombstone(k) {
-      const meta = loadLocalMeta();
-      meta.tombstones[k] = Date.now();
-      delete meta.timestamps[k];
-      saveLocalMeta(meta);
-    }
-
     function collect() {
       const out = {};
       for (const k of listAllKeys()) {
@@ -88,59 +42,32 @@
         if (v == null) continue;
         try { out[k] = JSON.parse(v); } catch (e) { out[k] = v; }
       }
-      const localMeta = loadLocalMeta();
-      out[META_KEY] = { timestamps: localMeta.timestamps, tombstones: localMeta.tombstones };
       return out;
     }
+    const origSet = localStorage.setItem.bind(localStorage);
+    const origRemove = localStorage.removeItem.bind(localStorage);
     localStorage.setItem = function (k, v) {
       origSet(k, v);
-      try { if (!suppressSync && matches(k)) { touchTimestamp(k); schedulePush(); } } catch (e) {}
+      try { if (!suppressSync && matches(k)) schedulePush(); } catch (e) {}
     };
     localStorage.removeItem = function (k) {
       origRemove(k);
-      try { if (!suppressSync && matches(k)) { touchTombstone(k); schedulePush(); } } catch (e) {}
+      try { if (!suppressSync && matches(k)) schedulePush(); } catch (e) {}
     };
-    // Last-write-wins per key, using each key's own timestamp rather than
-    // one timestamp for the whole blob -- a single blob-level time can't
-    // tell you which individual keys inside it are actually stale. A key
-    // missing from remote.data is no longer inferred as "delete this
-    // locally" -- remote hasn't seen it yet, so it's left alone and gets
-    // pushed up on the next push. Real deletions are explicit tombstones,
-    // themselves timestamped and compared the same way. Keys with no
-    // timestamp on either side (untouched since before this existed)
-    // default to 0 -- "missing" reads as "oldest," per spec, so it only
-    // loses ties, never wins one against a real timestamp.
     function applyRemote(remote) {
       if (!remote || typeof remote !== 'object') return false;
-      const remoteMeta = remote[META_KEY] && typeof remote[META_KEY] === 'object'
-        ? { timestamps: remote[META_KEY].timestamps || {}, tombstones: remote[META_KEY].tombstones || {} }
-        : { timestamps: {}, tombstones: {} };
-      const localMeta = loadLocalMeta();
       suppressSync = true;
       let changed = false;
       try {
         for (const k of Object.keys(remote)) {
-          if (k === META_KEY || !matches(k)) continue;
-          const remoteTs = remoteMeta.timestamps[k] || 0;
-          const localTs = localMeta.timestamps[k] || 0;
-          if (remoteTs < localTs) continue; // local is newer -- keep it, it'll push up
+          if (!matches(k)) continue;
           const incoming = JSON.stringify(remote[k]);
           const local = localStorage.getItem(k);
           if (local !== incoming) { try { origSet(k, incoming); changed = true; } catch (e) {} }
-          localMeta.timestamps[k] = Math.max(remoteTs, localTs);
-          delete localMeta.tombstones[k];
         }
-        for (const k of Object.keys(remoteMeta.tombstones)) {
-          if (!matches(k)) continue;
-          const remoteDelTs = remoteMeta.tombstones[k];
-          const localKnownTs = Math.max(localMeta.timestamps[k] || 0, localMeta.tombstones[k] || 0);
-          if (remoteDelTs >= localKnownTs) {
-            if (localStorage.getItem(k) !== null) { try { origRemove(k); changed = true; } catch (e) {} }
-            delete localMeta.timestamps[k];
-            localMeta.tombstones[k] = Math.max(remoteDelTs, localMeta.tombstones[k] || 0);
-          }
+        for (const k of listAllKeys()) {
+          if (!(k in remote)) { try { origRemove(k); changed = true; } catch (e) {} }
         }
-        saveLocalMeta(localMeta);
       } finally { suppressSync = false; }
       if (changed && typeof onApplied === 'function') { try { onApplied(); } catch (e) {} }
       return changed;
@@ -185,10 +112,7 @@
         if (!error && data && data.data && Object.keys(data.data).length > 0) {
           lastSyncedJson = JSON.stringify(data.data);
           applyRemote(data.data);
-        } else if (listAllKeys().length > 0) {
-          // Note: not collect().length -- collect() always includes
-          // META_KEY now, which would make this true even with nothing
-          // real to sync.
+        } else if (Object.keys(collect()).length > 0) {
           schedulePush();
         }
       } catch (e) {}
