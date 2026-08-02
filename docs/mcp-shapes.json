@@ -1,0 +1,187 @@
+{
+  "_comment": "Real response shapes from the Equavia MCP server. Captured 2026-08-01. Build against these exact structures — do not invent fields.",
+
+  "get_workouts": {
+    "_note": "Returns last 7 days across all exercises when called with no date. IMPORTANT: `weight` sits on the PARENT object, not on individual sets. All sets in an entry therefore share one weight. This means reverse-pyramid sets (different weight per set) CANNOT currently be represented. The status panel must not assume per-set weight exists.",
+    "_shape": {
+      "workouts": [
+        {
+          "exercise": "string",
+          "unit": "string — kg",
+          "sets": [
+            {
+              "date": "ISO 8601 timestamp",
+              "reps": "number — the rep target for the entry",
+              "weight": "number — one weight for all sets",
+              "sets": [
+                { "reps": "number", "fail": "boolean" }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "_example": {
+      "workouts": [
+        {
+          "exercise": "Incline barbell bench",
+          "unit": "kg",
+          "sets": [
+            {
+              "date": "2026-07-30T11:00:00.000Z",
+              "reps": 6,
+              "weight": 90,
+              "sets": [
+                { "fail": false, "reps": 6 },
+                { "fail": false, "reps": 6 },
+                { "fail": false, "reps": 6 },
+                { "fail": false, "reps": 6 }
+              ]
+            }
+          ]
+        },
+        {
+          "exercise": "Standing barbell OHP",
+          "unit": "kg",
+          "sets": [
+            {
+              "date": "2026-07-30T11:00:00.000Z",
+              "reps": 8,
+              "weight": 50,
+              "sets": [
+                { "fail": false, "reps": 8 },
+                { "fail": false, "reps": 8 },
+                { "fail": false, "reps": 8 }
+              ]
+            }
+          ]
+        },
+        {
+          "exercise": "Incline DB press",
+          "unit": "kg",
+          "sets": [
+            {
+              "date": "2026-07-30T11:00:00.000Z",
+              "reps": 10,
+              "weight": 34.5,
+              "sets": [
+                { "fail": false, "reps": 10 },
+                { "fail": false, "reps": 10 },
+                { "fail": false, "reps": 10 }
+              ]
+            }
+          ]
+        },
+        {
+          "exercise": "Cable lateral raise",
+          "unit": "kg",
+          "sets": [
+            {
+              "date": "2026-07-30T11:00:00.000Z",
+              "reps": 12,
+              "weight": 19,
+              "sets": [
+                { "fail": false, "reps": 12 },
+                { "fail": false, "reps": 12 },
+                { "fail": false, "reps": 12 },
+                { "fail": false, "reps": 12 }
+              ]
+            }
+          ]
+        },
+        {
+          "exercise": "Overhead cable tri ext",
+          "unit": "kg",
+          "sets": [
+            {
+              "date": "2026-07-30T11:00:00.000Z",
+              "reps": 12,
+              "weight": 22.5,
+              "sets": [
+                { "fail": false, "reps": 12 },
+                { "fail": false, "reps": 12 },
+                { "fail": false, "reps": 12 }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+
+  "get_health": {
+    "_note": "NOT live. This is a snapshot written whenever health.html was last opened on any device. ALWAYS read the `at` field and surface its age in the UI — a recovery gate firing on three-day-old data is misleading. Fields may be null (steps and activeKcal frequently are), so guard every read.",
+    "_shape": {
+      "at": "ISO 8601 — when this snapshot was written, NOT when it was requested",
+      "hrv": "number | null",
+      "rhr": "number | null",
+      "spo2": "number | null",
+      "avgHr": "number | null",
+      "steps": "number | null — often null",
+      "strain": "number | null",
+      "hrv7dAvg": "number | null",
+      "hrvTrend": "string — up | down | flat",
+      "recovery": "number 0-100 — drives the training gate",
+      "respRate": "number | null",
+      "rhr7dAvg": "number | null",
+      "rhrTrend": "string — up | down | flat",
+      "skinTemp": "number | null",
+      "sleepPerf": "number | null",
+      "activeKcal": "number | null — often null",
+      "sleepHours": "number | null",
+      "hrvDeclining": "boolean",
+      "whoopDayKcal": "number | null",
+      "recovery7dAvg": "number | null",
+      "recoveryTrend": "string — up | down | flat",
+      "yesterdayStrain": "number | null"
+    },
+    "_example": {
+      "at": "2026-07-29T21:37:35.803Z",
+      "hrv": 30,
+      "rhr": 64,
+      "spo2": 96.611115,
+      "avgHr": 68,
+      "steps": null,
+      "strain": 3.4423492,
+      "hrv7dAvg": 32,
+      "hrvTrend": "down",
+      "recovery": 52,
+      "respRate": 17.5,
+      "rhr7dAvg": 65,
+      "rhrTrend": "flat",
+      "skinTemp": 34.781834,
+      "sleepPerf": 80,
+      "activeKcal": null,
+      "sleepHours": 7.9,
+      "hrvDeclining": false,
+      "whoopDayKcal": 1741,
+      "recovery7dAvg": 50,
+      "recoveryTrend": "flat",
+      "yesterdayStrain": 2.779115
+    }
+  },
+
+  "_gate_thresholds": {
+    "_note": "Recovery bands used by the status panel. Applied to `recovery`, with `hrvTrend` as a secondary signal.",
+    "green": "recovery >= 67",
+    "amber": "recovery 34-66",
+    "red": "recovery <= 33",
+    "stale_warning_hours": 48
+  },
+
+  "_indicator_lifts": {
+    "_note": "Match on these exercise name strings as they appear in get_workouts. Names must match exactly or progression tracking silently returns nothing.",
+    "A1": "Incline DB press",
+    "A2": "Standing barbell OHP",
+    "B1": "Weighted chin-up",
+    "A5": "Hammer curl"
+  },
+
+  "_known_gaps": [
+    "No per-set weight — RPT loads cannot be stored or read.",
+    "No session completion record — a missed session is inferred from a training day with zero logged sets.",
+    "No waist or arm measurements anywhere. These need adding as inputs.",
+    "No session feel / subjective rating. Needed for the December volume decision.",
+    "'Weighted chin-up' and 'Hammer curl' do not yet appear in the log — they enter with the new programme on 2026-08-03."
+  ]
+}

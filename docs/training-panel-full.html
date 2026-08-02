@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Training panel — full mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;900&family=JetBrains+Mono:wght@400;600;800&family=Newsreader:opsz,wght@6..72,300;6..72,400;6..72,500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#E9ECE2; --card:#F7F8F3; --ink:#141C17; --ink2:#3E4A41;
+  --muted:#6E7B70; --rule:#CDD5C3; --soft:#DDE2D5;
+  --ox:#8A3033; --moss:#456B4C; --ochre:#9A6B18;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background:var(--paper);color:var(--ink);
+  font-family:"Newsreader",Georgia,serif;font-size:16px;line-height:1.5;
+  padding:22px 16px 90px;-webkit-text-size-adjust:100%;
+}
+.wrap{max-width:540px;margin:0 auto}
+
+/* dev */
+.devbar{background:var(--ink);border-radius:6px;padding:14px 15px;margin-bottom:24px}
+.devbar p{font-family:"JetBrains Mono",monospace;font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:#8FA894;margin-bottom:10px}
+.devbar div{display:flex;gap:5px;flex-wrap:wrap}
+.devbar button{font-family:"JetBrains Mono",monospace;font-size:10px;font-weight:700;letter-spacing:.07em;background:transparent;border:1px solid #3B4A40;color:#B7C4B9;padding:8px 11px;border-radius:4px;cursor:pointer}
+.devbar button[aria-pressed="true"]{background:#EDF0E7;color:var(--ink);border-color:#EDF0E7}
+.above{border:1px dashed var(--rule);border-radius:6px;padding:24px 18px;text-align:center;margin-bottom:8px}
+.above span{font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+
+/* blocks */
+.blk{background:var(--card);border:1px solid var(--rule);border-radius:6px;margin-bottom:10px;overflow:hidden}
+.blk-h{display:flex;align-items:center;gap:9px;padding:11px 16px;border-bottom:1px solid var(--soft);background:rgba(20,28,23,.025)}
+.blk-h h3{font-family:"JetBrains Mono",monospace;font-size:9.5px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+.blk-h .n{font-family:"JetBrains Mono",monospace;font-size:9.5px;font-weight:800;color:var(--ox)}
+.blk-b{padding:16px}
+
+details.blk > summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:9px;padding:11px 16px;background:rgba(20,28,23,.025)}
+details.blk > summary::-webkit-details-marker{display:none}
+details.blk > summary h3{font-family:"JetBrains Mono",monospace;font-size:9.5px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+details.blk > summary .n{font-family:"JetBrains Mono",monospace;font-size:9.5px;font-weight:800;color:var(--ox)}
+details.blk > summary .chev{margin-left:auto;font-family:"JetBrains Mono",monospace;font-size:13px;color:var(--muted);transition:transform .2s}
+details.blk[open] > summary{border-bottom:1px solid var(--soft)}
+details.blk[open] > summary .chev{transform:rotate(90deg)}
+details.blk > summary:focus-visible{outline:2px solid var(--ink);outline-offset:-2px}
+
+/* position */
+.ph-name{font-family:"Archivo",sans-serif;font-weight:900;font-size:24px;text-transform:uppercase;letter-spacing:-.02em;line-height:1.05}
+.ph-sub{font-family:"JetBrains Mono",monospace;font-size:11.5px;color:var(--muted);margin-top:5px}
+.bar{height:7px;background:var(--soft);border-radius:4px;margin:15px 0 8px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--ink);border-radius:4px;transition:width .5s cubic-bezier(.2,.7,.3,1)}
+.bar-k{display:flex;justify-content:space-between;font-family:"JetBrains Mono",monospace;font-size:10px;color:var(--muted)}
+.mini{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--soft);border-radius:5px;overflow:hidden;margin-top:16px}
+.mini div{background:var(--card);padding:11px 12px}
+.mini dt{font-family:"JetBrains Mono",monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.mini dd{font-family:"JetBrains Mono",monospace;font-size:14px;font-weight:700}
+
+/* today */
+.sess{font-family:"Archivo",sans-serif;font-weight:900;font-size:26px;text-transform:uppercase;letter-spacing:-.02em;line-height:1}
+.sess.rest{color:var(--muted)}
+.gate{display:flex;align-items:center;gap:9px;margin:14px 0 4px;flex-wrap:wrap}
+.dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.gate b{font-family:"JetBrains Mono",monospace;font-size:11.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
+.gate small{font-family:"JetBrains Mono",monospace;font-size:10px;color:var(--muted);margin-left:auto}
+.gate-msg{font-size:15px;color:var(--ink2);font-weight:300;margin-top:3px}
+.macros{display:flex;gap:22px;flex-wrap:wrap;margin-top:16px;padding-top:14px;border-top:1px solid var(--soft)}
+.macros div{font-family:"JetBrains Mono",monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.macros b{display:block;font-size:17px;font-weight:800;color:var(--ink);margin-top:3px;letter-spacing:0}
+
+/* flags */
+.flag{display:grid;grid-template-columns:5px 1fr;gap:12px;padding:12px 0;border-top:1px solid var(--soft)}
+.flag:first-child{border-top:0;padding-top:0}
+.flag i{border-radius:3px;display:block}
+.flag h4{font-family:"Archivo",sans-serif;font-weight:700;font-size:15px;line-height:1.25}
+.flag p{font-size:14.5px;color:var(--ink2);font-weight:300;margin-top:3px}
+.flag .act{font-family:"JetBrains Mono",monospace;font-size:11px;font-weight:600;color:var(--ink);margin-top:6px;display:inline-block;border-bottom:1.5px solid var(--ox);padding-bottom:1px}
+.clear{text-align:center;padding:14px 0 6px}
+.clear b{font-family:"Archivo",sans-serif;font-weight:900;font-size:17px;color:var(--moss);text-transform:uppercase}
+.clear p{font-size:14.5px;color:var(--muted);margin-top:4px;font-weight:300}
+.f-red i{background:var(--ox)} .f-amb i{background:var(--ochre)} .f-inf i{background:var(--muted)} .f-grn i{background:var(--moss)}
+.g-red{background:var(--ox)} .g-amb{background:var(--ochre)} .g-grn{background:var(--moss)} .g-gry{background:var(--muted)}
+
+/* phases */
+.pcard{border-left:4px solid var(--soft);padding:13px 0 13px 14px;margin-bottom:4px}
+.pcard.now{border-left-color:var(--ox);background:rgba(138,48,51,.035);border-radius:0 5px 5px 0;padding-right:12px}
+.pcard.done{opacity:.5}
+.pcard-h{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+.pcard-h h4{font-family:"Archivo",sans-serif;font-weight:900;font-size:15.5px;text-transform:uppercase;letter-spacing:-.01em}
+.pcard-h span{font-family:"JetBrains Mono",monospace;font-size:10px;color:var(--muted);white-space:nowrap}
+.pcard p{font-size:14.5px;color:var(--ink2);font-weight:300;margin-top:5px}
+.kcals{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px}
+.kcals span{font-family:"JetBrains Mono",monospace;font-size:10.5px;font-weight:600;background:var(--paper);border:1px solid var(--rule);padding:4px 8px;border-radius:20px}
+.kcals span.hot{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+
+/* tables */
+.tbl{width:100%;border-collapse:collapse;font-size:15px}
+.tbl th{font-family:"JetBrains Mono",monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);text-align:right;padding:0 0 8px 6px;border-bottom:1.5px solid var(--ink);font-weight:600}
+.tbl th:first-child{text-align:left;padding-left:0}
+.tbl td{padding:9px 0 9px 6px;border-bottom:1px solid var(--soft);text-align:right;font-family:"JetBrains Mono",monospace;font-size:13px;font-weight:600}
+.tbl td:first-child{text-align:left;padding-left:0;font-family:"Newsreader",serif;font-size:15px;font-weight:400}
+.tbl tr:last-child td{border-bottom:0}
+.tbl.read td{font-family:"Newsreader",serif;font-size:14.5px;font-weight:400;text-align:left;padding-left:10px;color:var(--ink2)}
+.tbl.read td:first-child{font-weight:500;color:var(--ink);padding-left:0;width:47%}
+.foot-note{font-size:13px;color:var(--muted);margin-top:10px;font-family:"JetBrains Mono",monospace}
+
+.note{border-left:3px solid var(--ox);background:rgba(138,48,51,.05);padding:12px 14px;margin-top:14px;border-radius:0 4px 4px 0;font-size:14.5px;color:var(--ink2);font-weight:300}
+.note strong{color:var(--ink);font-weight:500}
+
+/* food */
+.switch{display:flex;gap:5px;margin-bottom:16px;flex-wrap:wrap}
+.switch button{font-family:"JetBrains Mono",monospace;font-size:10px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;background:var(--paper);border:1px solid var(--rule);color:var(--ink2);padding:8px 12px;border-radius:4px;cursor:pointer}
+.switch button[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.meal{margin-bottom:20px}
+.meal-h{display:flex;align-items:baseline;gap:9px;margin-bottom:3px}
+.meal-h b{font-family:"JetBrains Mono",monospace;font-size:11px;font-weight:800;color:var(--ox);letter-spacing:.07em}
+.meal-h h4{font-family:"Archivo",sans-serif;font-weight:900;font-size:15px;text-transform:uppercase}
+.meal>p{font-size:14px;color:var(--muted);font-weight:300;margin-bottom:10px}
+
+.frow{
+  display:flex;justify-content:space-between;align-items:center;gap:10px;
+  padding:9px 8px 9px 0;border-bottom:1px solid var(--soft);
+  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+  border-radius:4px;transition:background .15s;
+}
+.frow:last-of-type{border-bottom:0}
+.frow.sw{cursor:pointer;padding-left:8px;margin-left:-8px}
+.frow.sw:active{background:rgba(20,28,23,.06)}
+.frow.holding{background:rgba(138,48,51,.1)}
+.fname{font-size:15px;display:flex;align-items:center;gap:7px}
+.fname .ic{font-family:"JetBrains Mono",monospace;font-size:10px;color:var(--rule)}
+.frow.sw:hover .ic{color:var(--ox)}
+.fqty{font-family:"JetBrains Mono",monospace;font-size:13px;font-weight:600;white-space:nowrap}
+.swapped{color:var(--ox)}
+.totals{display:flex;gap:18px;flex-wrap:wrap;margin-top:12px;padding-top:11px;border-top:1.5px solid var(--ink)}
+.totals div{font-family:"JetBrains Mono",monospace;font-size:9px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted)}
+.totals b{display:block;font-size:16px;font-weight:800;color:var(--ink);margin-top:2px;letter-spacing:0}
+
+.lists{display:grid;gap:10px;margin-top:6px}
+.lbox{border:1px solid var(--rule);border-radius:5px;padding:13px 15px;background:var(--paper)}
+.lbox h5{font-family:"JetBrains Mono",monospace;font-size:9.5px;letter-spacing:.15em;text-transform:uppercase;margin-bottom:8px}
+.lbox.y h5{color:var(--moss)} .lbox.n h5{color:var(--ox)}
+.lbox p{font-size:14px;line-height:1.65;color:var(--ink2);font-weight:300}
+
+/* swap sheet */
+.scrim{position:fixed;inset:0;background:rgba(20,28,23,.5);opacity:0;pointer-events:none;transition:opacity .2s;z-index:90}
+.scrim.on{opacity:1;pointer-events:auto}
+.sheet{
+  position:fixed;left:0;right:0;bottom:0;z-index:100;
+  background:var(--card);border-radius:14px 14px 0 0;
+  padding:8px 18px calc(20px + env(safe-area-inset-bottom));
+  transform:translateY(101%);transition:transform .26s cubic-bezier(.2,.7,.3,1);
+  max-width:540px;margin:0 auto;max-height:76vh;overflow-y:auto;
+}
+.sheet.on{transform:none}
+.grab{width:36px;height:4px;background:var(--rule);border-radius:2px;margin:6px auto 14px}
+.sheet h4{font-family:"Archivo",sans-serif;font-weight:900;font-size:19px;text-transform:uppercase;letter-spacing:-.01em}
+.sheet .sub{font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);margin:4px 0 14px}
+.opt{display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;text-align:left;background:none;border:0;border-top:1px solid var(--soft);padding:14px 0;cursor:pointer;font-family:inherit}
+.opt:first-of-type{border-top:0}
+.opt span{font-size:16px;color:var(--ink)}
+.opt em{font-family:"JetBrains Mono",monospace;font-size:11px;font-style:normal;color:var(--muted);text-align:right}
+.opt:active{opacity:.55}
+
+.hint{font-family:"JetBrains Mono",monospace;font-size:10.5px;color:var(--muted);margin-top:12px;text-align:center}
+
+/* busy mode toggle */
+.pmode{
+  display:flex;align-items:center;justify-content:space-between;gap:14px;
+  background:var(--card);border:1px solid var(--rule);border-radius:6px;
+  padding:12px 14px;margin-bottom:10px;transition:.2s;
+}
+.pmode.on{background:var(--ink);border-color:var(--ink)}
+.pmode b{font-family:"Archivo",sans-serif;font-weight:700;font-size:14px;display:block}
+.pmode.on b{color:#EDF0E7}
+.pmode span{font-family:"JetBrains Mono",monospace;font-size:10px;color:var(--muted);display:block;margin-top:3px}
+.pmode.on span{color:#8FA894}
+.pmode button{width:46px;height:27px;border-radius:20px;border:1px solid var(--rule);background:var(--paper);cursor:pointer;padding:0;position:relative;flex-shrink:0}
+.pmode button i{position:absolute;top:2px;left:2px;width:21px;height:21px;border-radius:50%;background:var(--muted);transition:.2s}
+.pmode.on button{background:#3B4A40;border-color:#3B4A40}
+.pmode.on button i{left:22px;background:#EDF0E7}
+.pmode button:focus-visible{outline:2px solid var(--ox);outline-offset:2px}
+
+/* scorecard */
+.crit{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;padding:11px 0;border-bottom:1px solid var(--soft)}
+.crit:last-of-type{border-bottom:0}
+.crit p{font-size:14.5px;line-height:1.35}
+.crit p small{display:block;font-family:"JetBrains Mono",monospace;font-size:10px;color:var(--muted);margin-top:2px}
+.crit .val{font-family:"JetBrains Mono",monospace;font-size:13px;font-weight:700;white-space:nowrap}
+.crit .pf{width:8px;height:8px;border-radius:50%}
+.verdict{margin-top:14px;padding-top:13px;border-top:1.5px solid var(--ink)}
+.verdict b{font-family:"Archivo",sans-serif;font-weight:900;font-size:15px;text-transform:uppercase}
+.verdict p{font-size:14.5px;color:var(--ink2);font-weight:300;margin-top:4px}
+.foot{margin-top:24px;padding-top:15px;border-top:1px solid var(--rule)}
+.foot p{font-family:"JetBrains Mono",monospace;font-size:10.5px;color:var(--muted);line-height:1.85}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="devbar">
+    <p>Preview state — not part of the build</p>
+    <div id="sw">
+      <button data-s="0" aria-pressed="true">Today · pre-start</button>
+      <button data-s="1" aria-pressed="false">Mid-phase · clear</button>
+      <button data-s="2" aria-pressed="false">Mid-phase · flags</button>
+      <button data-s="3" aria-pressed="false">Deload</button>
+      <button data-s="4" aria-pressed="false">Reveal cut</button>
+    </div>
+  </div>
+
+  <div class="above"><span>↑ your existing training page ↑</span></div>
+
+  <!-- BUSY MODE -->
+  <div class="pmode" id="pmode">
+    <div>
+      <b>Busy Mode</b>
+      <span id="pm-note">Off — full programme running</span>
+    </div>
+    <button id="pm-btn" role="switch" aria-checked="false"><i></i></button>
+  </div>
+
+  <!-- 01 POSITION -->
+  <div class="blk">
+    <div class="blk-h"><span class="n">01</span><h3>Position</h3></div>
+    <div class="blk-b">
+      <div class="ph-name" id="p-name">—</div>
+      <div class="ph-sub" id="p-sub">—</div>
+      <div class="bar"><i id="p-bar" style="width:0%"></i></div>
+      <div class="bar-k"><span id="p-from">—</span><span id="p-to">—</span></div>
+      <dl class="mini">
+        <div><dt>Next checkpoint</dt><dd id="p-chk">—</dd></div>
+        <div><dt>Sessions logged</dt><dd id="p-sess">—</dd></div>
+      </dl>
+    </div>
+  </div>
+
+  <!-- 02 TODAY -->
+  <div class="blk">
+    <div class="blk-h"><span class="n">02</span><h3>Today</h3></div>
+    <div class="blk-b">
+      <div class="sess" id="t-sess">—</div>
+      <div class="gate"><span class="dot" id="t-dot"></span><b id="t-band">—</b><small id="t-sync">—</small></div>
+      <p class="gate-msg" id="t-msg">—</p>
+      <div class="macros">
+        <div>Calories<b id="t-kcal">—</b></div>
+        <div>Protein<b id="t-pro">—</b></div>
+        <div>Steps<b id="t-step">—</b></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 03 FLAGS -->
+  <div class="blk">
+    <div class="blk-h"><span class="n">03</span><h3>Flags</h3></div>
+    <div class="blk-b" id="flags"></div>
+  </div>
+
+  <!-- 04 PHASES -->
+  <details class="blk">
+    <summary><span class="n">04</span><h3>Phases &amp; calories</h3><span class="chev">›</span></summary>
+    <div class="blk-b" id="phases"></div>
+  </details>
+
+  <!-- 05 CHECKPOINTS -->
+  <details class="blk">
+    <summary><span class="n">05</span><h3>Where you'll be</h3><span class="chev">›</span></summary>
+    <div class="blk-b">
+      <p style="font-size:14.5px;color:var(--ink2);font-weight:300;margin-bottom:14px">Everything measures against 30 Aug 26 — weight, waist, flexed arm, chest, four photos. Once, properly.</p>
+      <table class="tbl">
+        <thead><tr><th>&nbsp;</th><th>Dec 26</th><th>Mar 27</th><th>Jun 27</th><th>Aug 27</th></tr></thead>
+        <tbody>
+          <tr><td>Weight</td><td>80</td><td>80.5</td><td>82</td><td>79–80</td></tr>
+          <tr><td>Incline DB press</td><td>38</td><td>40</td><td>42</td><td>42</td></tr>
+          <tr><td>Overhead press</td><td>59</td><td>62</td><td>65</td><td>65</td></tr>
+          <tr><td>Weighted chin</td><td>+10</td><td>+16</td><td>+20</td><td>+20</td></tr>
+          <tr><td>Hammer curl</td><td>20</td><td>22</td><td>24</td><td>24</td></tr>
+          <tr><td>Flexed arm</td><td>+1.0</td><td>+1.5</td><td>+2.2</td><td>+2.2</td></tr>
+        </tbody>
+      </table>
+      <p class="foot-note">All kg. Arm in cm from baseline.</p>
+      <div class="note"><strong>About that arm number.</strong> One centimetre in four months on a lagging muscle is a good result, not a slow one. The full +2.2 cm over a year sits right at the natural ceiling for your training age.</div>
+    </div>
+  </details>
+
+  <!-- 06 FOOD -->
+  <details class="blk">
+    <summary><span class="n">06</span><h3>Food</h3><span class="chev">›</span></summary>
+    <div class="blk-b">
+      <p style="font-size:14.5px;color:var(--ink2);font-weight:300;margin-bottom:14px">One structure all year. Protein and fat barely move — carbs are the only dial.</p>
+
+      <div class="switch" role="group" aria-label="Phase">
+        <button data-m="0" aria-pressed="false">Cutting</button>
+        <button data-m="1" aria-pressed="true">Maintenance</button>
+        <button data-m="2" aria-pressed="false">Surplus</button>
+      </div>
+
+      <div class="meal">
+        <div class="meal-h"><b>12:00</b><h4>The shake</h4></div>
+        <p>Breaks the fast. Water or rice milk.</p>
+        <div class="frow sw" data-k="pea"><span class="fname"><span class="t">Pea protein</span><span class="ic">⇄</span></span><span class="fqty" data-v="30 g|30 g|30 g">30 g</span></div>
+        <div class="frow sw" data-k="rice-p"><span class="fname"><span class="t">Rice protein</span><span class="ic">⇄</span></span><span class="fqty" data-v="20 g|20 g|25 g">20 g</span></div>
+        <div class="frow sw" data-k="kiwi"><span class="fname"><span class="t">Kiwi</span><span class="ic">⇄</span></span><span class="fqty" data-v="2|2|2">2</span></div>
+        <div class="frow sw" data-k="banana"><span class="fname"><span class="t">Banana, firm</span><span class="ic">⇄</span></span><span class="fqty" data-v="1|1|1">1</span></div>
+        <div class="frow sw" data-k="berry"><span class="fname"><span class="t">Blueberries</span><span class="ic">⇄</span></span><span class="fqty" data-v="40 g|40 g|50 g">40 g</span></div>
+        <div class="frow sw" data-k="fibre"><span class="fname"><span class="t">Sunfiber</span><span class="ic">⇄</span></span><span class="fqty" data-v="7 g|7 g|7 g">7 g</span></div>
+        <div class="totals">
+          <div>Cals<b data-v="415|415|450">415</b></div>
+          <div>Protein<b data-v="40 g|40 g|44 g">40 g</b></div>
+          <div>Fibre<b data-v="14 g|14 g|14 g">14 g</b></div>
+        </div>
+      </div>
+
+      <div class="meal">
+        <div class="meal-h"><b>16:30</b><h4>After training</h4></div>
+        <p>The big one. Most of your carbs live here.</p>
+        <div class="frow sw" data-k="meat"><span class="fname"><span class="t">Chicken or beef, cooked</span><span class="ic">⇄</span></span><span class="fqty" data-v="180 g|200 g|220 g">200 g</span></div>
+        <div class="frow sw" data-k="rice"><span class="fname"><span class="t">White rice, cooked</span><span class="ic">⇄</span></span><span class="fqty" data-v="250 g|350 g|450 g">350 g</span></div>
+        <div class="frow sw" data-k="veg"><span class="fname"><span class="t">Carrot or courgette</span><span class="ic">⇄</span></span><span class="fqty" data-v="150 g|150 g|150 g">150 g</span></div>
+        <div class="frow sw" data-k="oil"><span class="fname"><span class="t">Olive oil</span><span class="ic">⇄</span></span><span class="fqty" data-v="10 g|12 g|15 g">12 g</span></div>
+        <div class="frow sw" data-k="chia"><span class="fname"><span class="t">Chia seeds</span><span class="ic">⇄</span></span><span class="fqty" data-v="12 g|12 g|12 g">12 g</span></div>
+        <div class="totals">
+          <div>Cals<b data-v="800|1010|1220">1010</b></div>
+          <div>Protein<b data-v="52 g|57 g|62 g">57 g</b></div>
+        </div>
+      </div>
+
+      <div class="meal">
+        <div class="meal-h"><b>20:30</b><h4>Dinner</h4></div>
+        <p>Last food. Fast starts after this.</p>
+        <div class="frow sw" data-k="meat"><span class="fname"><span class="t">Beef, lamb or thigh, cooked</span><span class="ic">⇄</span></span><span class="fqty" data-v="180 g|200 g|220 g">200 g</span></div>
+        <div class="frow sw" data-k="potato"><span class="fname"><span class="t">Peeled potato</span><span class="ic">⇄</span></span><span class="fqty" data-v="250 g|350 g|400 g">350 g</span></div>
+        <div class="frow sw" data-k="veg"><span class="fname"><span class="t">Green beans or bok choy</span><span class="ic">⇄</span></span><span class="fqty" data-v="150 g|150 g|150 g">150 g</span></div>
+        <div class="frow sw" data-k="oil"><span class="fname"><span class="t">Olive oil or ghee</span><span class="ic">⇄</span></span><span class="fqty" data-v="12 g|15 g|18 g">15 g</span></div>
+        <div class="frow sw" data-k="fibre"><span class="fname"><span class="t">Sunfiber</span><span class="ic">⇄</span></span><span class="fqty" data-v="5 g|5 g|5 g">5 g</span></div>
+        <div class="totals">
+          <div>Cals<b data-v="760|900|1020">900</b></div>
+          <div>Protein<b data-v="50 g|55 g|60 g">55 g</b></div>
+        </div>
+      </div>
+
+      <p class="hint">Long-press any food to swap it</p>
+
+      <div class="note">These land 200–300 cal under your phase target on purpose. That gap is yours. A plan with no slack is a plan you quit.</div>
+
+      <div class="lists">
+        <div class="lbox y"><h5>Eat freely</h5><p>Chicken · beef · lamb · turkey · pork loin · white fish · egg yolks · white rice · jasmine · potato · sweet potato · rice noodles · polenta · parsnip · swede · carrot · courgette · cucumber · lettuce · bok choy · green beans · olive oil · ghee · macadamia · chia · pumpkin seeds · blueberries · kiwi · banana · raspberries</p></div>
+        <div class="lbox n"><h5>Still off</h5><p>All dairy · whey · tomato · spinach · avocado · onion · garlic · citrus · strawberry · chocolate · cured meat · canned fish · soy sauce · anything aged or fermented · any leftover protein</p></div>
+      </div>
+    </div>
+  </details>
+
+  <!-- 07 REINTRO -->
+  <details class="blk">
+    <summary><span class="n">07</span><h3>Getting your diet back</h3><span class="chev">›</span></summary>
+    <div class="blk-b">
+      <p style="font-size:14.5px;color:var(--ink2);font-weight:300;margin-bottom:14px">Jan–Mar. Low-FODMAP was never meant to be permanent. One group at a time, three days on, three off.</p>
+      <table class="tbl">
+        <thead><tr><th>Try</th><th>Food</th><th>When</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td style="text-align:left;font-family:Newsreader,serif;font-weight:400">Chickpeas, rinsed</td><td>4 Jan</td></tr>
+          <tr><td>2</td><td style="text-align:left;font-family:Newsreader,serif;font-weight:400">White bread</td><td>18 Jan</td></tr>
+          <tr><td>3</td><td style="text-align:left;font-family:Newsreader,serif;font-weight:400">Sweet potato</td><td>1 Feb</td></tr>
+          <tr><td>4</td><td style="text-align:left;font-family:Newsreader,serif;font-weight:400">Blackberries</td><td>15 Feb</td></tr>
+          <tr><td>5</td><td style="text-align:left;font-family:Newsreader,serif;font-weight:400">Honey</td><td>1 Mar</td></tr>
+          <tr><td>6</td><td style="text-align:left;font-family:Newsreader,serif;font-weight:400">Onion</td><td>15 Mar</td></tr>
+        </tbody>
+      </table>
+      <div class="note"><strong>Legumes first, not dairy.</strong> Dairy is off for the acne, and that's whey rather than lactose — so testing milk tells you nothing useful. Egg white is worth retrying separately once things settle.</div>
+    </div>
+  </details>
+
+  <!-- 08 WEEKLY -->
+  <details class="blk" open>
+    <summary><span class="n">08</span><h3>The weekly read</h3><span class="chev">›</span></summary>
+    <div class="blk-b">
+      <p style="font-size:14.5px;color:var(--ink2);font-weight:300;margin-bottom:14px">Weight and waist, same morning, after the bathroom. This table replaces a coach.</p>
+      <table class="tbl read">
+        <tr><td>Weight up · waist flat</td><td style="color:var(--moss)">Clean muscle. Carry on.</td></tr>
+        <tr><td>Weight flat · waist down</td><td style="color:var(--moss)">Recomp working. Carry on.</td></tr>
+        <tr><td>Waist climbing</td><td style="color:var(--ox)">Take 150 cal off training days.</td></tr>
+        <tr><td>Flat 3 weeks in a surplus</td><td style="color:var(--ochre)">Under-eating. Add 150.</td></tr>
+      </table>
+    </div>
+  </details>
+
+  <!-- 09 MONTHLY -->
+  <details class="blk">
+    <summary><span class="n">09</span><h3>The monthly read</h3><span class="chev">›</span></summary>
+    <div class="blk-b">
+      <p style="font-size:14.5px;color:var(--ink2);font-weight:300;margin-bottom:14px">Flexed arm, chest, four photos. Same morning, not after training. Then read it against your lifts.</p>
+      <table class="tbl read">
+        <tr><td>Arm up · lifts up</td><td style="color:var(--moss)">Block is working. Don't change anything.</td></tr>
+        <tr><td>Lifts up · arm flat</td><td style="color:var(--ochre)">Strength without size. Check you're eating the surplus.</td></tr>
+        <tr><td>Arm flat 2 months</td><td style="color:var(--ox)">Rotate the curl variation. Stimulus has gone stale.</td></tr>
+        <tr><td>Photos changed · numbers flat</td><td style="color:var(--muted)">Measurement noise. Trust the photos.</td></tr>
+        <tr><td>Chest up faster than arm</td><td style="color:var(--ochre)">Volume drifting to strengths. Recheck the arm sets.</td></tr>
+        <tr><td>Nothing moved anywhere</td><td style="color:var(--ox)">Check sessions logged before changing the programme.</td></tr>
+      </table>
+      <div class="note"><strong>Monthly, not weekly.</strong> Arm circumference moves about 0.25 cm a month at best. Measuring it weekly just shows you tape error and makes a good month feel like a bad one.</div>
+    </div>
+  </details>
+
+  <!-- 10 DECISION -->
+  <details class="blk">
+    <summary><span class="n">10</span><h3>December decision</h3><span class="chev">›</span></summary>
+    <div class="blk-b">
+      <p style="font-size:14.5px;color:var(--ink2);font-weight:300;margin-bottom:14px">Volume is frozen until 20 Dec. These four decide whether it goes up. Tracked live so it isn't a guess.</p>
+      <div class="crit"><p>Sessions completed<small>Gate: 90% of 48</small></p><span class="val">44 / 48 · 92%</span><span class="pf g-grn"></span></div>
+      <div class="crit"><p>Indicator lifts moving<small>Gate: no stall past 2 sessions</small></p><span class="val">3 of 4</span><span class="pf g-amb"></span></div>
+      <div class="crit"><p>Recovery trend<small>Gate: no sustained weekly decline</small></p><span class="val">Flat</span><span class="pf g-grn"></span></div>
+      <div class="crit"><p>Weeks that felt like a grind<small>Gate: 2 or fewer</small></p><span class="val">1</span><span class="pf g-grn"></span></div>
+      <div class="verdict">
+        <b style="color:var(--ochre)">Three of four</b>
+        <p>Hammer curl is the stall. Rotate the variation rather than adding volume — a stalled lift isn't a volume problem. Reassess at the January transition.</p>
+      </div>
+      <div class="note"><strong>This is the most consequential call in the plan</strong> and the easiest to get wrong from memory. If it's sitting here all along, December is a five-minute read rather than a guess about how sixteen weeks felt.</div>
+    </div>
+  </details>
+
+  <div class="foot">
+    <p><strong>Reads:</strong> get_workouts · get_health · get_weight · programme.json<br>
+    <strong>Writes:</strong> nothing<br>
+    <strong>Needs adding:</strong> weekly waist · monthly arm &amp; chest · session feel</p>
+  </div>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sh-t">
+  <div class="grab"></div>
+  <h4 id="sh-t">Swap</h4>
+  <p class="sub" id="sh-s">Same macros, same frameworks</p>
+  <div id="sh-o"></div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var $ = function(i){ return document.getElementById(i); };
+
+  /* ---------- panel states ---------- */
+  var STATES = [
+    {name:"Doesn't start yet",sub:"Phase 0 opens Mon 3 Aug · 2 days out",pct:0,from:"3 Aug",to:"30 Aug",
+     chk:"30 Aug",sess:"—",session:"Rest",rest:true,band:"Amber",dot:"g-amb",sync:"synced 3d ago",
+     msg:"Recovery 52, HRV 30 against a 7-day average of 32 and trending down. Worth a quiet weekend.",
+     kcal:"—",pro:"—",step:"—",ph:-1,
+     flags:[
+       {t:"amb",h:"Fractional plates not bought",p:"Overhead press progression needs 1.25 kg plates from session one.",a:"Order today"},
+       {t:"inf",h:"Health data 3 days stale",p:"Last sync 29 Jul 21:37. Open health.html before Monday.",a:"Refresh"},
+       {t:"inf",h:"Baseline not captured",p:"Weight, waist, arm, chest and four photos due 30 Aug.",a:"Set reminder"}
+     ]},
+    {name:"Arms & delts",sub:"Week 6 of 16 · Phase 1",pct:36,from:"31 Aug",to:"20 Dec",
+     chk:"20 Dec · 71d",sess:"17 of 18",session:"Upper A",rest:false,band:"Green",dot:"g-grn",sync:"synced 2h ago",
+     msg:"Run it as written. Push the top set on incline press.",kcal:"2,850",pro:"160 g",step:"8–10k",ph:1,flags:[]},
+    {name:"Arms & delts",sub:"Week 11 of 16 · Phase 1",pct:66,from:"31 Aug",to:"20 Dec",
+     chk:"20 Dec · 36d",sess:"29 of 33",session:"Upper B",rest:false,band:"Amber",dot:"g-amb",sync:"synced 5h ago",
+     msg:"Skip the money set on chins. Start at set 2's load. Keep everything else.",
+     kcal:"2,850",pro:"160 g",step:"8–10k",ph:1,
+     flags:[
+       {t:"red",h:"Hammer curl stalled",p:"18 kg × 6 for three sessions. Everything else moved.",a:"Swap to pinwheel for 3 weeks"},
+       {t:"amb",h:"Behind pace on overhead press",p:"56 kg now, needs 59 kg by 20 Dec. Pace says 57.5 kg.",a:"Check you're micro-loading"},
+       {t:"amb",h:"Weight flat 3 weeks in a surplus",p:"79.2 kg since 12 Oct. Probably under-eating.",a:"Add 150 kcal to training days"},
+       {t:"inf",h:"4 sessions missed this month",p:"29 of 33 — above the 90% gate for the December review.",a:""}
+     ]},
+    {name:"Arms & delts",sub:"Week 8 of 16 · Deload",pct:48,from:"31 Aug",to:"20 Dec",
+     chk:"20 Dec · 57d",sess:"23 of 24",session:"Upper A · light",rest:false,band:"Green",dot:"g-grn",sync:"synced 40m ago",
+     msg:"Deload. 60% of usual loads, half the sets, same movements. Don't improvise.",
+     kcal:"2,850",pro:"160 g",step:"8–10k",ph:1,
+     flags:[
+       {t:"inf",h:"Deload week — 19–25 Oct",p:"Scheduled. Normal loads resume Monday 26 Oct.",a:""},
+       {t:"inf",h:"Waist +0.4 cm since baseline",p:"Inside tolerance for a gaining phase. Nothing to do.",a:""}
+     ]},
+    {name:"Reveal",sub:"Week 5 of 8 · Phase 4",pct:63,from:"5 Jul",to:"29 Aug",
+     chk:"29 Aug · 26d",sess:"14 of 15",session:"Upper A",rest:false,band:"Amber",dot:"g-amb",sync:"synced 1h ago",
+     msg:"Skip the money set. Deficits blunt the top end — that's expected, not a problem.",
+     kcal:"2,300",pro:"175 g",step:"12–15k",ph:7,
+     flags:[
+       {t:"inf",h:"Incline press stalled — expected",p:"40 kg × 5 for two sessions. In a deficit this is the phase working. Hold the weight, don't chase it.",a:""},
+       {t:"grn",h:"Down 2.1 kg in 5 weeks",p:"80.8 → 78.7 kg at 0.42 kg/wk. On pace for 79 by 29 Aug.",a:""},
+       {t:"amb",h:"Protein under target 4 days this week",p:"Averaging 158 g against 175. Protein is the one thing that goes up in a cut.",a:"Add a fourth feed"},
+       {t:"inf",h:"Final photos due 29 Aug",p:"Same lighting and time of day as the 30 Aug 26 baseline.",a:"Set reminder"}
+     ]}
+  ];
+
+  var PHASES = [
+    {n:"Cut to 77",d:"3 Aug 26 – 30 Aug 26",b:"Four weeks to arrive lean. Training is already full-speed — this bit is all food.",k:["2250 train","2100 rest","162 g protein","−0.4 kg/wk","12–14k steps"]},
+    {n:"Arms & delts",d:"31 Aug 26 – 20 Dec 26",b:"The main event. Sixteen weeks at the weak point, slightly above maintenance. Deloads 19 Oct and 14 Dec.",k:["2850 train","2450 rest","160 g protein","+0.2 kg/wk","8–10k steps"]},
+    {n:"Break & review",d:"21 Dec 26 – 3 Jan 27",b:"Two weeks off the structure. Then the honest question: did 16 weeks feel sustainable?",k:["Unstructured","Decision point"]},
+    {n:"Consolidate",d:"4 Jan 27 – 28 Mar 27",b:"Maintenance. Arms drop to two sets, focus back on the big four. Food reintroduction runs here.",k:["2600 train","2350 rest","155 g protein","Weight flat","10–12k steps"]},
+    {n:"Deload",d:"29 Mar – 4 Apr 27",b:"60% of your weights, half the sets.",k:["Easy week"]},
+    {n:"Arms & delts II",d:"5 Apr 27 – 27 Jun 27",b:"Round two on a bigger base. Same volume, rotated exercises. Deload 24 May.",k:["2900 train","2500 rest","160 g protein","+0.2 kg/wk","8–10k steps"]},
+    {n:"Deload",d:"28 Jun – 4 Jul 27",b:"Earn the last block.",k:["Easy week"]},
+    {n:"Reveal",d:"5 Jul 27 – 29 Aug 27",b:"Strip the fat and see what you built. Training does not change. Some lifts will stall — that's the phase working.",k:["2300 train","2100 rest","175 g protein","−0.45 kg/wk","12–15k steps"]}
+  ];
+
+  var SWAPS = {
+    "pea":    {t:"Pea protein",  o:[["Rice protein","no GOS ceiling"],["Potato isolate","pricey, hard to find"],["Soy isolate","test histamine first"]]},
+    "rice-p": {t:"Rice protein", o:[["Pea protein","more leucine"],["Potato isolate","if you find it"]]},
+    "kiwi":   {t:"Kiwi",         o:[["Honeydew melon","no actinidin"],["Cantaloupe","no actinidin"],["Papaya","papain — test it"]]},
+    "banana": {t:"Banana",       o:[["Cooked-cooled rice","same resistant starch"],["Green plantain","cook first"],["Skip it","−105 cal"]]},
+    "berry":  {t:"Blueberries",  o:[["Raspberries","like for like"],["Blackberries","sorbitol — test"],["Cranberries, fresh","tart"]]},
+    "fibre":  {t:"Sunfiber",     o:[["Acacia fibre","also non-gassy"],["Split the dose","if bloating"]]},
+    "meat":   {t:"Protein",      o:[["Chicken breast","leanest"],["Beef mince, lean",""],["Lamb","higher fat — cut the oil"],["Turkey",""],["Pork loin",""],["White fish","cook from frozen"]]},
+    "rice":   {t:"White rice",   o:[["Jasmine or basmati","same"],["Rice noodles","1:1 cooked"],["Polenta","different texture"],["Tapioca",""],["Peeled potato","×1.5 by weight"]]},
+    "veg":    {t:"Vegetables",   o:[["Carrot",""],["Courgette",""],["Green beans",""],["Bok choy",""],["Cucumber","raw"],["Parsnip","starchier"],["Swede",""]]},
+    "oil":    {t:"Fat",          o:[["Olive oil",""],["Ghee",""],["Coconut oil",""],["Macadamia oil","expensive"]]},
+    "chia":   {t:"Chia seeds",   o:[["Pumpkin seeds","no gel"],["Macadamias","fat only"],["Move to meal 3","not with Sunfiber"]]},
+    "potato": {t:"Peeled potato",o:[["Sweet potato","max 75 g — mannitol"],["White rice","×0.65 by weight"],["Parsnip",""],["Swede",""],["Polenta",""]]}
+  };
+
+  /* ---------- render ---------- */
+  function render(s){
+    var d = Object.assign({}, STATES[s]);
+
+    if(busy===1){
+      d.sub    = d.sub + " · busy week";
+      d.session= (d.session.indexOf("Upper")===0) ? d.session : "Rest";
+      d.msg    = "Busy week. First four exercises only. Hold your weights — don't chase them.";
+      d.step   = "no extra";
+      if(d.kcal!=="—"){ d.kcal=(parseInt(d.kcal.replace(/,/g,""),10)+250).toLocaleString(); }
+      d.flags  = d.flags.filter(function(f){ return f.h.indexOf("session")===-1; });
+      d.flags  = [{t:"inf",h:"Busy Mode — 6 days left",p:"Legs dropped, two sessions, calories up 250. Expires Sunday and you'll be asked again.",a:""}].concat(d.flags);
+    } else if(busy===2){
+      d.flags = [{t:"amb",h:"Busy Mode expired",p:"The week ran out. Still busy, or back to the full programme? Nothing changes until you choose.",a:"Re-arm for another week"}].concat(d.flags);
+    }
+
+    $("p-name").textContent=d.name; $("p-sub").textContent=d.sub;
+    $("p-bar").style.width=d.pct+"%";
+    $("p-from").textContent=d.from; $("p-to").textContent=d.to;
+    $("p-chk").textContent=d.chk;  $("p-sess").textContent=d.sess;
+
+    var ts=$("t-sess"); ts.textContent=d.session; ts.className="sess"+(d.rest?" rest":"");
+    $("t-dot").className="dot "+d.dot; $("t-band").textContent=d.band;
+    $("t-sync").textContent=d.sync;   $("t-msg").textContent=d.msg;
+    $("t-kcal").textContent=d.kcal;   $("t-pro").textContent=d.pro; $("t-step").textContent=d.step;
+
+    var box=$("flags");
+    box.innerHTML = d.flags.length
+      ? d.flags.map(function(f){
+          return '<div class="flag f-'+f.t+'"><i></i><div><h4>'+f.h+'</h4><p>'+f.p+'</p>'
+               + (f.a?'<span class="act">'+f.a+'</span>':'')+'</div></div>';
+        }).join("")
+      : '<div class="clear"><b>All clear</b><p>Nothing off pace. Turn up Monday.</p></div>';
+
+    $("phases").innerHTML = PHASES.map(function(p,i){
+      var cls = i===d.ph ? " now" : (d.ph>-1 && i<d.ph ? " done" : "");
+      return '<div class="pcard'+cls+'"><div class="pcard-h"><h4>'+p.n+'</h4><span>'+p.d+'</span></div>'
+           + '<p>'+p.b+'</p><div class="kcals">'
+           + p.k.map(function(x,j){ return '<span'+(i===d.ph&&j===0?' class="hot"':'')+'>'+x+'</span>'; }).join("")
+           + '</div></div>';
+    }).join("");
+  }
+
+  var btns=document.querySelectorAll("#sw button");
+  var cur=0;
+  btns.forEach(function(b){
+    b.addEventListener("click",function(){
+      btns.forEach(function(x){ x.setAttribute("aria-pressed", x===b); });
+      cur=+b.dataset.s; render(cur);
+    });
+  });
+
+  /* ---------- busy mode · 7-day expiry ---------- */
+  var busy=0, pm=$("pmode"), pmb=$("pm-btn");
+  var DAYNM=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+
+  function busyLabel(){
+    if(busy===0) return "Off — full programme running";
+    if(busy===1){
+      var e=new Date(); e.setDate(e.getDate()+7);
+      return "On · 6 days left · expires "+DAYNM[e.getDay()]+" "+e.getDate()+" "+
+             e.toLocaleDateString("en-GB",{month:"short"});
+    }
+    return "Expired — re-arm it or go back to full";
+  }
+  function paint(){
+    pm.classList.toggle("on",busy===1);
+    pmb.setAttribute("aria-checked",busy===1);
+    $("pm-note").textContent=busyLabel();
+    render(cur);
+  }
+  pmb.addEventListener("click",function(){ busy=(busy+1)%3; paint(); });
+
+  /* ---------- meal phase switch ---------- */
+  var mb=document.querySelectorAll(".switch button");
+  function setMode(m){
+    mb.forEach(function(b){ b.setAttribute("aria-pressed", b.dataset.m===String(m)); });
+    document.querySelectorAll("[data-v]").forEach(function(el){ el.textContent=el.dataset.v.split("|")[m]; });
+  }
+  mb.forEach(function(b){ b.addEventListener("click",function(){ setMode(+b.dataset.m); }); });
+  setMode(1);
+
+  /* ---------- long-press swap ---------- */
+  var scrim=$("scrim"), sheet=$("sheet"), timer=null, active=null, moved=false;
+
+  function open(row){
+    active=row;
+    var s=SWAPS[row.dataset.k]; if(!s) return;
+    $("sh-t").textContent="Swap "+s.t.toLowerCase();
+    $("sh-o").innerHTML=s.o.map(function(o,i){
+      return '<button class="opt" data-i="'+i+'"><span>'+o[0]+'</span><em>'+o[1]+'</em></button>';
+    }).join("");
+    scrim.classList.add("on"); sheet.classList.add("on");
+    if(navigator.vibrate) navigator.vibrate(8);
+  }
+  function close(){
+    scrim.classList.remove("on"); sheet.classList.remove("on");
+    document.querySelectorAll(".holding").forEach(function(e){ e.classList.remove("holding"); });
+  }
+  scrim.addEventListener("click",close);
+
+  $("sh-o").addEventListener("click",function(e){
+    var b=e.target.closest(".opt"); if(!b||!active) return;
+    var s=SWAPS[active.dataset.k];
+    var t=active.querySelector(".t");
+    t.textContent=s.o[+b.dataset.i][0];
+    t.classList.add("swapped");
+    close();
+  });
+
+  document.querySelectorAll(".frow.sw").forEach(function(row){
+    function start(){
+      moved=false;
+      row.classList.add("holding");
+      timer=setTimeout(function(){ if(!moved) open(row); },430);
+    }
+    function cancel(){
+      clearTimeout(timer);
+      if(!sheet.classList.contains("on")) row.classList.remove("holding");
+    }
+    row.addEventListener("touchstart",start,{passive:true});
+    row.addEventListener("touchend",cancel);
+    row.addEventListener("touchmove",function(){ moved=true; cancel(); },{passive:true});
+    row.addEventListener("mousedown",start);
+    row.addEventListener("mouseup",cancel);
+    row.addEventListener("mouseleave",cancel);
+    row.addEventListener("contextmenu",function(e){ e.preventDefault(); clearTimeout(timer); open(row); });
+  });
+
+  paint();
+})();
+</script>
+</body>
+</html>

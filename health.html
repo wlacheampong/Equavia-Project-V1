@@ -1748,6 +1748,15 @@ main {
         <span class="hw-unit-static" id="hwUnitStatic">kg</span>
         <button class="hw-save-btn" id="hwSaveBtn">Save</button>
       </div>
+
+      <!-- Waist -- weekly, not daily like weight above, so no lock/streak/chart
+           apparatus, just an input that writes onto the same day's po_coach_weights
+           entry (measurements.js's shape: {dateKey, weight, waist}, both optional). -->
+      <div class="hw-input-row" id="hwWaistRow" style="margin-top:14px;padding-top:14px;border-top:1px solid var(--eq-border);">
+        <input type="number" step="0.1" class="hw-input" id="hwWaistInput" placeholder="Waist (cm)" inputmode="decimal" aria-label="Waist measurement">
+        <button class="hw-save-btn" id="hwWaistSaveBtn">Save waist</button>
+      </div>
+      <div class="hw-empty" id="hwWaistLast" style="display:none"></div>
     </div>
   </div>
 
@@ -2308,6 +2317,7 @@ main {
       }
       renderStreak();
       renderGoal();
+      renderWaist();
     }
 
     function saveEntry(weight) {
@@ -2319,6 +2329,36 @@ main {
       render();
       publishWeightSummary();
     }
+
+    // Waist -- shares wtEntries/WT_KEY with weight above (same per-day row,
+    // status.js's measurements shape already treats every field but date as
+    // optional) rather than a separate log the status panel would have to
+    // join against weight by date itself.
+    function renderWaist() {
+      const last = wtEntries.slice().reverse().find((e) => e.waist != null);
+      const el = $('hwWaistLast');
+      if (last) {
+        el.textContent = 'Last: ' + last.waist.toFixed(1) + ' cm on ' + last.dateKey;
+        el.style.display = '';
+      } else {
+        el.style.display = 'none';
+      }
+    }
+    function saveWaist(waist) {
+      const key = wtDateKey(new Date());
+      const existing = wtEntries.find((e) => e.dateKey === key);
+      if (existing) existing.waist = waist;
+      else { wtEntries.push({ dateKey: key, waist }); wtEntries.sort((a, b) => a.dateKey.localeCompare(b.dateKey)); }
+      wtSave(wtEntries);
+      $('hwWaistInput').value = '';
+      renderWaist();
+    }
+    $('hwWaistSaveBtn').addEventListener('click', () => {
+      const v = parseFloat($('hwWaistInput').value);
+      if (isNaN(v) || v <= 0) return;
+      saveWaist(v);
+    });
+    $('hwWaistInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('hwWaistSaveBtn').click(); });
 
     $('hwSaveBtn').addEventListener('click', () => {
       const v = parseFloat($('hwInput').value);

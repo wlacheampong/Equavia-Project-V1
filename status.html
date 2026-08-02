@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Training status</title>
+<link rel="stylesheet" href="css/equavia-core.css">
+<style>
+  body { padding: var(--eq-page-padding) var(--eq-page-padding) 60px; }
+  .wrap { max-width: 540px; margin: 0 auto; }
+
+  .devnote { font-size: var(--eq-font-xs); color: var(--eq-text-muted); margin-bottom: var(--eq-space-lg); line-height: 1.6; }
+  .devnote code { font-family: var(--eq-font-mono); }
+
+  /* ---- blocks ---- */
+  .blk { background: var(--eq-bg-card); border: 1px solid var(--eq-border); border-radius: var(--eq-card-radius); margin-bottom: var(--eq-space-md); overflow: hidden; }
+  .blk-h { display: flex; align-items: center; gap: var(--eq-space-sm); padding: var(--eq-space-md) var(--eq-card-padding); border-bottom: 1px solid var(--eq-border); }
+  .blk-h h3, details.blk > summary h3 { font-family: var(--eq-font-mono); font-size: var(--eq-font-xs); font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--eq-text-muted); }
+  .blk-h .n, details.blk > summary .n { font-family: var(--eq-font-mono); font-size: var(--eq-font-xs); font-weight: 800; color: var(--eq-accent); }
+  .blk-b { padding: var(--eq-card-padding); }
+
+  details.blk > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: var(--eq-space-sm); padding: var(--eq-space-md) var(--eq-card-padding); }
+  details.blk > summary::-webkit-details-marker { display: none; }
+  details.blk > summary .chev { margin-left: auto; font-family: var(--eq-font-mono); font-size: 14px; color: var(--eq-text-muted); transition: transform 0.2s; }
+  details.blk[open] > summary { border-bottom: 1px solid var(--eq-border); }
+  details.blk[open] > summary .chev { transform: rotate(90deg); }
+
+  /* ---- busy mode ---- */
+  .pmode { display: flex; align-items: center; justify-content: space-between; gap: var(--eq-space-lg); background: var(--eq-bg-card); border: 1px solid var(--eq-border); border-radius: var(--eq-card-radius); padding: var(--eq-space-md) var(--eq-space-lg); margin-bottom: var(--eq-space-md); transition: 0.2s; }
+  .pmode.on { background: rgba(var(--eq-accent-rgb), 0.12); border-color: var(--eq-accent); }
+  .pmode.expired { background: rgba(var(--eq-warning-rgb), 0.1); border-color: var(--eq-warning); }
+  .pmode b { font-size: var(--eq-font-base); font-weight: 700; display: block; color: var(--eq-text-primary); }
+  .pmode span { font-family: var(--eq-font-mono); font-size: var(--eq-font-xs); color: var(--eq-text-muted); display: block; margin-top: 3px; }
+  .pmode-off { font-family: var(--eq-font-mono); font-size: var(--eq-font-xs); color: var(--eq-text-secondary); background: none; border: 0; border-bottom: 1px solid var(--eq-text-secondary); cursor: pointer; padding: 0; margin-top: 6px; }
+  .pmode-switch { width: 46px; height: 27px; border-radius: 20px; border: 1px solid var(--eq-border-strong); background: var(--eq-bg-input); cursor: pointer; padding: 0; position: relative; flex-shrink: 0; }
+  .pmode-switch i { position: absolute; top: 2px; left: 2px; width: 21px; height: 21px; border-radius: 50%; background: var(--eq-text-muted); transition: 0.2s; display: block; }
+  .pmode.on .pmode-switch, .pmode.expired .pmode-switch { background: var(--eq-accent); border-color: var(--eq-accent); }
+  .pmode.on .pmode-switch i, .pmode.expired .pmode-switch i { left: 22px; background: var(--eq-bg-primary); }
+
+  /* ---- position ---- */
+  .ph-name { font-size: var(--eq-font-2xl); font-weight: 800; text-transform: uppercase; letter-spacing: -0.01em; line-height: 1.05; color: var(--eq-text-primary); }
+  .ph-sub { font-family: var(--eq-font-mono); font-size: var(--eq-font-xs); color: var(--eq-text-muted); margin-top: var(--eq-space-xs); }
+  .bar { height: 6px; background: var(--eq-border); border-radius: 4px; margin: var(--eq-space-lg) 0 var(--eq-space-sm); overflow: hidden; }
+  .bar i { display: block; height: 100%; background: var(--eq-accent); border-radius: 4px; transition: width 0.5s cubic-bezier(.2,.7,.3,1); }
+  .bar-k { display: flex; justify-content: space-between; font-family: var(--eq-font-mono); font-size: var(--eq-font-xs); color: var(--eq-text-muted); }
+  .mini { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--eq-border); border-radius: 8px; overflow: hidden; margin-top: var(--eq-space-lg); }
+  .mini div { background: var(--eq-bg-card); padding: var(--eq-space-md); }
+  .mini dt { font-family: var(--eq-font-mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--eq-text-muted); margin-bottom: 4px; }
+  .mini dd { font-family: var(--eq-font-mono); font-size: var(--eq-font-md); font-weight: 700; color: var(--eq-text-primary); }
+
+  /* ---- today ---- */
+  .sess { font-size: 24px; font-weight: 800; text-transform: uppercase; letter-spacing: -0.01em; color: var(--eq-text-primary); }
+  .sess.rest { color: var(--eq-text-muted); }
+  .gate { display: flex; align-items: center; gap: var(--eq-space-sm); margin: var(--eq-space-md) 0 4px; flex-wrap: wrap; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+  .dot-grn { background: var(--eq-success); } .dot-amb { background: var(--eq-warning); } .dot-red { background: var(--eq-danger); } .dot-gry { background: var(--eq-text-muted); }
+  .gate b { font-family: var(--eq-font-mono); font-size: var(--eq-font-xs); font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--eq-text-primary); }
+  .gate small { font-family: var(--eq-font-mono); font-size: var(--eq-font-xs); color: var(--eq-text-muted); margin-left: auto; }
+  .gate-msg { font-size: var(--eq-font-sm); color: var(--eq-text-secondary); margin-top: 4px; }
+  .macros { display: flex; gap: var(--eq-space-xl); flex-wrap: wrap; margin-top: var(--eq-space-lg); padding-top: var(--eq-space-md); border-top: 1px solid var(--eq-border); }
+  .macros div { font-family: var(--eq-font-mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--eq-text-muted); }
+  .macros b { display: block; font-size: var(--eq-font-lg); font-weight: 800; color: var(--eq-text-primary); margin-top: 3px; }
+
+  /* ---- flags ---- */
+  .flag { display: grid; grid-template-columns: 4px 1fr; gap: var(--eq-space-md); padding: var(--eq-space-md) 0; border-top: 1px solid var(--eq-border); }
+  .flag:first-child { border-top: 0; padding-top: 0; }
+  .flag i { border-radius: 3px; display: block; }
+  .flag h4 { font-weight: 700; font-size: var(--eq-font-base); line-height: 1.25; color: var(--eq-text-primary); }
+  .flag p { font-size: var(--eq-font-sm); color: var(--eq-text-secondary); margin-top: 3px; }
+  .flag .act { font-family: var(--eq-font-mono); font-size: var(--eq-font-xs); font-weight: 600; color: var(--eq-text-primary); margin-top: 6px; display: inline-block; border-bottom: 1.5px solid var(--eq-accent); padding-bottom: 1px; }
+  .sev-red i { background: var(--eq-danger); } .sev-amb i { background: var(--eq-warning); } .sev-inf i { background: var(--eq-text-muted); } .sev-grn i { background: var(--eq-success); }
+  .clear { text-align: center; padding: var(--eq-space-md) 0 4px; }
+  .clear b { font-weight: 800; font-size: var(--eq-font-lg); color: var(--eq-success); text-transform: uppercase; }
+  .clear p { font-size: var(--eq-font-sm); color: var(--eq-text-muted); margin-top: 4px; }
+
+  /* ---- phases ---- */
+  .pcard { border-left: 3px solid var(--eq-border); padding: var(--eq-space-md) 0 var(--eq-space-md) var(--eq-space-md); margin-bottom: 4px; }
+  .pcard.now { border-left-color: var(--eq-accent); background: rgba(var(--eq-accent-rgb), 0.06); border-radius: 0 6px 6px 0; padding-right: var(--eq-space-md); }
+  .pcard.done { opacity: 0.45; }
+  .pcard-h { display: flex; justify-content: space-between; align-items: baseline; gap: var(--eq-space-sm); flex-wrap: wrap; }
+  .pcard-h h4 { font-weight: 800; font-size: var(--eq-font-sm); text-transform: uppercase; letter-spacing: -0.01em; color: var(--eq-text-primary); }
+  .pcard-h span { font-family: var(--eq-font-mono); font-size: var(--eq-font-xs); color: var(--eq-text-muted); white-space: nowrap; }
+  .kcals { display: flex; flex-wrap: wrap; gap: 5px; margin-top: var(--eq-space-sm); }
+  .kcals span { font-family: var(--eq-font-mono); font-size: 10px; font-weight: 600; background: var(--eq-bg-input); border: 1px solid var(--eq-border); color: var(--eq-text-secondary); padding: 3px 8px; border-radius: 20px; }
+  .kcals span.hot { background: var(--eq-accent); color: var(--eq-bg-primary); border-color: var(--eq-accent); }
+
+  /* ---- tables ---- */
+  .tbl { width: 100%; border-collapse: collapse; font-size: var(--eq-font-sm); }
+  .tbl th { font-family: var(--eq-font-mono); font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--eq-text-muted); text-align: right; padding: 0 0 8px 6px; border-bottom: 1.5px solid var(--eq-border-strong); font-weight: 600; }
+  .tbl th:first-child { text-align: left; padding-left: 0; }
+  .tbl td { padding: 9px 0 9px 6px; border-bottom: 1px solid var(--eq-border); text-align: right; font-family: var(--eq-font-mono); font-size: var(--eq-font-xs); font-weight: 600; color: var(--eq-text-primary); }
+  .tbl td:first-child { text-align: left; padding-left: 0; font-family: var(--eq-font-family); font-size: var(--eq-font-sm); font-weight: 400; color: var(--eq-text-secondary); }
+  .tbl tr:last-child td { border-bottom: 0; }
+  .tbl.read td { font-family: var(--eq-font-family); font-size: var(--eq-font-sm); font-weight: 400; text-align: left; padding-left: 10px; }
+  .tbl.read td:first-child { font-weight: 500; color: var(--eq-text-primary); padding-left: 0; width: 44%; }
+  .foot-note { font-size: var(--eq-font-xs); color: var(--eq-text-muted); margin-top: var(--eq-space-sm); font-family: var(--eq-font-mono); }
+
+  .note { border-left: 3px solid var(--eq-accent); background: rgba(var(--eq-accent-rgb), 0.06); padding: var(--eq-space-sm) var(--eq-space-md); margin-top: var(--eq-space-md); border-radius: 0 6px 6px 0; font-size: var(--eq-font-sm); color: var(--eq-text-secondary); }
+  .note strong { color: var(--eq-text-primary); font-weight: 600; }
+  .gap { border-left: 3px solid var(--eq-text-muted); background: rgba(var(--eq-text-primary-rgb), 0.03); padding: var(--eq-space-sm) var(--eq-space-md); margin-top: var(--eq-space-md); border-radius: 0 6px 6px 0; font-size: var(--eq-font-sm); color: var(--eq-text-muted); font-style: italic; }
+  .blurb { font-size: var(--eq-font-sm); color: var(--eq-text-secondary); margin-bottom: var(--eq-space-md); }
+
+  /* ---- food ---- */
+  .switch { display: flex; gap: 5px; margin-bottom: var(--eq-space-lg); flex-wrap: wrap; }
+  .switch button { font-family: var(--eq-font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; background: var(--eq-bg-input); border: 1px solid var(--eq-border); color: var(--eq-text-secondary); padding: 8px 12px; border-radius: var(--eq-btn-radius); cursor: pointer; }
+  .switch button[aria-pressed="true"] { background: var(--eq-text-primary); color: var(--eq-bg-primary); border-color: var(--eq-text-primary); }
+  .meal { margin-bottom: var(--eq-space-xl); }
+  .meal-h { display: flex; align-items: baseline; gap: var(--eq-space-sm); margin-bottom: 3px; }
+  .meal-h b { font-family: var(--eq-font-mono); font-size: var(--eq-font-xs); font-weight: 800; color: var(--eq-accent); letter-spacing: 0.05em; }
+  .meal-h h4 { font-weight: 800; font-size: var(--eq-font-base); text-transform: uppercase; color: var(--eq-text-primary); }
+  .meal > p { font-size: var(--eq-font-sm); color: var(--eq-text-muted); margin-bottom: var(--eq-space-sm); }
+  .frow { display: flex; justify-content: space-between; align-items: center; gap: var(--eq-space-sm); padding: 6px 0; }
+  .fname { font-size: var(--eq-font-sm); color: var(--eq-text-primary); }
+  .fqty { font-family: var(--eq-font-mono); font-size: var(--eq-font-xs); font-weight: 600; white-space: nowrap; color: var(--eq-text-secondary); }
+  .swap { margin: 0 0 var(--eq-space-sm); border-bottom: 1px solid var(--eq-border); padding-bottom: var(--eq-space-sm); }
+  .swap summary { font-family: var(--eq-font-mono); font-size: 10px; color: var(--eq-text-muted); cursor: pointer; }
+  .swap ul { list-style: none; margin-top: 6px; padding-left: var(--eq-space-sm); }
+  .swap li { font-size: var(--eq-font-xs); color: var(--eq-text-secondary); padding: 3px 0; }
+  .swap li b { color: var(--eq-text-primary); font-weight: 600; }
+  .totals { display: flex; gap: var(--eq-space-lg); flex-wrap: wrap; margin-top: var(--eq-space-sm); padding-top: var(--eq-space-sm); border-top: 1.5px solid var(--eq-border-strong); }
+  .totals div { font-family: var(--eq-font-mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--eq-text-muted); }
+  .totals b { display: block; font-size: var(--eq-font-md); font-weight: 800; color: var(--eq-text-primary); margin-top: 2px; }
+  .lists { display: grid; gap: var(--eq-space-sm); margin-top: var(--eq-space-sm); }
+  .lbox { border: 1px solid var(--eq-border); border-radius: 8px; padding: var(--eq-space-md); background: var(--eq-bg-input); }
+  .lbox h5 { font-family: var(--eq-font-mono); font-size: 9.5px; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: var(--eq-space-sm); }
+  .lbox.y h5 { color: var(--eq-success); } .lbox.n h5 { color: var(--eq-danger); }
+  .lbox p { font-size: var(--eq-font-xs); line-height: 1.65; color: var(--eq-text-secondary); }
+
+  /* ---- scorecard (10) ---- */
+  .crit { display: grid; grid-template-columns: 1fr auto auto; gap: var(--eq-space-sm); align-items: center; padding: var(--eq-space-md) 0; border-bottom: 1px solid var(--eq-border); }
+  .crit:last-of-type { border-bottom: 0; }
+  .crit p { font-size: var(--eq-font-sm); line-height: 1.35; color: var(--eq-text-primary); }
+  .crit p small { display: block; font-family: var(--eq-font-mono); font-size: var(--eq-font-xs); color: var(--eq-text-muted); margin-top: 2px; }
+  .crit .val { font-family: var(--eq-font-mono); font-size: var(--eq-font-xs); font-weight: 700; white-space: nowrap; color: var(--eq-text-muted); }
+  .crit .pf { width: 8px; height: 8px; border-radius: 50%; }
+
+  .foot { margin-top: var(--eq-space-xl); padding-top: var(--eq-space-md); border-top: 1px solid var(--eq-border); }
+  .foot p { font-family: var(--eq-font-mono); font-size: var(--eq-font-xs); color: var(--eq-text-muted); line-height: 1.85; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="devnote">
+    Standalone diagnostic page — not linked from nav or the service worker precache.
+    Reads <code>docs/programme.json</code> live via <code>js/status.js</code>, and reads
+    workouts/health/weight straight from <code>gym.html</code>'s and <code>health.html</code>'s
+    own <code>localStorage</code> keys on this device — see the "Real data" comment near
+    the top of the <code>&lt;script type="module"&gt;</code> below for exactly which keys
+    and how they're converted. That means it only sees what this browser has logged
+    locally, not what's synced to other devices via Supabase. Waist, arm/chest, and
+    session-feel still have no data source anywhere, so those and December's live
+    scorecard values still show their honest empty states — check the console for any
+    indicator-lift name mismatches between <code>po_coach_v1.exercises</code> and
+    <code>mcp-shapes.json</code>'s <code>_indicator_lifts</code>.
+  </div>
+
+  <!-- BUSY MODE -->
+  <div class="pmode" id="pmode">
+    <div>
+      <b>Busy Mode</b>
+      <span id="pm-note">—</span>
+      <button type="button" class="pmode-off" id="pm-off" style="display:none">Turn off instead</button>
+    </div>
+    <button type="button" class="pmode-switch" id="pm-btn" role="switch" aria-checked="false"><i></i></button>
+  </div>
+
+  <!-- 01 POSITION -->
+  <div class="blk">
+    <div class="blk-h"><span class="n">01</span><h3>Position</h3></div>
+    <div class="blk-b">
+      <div class="ph-name" id="p-name">—</div>
+      <div class="ph-sub" id="p-sub">—</div>
+      <div class="bar"><i id="p-bar" style="width:0%"></i></div>
+      <div class="bar-k"><span id="p-from">—</span><span id="p-to">—</span></div>
+      <dl class="mini">
+        <div><dt>Next checkpoint</dt><dd id="p-chk">—</dd></div>
+        <div><dt>Sessions logged</dt><dd id="p-sess">—</dd></div>
+      </dl>
+    </div>
+  </div>
+
+  <!-- 02 TODAY -->
+  <div class="blk">
+    <div class="blk-h"><span class="n">02</span><h3>Today</h3></div>
+    <div class="blk-b">
+      <div class="sess" id="t-sess">—</div>
+      <div class="gate"><span class="dot" id="t-dot"></span><b id="t-band">—</b><small id="t-sync">—</small></div>
+      <p class="gate-msg" id="t-msg">—</p>
+      <div class="macros">
+        <div>Calories<b id="t-kcal">—</b></div>
+        <div>Protein<b id="t-pro">—</b></div>
+        <div>Steps<b id="t-step">—</b></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 03 FLAGS -->
+  <div class="blk">
+    <div class="blk-h"><span class="n">03</span><h3>Flags</h3></div>
+    <div class="blk-b" id="flags"></div>
+  </div>
+
+  <!-- 04 PHASES -->
+  <details class="blk">
+    <summary><span class="n">04</span><h3>Phases &amp; calories</h3><span class="chev">›</span></summary>
+    <div class="blk-b" id="phases"></div>
+  </details>
+
+  <!-- 05 CHECKPOINTS -->
+  <details class="blk">
+    <summary><span class="n">05</span><h3>Where you'll be</h3><span class="chev">›</span></summary>
+    <div class="blk-b">
+      <p class="blurb" id="chk-baseline-note">—</p>
+      <div id="checkpoints-table"></div>
+      <p class="foot-note">All kg. Arm in cm from baseline.</p>
+    </div>
+  </details>
+
+  <!-- 06 FOOD -->
+  <details class="blk">
+    <summary><span class="n">06</span><h3>Food</h3><span class="chev">›</span></summary>
+    <div class="blk-b">
+      <p class="blurb">One structure all year. Protein and fat barely move — carbs are the only dial.</p>
+      <div class="switch" role="group" aria-label="Diet mode">
+        <button type="button" data-mode="cut" aria-pressed="false">Cutting</button>
+        <button type="button" data-mode="maintenance" aria-pressed="false">Maintenance</button>
+        <button type="button" data-mode="surplus" aria-pressed="false">Surplus</button>
+      </div>
+      <div id="food-meals"></div>
+      <div class="totals" id="food-daily-totals"></div>
+      <div class="note" id="food-discretionary"></div>
+      <div class="lists">
+        <div class="lbox y"><h5>Eat freely</h5><p id="food-eat-freely"></p></div>
+        <div class="lbox n"><h5>Still off</h5><p id="food-excluded"></p></div>
+      </div>
+    </div>
+  </details>
+
+  <!-- 07 REINTRO -->
+  <details class="blk">
+    <summary><span class="n">07</span><h3>Getting your diet back</h3><span class="chev">›</span></summary>
+    <div class="blk-b">
+      <p class="blurb" id="reintro-window">—</p>
+      <div id="reintro-table"></div>
+      <div class="note" id="reintro-rationale"></div>
+      <p class="foot-note" id="reintro-protocol"></p>
+    </div>
+  </details>
+
+  <!-- 08 WEEKLY -->
+  <details class="blk">
+    <summary><span class="n">08</span><h3>The weekly read</h3><span class="chev">›</span></summary>
+    <div class="blk-b">
+      <p class="blurb">Weight and waist, same morning, after the bathroom.</p>
+      <div id="weekly-table"></div>
+    </div>
+  </details>
+
+  <!-- 09 MONTHLY -->
+  <details class="blk">
+    <summary><span class="n">09</span><h3>The monthly read</h3><span class="chev">›</span></summary>
+    <div class="blk-b">
+      <p class="blurb" id="monthly-cadence">—</p>
+      <div id="monthly-table"></div>
+    </div>
+  </details>
+
+  <!-- 10 DECISION -->
+  <details class="blk">
+    <summary><span class="n">10</span><h3>December decision</h3><span class="chev">›</span></summary>
+    <div class="blk-b">
+      <p class="blurb">Volume is frozen until <span id="dec-date">—</span>. These four decide whether it goes up.</p>
+      <div id="dec-criteria"></div>
+      <div class="gap">Live values need workout/health/measurement history this page isn't fetching yet — "going through motions" weeks in particular has no data source at all, not just an unwired one.</div>
+    </div>
+  </details>
+
+  <div class="foot">
+    <p><strong>Reads:</strong> status.js (currentPhase, todaySession, phaseProgress, nextCheckpoint, dailyTargets, evaluateFlags, busyModeStatus) · programme.json · EqBusyMode · this device's <code>eq.health.summary</code>, <code>recovery_log_v1</code>, <code>po_coach_weights</code>, <code>po_coach_goal_weight</code>, <code>po_coach_v1</code><br>
+    <strong>Writes:</strong> nothing except Busy Mode arm/clear, via EqBusyMode only<br>
+    <strong>Needs adding:</strong> weekly waist · monthly arm &amp; chest · session feel · December's live scorecard values</p>
+  </div>
+</div>
+
+<script src="js/busy-mode.js"></script>
+<script type="module">
+import {
+  currentPhase, todaySession, phaseProgress, nextCheckpoint,
+  dailyTargets, evaluateFlags, busyModeStatus, INDICATOR_LIFTS,
+} from './js/status.js';
+import programme from './docs/programme.json' with { type: 'json' };
+
+const $ = (id) => document.getElementById(id);
+
+// The one legitimate `new Date()` in this whole feature — status.js itself
+// never calls it (every function there takes `date` explicitly so it stays
+// testable), but the actual page has to know what day it is.
+const today = new Date();
+
+// ---- Real data, converted from gym.html/health.html's own localStorage ----
+// Shapes below are transcribed from reading those two pages' source directly
+// (not guessed from mcp-shapes.json alone) -- see each conversion's comment
+// for the exact file/line it's grounded in. Where a field genuinely has no
+// source, this passes null rather than inventing a default.
+function loadJSON(key) {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw == null ? null : JSON.parse(raw);
+  } catch (e) { return null; }
+}
+
+// Health: eq.health.summary (health.html:1670) matches get_health field-for-
+// field already -- passed straight through, no transformation.
+const health = loadJSON('eq.health.summary');
+
+// Recovery history: recovery_log_v1 (health.html:1574) is the append-only
+// daily history -- [{ dateKey, recovery }] -- separate from the single
+// snapshot in eq.health.summary. Real trend needs this, not one field.
+const recoveryLogRaw = loadJSON('recovery_log_v1');
+const recoveryLog = Array.isArray(recoveryLogRaw) ? recoveryLogRaw : [];
+
+// Weight: po_coach_weights ([{dateKey, weight}], health.html:2152) and
+// po_coach_goal_weight (a bare number string, health.html:2153) map 1:1 onto
+// get_weight's { entries, goal_weight }. Goal validation mirrors health.html's
+// own goalLoad() exactly (health.html:2180) -- >0 and non-NaN, else null.
+const weightEntriesRaw = loadJSON('po_coach_weights');
+const weightEntries = Array.isArray(weightEntriesRaw) ? weightEntriesRaw : [];
+const goalWeightParsed = parseFloat(localStorage.getItem('po_coach_goal_weight'));
+const weight = {
+  entries: weightEntries,
+  goal_weight: (!isNaN(goalWeightParsed) && goalWeightParsed > 0) ? goalWeightParsed : null,
+};
+
+// measurements: status.js's shape is [{date, weight, waist, arm_flexed,
+// chest, session_feel}], every field but date optional. weight+waist share
+// one entry (health.html writes waist onto the same po_coach_weights row as
+// weight, see health.html's Waist section) so they fall out of the same
+// map(). session_feel lives in a separate log (gym.html's session_feel_log_v1,
+// written at the end of a logged session) keyed by date, not by the same
+// row -- merged in here by date rather than left for evaluateFlags to join
+// itself, since its own doc comment already treats measurements as one
+// per-day record, not two logs a caller forgot to combine. arm_flexed/chest
+// still have no source anywhere and stay absent.
+const feelLogRaw = loadJSON('session_feel_log_v1');
+const feelLog = Array.isArray(feelLogRaw) ? feelLogRaw : [];
+const feelByDate = new Map(feelLog.map((f) => [f.dateKey, f.feel]));
+
+const measurements = weightEntries.map((e) => {
+  const entry = { date: e.dateKey, weight: e.weight };
+  if (e.waist != null) entry.waist = e.waist;
+  if (feelByDate.has(e.dateKey)) entry.session_feel = feelByDate.get(e.dateKey);
+  return entry;
+});
+// A session-feel entry on a day with no weight entry (weight is daily-
+// capable but not mandatory) would otherwise be dropped entirely by the
+// map() above -- add those as their own sparse entries instead of losing them.
+for (const [dateKey, feel] of feelByDate) {
+  if (!weightEntries.some((e) => e.dateKey === dateKey)) {
+    measurements.push({ date: dateKey, session_feel: feel });
+  }
+}
+
+// Workouts: po_coach_v1.logs (gym.html:1352, the LS_KEY blob) is keyed by
+// gym.html's own internal exercise id, not display name -- join against
+// po_coach_v1.exercises to resolve id -> name, then regroup into
+// get_workouts' { workouts: [{exercise, unit, sets}] }. Unit is global
+// (state.units, gym.html:1364), not per-exercise.
+//
+// The name join is the fragile part: evaluateFlags' indicator-lift rules
+// match on the exact display-name strings in mcp-shapes.json's
+// _indicator_lifts. If gym.html's real exercise names don't match those
+// strings, the affected lift's stall/pace rules silently never fire --
+// reported to the console below rather than silently fixed, since guessing
+// at a rename here could paper over a real naming drift instead of
+// surfacing it.
+function buildWorkouts() {
+  const state = loadJSON('po_coach_v1');
+  if (!state || !state.logs || !Array.isArray(state.exercises)) return { workouts: [] };
+
+  const unit = state.units || 'kg';
+  const byName = new Map();
+  for (const exId of Object.keys(state.logs)) {
+    const ex = state.exercises.find((e) => e.id === exId);
+    if (!ex) continue; // logged history for an exercise no longer in state.exercises -- skip, don't fabricate a name
+    const entries = Array.isArray(state.logs[exId]) ? state.logs[exId] : [];
+    if (!byName.has(ex.name)) byName.set(ex.name, []);
+    byName.get(ex.name).push(...entries);
+  }
+
+  const workouts = Array.from(byName.entries()).map(([exercise, sets]) => ({ exercise, unit, sets }));
+
+  const loggedNames = new Set(workouts.map((w) => w.exercise));
+  for (const [id, expectedName] of INDICATOR_LIFTS) {
+    if (!loggedNames.has(expectedName)) {
+      console.warn(
+        '[status.html] indicator lift ' + id + ' ("' + expectedName + '") has no matching exercise name in ' +
+        'po_coach_v1.exercises -- its stall/pace rules will never fire until the name matches exactly. Logged names:',
+        Array.from(loggedNames)
+      );
+    }
+  }
+
+  return { workouts };
+}
+const workouts = buildWorkouts();
+
+// Exposed for debugging this page from the console -- this is a diagnostic
+// page already, seeing exactly what got converted from localStorage is
+// useful, not just a test hook.
+window.__eqStatusDebug = { health, recoveryLog, weight, measurements, workouts };
+
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+const MS_PER_DAY = 86400000;
+function toDay(d) {
+  const dt = new Date(d);
+  return Date.UTC(dt.getUTCFullYear(), dt.getUTCMonth(), dt.getUTCDate());
+}
+function fmtDate(iso) {
+  const dt = new Date(iso + (String(iso).length === 10 ? 'T00:00:00Z' : ''));
+  return dt.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit', timeZone: 'UTC' });
+}
+const SEVERITY_CLASS = { red: 'sev-red', amber: 'sev-amb', green: 'sev-grn', info: 'sev-inf' };
+
+// ---- Busy Mode ----
+let busyRow = null;
+try { busyRow = await window.EqBusyMode.get(); } catch (e) { console.error('Busy Mode read failed', e); }
+let bm = busyModeStatus(busyRow ? busyRow.armed_at : null, today);
+
+function renderBusyMode() {
+  const el = $('pmode');
+  el.classList.toggle('on', bm.state === 'armed');
+  el.classList.toggle('expired', bm.state === 'expired');
+  $('pm-btn').setAttribute('aria-checked', String(bm.isBusy));
+  $('pm-off').style.display = bm.state === 'expired' ? '' : 'none';
+  $('pm-note').textContent =
+    bm.state === 'off' ? 'Off — full programme running' :
+    bm.state === 'armed' ? 'On · expires ' + fmtDate(bm.expiresAt) :
+    'Expired ' + fmtDate(bm.expiresAt) + ' — re-arm or turn off, nothing changes until you do';
+}
+async function toggleBusyMode() {
+  try {
+    if (bm.state === 'armed') { await window.EqBusyMode.clear(); busyRow = null; }
+    else { busyRow = await window.EqBusyMode.arm(); } // off -> arm; expired -> re-arm
+    bm = busyModeStatus(busyRow ? busyRow.armed_at : null, today);
+    renderAll();
+  } catch (e) { console.error('Busy Mode write failed', e); }
+}
+async function turnOffFromExpired() {
+  try {
+    await window.EqBusyMode.clear();
+    busyRow = null;
+    bm = busyModeStatus(null, today);
+    renderAll();
+  } catch (e) { console.error('Busy Mode write failed', e); }
+}
+$('pm-btn').addEventListener('click', toggleBusyMode);
+$('pm-off').addEventListener('click', turnOffFromExpired);
+
+// ---- 01 Position ----
+function renderPosition() {
+  const phase = currentPhase(today);
+  const cp = nextCheckpoint(today);
+  $('p-chk').textContent = cp ? cp.label + ' · ' + fmtDate(cp.date) : '—';
+  $('p-sess').textContent = 'Not wired yet';
+
+  if (!phase) {
+    const first = programme.phases[0];
+    const last = programme.phases[programme.phases.length - 1];
+
+    if (toDay(today) < toDay(first.start)) {
+      // Before day 1 -- a countdown to the real start, not an empty state.
+      const daysOut = Math.round((toDay(first.start) - toDay(today)) / MS_PER_DAY);
+      $('p-name').textContent = first.name;
+      $('p-sub').textContent = 'Starts ' + fmtDate(first.start) + ' · ' + daysOut + ' day' + (daysOut === 1 ? '' : 's') + ' out';
+      $('p-bar').style.width = '0%';
+      $('p-from').textContent = fmtDate(first.start);
+      $('p-to').textContent = fmtDate(first.end);
+    } else {
+      // Past the last phase's end -- a distinct branch, not lumped in with pre-start.
+      $('p-name').textContent = 'Programme complete';
+      $('p-sub').textContent = 'Ended ' + fmtDate(last.end);
+      $('p-bar').style.width = '100%';
+      $('p-from').textContent = fmtDate(last.start);
+      $('p-to').textContent = fmtDate(last.end);
+    }
+    return;
+  }
+  const progress = phaseProgress(today);
+  $('p-name').textContent = phase.name;
+  $('p-sub').textContent = phase.id + ' · day ' + progress.daysElapsed + ' of ' + progress.daysTotal;
+  $('p-bar').style.width = Math.round(progress.fraction * 100) + '%';
+  $('p-from').textContent = fmtDate(phase.start);
+  $('p-to').textContent = fmtDate(phase.end);
+}
+
+// ---- 02 Today ----
+function renderToday() {
+  const session = todaySession(today, bm.isBusy);
+  const targets = dailyTargets(today, bm.isBusy);
+
+  const ts = $('t-sess');
+  ts.textContent = session ? session.name : 'Rest';
+  ts.classList.toggle('rest', !session);
+
+  $('t-dot').className = 'dot dot-gry';
+  $('t-band').textContent = 'No data';
+  $('t-sync').textContent = 'health not wired';
+  $('t-msg').textContent = 'Recovery gate needs get_health — not fed into this page yet.';
+
+  $('t-kcal').textContent = targets ? targets.kcal.toLocaleString() : '—';
+  $('t-pro').textContent = targets ? targets.protein_g + ' g' : '—';
+  $('t-step').textContent = !targets ? '—' : (targets.steps ? Math.round(targets.steps.min / 1000) + '–' + Math.round(targets.steps.max / 1000) + 'k' : 'no extra');
+}
+
+// ---- 03 Flags ----
+function renderFlags() {
+  const flags = evaluateFlags(workouts, health, measurements, today, bm.isBusy, bm, recoveryLog);
+  const box = $('flags');
+  box.innerHTML = flags.length
+    ? flags.map((f) =>
+        '<div class="flag ' + (SEVERITY_CLASS[f.severity] || 'sev-inf') + '"><i></i><div><h4>' + esc(f.title) + '</h4><p>' + esc(f.detail) + '</p>'
+        + (f.action ? '<span class="act">' + esc(f.action) + '</span>' : '') + '</div></div>'
+      ).join('')
+    : '<div class="clear"><b>All clear</b><p>Nothing off pace.</p></div>';
+}
+
+// ---- 04 Phases & calories ----
+function renderPhases() {
+  const phase = currentPhase(today);
+  $('phases').innerHTML = programme.phases.map((p) => {
+    const isNow = phase && phase.id === p.id;
+    const isDone = toDay(p.end) < toDay(today);
+    const cls = isNow ? ' now' : (isDone ? ' done' : '');
+    const chips = [
+      p.direction,
+      p.kcal_train + ' train',
+      p.kcal_rest + ' rest',
+      p.protein_g + ' g protein',
+      p.steps ? Math.round(p.steps.min / 1000) + '–' + Math.round(p.steps.max / 1000) + 'k steps' : 'steps n/a',
+    ];
+    return '<div class="pcard' + cls + '"><div class="pcard-h"><h4>' + esc(p.name) + '</h4><span>' + fmtDate(p.start) + ' – ' + fmtDate(p.end) + '</span></div>'
+      + '<div class="kcals">' + chips.map((c, i) => '<span' + (isNow && i === 0 ? ' class="hot"' : '') + '>' + esc(String(c)) + '</span>').join('') + '</div></div>';
+  }).join('');
+}
+
+// ---- 05 Checkpoints ----
+function renderCheckpoints() {
+  const cps = programme.checkpoints;
+  const p0 = programme.phases.find((p) => p.id === 'P0');
+  $('chk-baseline-note').textContent = 'Everything measures against ' + fmtDate(p0.end) + ' — weight, waist, flexed arm, chest, four photos. Once, properly.';
+
+  const liftRows = [];
+  const seen = new Set();
+  for (const cp of cps) {
+    for (const lift of cp.indicator_lifts) {
+      if (!seen.has(lift.id)) { seen.add(lift.id); liftRows.push({ id: lift.id, name: lift.name }); }
+    }
+  }
+
+  let html = '<table class="tbl"><thead><tr><th></th>' + cps.map((c) => '<th>' + esc(c.label) + '</th>').join('') + '</tr></thead><tbody>';
+  html += '<tr><td>Weight</td>' + cps.map((c) => '<td>' + esc(c.weight) + '</td>').join('') + '</tr>';
+  for (const row of liftRows) {
+    html += '<tr><td>' + esc(row.name) + '</td>' + cps.map((c) => {
+      const l = c.indicator_lifts.find((x) => x.id === row.id);
+      return '<td>' + (l ? esc(l.target) : '—') + '</td>';
+    }).join('') + '</tr>';
+  }
+  html += '<tr><td>Flexed arm</td>' + cps.map((c) => '<td>' + esc(c.flexed_arm) + '</td>').join('') + '</tr>';
+  html += '</tbody></table>';
+  $('checkpoints-table').innerHTML = html;
+}
+
+// ---- 06 Food ----
+let dietMode = (currentPhase(today) || {}).direction || 'maintenance';
+
+function renderFood() {
+  document.querySelectorAll('.switch button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.mode === dietMode)));
+
+  $('food-meals').innerHTML = programme.nutrition.meals.map((meal) => {
+    const items = meal.items.map((it) => {
+      const swaps = (it.swaps && it.swaps.length)
+        ? '<details class="swap"><summary>Swap options</summary><ul>'
+          + it.swaps.map((s) => '<li><b>' + esc(s.to) + '</b>' + (s.note ? ' — ' + esc(s.note) : '') + '</li>').join('')
+          + '</ul></details>'
+        : '';
+      return '<div class="frow"><span class="fname">' + esc(it.name) + '</span><span class="fqty">' + esc(it[dietMode]) + '</span></div>' + swaps;
+    }).join('');
+    const totals = Object.entries(meal.totals).map(([k, v]) =>
+      '<div>' + esc(k.charAt(0).toUpperCase() + k.slice(1)) + '<b>' + esc(v[dietMode]) + '</b></div>'
+    ).join('');
+    return '<div class="meal"><div class="meal-h"><b>' + esc(meal.time) + '</b><h4>' + esc(meal.name) + '</h4></div><p>' + esc(meal.blurb) + '</p>'
+      + items + '<div class="totals">' + totals + '</div></div>';
+  }).join('');
+
+  const dt = programme.nutrition.daily_totals;
+  $('food-daily-totals').innerHTML = Object.entries(dt).map(([k, v]) =>
+    '<div>Daily ' + esc(k) + '<b>' + esc(v[dietMode]) + '</b></div>'
+  ).join('');
+  $('food-discretionary').innerHTML = '<strong>Discretionary slack.</strong> ' + esc(programme.nutrition.discretionary_note);
+
+  const r = programme.nutrition.rotation;
+  $('food-eat-freely').textContent = Object.values(r).flat().join(' · ');
+  $('food-excluded').textContent = programme.nutrition.excluded.join(' · ');
+}
+document.querySelectorAll('.switch button').forEach((b) => b.addEventListener('click', () => { dietMode = b.dataset.mode; renderFood(); }));
+
+// ---- 07 Reintroduction ----
+function renderReintro() {
+  const p2 = programme.phases.find((p) => p.id === programme.reintroduction.phase);
+  $('reintro-window').textContent = fmtDate(p2.start) + ' – ' + fmtDate(p2.end) + '. Low-FODMAP was never meant to be permanent. One group at a time, three days on, three off.';
+  $('reintro-protocol').textContent = programme.reintroduction.protocol_note;
+  $('reintro-rationale').innerHTML = '<strong>Legumes first, not dairy.</strong> ' + esc(programme.reintroduction.rationale_note.replace(/^Legumes first, not dairy\.\s*/, ''));
+
+  const rows = programme.reintroduction.challenges.map((c) =>
+    '<tr><td>' + c.order + '</td><td style="text-align:left;font-family:var(--eq-font-family);font-weight:400;color:var(--eq-text-primary)">' + esc(c.subgroup) + ' — ' + esc(c.test_food) + '</td><td>' + esc(c.window) + '</td></tr>'
+  ).join('') + '<tr><td>—</td><td style="text-align:left;font-family:var(--eq-font-family);font-weight:400;color:var(--eq-text-muted)">' + esc(programme.reintroduction.deferred.subgroup) + '</td><td>' + esc(programme.reintroduction.deferred.note) + '</td></tr>';
+  $('reintro-table').innerHTML = '<table class="tbl"><thead><tr><th>Try</th><th>Food</th><th>When</th></tr></thead><tbody>' + rows + '</tbody></table>';
+}
+
+// ---- 08 Weekly read ----
+function renderWeekly() {
+  const rows = programme.diagnostics.weekly.map((r) => {
+    const token = r.action === 'Continue' ? 'success' : (r.observation.toLowerCase().startsWith('waist up') ? 'danger' : 'warning');
+    const text = r.action === 'Continue' ? r.interpretation + '. Continue.' : r.interpretation + '. ' + r.action + '.';
+    return '<tr><td>' + esc(r.observation) + '</td><td style="color:var(--eq-' + token + ')">' + esc(text) + '</td></tr>';
+  }).join('');
+  $('weekly-table').innerHTML = '<table class="tbl read">' + rows + '</table>';
+}
+
+// ---- 09 Monthly read ----
+function renderMonthly() {
+  $('monthly-cadence').textContent = programme.diagnostics.monthly_cadence;
+  const rows = programme.diagnostics.monthly.map((r) => {
+    const style = r.tone === 'muted' ? 'color:var(--eq-text-secondary)' : 'color:var(--eq-' + r.tone + ')';
+    return '<tr><td>' + esc(r.observation) + '</td><td style="' + style + '">' + esc(r.response) + '</td></tr>';
+  }).join('');
+  $('monthly-table').innerHTML = '<table class="tbl read">' + rows + '</table>';
+}
+
+// ---- 10 December decision ----
+function renderDecember() {
+  const dd = programme.december_decision;
+  $('dec-date').textContent = fmtDate(dd.date);
+  $('dec-criteria').innerHTML = dd.criteria.map((c) =>
+    '<div class="crit"><p>' + esc(c.label) + '<small>Gate: ' + esc(c.threshold) + '</small></p><span class="val">—</span><span class="pf dot-gry"></span></div>'
+  ).join('');
+}
+
+function renderAll() {
+  renderBusyMode();
+  renderPosition();
+  renderToday();
+  renderFlags();
+  renderPhases();
+}
+
+renderAll();
+renderCheckpoints();
+renderFood();
+renderReintro();
+renderWeekly();
+renderMonthly();
+renderDecember();
+</script>
+</body>
+</html>

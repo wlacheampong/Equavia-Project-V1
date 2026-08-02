@@ -1,0 +1,576 @@
+{
+  "pre_start_checklist": {
+    "_note": "master-plan-v2.md §9.7, one-off purchases due before phases[0].start. No purchased/done flag exists anywhere -- there's no way to know if an item is already handled, so evaluateFlags' pre-start rule surfaces the whole list unconditionally while date < phases[0].start, not a diff against what's done.",
+    "items": [
+      { "item": "Fractional plates, 1.25 kg pair", "cost": "~£20", "purpose": "Non-optional. Enables A2 progression." },
+      { "item": "Tape measure", "cost": "~£4", "purpose": "Waist, arm, chest" },
+      { "item": "Kitchen scale", "cost": "~£12", "purpose": "If not owned" },
+      { "item": "Lifting straps", "cost": "~£10", "purpose": "For L2 RDL progression" }
+    ]
+  },
+
+  "phases": [
+    {
+      "id": "P0",
+      "name": "Cut",
+      "start": "2026-08-03",
+      "end": "2026-08-30",
+      "direction": "cut",
+      "kcal_train": 2250,
+      "kcal_rest": 2100,
+      "protein_g": 162,
+      "steps": { "min": 12000, "max": 14000 },
+      "deloads": []
+    },
+    {
+      "id": "P1",
+      "name": "Specialisation I",
+      "start": "2026-08-31",
+      "end": "2026-12-20",
+      "direction": "surplus",
+      "kcal_train": 2850,
+      "kcal_rest": 2450,
+      "protein_g": 160,
+      "steps": { "min": 8000, "max": 10000 },
+      "deloads": ["2026-10-19", "2026-12-14"]
+    },
+    {
+      "id": "T1",
+      "name": "Transition / Volume Review",
+      "start": "2026-12-21",
+      "end": "2027-01-03",
+      "inherits_from": "P1",
+      "direction": "surplus",
+      "kcal_train": 2850,
+      "kcal_rest": 2450,
+      "protein_g": 160,
+      "steps": { "min": 10000, "max": 12000 },
+      "deloads": []
+    },
+    {
+      "id": "P2",
+      "name": "Consolidation + FODMAP Reintro",
+      "start": "2027-01-04",
+      "end": "2027-03-28",
+      "direction": "maintenance",
+      "kcal_train": 2600,
+      "kcal_rest": 2350,
+      "protein_g": 155,
+      "steps": { "min": 10000, "max": 12000 },
+      "deloads": ["2027-02-22"]
+    },
+    {
+      "id": "D1",
+      "name": "Deload",
+      "start": "2027-03-29",
+      "end": "2027-04-04",
+      "inherits_from": "P2",
+      "direction": "maintenance",
+      "kcal_train": 2600,
+      "kcal_rest": 2350,
+      "protein_g": 155,
+      "steps": { "min": 10000, "max": 12000 },
+      "deloads": []
+    },
+    {
+      "id": "P3",
+      "name": "Specialisation II",
+      "start": "2027-04-05",
+      "end": "2027-06-27",
+      "direction": "surplus",
+      "kcal_train": 2900,
+      "kcal_rest": 2500,
+      "protein_g": 160,
+      "steps": { "min": 8000, "max": 10000 },
+      "deloads": ["2027-05-24"]
+    },
+    {
+      "id": "D2",
+      "name": "Deload",
+      "start": "2027-06-28",
+      "end": "2027-07-04",
+      "inherits_from": "P3",
+      "direction": "surplus",
+      "kcal_train": 2900,
+      "kcal_rest": 2500,
+      "protein_g": 160,
+      "steps": { "min": 10000, "max": 12000 },
+      "deloads": []
+    },
+    {
+      "id": "P4",
+      "name": "Reveal Cut",
+      "start": "2027-07-05",
+      "end": "2027-08-29",
+      "direction": "cut",
+      "kcal_train": 2300,
+      "kcal_rest": 2100,
+      "protein_g": 175,
+      "steps": { "min": 12000, "max": 15000 },
+      "deloads": []
+    }
+  ],
+
+  "busy_mode_steps": null,
+  "_busy_mode_steps_note": "null is intentional -- no deliberate walking is added during a busy week, this is not missing data.",
+  "busy_mode_kcal_adjustment": 250,
+
+  "sessions": [
+    {
+      "id": "UPPER-A",
+      "name": "Push & Brachialis",
+      "day": "Monday",
+      "exercises": [
+        {
+          "id": "A1",
+          "name": "Incline DB Press",
+          "sets_reps": "3 x 5, 6, 8",
+          "style": "RPT -10%",
+          "rest": "3 min",
+          "rir": "1-2 / 0-1 / 0-1",
+          "start_load": "36 kg"
+        },
+        {
+          "id": "A2",
+          "name": "Overhead Press",
+          "sets_reps": "3 x 5, 6, 8",
+          "style": "RPT -10%",
+          "rest": "3 min",
+          "rir": "1-2 / 0-1 / 0-1",
+          "start_load": "54 kg"
+        },
+        {
+          "id": "A3",
+          "name": "Weighted Dips or Incline Machine Press",
+          "sets_reps": "3 x 8-10",
+          "style": "Double prog.",
+          "rest": "2 min",
+          "rir": "1",
+          "start_load": "90 kg machine"
+        },
+        {
+          "id": "A4",
+          "name": "Cable Lateral Raise - unilateral",
+          "sets_reps": "3 x 12-20",
+          "style": "Straight",
+          "rest": "90 s",
+          "rir": "0-1",
+          "start_load": null
+        },
+        {
+          "id": "A5",
+          "name": "Hammer / Pinwheel Curl",
+          "sets_reps": "3 x 6, 8, 10",
+          "style": "RPT top set",
+          "rest": "2 min",
+          "rir": "1-2 / 0-1 / 0-1",
+          "start_load": "16 kg"
+        },
+        {
+          "id": "A6",
+          "name": "Overhead Cable Extension - rope",
+          "sets_reps": "3 x 8-12",
+          "style": "Straight",
+          "rest": "90 s",
+          "rir": "0-1",
+          "start_load": null
+        }
+      ]
+    },
+    {
+      "id": "LEGS",
+      "name": "Lower Body & Core",
+      "day": "Wednesday",
+      "exercises": [
+        {
+          "id": "L1",
+          "name": "Bulgarian Split Squat",
+          "sets_reps": "3 x 8-12 / leg",
+          "style": null,
+          "rest": "2 min",
+          "rir": "2",
+          "start_load": "22 kg"
+        },
+        {
+          "id": "L2",
+          "name": "Romanian Deadlift",
+          "sets_reps": "3 x 8-10",
+          "style": null,
+          "rest": "2-3 min",
+          "rir": "2",
+          "start_load": "26 kg DBs"
+        },
+        {
+          "id": "L3",
+          "name": "Slider Curl -> Nordic Curl",
+          "sets_reps": "3 x 8-12",
+          "style": null,
+          "rest": "90 s",
+          "rir": "1",
+          "start_load": "BW"
+        },
+        {
+          "id": "L4",
+          "name": "Leg Extension",
+          "sets_reps": "2 x 12-15",
+          "style": null,
+          "rest": "90 s",
+          "rir": "0-1",
+          "start_load": null
+        },
+        {
+          "id": "L5",
+          "name": "Calf Raise - 2 s pause stretched",
+          "sets_reps": "3 x 10-15",
+          "style": null,
+          "rest": "90 s",
+          "rir": "0-1",
+          "start_load": null
+        },
+        {
+          "id": "L6",
+          "name": "Hanging Leg Raise",
+          "sets_reps": "3 x 8-15",
+          "style": null,
+          "rest": "60 s",
+          "rir": "1",
+          "start_load": "BW"
+        },
+        {
+          "id": "L7",
+          "name": "Face Pull",
+          "sets_reps": "2 x 15-20",
+          "style": null,
+          "rest": "60 s",
+          "rir": "1",
+          "start_load": null
+        }
+      ]
+    },
+    {
+      "id": "UPPER-B",
+      "name": "Pull & Lateral Triceps",
+      "day": "Friday",
+      "exercises": [
+        {
+          "id": "B1",
+          "name": "Weighted Chin-up",
+          "sets_reps": "3 x 5, 6, 8",
+          "style": "RPT -10% of total load",
+          "rest": "3 min",
+          "rir": "1-2 / 0-1 / 0-1",
+          "start_load": "BW"
+        },
+        {
+          "id": "B2",
+          "name": "Chest-Supported Row",
+          "sets_reps": "3 x 8-10",
+          "style": "Double prog.",
+          "rest": "2 min",
+          "rir": "1",
+          "start_load": "68.3 kg"
+        },
+        {
+          "id": "B3",
+          "name": "Lat Pulldown - wide",
+          "sets_reps": "2 x 10-12",
+          "style": "Double prog.",
+          "rest": "90 s",
+          "rir": "1",
+          "start_load": "81-85 kg"
+        },
+        {
+          "id": "B4",
+          "name": "Incline DB Curl",
+          "sets_reps": "3 x 8-12",
+          "style": "Straight",
+          "rest": "90 s",
+          "rir": "0-1",
+          "start_load": null
+        },
+        {
+          "id": "B5",
+          "name": "Cable Pushdown - V-bar, flare hands",
+          "sets_reps": "3 x 10-15",
+          "style": "Straight",
+          "rest": "90 s",
+          "rir": "0-1",
+          "start_load": "25.3 kg"
+        },
+        {
+          "id": "B6",
+          "name": "Machine Lateral Raise",
+          "sets_reps": "3 x 12-20",
+          "style": "Straight",
+          "rest": "90 s",
+          "rir": "0-1",
+          "start_load": "64 kg"
+        }
+      ]
+    }
+  ],
+
+  "checkpoints": [
+    {
+      "date": "2026-12-20",
+      "label": "Month 4",
+      "indicator_lifts": [
+        { "id": "A1", "name": "Incline DB press", "target": "38 kg x 5" },
+        { "id": "A2", "name": "Overhead press", "target": "58-60 kg x 5" },
+        { "id": "B1", "name": "Weighted chin", "target": "+8-12 kg x 5" },
+        { "id": "A5", "name": "Hammer curl", "target": "20 kg x 6" }
+      ],
+      "weight": "79.5-80.5 kg",
+      "flexed_arm": "+0.8-1.2 cm"
+    },
+    {
+      "date": "2027-03-28",
+      "label": "Month 7",
+      "indicator_lifts": [
+        { "id": "A1", "name": "Incline DB press", "target": "40 kg x 5" },
+        { "id": "A2", "name": "Overhead press", "target": "62 kg x 5" },
+        { "id": "B1", "name": "Weighted chin", "target": "+14-18 kg x 5" },
+        { "id": "A5", "name": "Hammer curl", "target": "22 kg x 6" }
+      ],
+      "weight": "80-81 kg, stable",
+      "flexed_arm": "+1.2-1.8 cm"
+    },
+    {
+      "date": "2027-06-27",
+      "label": "Month 10",
+      "indicator_lifts": [
+        { "id": "A1", "name": "Incline DB press", "target": "42 kg x 5" },
+        { "id": "A2", "name": "Overhead press", "target": "65 kg x 5" },
+        { "id": "B1", "name": "Weighted chin", "target": "+20 kg x 5" },
+        { "id": "A5", "name": "Pinwheel curl", "target": "24 kg x 6" }
+      ],
+      "weight": "81.5-82.5 kg",
+      "flexed_arm": "+2.0-2.5 cm"
+    },
+    {
+      "date": "2027-08-29",
+      "label": "Month 12 / Final",
+      "indicator_lifts": [
+        { "id": "A1", "name": "Incline DB press", "target": "42 kg x 5" },
+        { "id": "A2", "name": "Overhead press", "target": "65 kg x 5" },
+        { "id": "B1", "name": "Weighted chin", "target": "+20 kg x 5" },
+        { "id": "A5", "name": "Hammer curl", "target": "24 kg x 6" }
+      ],
+      "weight": "79-80 kg",
+      "flexed_arm": "+2.0-2.5 cm from baseline"
+    }
+  ],
+
+  "nutrition": {
+    "_note": "master-plan-v2.md §5 for meals/quantities/rotation lists. Quantities are keyed cut/maintenance/surplus, which map 1:1 onto phases[].direction -- there's no separate diet-mode field, direction already is it. Per-ingredient `swaps` are NOT from master-plan-v2.md (it has no per-item substitution table) -- they're transcribed from docs/training-panel-full.html's SWAPS data, which is the only source that has them. Every caveat ('sweet potato: max 75 g -- mannitol', 'lamb: higher fat -- cut the oil', chia/Sunfiber not sharing a meal, etc.) is preserved verbatim; a swap option with its caveat silently dropped is worse than no swap list.",
+    "meals": [
+      {
+        "time": "12:00",
+        "name": "Fast-Breaking Shake",
+        "blurb": "Breaks the fast.",
+        "items": [
+          { "name": "Pea protein isolate", "cut": "30 g", "maintenance": "30 g", "surplus": "30 g",
+            "swaps": [
+              { "to": "Rice protein", "note": "no GOS ceiling" },
+              { "to": "Potato isolate", "note": "pricey, hard to find" },
+              { "to": "Soy isolate", "note": "test histamine first" }
+            ] },
+          { "name": "Rice protein", "cut": "20 g", "maintenance": "20 g", "surplus": "25 g",
+            "swaps": [
+              { "to": "Pea protein", "note": "more leucine" },
+              { "to": "Potato isolate", "note": "if you find it" }
+            ] },
+          { "name": "Kiwi", "cut": "2 medium", "maintenance": "2 medium", "surplus": "2 medium",
+            "swaps": [
+              { "to": "Honeydew melon", "note": "no actinidin" },
+              { "to": "Cantaloupe", "note": "no actinidin" },
+              { "to": "Papaya", "note": "papain -- test it" }
+            ] },
+          { "name": "Banana, firm", "cut": "1", "maintenance": "1", "surplus": "1",
+            "swaps": [
+              { "to": "Cooked-cooled rice", "note": "same resistant starch" },
+              { "to": "Green plantain", "note": "cook first" },
+              { "to": "Skip it", "note": "-105 cal" }
+            ] },
+          { "name": "Blueberries", "cut": "40 g", "maintenance": "40 g", "surplus": "50 g",
+            "swaps": [
+              { "to": "Raspberries", "note": "like for like" },
+              { "to": "Blackberries", "note": "sorbitol -- test" },
+              { "to": "Cranberries, fresh", "note": "tart" }
+            ] },
+          { "name": "Sunfiber (PHGG)", "cut": "7 g", "maintenance": "7 g", "surplus": "7 g",
+            "swaps": [
+              { "to": "Acacia fibre", "note": "also non-gassy" },
+              { "to": "Split the dose", "note": "if bloating" }
+            ] }
+        ],
+        "totals": {
+          "calories": { "cut": "~415", "maintenance": "~415", "surplus": "~450" },
+          "protein": { "cut": "~40 g", "maintenance": "~40 g", "surplus": "~44 g" },
+          "fibre": { "cut": "~13.6 g", "maintenance": "~13.6 g", "surplus": "~14 g" }
+        }
+      },
+      {
+        "time": "16:30",
+        "name": "Post-Training",
+        "blurb": "Largest carb load.",
+        "items": [
+          { "name": "Chicken breast or beef, cooked", "cut": "180 g", "maintenance": "200 g", "surplus": "220 g",
+            "swaps": [
+              { "to": "Chicken breast", "note": "leanest" },
+              { "to": "Beef mince, lean", "note": "" },
+              { "to": "Lamb", "note": "higher fat -- cut the oil" },
+              { "to": "Turkey", "note": "" },
+              { "to": "Pork loin", "note": "" },
+              { "to": "White fish", "note": "cook from frozen" }
+            ] },
+          { "name": "White rice, cooked", "cut": "250 g", "maintenance": "350 g", "surplus": "450 g",
+            "swaps": [
+              { "to": "Jasmine or basmati", "note": "same" },
+              { "to": "Rice noodles", "note": "1:1 cooked" },
+              { "to": "Polenta", "note": "different texture" },
+              { "to": "Tapioca", "note": "" },
+              { "to": "Peeled potato", "note": "×1.5 by weight" }
+            ] },
+          { "name": "Carrot / courgette, boiled", "cut": "150 g", "maintenance": "150 g", "surplus": "150 g",
+            "swaps": [
+              { "to": "Carrot", "note": "" },
+              { "to": "Courgette", "note": "" },
+              { "to": "Green beans", "note": "" },
+              { "to": "Bok choy", "note": "" },
+              { "to": "Cucumber", "note": "raw" },
+              { "to": "Parsnip", "note": "starchier" },
+              { "to": "Swede", "note": "" }
+            ] },
+          { "name": "Olive oil", "cut": "10 g", "maintenance": "12 g", "surplus": "15 g",
+            "swaps": [
+              { "to": "Olive oil", "note": "" },
+              { "to": "Ghee", "note": "" },
+              { "to": "Coconut oil", "note": "" },
+              { "to": "Macadamia oil", "note": "expensive" }
+            ] },
+          { "name": "Chia seeds", "cut": "12 g", "maintenance": "12 g", "surplus": "12 g",
+            "swaps": [
+              { "to": "Pumpkin seeds", "note": "no gel" },
+              { "to": "Macadamias", "note": "fat only" },
+              { "to": "Move to meal 3", "note": "not with Sunfiber" }
+            ] }
+        ],
+        "totals": {
+          "calories": { "cut": "~800", "maintenance": "~1,010", "surplus": "~1,220" },
+          "protein": { "cut": "~52 g", "maintenance": "~57 g", "surplus": "~62 g" }
+        }
+      },
+      {
+        "time": "20:30",
+        "name": "Final Feeding",
+        "blurb": "Fast begins after.",
+        "items": [
+          { "name": "Beef, lamb or chicken thigh, cooked", "cut": "180 g", "maintenance": "200 g", "surplus": "220 g",
+            "swaps": [
+              { "to": "Chicken breast", "note": "leanest" },
+              { "to": "Beef mince, lean", "note": "" },
+              { "to": "Lamb", "note": "higher fat -- cut the oil" },
+              { "to": "Turkey", "note": "" },
+              { "to": "Pork loin", "note": "" },
+              { "to": "White fish", "note": "cook from frozen" }
+            ] },
+          { "name": "Peeled potato", "cut": "250 g", "maintenance": "350 g", "surplus": "400 g",
+            "swaps": [
+              { "to": "Sweet potato", "note": "max 75 g -- mannitol" },
+              { "to": "White rice", "note": "×0.65 by weight" },
+              { "to": "Parsnip", "note": "" },
+              { "to": "Swede", "note": "" },
+              { "to": "Polenta", "note": "" }
+            ] },
+          { "name": "Green beans / courgette / bok choy", "cut": "150 g", "maintenance": "150 g", "surplus": "150 g",
+            "swaps": [
+              { "to": "Carrot", "note": "" },
+              { "to": "Courgette", "note": "" },
+              { "to": "Green beans", "note": "" },
+              { "to": "Bok choy", "note": "" },
+              { "to": "Cucumber", "note": "raw" },
+              { "to": "Parsnip", "note": "starchier" },
+              { "to": "Swede", "note": "" }
+            ] },
+          { "name": "Olive oil or ghee", "cut": "12 g", "maintenance": "15 g", "surplus": "18 g",
+            "swaps": [
+              { "to": "Olive oil", "note": "" },
+              { "to": "Ghee", "note": "" },
+              { "to": "Coconut oil", "note": "" },
+              { "to": "Macadamia oil", "note": "expensive" }
+            ] },
+          { "name": "Sunfiber", "cut": "5 g", "maintenance": "5 g", "surplus": "5 g",
+            "swaps": [
+              { "to": "Acacia fibre", "note": "also non-gassy" },
+              { "to": "Split the dose", "note": "if bloating" }
+            ] }
+        ],
+        "totals": {
+          "calories": { "cut": "~760", "maintenance": "~900", "surplus": "~1,020" },
+          "protein": { "cut": "~50 g", "maintenance": "~55 g", "surplus": "~60 g" }
+        }
+      }
+    ],
+    "daily_totals": {
+      "calories": { "cut": "~1,975", "maintenance": "~2,325", "surplus": "~2,690" },
+      "protein": { "cut": "~142 g", "maintenance": "~152 g", "surplus": "~166 g" },
+      "fibre": { "cut": "~26 g", "maintenance": "~28 g", "surplus": "~29 g" }
+    },
+    "discretionary_note": "These land 200-300 kcal under phase target on purpose. A plan with no slack gets abandoned.",
+    "rotation": {
+      "protein": ["Chicken breast", "Chicken thigh", "Beef mince", "Lamb", "Turkey", "Pork loin", "White fish (cooked from frozen)", "Egg yolks"],
+      "carbohydrate": ["White rice", "Jasmine", "Basmati", "Peeled potato", "Sweet potato (≤75 g)", "Rice noodles", "Polenta", "Tapioca", "Parsnip", "Swede"],
+      "fat": ["Olive oil", "Macadamia", "Coconut oil", "Ghee", "Pumpkin seeds", "Chia"],
+      "vegetable": ["Carrot", "Courgette", "Cucumber", "Lettuce", "Bok choy", "Green beans", "Peeled red pepper", "Pumpkin (small)"],
+      "fruit": ["Blueberries", "Kiwi", "Banana", "Blackberries", "Raspberries"]
+    },
+    "excluded": ["Tomato", "Spinach", "Avocado", "Aged or fermented anything", "Onion", "Garlic", "Citrus", "Strawberry", "Chocolate", "Cured meat", "Canned fish", "Soy sauce (fermented + wheat)", "All dairy"]
+  },
+
+  "reintroduction": {
+    "_note": "master-plan-v2.md §6.3. Window is Phase 2 (P2) -- deliberately not duplicating its dates here, read them from phases[].",
+    "phase": "P2",
+    "protocol_note": "3 days challenge, escalating dose, nothing else new. 3 days washout at baseline regardless of outcome -- symptoms lag.",
+    "rationale_note": "Legumes first, not dairy. Dairy is off for the acne, and that's whey rather than lactose -- so testing milk tells you nothing useful. Egg white is worth retrying separately once things settle.",
+    "challenges": [
+      { "order": 1, "subgroup": "GOS", "test_food": "Chickpeas, tinned + rinsed", "day1": "30 g", "day2": "60 g", "day3": "100 g", "window": "4-9 Jan" },
+      { "order": 2, "subgroup": "Fructans (wheat)", "test_food": "White bread", "day1": "½ slice", "day2": "1 slice", "day3": "2 slices", "window": "18-23 Jan" },
+      { "order": 3, "subgroup": "Mannitol", "test_food": "Sweet potato", "day1": "100 g", "day2": "150 g", "day3": "200 g", "window": "1-6 Feb" },
+      { "order": 4, "subgroup": "Sorbitol", "test_food": "Blackberries", "day1": "3", "day2": "5", "day3": "10", "window": "15-20 Feb" },
+      { "order": 5, "subgroup": "Fructose", "test_food": "Honey", "day1": "½ tsp", "day2": "1 tsp", "day3": "2 tsp", "window": "1-6 Mar" },
+      { "order": 6, "subgroup": "Fructans (onion/garlic)", "test_food": "Onion", "day1": "¼ small", "day2": "½", "day3": "1", "window": "15-20 Mar" }
+    ],
+    "deferred": { "subgroup": "Lactose", "note": "Deferred -- whey excluded regardless" }
+  },
+
+  "diagnostics": {
+    "_note": "`weekly` is master-plan-v2.md §8's real observation/interpretation/action table. `monthly` has no equivalent in master-plan-v2.md -- it's transcribed from docs/training-panel-full.html's Monthly Read table (the only source that has it), same as nutrition.swaps. `tone` mirrors that table's own moss/ochre/ox/muted colour coding, preserved as data so status.html doesn't have to re-derive severity from the response text.",
+    "weekly": [
+      { "observation": "Weight up, waist flat", "interpretation": "Clean muscle gain", "action": "Continue" },
+      { "observation": "Weight flat, waist down", "interpretation": "Recomp working", "action": "Continue" },
+      { "observation": "Waist up", "interpretation": "Calories too high", "action": "-150 kcal training days" },
+      { "observation": "Weight flat 3 weeks in surplus", "interpretation": "Under-eating", "action": "+150 kcal training days" }
+    ],
+    "monthly_cadence": "Flexed arm and chest, AM, not post-training, widest point / mid-chest, relaxed. Four photos each time: front relaxed, front flexed, side, back, same lighting.",
+    "monthly": [
+      { "observation": "Arm up, lifts up", "response": "Block is working. Don't change anything.", "tone": "success" },
+      { "observation": "Lifts up, arm flat", "response": "Strength without size. Check you're eating the surplus.", "tone": "warning" },
+      { "observation": "Arm flat 2 months", "response": "Rotate the curl variation. Stimulus has gone stale.", "tone": "danger" },
+      { "observation": "Photos changed, numbers flat", "response": "Measurement noise. Trust the photos.", "tone": "muted" },
+      { "observation": "Chest up faster than arm", "response": "Volume drifting to strengths. Recheck the arm sets.", "tone": "warning" },
+      { "observation": "Nothing moved anywhere", "response": "Check sessions logged before changing the programme.", "tone": "danger" }
+    ]
+  },
+
+  "december_decision": {
+    "_note": "master-plan-v2.md §4.3. Decision gate at the P1/T1 boundary. Criteria and thresholds are real; the live values against them need workouts+health+measurements history status.html isn't fetching yet (session-feel in particular has no data source at all -- see mcp-shapes.json's _known_gaps), so they render as gaps until that's wired.",
+    "date": "2026-12-20",
+    "criteria": [
+      { "id": "sessions", "label": "Session completion", "threshold": "≥ 90% of 48 sessions" },
+      { "id": "lifts", "label": "Indicator lift progression", "threshold": "No stall > 2 consecutive sessions" },
+      { "id": "recovery", "label": "Whoop recovery", "threshold": "No sustained weekly downtrend" },
+      { "id": "feel", "label": "\"Going through motions\" weeks", "threshold": "≤ 2 across 16 weeks" }
+    ]
+  }
+}

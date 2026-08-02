@@ -510,6 +510,13 @@ img, video, canvas, svg { max-width: 100%; }
   .finishBtn.locked { background: rgba(var(--eq-accent-rgb), .12); color: var(--mint); border:1px solid var(--mint); }
   .freshbtn { display:block; margin: 13px auto 0; background:none; border:none; color: var(--muted); font-family: var(--sans); font-size:12.5px; font-weight:500; cursor:pointer; padding:8px 12px; border-radius:9px; transition: color .18s; }
   .freshbtn:hover { color: var(--text); } .freshbtn.arm { color: var(--fail); font-weight:600; }
+  .feelRow { margin-top:14px; text-align:center; }
+  .feelLabel { font-size:12.5px; color:var(--muted); margin-bottom:8px; font-family: var(--sans); }
+  .feelBtns { display:flex; gap:6px; justify-content:center; flex-wrap:wrap; }
+  .feelBtn { border:1px solid rgba(var(--eq-text-primary-rgb),.14); background:none; color:var(--text); font-family:var(--sans); font-size:12px; font-weight:600; padding:8px 12px; border-radius:20px; cursor:pointer; transition:background .15s, border-color .15s, opacity .15s; }
+  .feelBtn:active { transform: scale(.97); }
+  .feelBtn.picked { background:var(--mint); color:var(--ink); border-color:var(--mint); }
+  .feelBtn:disabled { opacity:.4; cursor:default; }
   .store-note { text-align:center; color: var(--muted); font-size:11.5px; font-weight:500; margin-top:6px; opacity:.85; }
 
   /* ── popups (history / form / swap / tune / overflow menu) ─────────── */
@@ -1275,6 +1282,18 @@ img, video, canvas, svg { max-width: 100%; }
     <div class="progress" id="progress"><div class="ptrack"><div class="pfill" id="pfill"></div></div><div class="plabel" id="plabel"></div></div>
     <div class="exwrap" id="exwrap"></div>
     <div class="finishRow"><button class="finishBtn" id="finishBtn">finish session</button></div>
+    <!-- One-tap session feel -- shown only on the not-submitted->submitted
+         transition (see renderFinish), same moment applyProgression fires.
+         "Going through the motions" is master-plan-v2.md §4.3's own phrase
+         for the December decision's fourth criterion, on purpose. -->
+    <div class="feelRow" id="feelRow" style="display:none">
+      <div class="feelLabel">How'd that one feel?</div>
+      <div class="feelBtns">
+        <button class="feelBtn" data-feel="great" type="button">Great</button>
+        <button class="feelBtn" data-feel="fine" type="button">Fine</button>
+        <button class="feelBtn" data-feel="motions" type="button">Going through the motions</button>
+      </div>
+    </div>
     <button class="freshbtn" id="freshbtn">Start fresh</button>
     <!-- The old page's "Saved to your Project Equavia dashboard" note was
          true when this was a separate sealed tile posting data elsewhere.
@@ -1734,7 +1753,7 @@ img, video, canvas, svg { max-width: 100%; }
   // sync mechanism still carries po_coach_weights/po_coach_goal_weight/
   // calorie_log_v1 cross-device -- sync ownership was never tied to which
   // page's UI reads/writes a key, same as before that move.
-  const PC_SYNCED_KEYS = ['po_coach_v1', 'po_coach_workout_done', 'po_coach_weights', 'po_coach_goal_weight', 'calorie_log_v1'];
+  const PC_SYNCED_KEYS = ['po_coach_v1', 'po_coach_workout_done', 'po_coach_weights', 'po_coach_goal_weight', 'calorie_log_v1', 'session_feel_log_v1'];
 
   let pcSupa = null;
   let pcPushTimer = null;
@@ -2916,6 +2935,41 @@ function applyProgression(d){
     else e.reps = e.reps + 1;
   });
 }
+/* Session feel -- one-tap, shown only while the current session is
+   submitted (same STATE.submitted flag renderFinish already tracks), one
+   entry per calendar day. Its own key/array rather than folding into
+   po_coach_v1 -- this is a subjective daily rating, not exercise history,
+   and status.html's measurements converter reads it independently of
+   workouts. "Going through the motions" is master-plan-v2.md §4.3's own
+   phrase for the December decision's fourth criterion. */
+const FEEL_KEY = 'session_feel_log_v1';
+function feelLoad(){ try{ const a=JSON.parse(localStorage.getItem(FEEL_KEY)); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
+function feelSave(arr){ try{ localStorage.setItem(FEEL_KEY, JSON.stringify(arr)); }catch(e){} }
+function feelToday(){ const key=new Date().toISOString().slice(0,10); return feelLoad().find(f=>f.dateKey===key) || null; }
+function saveFeel(feel){
+  const key=new Date().toISOString().slice(0,10);
+  const list=feelLoad();
+  const existing=list.find(f=>f.dateKey===key);
+  if(existing) existing.feel=feel;
+  else { list.push({dateKey:key, feel}); list.sort((a,b)=>a.dateKey.localeCompare(b.dateKey)); }
+  feelSave(list);
+  renderFeelRow();
+}
+function renderFeelRow(){
+  const row=$('#feelRow'); if(!row) return;
+  if(!STATE.submitted){ row.style.display='none'; return; }
+  row.style.display='';
+  const picked = feelToday();
+  document.querySelectorAll('.feelBtn').forEach(b=>{
+    const isPicked = !!(picked && picked.feel===b.dataset.feel);
+    b.classList.toggle('picked', isPicked);
+    b.disabled = !!picked;
+  });
+}
+document.querySelectorAll('.feelBtn').forEach(b=>{
+  b.addEventListener('click', ()=> saveFeel(b.dataset.feel));
+});
+
 function renderFinish(d){
   const btn=$('#finishBtn'); const t=dayTotals(d);
   if(STATE.submitted){ btn.textContent='re-lock session'; btn.classList.add('locked'); btn.disabled=false; }
@@ -2924,8 +2978,9 @@ function renderFinish(d){
     const wasSubmitted = STATE.submitted;
     STATE.submitted=!STATE.submitted;
     if(!wasSubmitted && STATE.submitted) applyProgression(d);
-    renderFinish(d); saveState();
+    renderFinish(d); saveState(); renderFeelRow();
   };
+  renderFeelRow();
 }
 
 function renderCard(e, day){

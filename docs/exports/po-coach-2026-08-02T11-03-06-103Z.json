@@ -1,0 +1,1253 @@
+[
+  {
+    "key": "po-coach",
+    "data": {
+      "po_coach_v1": {
+        "days": [
+          {
+            "id": "push",
+            "name": "Upper A"
+          },
+          {
+            "id": "pull",
+            "name": "Lower A"
+          },
+          {
+            "id": "legs",
+            "name": "Arms & Shoulders"
+          },
+          {
+            "id": "d_1784239705144",
+            "name": "Upper B"
+          },
+          {
+            "id": "d_1784239715209",
+            "name": "Lower B"
+          }
+        ],
+        "gyms": [
+          {
+            "id": "comm",
+            "name": " Gym"
+          },
+          {
+            "id": "g_1784491737051",
+            "name": "Gym 2"
+          }
+        ],
+        "logs": {
+          "tr_pull_up": [],
+          "tr_leg_curl": [],
+          "tr_calf_raise": [],
+          "tr_face_pulls": [],
+          "tr_hammer_curl": [],
+          "tr_barbell_curl": [],
+          "tr_lat_pulldown": [],
+          "tr_back_extension": [],
+          "tr_overhead_press": [],
+          "ex_1784240175413_377": [
+            {
+              "date": "2026-07-20T06:48:54.102Z",
+              "reps": 12,
+              "weight": 50
+            },
+            {
+              "date": "2026-07-20T06:51:56.797Z",
+              "reps": 11,
+              "weight": 50
+            }
+          ],
+          "seed_0_1783784444743": [
+            {
+              "date": "2026-07-16T22:10:56.416Z",
+              "reps": 8,
+              "weight": 90
+            },
+            {
+              "date": "2026-07-20T06:22:46.611Z",
+              "reps": 5,
+              "weight": 90
+            },
+            {
+              "date": "2026-07-20T06:25:44.584Z",
+              "reps": 8,
+              "weight": 80
+            },
+            {
+              "date": "2026-07-20T06:28:35.828Z",
+              "reps": 8,
+              "weight": 70
+            }
+          ],
+          "seed_1_1783784444743": [
+            {
+              "date": "2026-07-20T06:34:02.931Z",
+              "reps": 8,
+              "weight": 82.3
+            },
+            {
+              "date": "2026-07-20T06:37:13.156Z",
+              "reps": 8,
+              "weight": 69.8
+            }
+          ],
+          "seed_2_1783784444743": [
+            {
+              "date": "2026-07-20T06:41:55.708Z",
+              "reps": 9,
+              "weight": 50
+            },
+            {
+              "date": "2026-07-20T06:45:29.471Z",
+              "reps": 12,
+              "weight": 52.5
+            }
+          ],
+          "seed_3_1783784444743": [
+            {
+              "date": "2026-07-21T11:46:40.739Z",
+              "reps": 7,
+              "weight": 100
+            },
+            {
+              "date": "2026-07-21T11:59:39.375Z",
+              "reps": 8,
+              "weight": 90
+            }
+          ],
+          "seed_4_1783784444743": [
+            {
+              "date": "2026-07-21T12:00:08.178Z",
+              "reps": 8,
+              "weight": 50
+            },
+            {
+              "date": "2026-07-21T12:00:08.939Z",
+              "reps": 8,
+              "weight": 50
+            }
+          ],
+          "seed_5_1783784444743": [
+            {
+              "date": "2026-07-21T12:03:40.630Z",
+              "reps": 8,
+              "weight": 73
+            }
+          ],
+          "tr_dips_near_failure": [],
+          "tr_hanging_leg_raise": [],
+          "tr_romanian_deadlift": [],
+          "ex_1784240288726_5204": [
+            {
+              "date": "2026-07-20T06:55:52.075Z",
+              "reps": 17,
+              "weight": 25
+            },
+            {
+              "date": "2026-07-20T07:00:39.725Z",
+              "reps": 15,
+              "weight": 35
+            }
+          ],
+          "ex_1784240416420_8438": [
+            {
+              "date": "2026-07-20T06:55:40.881Z",
+              "reps": 12,
+              "weight": 25
+            },
+            {
+              "date": "2026-07-20T07:00:29.216Z",
+              "reps": 12,
+              "weight": 25
+            }
+          ],
+          "ex_1784243046135_7315": [
+            {
+              "date": "2026-07-16T23:08:45.925Z",
+              "reps": 8,
+              "weight": 100
+            },
+            {
+              "date": "2026-07-16T23:08:48.504Z",
+              "reps": 8,
+              "weight": 100
+            }
+          ],
+          "ex_1784243133978_9290": [
+            {
+              "date": "2026-07-16T23:08:57.127Z",
+              "reps": 10,
+              "weight": 22
+            },
+            {
+              "date": "2026-07-16T23:08:58.146Z",
+              "reps": 10,
+              "weight": 22
+            }
+          ],
+          "ex_1784243169550_9481": [
+            {
+              "date": "2026-07-16T23:09:05.491Z",
+              "reps": 10,
+              "weight": 0
+            },
+            {
+              "date": "2026-07-16T23:09:06.480Z",
+              "reps": 10,
+              "weight": 0
+            }
+          ],
+          "ex_1784243205637_3692": [
+            {
+              "date": "2026-07-16T23:09:13.942Z",
+              "reps": 12,
+              "weight": 100
+            },
+            {
+              "date": "2026-07-16T23:09:14.815Z",
+              "reps": 12,
+              "weight": 100
+            }
+          ],
+          "ex_1784243268284_3847": [
+            {
+              "date": "2026-07-16T23:09:22.934Z",
+              "reps": 9,
+              "weight": 0
+            },
+            {
+              "date": "2026-07-16T23:09:24.181Z",
+              "reps": 9,
+              "weight": 0
+            },
+            {
+              "date": "2026-07-16T23:09:27.154Z",
+              "reps": 9,
+              "weight": 0
+            }
+          ],
+          "tr_chest_supported_row": [],
+          "tr_dumbbell_bench_press": [],
+          "tr_bulgarian_split_squat": [],
+          "tr_incline_machine_press": [],
+          "tr_cable_triceps_pushdown": [
+            {
+              "date": "2026-07-29T11:00:00.000Z",
+              "reps": 15,
+              "sets": [
+                {
+                  "fail": false,
+                  "reps": 15
+                }
+              ],
+              "weight": 0
+            }
+          ],
+          "tr_incline_dumbbell_press": [],
+          "tr_supinated_lat_pulldown": [],
+          "tr_face_pulls_or_rear_delt_fly": [],
+          "tr_machine_press_stretch_focus": [],
+          "tr_back_squat_or_trap_bar_deadlift": [],
+          "tr_machine_lateral_raise_rest_pause": [],
+          "tr_barbell_or_cable_curl_2nd_variant": [],
+          "tr_reverse_plank_dead_hang_30_60s_each": [],
+          "tr_seated_cable_row_neutral_close_grip": []
+        },
+        "plan": {
+          "days": {
+            "legs": {
+              "ex": [
+                {
+                  "id": "squat_or_trap_dl",
+                  "kg": 0,
+                  "log": [
+                    null,
+                    null,
+                    null
+                  ],
+                  "hist": [],
+                  "name": "Back Squat or Trap-Bar Deadlift",
+                  "note": "",
+                  "poId": "tr_back_squat_or_trap_bar_deadlift",
+                  "reps": 8,
+                  "rest": 210,
+                  "sets": 3,
+                  "tier": 1,
+                  "deload": false,
+                  "lastKg": null,
+                  "pinned": false,
+                  "perHand": false,
+                  "collapsed": false
+                },
+                {
+                  "id": "rdl_1",
+                  "kg": 26,
+                  "log": [
+                    null,
+                    null,
+                    null
+                  ],
+                  "hist": [],
+                  "name": "Romanian Deadlift",
+                  "note": "",
+                  "poId": "tr_romanian_deadlift",
+                  "reps": 12,
+                  "rest": 150,
+                  "sets": 3,
+                  "tier": 1,
+                  "deload": false,
+                  "lastKg": null,
+                  "pinned": false,
+                  "perHand": false,
+                  "collapsed": false
+                },
+                {
+                  "id": "bulgarian_split_squat",
+                  "kg": 22,
+                  "log": [
+                    null,
+                    null,
+                    null
+                  ],
+                  "hist": [],
+                  "name": "Bulgarian Split Squat",
+                  "note": "",
+                  "poId": "tr_bulgarian_split_squat",
+                  "reps": 12,
+                  "rest": 120,
+                  "sets": 3,
+                  "tier": 2,
+                  "deload": false,
+                  "lastKg": null,
+                  "pinned": false,
+                  "perHand": true,
+                  "collapsed": false
+                },
+                {
+                  "id": "leg_curl_1",
+                  "kg": 0,
+                  "log": [
+                    null,
+                    null,
+                    null
+                  ],
+                  "hist": [],
+                  "name": "Leg Curl",
+                  "note": "",
+                  "poId": "tr_leg_curl",
+                  "reps": 15,
+                  "rest": 75,
+                  "sets": 3,
+                  "tier": 3,
+                  "deload": false,
+                  "lastKg": null,
+                  "pinned": false,
+                  "perHand": false,
+                  "collapsed": false
+                },
+                {
+                  "id": "calf_raise_1",
+                  "kg": 0,
+                  "log": [
+                    null,
+                    null,
+                    null
+                  ],
+                  "hist": [],
+                  "name": "Calf Raise",
+                  "note": "",
+                  "poId": "tr_calf_raise",
+                  "reps": 15,
+                  "rest": 60,
+                  "sets": 3,
+                  "tier": 3,
+                  "deload": false,
+                  "lastKg": null,
+                  "pinned": false,
+                  "perHand": false,
+                  "collapsed": false
+                },
+                {
+                  "id": "hang_leg_raise_1",
+                  "kg": 0,
+                  "log": [
+                    null,
+                    null,
+                    null
+                  ],
+                  "hist": [],
+                  "name": "Hanging Leg Raise",
+                  "note": "",
+                  "poId": "tr_hanging_leg_raise",
+                  "reps": 15,
+                  "rest": 60,
+                  "sets": 3,
+                  "tier": "ab",
+                  "deload": false,
+                  "lastKg": null,
+                  "pinned": false,
+                  "perHand": false,
+                  "collapsed": false
+                }
+              ],
+              "off": false,
+              "name": "Legs",
+              "type": "Heavy",
+              "restDay": false
+            },
+            "pull": {
+              "ex": [
+                {
+                  "id": "pullup",
+                  "kg": 0,
+                  "log": [
+                    null,
+                    null,
+                    null
+                  ],
+                  "hist": [],
+                  "name": "Pull-Up",
+                  "note": "",
+                  "poId": "tr_pull_up",
+                  "reps": 10,
+                  "rest": 180,
+                  "sets": 3,
+                  "tier": 1,
+                  "deload": false,
+                  "lastKg": null,
+                  "pinned": false,
+                  "perHand": false,
+                  "collapsed": false
+                },
+                {
+                  "id": "chest_supported_row",
+                  "kg": 68.3,
+                  "log": [
+                    null,
+                    null,
+                    null
+                  ],
+                  "hist": [],
+                  "name": "Chest-Supported Row",
+                  "note": "",
+                  "poId": "tr_chest_supported_row",
+                  "reps": 10,
+                  "rest": 150,
+                  "sets": 3,
+                  "tier": 1,
+                  "deload": false,
+                  "lastKg": null,
+                  "pinned": false,
+                  "perHand": false,
+                  "collapsed": false
+                },
+                {
+                  "id": "lat_pulldown_1",
+                  "kg": 81.3,
+                  "log": [
+                    null,
+                    null
+                  ],
+                  "hist": [],
+                  "name": "Lat Pulldown",
+                  "note": "",
+                  "poId": "tr_lat_pulldown",
+                  "reps": 12,
+                  "rest": 120,
+                  "sets": 2,
+                  "tier": 2,
+                  "deload": false,
+                  "lastKg": null,
+                  "pinned": false,
+                  "perHand": false,
+                  "collapsed": false
+                },
+                {
+                  "id": "bb_curl_1",
+                  "kg": 30,
+                  "log": [
+                    null,
+                    null
+                  ],
+                  "hist": [],
+                  "name": "Barbell Curl",
+                  "note": "",
+                  "poId": "tr_barbell_curl",
+                  "reps": 12,
+                  "rest": 75,
+                  "sets": 2,
+                  "tier": 3,
+                  "deload": false,
+                  "lastKg": null,
+                  "pinned": false,
+                  "perHand": false,
+                  "collapsed": false
+                },
+                {
+                  "id": "face_pulls_1",
+                  "kg": 20,
+                  "log": [
+                    null,
+                    null,
+                    null
+                  ],
+                  "hist": [],
+                  "name": "Face Pulls",
+                  "note": "",
+                  "poId": "tr_face_pulls",
+                  "reps": 20,
+                  "rest": 60,
+                  "sets": 3,
+                  "tier": 3,
+                  "deload": false,
+                  "lastKg": null,
+                  "pinned": false,
+                  "perHand": false,
+                  "collapsed": false
+                }
+              ],
+              "off": false,
+              "name": "Pull",
+              "type": "Heavy",
+              "restDay": false
+            },
+            "push": {
+              "ex": [
+                {
+                  "id": "db_bench_press",
+                  "kg": 36,
+                  "log": [
+                    null,
+                    null,
+                    null
+                  ],
+                  "hist": [],
+                  "name": "Dumbbell Bench Press",
+                  "note": "",
+                  "poId": "tr_dumbbell_bench_press",
+                  "reps": 8,
+                  "rest": 180,
+                  "sets": 3,
+                  "tier": 1,
+                  "deload": false,
+                  "lastKg": null,
+                  "pinned": false,
+                  "perHand": true,
+                  "collapsed": false
+                },
+                {
+                  "id": "ohp_bb",
+                  "kg": 54,
+                  "log": [
+                    null,
+                    null,
+                    null
+                  ],
+                  "hist": [],
+                  "name": "Overhead Press",
+                  "note": "",
+                  "poId": "tr_overhead_press",
+                  "reps": 10,
+                  "rest": 150,
+                  "sets": 3,
+                  "tier": 1,
+                  "deload": false,
+                  "lastKg": null,
+                  "pinned": false,
+                  "perHand": false,
+                  "collapsed": false
+                },
+                {
+                  "id": "incline_machine_press",
+                  "kg": 90,
+                  "log": [
+                    null,
+                    null
+                  ],
+                  "hist": [],
+                  "name": "Incline Machine Press",
+                  "note": "",
+                  "poId": "tr_incline_machine_press",
+                  "reps": 12,
+                  "rest": 120,
+                  "sets": 2,
+                  "tier": 2,
+                  "deload": false,
+                  "lastKg": null,
+                  "pinned": false,
+                  "perHand": false,
+                  "collapsed": false
+                },
+                {
+                  "id": "dips",
+                  "kg": 0,
+                  "log": [
+                    null,
+                    null
+                  ],
+                  "hist": [],
+                  "name": "Dips (near failure)",
+                  "note": "",
+                  "poId": "tr_dips_near_failure",
+                  "reps": 10,
+                  "rest": 120,
+                  "sets": 2,
+                  "tier": 2,
+                  "deload": false,
+                  "lastKg": null,
+                  "pinned": false,
+                  "perHand": false,
+                  "collapsed": false
+                },
+                {
+                  "id": "cable_tri_pushdown_1",
+                  "kg": 25.3,
+                  "log": [
+                    null,
+                    null
+                  ],
+                  "hist": [],
+                  "name": "Cable Triceps Pushdown",
+                  "note": "",
+                  "poId": "tr_cable_triceps_pushdown",
+                  "reps": 15,
+                  "rest": 75,
+                  "sets": 2,
+                  "tier": 3,
+                  "deload": false,
+                  "lastKg": null,
+                  "pinned": false,
+                  "perHand": false,
+                  "collapsed": false
+                }
+              ],
+              "off": false,
+              "name": "Push",
+              "type": "Heavy",
+              "restDay": false
+            },
+            "rest": {
+              "ex": [],
+              "off": false,
+              "name": "Rest",
+              "type": "",
+              "restDay": true
+            },
+            "chest_back": {
+              "ex": [
+                {
+                  "id": "incline_db_press",
+                  "kg": 36,
+                  "log": [
+                    null,
+                    null,
+                    null
+                  ],
+                  "hist": [],
+                  "name": "Incline Dumbbell Press",
+                  "note": "",
+                  "poId": "tr_incline_dumbbell_press",
+                  "reps": 12,
+                  "rest": 120,
+                  "sets": 3,
+                  "tier": 1,
+                  "deload": false,
+                  "lastKg": null,
+                  "pinned": false,
+                  "perHand": true,
+                  "collapsed": false
+                },
+                {
+                  "id": "supinated_lat_pulldown",
+                  "kg": 84.6,
+                  "log": [
+                    null,
+                    null,
+                    null
+                  ],
+                  "hist": [],
+                  "name": "Supinated Lat Pulldown",
+                  "note": "",
+                  "poId": "tr_supinated_lat_pulldown",
+                  "reps": 12,
+                  "rest": 120,
+                  "sets": 3,
+                  "tier": 1,
+                  "deload": false,
+                  "lastKg": null,
+                  "pinned": false,
+                  "perHand": false,
+                  "collapsed": false
+                },
+                {
+                  "id": "machine_press_stretch",
+                  "kg": 79,
+                  "log": [
+                    null,
+                    null
+                  ],
+                  "hist": [],
+                  "name": "Machine Press (stretch focus)",
+                  "note": "",
+                  "poId": "tr_machine_press_stretch_focus",
+                  "reps": 15,
+                  "rest": 90,
+                  "sets": 2,
+                  "tier": 2,
+                  "deload": false,
+                  "lastKg": null,
+                  "pinned": false,
+                  "perHand": false,
+                  "collapsed": false
+                },
+                {
+                  "id": "seated_cable_row",
+                  "kg": 82.3,
+                  "log": [
+                    null,
+                    null,
+                    null
+                  ],
+                  "hist": [],
+                  "name": "Seated Cable Row, Neutral Close Grip",
+                  "note": "",
+                  "poId": "tr_seated_cable_row_neutral_close_grip",
+                  "reps": 15,
+                  "rest": 90,
+                  "sets": 3,
+                  "tier": 2,
+                  "deload": false,
+                  "lastKg": null,
+                  "pinned": false,
+                  "perHand": false,
+                  "collapsed": false
+                },
+                {
+                  "id": "back_extension",
+                  "kg": 15,
+                  "log": [
+                    null,
+                    null
+                  ],
+                  "hist": [],
+                  "name": "Back Extension",
+                  "note": "",
+                  "poId": "tr_back_extension",
+                  "reps": 15,
+                  "rest": 60,
+                  "sets": 2,
+                  "tier": 3,
+                  "deload": false,
+                  "lastKg": null,
+                  "pinned": false,
+                  "perHand": false,
+                  "collapsed": false
+                }
+              ],
+              "off": false,
+              "name": "Chest & Back",
+              "type": "Volume",
+              "restDay": false
+            },
+            "shoulders_arms": {
+              "ex": [
+                {
+                  "id": "machine_lateral_raise",
+                  "kg": 64,
+                  "log": [
+                    null,
+                    null,
+                    null
+                  ],
+                  "hist": [],
+                  "name": "Machine Lateral Raise (rest-pause)",
+                  "note": "",
+                  "poId": "tr_machine_lateral_raise_rest_pause",
+                  "reps": 15,
+                  "rest": 75,
+                  "sets": 3,
+                  "tier": 1,
+                  "deload": false,
+                  "lastKg": null,
+                  "pinned": false,
+                  "perHand": false,
+                  "collapsed": false
+                },
+                {
+                  "id": "hammer_curl_1",
+                  "kg": 16,
+                  "log": [
+                    null,
+                    null
+                  ],
+                  "hist": [],
+                  "name": "Hammer Curl",
+                  "note": "",
+                  "poId": "tr_hammer_curl",
+                  "reps": 12,
+                  "rest": 60,
+                  "sets": 2,
+                  "tier": 2,
+                  "deload": false,
+                  "lastKg": null,
+                  "pinned": false,
+                  "perHand": true,
+                  "collapsed": false
+                },
+                {
+                  "id": "curl_variant_2",
+                  "kg": 0,
+                  "log": [
+                    null,
+                    null
+                  ],
+                  "hist": [],
+                  "name": "Barbell or Cable Curl (2nd variant)",
+                  "note": "",
+                  "poId": "tr_barbell_or_cable_curl_2nd_variant",
+                  "reps": 12,
+                  "rest": 60,
+                  "sets": 2,
+                  "tier": 2,
+                  "deload": false,
+                  "lastKg": null,
+                  "pinned": false,
+                  "perHand": false,
+                  "collapsed": false
+                },
+                {
+                  "id": "cable_tri_pushdown_2",
+                  "kg": 0,
+                  "log": [
+                    null,
+                    null,
+                    null
+                  ],
+                  "hist": [
+                    {
+                      "kg": 0,
+                      "date": "2026-07-29",
+                      "sets": [
+                        {
+                          "r": 15
+                        }
+                      ]
+                    }
+                  ],
+                  "name": "Cable Triceps Pushdown",
+                  "note": "",
+                  "poId": "tr_cable_triceps_pushdown",
+                  "reps": 15,
+                  "rest": 75,
+                  "sets": 3,
+                  "tier": 3,
+                  "deload": false,
+                  "lastKg": 0,
+                  "pinned": false,
+                  "perHand": false,
+                  "collapsed": false
+                },
+                {
+                  "id": "face_pulls_2",
+                  "kg": 0,
+                  "log": [
+                    null,
+                    null
+                  ],
+                  "hist": [],
+                  "name": "Face Pulls or Rear-Delt Fly",
+                  "note": "",
+                  "poId": "tr_face_pulls_or_rear_delt_fly",
+                  "reps": 20,
+                  "rest": 60,
+                  "sets": 2,
+                  "tier": 3,
+                  "deload": false,
+                  "lastKg": null,
+                  "pinned": false,
+                  "perHand": false,
+                  "collapsed": false
+                },
+                {
+                  "id": "plank_hang",
+                  "kg": 0,
+                  "log": [
+                    null,
+                    null
+                  ],
+                  "hist": [],
+                  "name": "Reverse Plank + Dead Hang (30-60s each)",
+                  "note": "",
+                  "poId": "tr_reverse_plank_dead_hang_30_60s_each",
+                  "reps": 45,
+                  "rest": 60,
+                  "sets": 2,
+                  "tier": "ab",
+                  "deload": false,
+                  "lastKg": null,
+                  "pinned": false,
+                  "perHand": false,
+                  "collapsed": false
+                }
+              ],
+              "off": false,
+              "name": "Shoulders & Arms",
+              "type": "Volume",
+              "restDay": false
+            }
+          },
+          "unit": "kg",
+          "order": [
+            "push",
+            "pull",
+            "legs",
+            "chest_back",
+            "shoulders_arms",
+            "rest"
+          ],
+          "active": "shoulders_arms",
+          "submitted": false
+        },
+        "units": "kg",
+        "currentEx": null,
+        "exercises": [
+          {
+            "bw": false,
+            "id": "seed_0_1783784444743",
+            "day": "push",
+            "gym": "comm",
+            "name": "Incline Machine Press",
+            "step": 2.5,
+            "repMax": 8,
+            "repMin": 5,
+            "startWeight": 90
+          },
+          {
+            "bw": false,
+            "id": "seed_1_1783784444743",
+            "day": "push",
+            "gym": "comm",
+            "name": "Cable Row",
+            "step": 2.5,
+            "repMax": 8,
+            "repMin": 5,
+            "startWeight": 82.3
+          },
+          {
+            "bw": false,
+            "id": "seed_2_1783784444743",
+            "day": "push",
+            "gym": "comm",
+            "name": "Chest Fly",
+            "step": 2.5,
+            "repMax": 12,
+            "repMin": 8,
+            "startWeight": 50
+          },
+          {
+            "bw": false,
+            "id": "seed_3_1783784444743",
+            "day": "pull",
+            "gym": "comm",
+            "name": "Hack squat",
+            "step": 2.5,
+            "repMax": 8,
+            "repMin": 5,
+            "startWeight": 100
+          },
+          {
+            "bw": false,
+            "id": "seed_4_1783784444743",
+            "day": "pull",
+            "gym": "comm",
+            "name": "Romanian deadlift",
+            "step": 2.5,
+            "repMax": 10,
+            "repMin": 6,
+            "startWeight": 26
+          },
+          {
+            "bw": false,
+            "id": "seed_5_1783784444743",
+            "day": "pull",
+            "gym": "comm",
+            "name": "Leg Extension",
+            "step": 1.5,
+            "repMax": 12,
+            "repMin": 8,
+            "startWeight": 66
+          },
+          {
+            "bw": false,
+            "id": "seed_6_1783784444743",
+            "day": "legs",
+            "gym": "comm",
+            "name": "Lateral Raises",
+            "step": 1.5,
+            "repMax": 15,
+            "repMin": 12,
+            "startWeight": 66
+          },
+          {
+            "bw": false,
+            "id": "seed_7_1783784444743",
+            "day": "legs",
+            "gym": "comm",
+            "name": "Rear Delt Fly",
+            "step": 2,
+            "repMax": 15,
+            "repMin": 8,
+            "startWeight": 50
+          },
+          {
+            "bw": false,
+            "id": "seed_8_1783784444743",
+            "day": "legs",
+            "gym": "comm",
+            "name": "Incline Hammer Curl",
+            "step": 2,
+            "repMax": 12,
+            "repMin": 8,
+            "startWeight": 16
+          },
+          {
+            "bw": false,
+            "id": "ex_1784240175413_377",
+            "day": "push",
+            "gym": "comm",
+            "name": "Machine Lateral raise",
+            "step": 2.5,
+            "repMax": 15,
+            "repMin": 10,
+            "startWeight": 50
+          },
+          {
+            "bw": false,
+            "id": "ex_1784240288726_5204",
+            "day": "push",
+            "gym": "comm",
+            "name": "Barbell Shrug",
+            "step": 5,
+            "repMax": 20,
+            "repMin": 12,
+            "startWeight": 30
+          },
+          {
+            "bw": false,
+            "id": "ex_1784240416420_8438",
+            "day": "push",
+            "gym": "comm",
+            "name": "Barbell Curl",
+            "step": 2.5,
+            "repMax": 10,
+            "repMin": 6,
+            "startWeight": 20
+          },
+          {
+            "bw": false,
+            "id": "ex_1784240448985_4908",
+            "day": "push",
+            "gym": "comm",
+            "name": "Spider Curl",
+            "step": 2.5,
+            "repMax": 10,
+            "repMin": 6,
+            "startWeight": 16
+          },
+          {
+            "bw": false,
+            "id": "ex_1784242405341_5064",
+            "day": "pull",
+            "gym": "comm",
+            "name": "Calf Raises",
+            "step": 2.5,
+            "repMax": 15,
+            "repMin": 12,
+            "startWeight": 105
+          },
+          {
+            "bw": true,
+            "id": "ex_1784242435142_2399",
+            "day": "pull",
+            "gym": "comm",
+            "name": "Hanging Leg Raises",
+            "step": 1,
+            "repMax": 12,
+            "repMin": 8,
+            "startWeight": 0
+          },
+          {
+            "bw": false,
+            "id": "ex_1784242677823_9850",
+            "day": "legs",
+            "gym": "comm",
+            "name": "Cable Curls",
+            "step": 2.5,
+            "repMax": 12,
+            "repMin": 8,
+            "startWeight": 45
+          },
+          {
+            "bw": false,
+            "id": "ex_1784242715648_8615",
+            "day": "legs",
+            "gym": "comm",
+            "name": "Cable Tricep Extension",
+            "step": 2.5,
+            "repMax": 12,
+            "repMin": 8,
+            "startWeight": 45
+          },
+          {
+            "bw": false,
+            "id": "ex_1784242771510_3962",
+            "day": "d_1784239705144",
+            "gym": "comm",
+            "name": "Lat Pull Down",
+            "step": 2.5,
+            "repMax": 10,
+            "repMin": 6,
+            "startWeight": 79
+          },
+          {
+            "bw": false,
+            "id": "ex_1784242849106_1932",
+            "day": "d_1784239705144",
+            "gym": "comm",
+            "name": "Chest Supported Row",
+            "step": 2.5,
+            "repMax": 10,
+            "repMin": 6,
+            "startWeight": 68.3
+          },
+          {
+            "bw": false,
+            "id": "ex_1784242912209_4432",
+            "day": "d_1784239705144",
+            "gym": "comm",
+            "name": "Overhead Press",
+            "step": 2.5,
+            "repMax": 10,
+            "repMin": 6,
+            "startWeight": 54
+          },
+          {
+            "bw": false,
+            "id": "ex_1784242942476_3577",
+            "day": "d_1784239705144",
+            "gym": "comm",
+            "name": "Face Pull",
+            "step": 2.5,
+            "repMax": 15,
+            "repMin": 12,
+            "startWeight": 27
+          },
+          {
+            "bw": false,
+            "id": "ex_1784242974084_6490",
+            "day": "d_1784239705144",
+            "gym": "comm",
+            "name": "Tricep Extension",
+            "step": 2,
+            "repMax": 12,
+            "repMin": 8,
+            "startWeight": 27
+          },
+          {
+            "bw": false,
+            "id": "ex_1784243046135_7315",
+            "day": "d_1784239715209",
+            "gym": "comm",
+            "name": "Leg Press",
+            "step": 3,
+            "repMax": 10,
+            "repMin": 6,
+            "startWeight": 100
+          },
+          {
+            "bw": false,
+            "id": "ex_1784243133978_9290",
+            "day": "d_1784239715209",
+            "gym": "comm",
+            "name": "Bulgarian Split Squat",
+            "step": 2.5,
+            "repMax": 12,
+            "repMin": 8,
+            "startWeight": 22
+          },
+          {
+            "bw": true,
+            "id": "ex_1784243169550_9481",
+            "day": "d_1784239715209",
+            "gym": "comm",
+            "name": "Nordic Curl",
+            "step": 1,
+            "repMax": 128,
+            "repMin": 8,
+            "startWeight": 0
+          },
+          {
+            "bw": false,
+            "id": "ex_1784243205637_3692",
+            "day": "d_1784239715209",
+            "gym": "comm",
+            "name": "Calf Raises",
+            "step": 2,
+            "repMax": 15,
+            "repMin": 12,
+            "startWeight": 100
+          },
+          {
+            "bw": true,
+            "id": "ex_1784243268284_3847",
+            "day": "d_1784239715209",
+            "gym": "comm",
+            "name": "Dead Bug",
+            "step": 1,
+            "repMax": 12,
+            "repMin": 8,
+            "startWeight": 0
+          }
+        ],
+        "filterDay": "push",
+        "filterGym": "comm",
+        "splitAnchor": {
+          "date": "2026-07-29",
+          "index": 0
+        },
+        "splitRotation": [
+          "Upper A",
+          "Lower A",
+          "Arms & Shoulders",
+          "Upper B",
+          "Lower B"
+        ],
+        "_userPickedDay": true
+      },
+      "po_coach_weights": [
+        {
+          "weight": 79.5,
+          "dateKey": "2026-07-11"
+        },
+        {
+          "weight": 81,
+          "dateKey": "2026-07-17"
+        },
+        {
+          "weight": 79.4,
+          "dateKey": "2026-07-20"
+        },
+        {
+          "weight": 78.7,
+          "dateKey": "2026-07-21"
+        },
+        {
+          "weight": 78.95,
+          "dateKey": "2026-07-22"
+        }
+      ],
+      "po_coach_goal_weight": 77
+    },
+    "updated_at": "2026-08-02T10:17:04.959+00:00"
+  }
+]

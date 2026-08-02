@@ -79,3 +79,29 @@ values.
 Important: the references are a **financial research tool**. Borrow the visual
 language and interaction patterns, not the information density. Equavia has far
 less data per screen — don't cram.
+
+## Training programme integration (master-plan-v2)
+
+Standing facts for work building on `docs/master-plan-v2.md` and
+`docs/mcp-shapes.json`:
+
+- Equavia is a single-user PWA.
+- Plain HTML / CSS / JS — no framework, no build step.
+- Supabase handles sync; Vercel handles hosting.
+- New code matches the style of the existing training page.
+- No new dependencies.
+
+Note: "phase" here means the training programme's P0–P4 periodisation blocks
+(`docs/master-plan-v2.md` §4), unrelated to the Fey redesign phases
+(`docs/files/00-08`) described above.
+
+`js/status.js` deliberately breaks from the `window.Eq*` IIFE pattern used by
+every other file in `js/` — it uses real ES `export`s instead, so its pure
+functions can be unit-tested under Node without a browser. Anything that
+loads it must use `<script type="module">`, not a plain `<script src>`.
+
+`gym.html` has its own `eq.training.*` localStorage keys (`programs_v1`,
+`activeProgramId_v1`, `reducedDecisions_v1`, `restSeconds_v1`) — these are a
+different "programme" entirely (that page's own workout-programme settings),
+unrelated to `docs/programme.json`'s phases/sessions/checkpoints. Don't
+conflate the two when working in this area.
