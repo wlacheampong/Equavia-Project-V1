@@ -7,7 +7,7 @@
 // Bump CACHE_NAME on any app-shell file change so clients pick up
 // the new list and drop the old cache on next activate.
 // =============================================================
-const CACHE_NAME = 'equavia-shell-v36';
+const CACHE_NAME = 'equavia-shell-v37';
 const APP_SHELL = [
   'lock.html',
   'dashboard.html',
@@ -29,7 +29,7 @@ const APP_SHELL = [
   'js/sync.js',
   'js/collapsible.js',
   'js/dexie.min.js',
-  'images/Index Landing Page.webp',
+  'images/favicon.png',
   'images/icon-192.png',
   'images/icon-512.png',
   'images/icon-192-maskable.png',
