@@ -441,10 +441,28 @@ function renderBusyMode() {
     bm.state === 'armed' ? 'On · expires ' + fmtDate(bm.expiresAt) :
     'Expired ' + fmtDate(bm.expiresAt) + ' — re-arm or turn off, nothing changes until you do';
 }
+const BUSY_MODE_ARM_CONFIRM =
+  'Arm Busy Mode?\n\n' +
+  'Two sessions instead of three\n' +
+  'Legs dropped\n' +
+  'First four exercises only\n' +
+  'Calories +250\n\n' +
+  'Expires in 7 days.';
+
 async function toggleBusyMode() {
   try {
-    if (bm.state === 'armed') { await window.EqBusyMode.clear(); busyRow = null; }
-    else { busyRow = await window.EqBusyMode.arm(); } // off -> arm; expired -> re-arm
+    if (bm.state === 'armed') {
+      // Turning off stays a single tap -- no confirmation, matches the
+      // instruction that clearing shouldn't get harder just because
+      // arming did.
+      await window.EqBusyMode.clear();
+      busyRow = null;
+    } else {
+      // off -> arm, or expired -> re-arm -- both are "arm" and both write
+      // a fresh armed_at, so both get the same confirmation.
+      if (!confirm(BUSY_MODE_ARM_CONFIRM)) return;
+      busyRow = await window.EqBusyMode.arm();
+    }
     bm = busyModeStatus(busyRow ? busyRow.armed_at : null, today);
     renderAll();
   } catch (e) { console.error('Busy Mode write failed', e); }

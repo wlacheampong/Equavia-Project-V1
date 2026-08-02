@@ -51,10 +51,24 @@
     return data;
   }
 
+  // Upserts armed_at/expires_at to null rather than DELETE-ing the row.
+  // DELETE against app_state under the anon key returns 200/204 "success"
+  // but silently affects zero rows (confirmed with Prefer: return=
+  // representation -- empty array back) -- almost certainly RLS permits
+  // insert/update for anon but not delete. get()'s existing
+  // `data.armed_at ? data : null` check already treats a null armed_at as
+  // off, so this reuses the exact write path arm() already uses
+  // successfully instead of a silently-broken one.
   async function clear() {
-    const res = await fetch(SUPABASE_URL + '/rest/v1/app_state?key=eq.' + ROW_KEY, {
-      method: 'DELETE',
-      headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY },
+    const res = await fetch(SUPABASE_URL + '/rest/v1/app_state?on_conflict=key', {
+      method: 'POST',
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: 'Bearer ' + SUPABASE_KEY,
+        'Content-Type': 'application/json',
+        Prefer: 'resolution=merge-duplicates',
+      },
+      body: JSON.stringify({ key: ROW_KEY, data: { armed_at: null, expires_at: null }, updated_at: new Date().toISOString() }),
     });
     if (!res.ok) throw new Error('Busy Mode clear failed: ' + res.status);
   }
