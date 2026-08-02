@@ -10,9 +10,6 @@
   body { padding: var(--eq-page-padding) var(--eq-page-padding) 60px; }
   .wrap { max-width: 540px; margin: 0 auto; }
 
-  .devnote { font-size: var(--eq-font-xs); color: var(--eq-text-muted); margin-bottom: var(--eq-space-lg); line-height: 1.6; }
-  .devnote code { font-family: var(--eq-font-mono); }
-
   /* ---- blocks ---- */
   .blk { background: var(--eq-bg-card); border: 1px solid var(--eq-border); border-radius: var(--eq-card-radius); margin-bottom: var(--eq-space-md); overflow: hidden; }
   .blk-h { display: flex; align-items: center; gap: var(--eq-space-sm); padding: var(--eq-space-md) var(--eq-card-padding); border-bottom: 1px solid var(--eq-border); }
@@ -140,21 +137,20 @@
 </style>
 </head>
 <body>
+<!--
+  Standalone diagnostic page, linked from the nav dock (Status) -- not yet
+  in the service worker precache. Reads workouts/health/weight straight
+  from this device's own gym.html/health.html localStorage keys, not
+  through Supabase (see the "Real data" comment in the <script
+  type="module"> below for exactly which keys and how they're converted)
+  -- it only ever reflects what this one browser has logged locally, not
+  what's synced from other devices. Arm/chest and December's live
+  scorecard values are still genuinely unwired (no data source at all,
+  not just unsynced). Indicator-lift name mismatches between
+  po_coach_v1.exercises and mcp-shapes.json's _indicator_lifts log to
+  console.warn only, not shown on the page.
+-->
 <div class="wrap">
-
-  <div class="devnote">
-    Diagnostic page, linked from the nav dock (Status) as of 2026-08-02 — not yet in the service worker precache. No auth-gate.js lock-screen check here, same as every other dock page (that script exists in js/ but isn't actually wired into any page in this app despite landing-guard.js's comment implying otherwise).
-    Reads <code>docs/programme.json</code> live via <code>js/status.js</code>, and reads
-    workouts/health/weight straight from <code>gym.html</code>'s and <code>health.html</code>'s
-    own <code>localStorage</code> keys on this device — see the "Real data" comment near
-    the top of the <code>&lt;script type="module"&gt;</code> below for exactly which keys
-    and how they're converted. That means it only sees what this browser has logged
-    locally, not what's synced to other devices via Supabase. Waist, arm/chest, and
-    session-feel still have no data source anywhere, so those and December's live
-    scorecard values still show their honest empty states — check the console for any
-    indicator-lift name mismatches between <code>po_coach_v1.exercises</code> and
-    <code>mcp-shapes.json</code>'s <code>_indicator_lifts</code>.
-  </div>
 
   <!-- BUSY MODE -->
   <div class="pmode" id="pmode">
@@ -172,7 +168,7 @@
     <div class="blk-b">
       <div class="ph-name" id="p-name">—</div>
       <div class="ph-sub" id="p-sub">—</div>
-      <div class="bar"><i id="p-bar" style="width:0%"></i></div>
+      <div class="bar" id="p-bar-track"><i id="p-bar" style="width:0%"></i></div>
       <div class="bar-k"><span id="p-from">—</span><span id="p-to">—</span></div>
       <dl class="mini">
         <div><dt>Next checkpoint</dt><dd id="p-chk">—</dd></div>
@@ -415,9 +411,34 @@ function esc(s) {
   return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 const MS_PER_DAY = 86400000;
+const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 function toDay(d) {
   const dt = new Date(d);
   return Date.UTC(dt.getUTCFullYear(), dt.getUTCMonth(), dt.getUTCDate());
+}
+
+// Sessions logged vs. scheduled within a phase's date range, capped at
+// `day` -- same "scheduled = Mon/Wed/Fri per programme.sessions, logged =
+// distinct dates with any real set" logic evaluateFlags' missed-session
+// rule uses, just scoped to one phase's own range instead of derived from
+// workouts' min/max date span.
+function countPhaseSessions(phase, workoutsList, day) {
+  const start = toDay(phase.start);
+  const end = Math.min(toDay(phase.end), day);
+  if (end < start) return { logged: 0, scheduled: 0 };
+  const loggedDays = new Set();
+  for (const entry of workoutsList) {
+    for (const s of entry.sets) {
+      const d = toDay(new Date(s.date));
+      if (d >= start && d <= end) loggedDays.add(d);
+    }
+  }
+  let scheduled = 0;
+  for (let d = start; d <= end; d += MS_PER_DAY) {
+    const dow = WEEKDAYS[new Date(d).getUTCDay()];
+    if (programme.sessions.some((s) => s.day === dow)) scheduled++;
+  }
+  return { logged: loggedDays.size, scheduled };
 }
 function fmtDate(iso) {
   const dt = new Date(iso + (String(iso).length === 10 ? 'T00:00:00Z' : ''));
@@ -478,12 +499,16 @@ async function turnOffFromExpired() {
 $('pm-btn').addEventListener('click', toggleBusyMode);
 $('pm-off').addEventListener('click', turnOffFromExpired);
 
+function renderSessionCount(phase) {
+  const counts = countPhaseSessions(phase, workouts.workouts, toDay(today));
+  $('p-sess').textContent = counts.scheduled > 0 ? counts.logged + ' of ' + counts.scheduled : '—';
+}
+
 // ---- 01 Position ----
 function renderPosition() {
   const phase = currentPhase(today);
   const cp = nextCheckpoint(today);
   $('p-chk').textContent = cp ? cp.label + ' · ' + fmtDate(cp.date) : '—';
-  $('p-sess').textContent = 'Not wired yet';
 
   if (!phase) {
     const first = programme.phases[0];
@@ -491,28 +516,36 @@ function renderPosition() {
 
     if (toDay(today) < toDay(first.start)) {
       // Before day 1 -- a countdown to the real start, not an empty state.
+      // Bar is hidden entirely rather than styled to 0% -- a 0%-width fill
+      // still leaves the full-width track div visible, which read as "the
+      // phase looks complete" rather than "hasn't started".
       const daysOut = Math.round((toDay(first.start) - toDay(today)) / MS_PER_DAY);
       $('p-name').textContent = first.name;
       $('p-sub').textContent = 'Starts ' + fmtDate(first.start) + ' · ' + daysOut + ' day' + (daysOut === 1 ? '' : 's') + ' out';
-      $('p-bar').style.width = '0%';
+      $('p-bar-track').style.display = 'none';
       $('p-from').textContent = fmtDate(first.start);
       $('p-to').textContent = fmtDate(first.end);
+      renderSessionCount(first); // nothing scheduled yet -> renders as "—"
     } else {
       // Past the last phase's end -- a distinct branch, not lumped in with pre-start.
       $('p-name').textContent = 'Programme complete';
       $('p-sub').textContent = 'Ended ' + fmtDate(last.end);
+      $('p-bar-track').style.display = '';
       $('p-bar').style.width = '100%';
       $('p-from').textContent = fmtDate(last.start);
       $('p-to').textContent = fmtDate(last.end);
+      renderSessionCount(last);
     }
     return;
   }
   const progress = phaseProgress(today);
   $('p-name').textContent = phase.name;
   $('p-sub').textContent = phase.id + ' · day ' + progress.daysElapsed + ' of ' + progress.daysTotal;
+  $('p-bar-track').style.display = '';
   $('p-bar').style.width = Math.round(progress.fraction * 100) + '%';
   $('p-from').textContent = fmtDate(phase.start);
   $('p-to').textContent = fmtDate(phase.end);
+  renderSessionCount(phase);
 }
 
 // ---- 02 Today ----

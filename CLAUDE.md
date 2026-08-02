@@ -105,3 +105,20 @@ loads it must use `<script type="module">`, not a plain `<script src>`.
 different "programme" entirely (that page's own workout-programme settings),
 unrelated to `docs/programme.json`'s phases/sessions/checkpoints. Don't
 conflate the two when working in this area.
+
+`js/auth-gate.js` exists but isn't wired into any page in this repo — not
+`gym.html`, not `health.html`, not any other dock page — confirmed by
+grepping every `.html` file. `js/landing-guard.js`'s own comment describes
+auth-gate.js as running first on every gated page; that's aspirational, not
+current. Don't assume a lock-screen check is protecting anything without
+checking the specific page.
+
+`status.html` reads workouts/health/weight straight from `gym.html`'s and
+`health.html`'s own `localStorage` keys on whichever device it's opened on
+(see that file's `<script type="module">` for exactly which keys and how
+they convert) — not through Supabase. It only ever reflects what that one
+browser has logged locally, never what's synced from other devices. Waist
+and session-feel both have real sources (`health.html`'s waist input on
+`po_coach_weights`, `gym.html`'s `session_feel_log_v1`); arm/chest and
+December's live scorecard values are still genuinely unwired — no data
+source exists for them at all, not just unsynced.
