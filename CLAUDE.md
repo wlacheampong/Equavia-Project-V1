@@ -32,6 +32,20 @@ onboarding. One user, one dataset.
   it doesn't redefine values.
 - Mobile matters — this gets used on a phone. Don't build desktop-only layouts.
 
+## Testing
+
+Test runs must **never** connect to the live Supabase backend. Block network
+calls to `*.supabase.co` (and `cdn.jsdelivr.net`, which pulls the Supabase JS
+client) at the browser/tool level before loading any page that calls
+`initCloudSync` — every page does. If a test genuinely needs remote-shaped
+data, use a fixture (a static JSON payload, or one of the real exports in
+`docs/exports/`), never a live read, and never a live write. This isn't
+optional caution: an unblocked test run against `js/sync.js` once pushed
+fabricated task/checklist/goal data straight into the real `app_state` table
+in Supabase, overwriting genuine data — see git history around
+`docs/exports/app_state-backup-2026-08-02T22-10-02.574Z.json` for the
+incident and its recovery. Must not recur.
+
 ## How the change specs are organised
 
 **Note:** the paths below match how `HOW-TO-USE.md` describes setting this up,
