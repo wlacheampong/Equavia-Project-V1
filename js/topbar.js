@@ -147,6 +147,35 @@
 
 body.has-eq-dock { padding-bottom: calc(72px + env(safe-area-inset-bottom)) !important; }
 
+/* ---- New-version reload prompt (fires on serviceworker controllerchange --
+   see registerServiceWorker) ---- */
+.eq-update-banner {
+  position: fixed; left: 50%; top: max(14px, env(safe-area-inset-top));
+  transform: translateX(-50%) translateY(-140%);
+  z-index: 10000;
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 10px 10px 16px;
+  border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(24, 25, 28, 0.96);
+  -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  color: rgba(255, 255, 255, 0.85);
+  font-family: inherit; font-size: 13px;
+  transition: transform 0.25s ease;
+}
+.eq-update-banner.is-shown { transform: translateX(-50%) translateY(0); }
+.eq-update-banner-reload {
+  border: 0; border-radius: 999px; padding: 6px 14px;
+  background: #FAFAFA; color: #16171a;
+  font-family: inherit; font-size: 12.5px; font-weight: 700;
+  cursor: pointer;
+}
+.eq-update-banner-dismiss {
+  border: 0; background: transparent; color: rgba(255, 255, 255, 0.5);
+  font-size: 16px; line-height: 1; padding: 4px; cursor: pointer;
+}
+.eq-update-banner-dismiss:hover { color: rgba(255, 255, 255, 0.85); }
+
 @media (max-width: ${COMPACT_BREAKPOINT}px) {
   .eq-dock-wrap { gap: 8px; bottom: max(14px, calc(8px + env(safe-area-inset-bottom))); }
   .eq-dock { padding: 4px; }
@@ -708,10 +737,43 @@ body.topbar-modal-open { overflow: hidden; touch-action: none; }
     sync();
   }
 
+  // Version-skew guard: with the fetch handler now stale-while-revalidate,
+  // an open tab keeps serving whatever it already has cached until *something*
+  // tells it a new version exists -- this is that something. 'controllerchange'
+  // is the browser's own signal that a *different* service worker (i.e. a
+  // different CACHE_NAME -- sw.js calls skipWaiting()+clients.claim(), so this
+  // fires as soon as a new version activates, not on next navigation) now
+  // controls this page. That's a more reliable and simpler source of truth
+  // than hand-rolling a CACHE_NAME string compare over postMessage would be:
+  // the browser already tracks service-worker identity for us.
+  function showUpdateBanner() {
+    if (document.getElementById('eqUpdateBanner')) return;
+    const banner = document.createElement('div');
+    banner.className = 'eq-update-banner';
+    banner.id = 'eqUpdateBanner';
+    banner.innerHTML =
+      '<span>A new version is available</span>' +
+      '<button type="button" class="eq-update-banner-reload">Reload</button>' +
+      '<button type="button" class="eq-update-banner-dismiss" aria-label="Dismiss">&times;</button>';
+    document.body.appendChild(banner);
+    requestAnimationFrame(() => banner.classList.add('is-shown'));
+    banner.querySelector('.eq-update-banner-reload').addEventListener('click', () => window.location.reload());
+    banner.querySelector('.eq-update-banner-dismiss').addEventListener('click', () => banner.remove());
+  }
+
   function registerServiceWorker() {
     if (!('serviceWorker' in navigator) || isEmbedded()) return;
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('sw.js').catch(() => {});
+    });
+    // Guards against the double-fire some browsers do when both an
+    // already-waiting worker and a freshly-installed one claim in quick
+    // succession -- only the first should prompt.
+    let announced = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (announced) return;
+      announced = true;
+      showUpdateBanner();
     });
   }
 
