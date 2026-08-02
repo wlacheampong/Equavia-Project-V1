@@ -170,9 +170,9 @@
   },
 
   "_indicator_lifts": {
-    "_note": "Match on these exercise name strings as they appear in get_workouts. Names must match exactly or progression tracking silently returns nothing.",
+    "_note": "Match on these exercise name strings as they appear in get_workouts. Names must match exactly or progression tracking silently returns nothing. Verified against the real po_coach_v1.exercises roster (docs/exports/po-coach-2026-08-02T11-03-06-103Z.json) on 2026-08-02 -- A2 matched exactly as 'Overhead Press'. A1, B1, A5 have no match in the current roster: 'Incline Machine Press' exists but is a different exercise (machine, not DB -- that's A3's movement, not A1's; an orphaned log key 'tr_incline_dumbbell_press' suggests a DB variant was created at some point, but it's not in the current roster and holds zero logged sets, so there's nothing real to point A1 at); no chin-up/pull-up movement exists for B1; 'Incline Hammer Curl' exists but is a different exercise from A5's slot. A1/B1/A5 are left as the intended target names -- do not substitute a different movement just because something vaguely adjacent exists -- and resolve once the new programme's exercises enter the log from 2026-08-03.",
     "A1": "Incline DB press",
-    "A2": "Standing barbell OHP",
+    "A2": "Overhead Press",
     "B1": "Weighted chin-up",
     "A5": "Hammer curl"
   },

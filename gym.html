@@ -1993,8 +1993,15 @@ img, video, canvas, svg { max-width: 100%; }
   function trainStoreSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
   function trainSlug(n) { return n.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''); }
 
+  // logs included alongside exercises deliberately -- state.logs is keyed by
+  // exercise id, and those ids are only meaningful within the programme that
+  // assigned them. Snapshotting exercises without logs (the original bug)
+  // meant switching programmes replaced state.exercises wholesale while
+  // state.logs stayed one shared global object, orphaning every id logged
+  // under whichever programme was active before. Logs now travel with their
+  // own programme's exercises as one pair, never split.
   function trainSnapshotCurrent() {
-    return { days: state.days, exercises: state.exercises, splitRotation: state.splitRotation, splitAnchor: state.splitAnchor };
+    return { days: state.days, exercises: state.exercises, logs: state.logs, splitRotation: state.splitRotation, splitAnchor: state.splitAnchor };
   }
   // Re-walk vs equavia-pre-answers-final.md 6.4: the user's real current
   // 5-day program, seeded as this program's exercise data (per the
@@ -2051,12 +2058,13 @@ img, video, canvas, svg { max-width: 100%; }
         id: 'split5', name: '5-Day Split',
         days: ['Upper A', 'Lower A', 'Arms & Shoulders', 'Upper B', 'Lower B'].map((n) => ({ id: trainSlug(n), name: n })),
         exercises: SPLIT5_SEED_EXERCISES.map((e, i) => Object.assign({ id: 'split5_' + i + '_' + Date.now() }, e)),
+        logs: {},
         splitRotation: ['Upper A', 'Lower A', 'Arms & Shoulders', 'Upper B', 'Lower B'], splitAnchor: { date: today, index: 0 },
       },
       {
         id: 'split3', name: '3-Day Split',
         days: ['Upper A', 'Lower', 'Upper B'].map((n) => ({ id: trainSlug(n), name: n })),
-        exercises: [], splitRotation: ['Upper A', 'Lower', 'Upper B'], splitAnchor: { date: today, index: 0 },
+        exercises: [], logs: {}, splitRotation: ['Upper A', 'Lower', 'Upper B'], splitAnchor: { date: today, index: 0 },
       },
     ];
     trainStoreSet(TRAIN_PROGRAMS_KEY, programs);
@@ -2089,6 +2097,11 @@ img, video, canvas, svg { max-width: 100%; }
     if (!target) return;
     state.days = target.days;
     state.exercises = target.exercises;
+    // logs swapped in lockstep with exercises -- see trainSnapshotCurrent()'s
+    // comment. `|| {}` covers programme entries saved before this fix
+    // existed (no logs field yet); that doesn't recover any history already
+    // orphaned by the old behaviour, it just stops making it worse.
+    state.logs = target.logs || {};
     state.splitRotation = target.splitRotation;
     state.splitAnchor = { date: new Date().toISOString().slice(0, 10), index: 0 };
     state.filterDay = target.days[0] ? target.days[0].id : state.filterDay;

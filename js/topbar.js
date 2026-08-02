@@ -23,6 +23,11 @@
       icon: '<rect x="3" y="3" width="18" height="18" rx="4"/><path d="M12 8v8M8 12h8"/>' },
     { key: 'fitness', href: 'gym.html',       label: 'Training',
       icon: '<path d="M6.5 9v6M17.5 9v6M3 10.5v3M21 10.5v3M6.5 12h11"/>' },
+    // Standalone training-programme diagnostic panel (status.js +
+    // programme.json) -- added to the dock as its own 8th icon, a
+    // deliberate exception to the flat-7 constraint noted below.
+    { key: 'status',  href: 'status.html',    label: 'Status',
+      icon: '<path d="M4 16a8 8 0 0 1 16 0"/><path d="M12 16 15 11"/><circle cx="12" cy="16" r="1"/>' },
     // Planner + the old Ability page, merged and renamed: tasks/goals/
     // calendar now sit alongside habits, skills, books and Learn Hub.
     { key: 'planner', href: 'planner.html',   label: 'Ability',
@@ -43,11 +48,10 @@
     { key: 'settings', href: 'settings.html',  label: 'Settings',
       icon: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1-1.55 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.55-1 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34h.09a1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55h.09a1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87v.09a1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.55 1z"/>' }
   ];
-  // The dock shows every destination except Ask (7 icons) -- matches the
-  // Fey reference's flat 7-icon pill with no nested overflow menu, and
-  // keeps "Out of scope: changing what any nav destination contains"
-  // true (Social/Settings stay one tap away, just no longer behind a
-  // second-level "More" sheet).
+  // The dock shows every destination except Ask (8 icons as of adding
+  // 'status' -- originally a flat 7-icon pill matching the Fey reference
+  // with no nested overflow menu; Status was added as a deliberate
+  // exception to that count, not a design-system change).
   const DOCK_PAGES = PAGES.filter((p) => p.key !== 'ask');
   const COMPACT_BREAKPOINT = 480; // below this, dock/search shrink further to stay clear of phone-width edges
 

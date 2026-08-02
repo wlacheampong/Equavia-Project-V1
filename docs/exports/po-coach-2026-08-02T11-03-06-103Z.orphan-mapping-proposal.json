@@ -1,0 +1,49 @@
+{
+  "source": "po-coach-2026-08-02T11-03-06-103Z.json",
+  "generatedAt": "2026-08-02T12:26:55.983Z",
+  "matchThreshold": 0.5,
+  "matched": [],
+  "unmatched": [
+    {
+      "orphanedId": "tr_cable_triceps_pushdown",
+      "sessionsAffected": 1,
+      "dateRange": {
+        "first": "2026-07-29T11:00:00.000Z",
+        "last": "2026-07-29T11:00:00.000Z"
+      },
+      "orphanedSlug": "cable triceps pushdown",
+      "nearestExerciseId": "seed_1_1783784444743",
+      "nearestExerciseName": "Cable Row",
+      "score": 0.25,
+      "confidence": "no confident match"
+    }
+  ],
+  "noSlug": [],
+  "emptyOrphans": [
+    "tr_pull_up",
+    "tr_leg_curl",
+    "tr_calf_raise",
+    "tr_face_pulls",
+    "tr_hammer_curl",
+    "tr_barbell_curl",
+    "tr_lat_pulldown",
+    "tr_back_extension",
+    "tr_overhead_press",
+    "tr_dips_near_failure",
+    "tr_hanging_leg_raise",
+    "tr_romanian_deadlift",
+    "tr_chest_supported_row",
+    "tr_dumbbell_bench_press",
+    "tr_bulgarian_split_squat",
+    "tr_incline_machine_press",
+    "tr_incline_dumbbell_press",
+    "tr_supinated_lat_pulldown",
+    "tr_face_pulls_or_rear_delt_fly",
+    "tr_machine_press_stretch_focus",
+    "tr_back_squat_or_trap_bar_deadlift",
+    "tr_machine_lateral_raise_rest_pause",
+    "tr_barbell_or_cable_curl_2nd_variant",
+    "tr_reverse_plank_dead_hang_30_60s_each",
+    "tr_seated_cable_row_neutral_close_grip"
+  ]
+}

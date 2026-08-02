@@ -310,13 +310,15 @@
     }
   ],
 
+  "_checkpoints_note": "indicator_lifts[].name checked 2026-08-02 against the real po_coach_v1.exercises roster (docs/exports/po-coach-2026-08-02T11-03-06-103Z.json). Only A2 had a real match: 'Overhead press' -> 'Overhead Press' (exact). A1 ('Incline DB press'), B1 ('Weighted chin'), and A5 ('Hammer curl' / Month 10's 'Pinwheel curl') are unchanged and left as the intended target names -- none exists in the current roster, and nothing close enough counts as a substitute: A1's roster has 'Incline Machine Press' (that's A3's movement -- machine, not DB) and an orphaned, zero-sets log key 'tr_incline_dumbbell_press' (created at some point, never logged, not in the current roster); B1 has no chin-up/pull-up movement at all; A5's roster has 'Incline Hammer Curl', a different exercise from this slot. All three resolve once the new programme's exercises enter the log from phases[0].start (2026-08-03). Month 10's 'Pinwheel curl' is a deliberate exercise-rotation swap per master-plan-v2.md §4.6, not a naming inconsistency -- left as-is.",
+
   "checkpoints": [
     {
       "date": "2026-12-20",
       "label": "Month 4",
       "indicator_lifts": [
         { "id": "A1", "name": "Incline DB press", "target": "38 kg x 5" },
-        { "id": "A2", "name": "Overhead press", "target": "58-60 kg x 5" },
+        { "id": "A2", "name": "Overhead Press", "target": "58-60 kg x 5" },
         { "id": "B1", "name": "Weighted chin", "target": "+8-12 kg x 5" },
         { "id": "A5", "name": "Hammer curl", "target": "20 kg x 6" }
       ],
@@ -328,7 +330,7 @@
       "label": "Month 7",
       "indicator_lifts": [
         { "id": "A1", "name": "Incline DB press", "target": "40 kg x 5" },
-        { "id": "A2", "name": "Overhead press", "target": "62 kg x 5" },
+        { "id": "A2", "name": "Overhead Press", "target": "62 kg x 5" },
         { "id": "B1", "name": "Weighted chin", "target": "+14-18 kg x 5" },
         { "id": "A5", "name": "Hammer curl", "target": "22 kg x 6" }
       ],
@@ -340,7 +342,7 @@
       "label": "Month 10",
       "indicator_lifts": [
         { "id": "A1", "name": "Incline DB press", "target": "42 kg x 5" },
-        { "id": "A2", "name": "Overhead press", "target": "65 kg x 5" },
+        { "id": "A2", "name": "Overhead Press", "target": "65 kg x 5" },
         { "id": "B1", "name": "Weighted chin", "target": "+20 kg x 5" },
         { "id": "A5", "name": "Pinwheel curl", "target": "24 kg x 6" }
       ],
@@ -352,7 +354,7 @@
       "label": "Month 12 / Final",
       "indicator_lifts": [
         { "id": "A1", "name": "Incline DB press", "target": "42 kg x 5" },
-        { "id": "A2", "name": "Overhead press", "target": "65 kg x 5" },
+        { "id": "A2", "name": "Overhead Press", "target": "65 kg x 5" },
         { "id": "B1", "name": "Weighted chin", "target": "+20 kg x 5" },
         { "id": "A5", "name": "Hammer curl", "target": "24 kg x 6" }
       ],

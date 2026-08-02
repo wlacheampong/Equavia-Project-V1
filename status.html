@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Training status</title>
+<script src="js/topbar.js" defer></script>
 <link rel="stylesheet" href="css/equavia-core.css">
 <style>
   body { padding: var(--eq-page-padding) var(--eq-page-padding) 60px; }
@@ -142,7 +143,7 @@
 <div class="wrap">
 
   <div class="devnote">
-    Standalone diagnostic page — not linked from nav or the service worker precache.
+    Diagnostic page, linked from the nav dock (Status) as of 2026-08-02 — not yet in the service worker precache. No auth-gate.js lock-screen check here, same as every other dock page (that script exists in js/ but isn't actually wired into any page in this app despite landing-guard.js's comment implying otherwise).
     Reads <code>docs/programme.json</code> live via <code>js/status.js</code>, and reads
     workouts/health/weight straight from <code>gym.html</code>'s and <code>health.html</code>'s
     own <code>localStorage</code> keys on this device — see the "Real data" comment near
