@@ -926,11 +926,10 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
 /* ===== Component 9: Checklists + Quick Note (sidebar) ===== */
 .chk-card { margin-bottom: 12px; }
 .chk-head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
-.chk-icon { font-size: 15px; }
 .chk-name { font-size: 13.5px; font-weight: 700; color: var(--text-primary); flex: 1; }
 .chk-edit-toggle {
-  flex: 0 0 auto; border: 0; background: transparent; cursor: pointer; font-size: 12px;
-  color: var(--text-tertiary); padding: 4px 6px; border-radius: 8px; line-height: 1;
+  flex: 0 0 auto; border: 0; background: transparent; cursor: pointer; font-size: 14px;
+  font-weight: 700; color: var(--text-tertiary); padding: 4px 8px; border-radius: 8px; line-height: 1;
   transition: background 0.2s, color 0.2s;
 }
 .chk-edit-toggle:hover { background: rgba(var(--eq-text-primary-rgb), 0.06); color: var(--text-primary); }
@@ -3381,9 +3380,9 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
 
   // ---------- Checklists (Morning / Mid-Day / Evening) ----------
   const CHECKLISTS = [
-    { id: 'morning', icon: '🌅', name: 'Morning Checklist' },
-    { id: 'midday',  icon: '☀️', name: 'Mid-Day Checklist' },
-    { id: 'evening', icon: '🌙', name: 'Evening Checklist' }
+    { id: 'morning', name: 'Morning Checklist' },
+    { id: 'midday',  name: 'Mid-Day Checklist' },
+    { id: 'evening', name: 'Evening Checklist' }
   ];
   let chkEditMode = {};
   let chkExpandedItem = {};
@@ -3409,9 +3408,6 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
 
     const head = document.createElement('div');
     head.className = 'chk-head';
-    const iconSpan = document.createElement('span');
-    iconSpan.className = 'chk-icon';
-    iconSpan.textContent = c.icon;
     const nameSpan = document.createElement('span');
     nameSpan.className = 'chk-name';
     nameSpan.textContent = c.name;
@@ -3419,12 +3415,11 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
     editBtn.type = 'button';
     editBtn.className = 'chk-edit-toggle' + (editing ? ' active' : '');
     editBtn.title = editing ? 'Done editing' : 'Edit checklist';
-    editBtn.textContent = editing ? '✓' : '✏️';
+    editBtn.textContent = editing ? '✓' : '+';
     editBtn.addEventListener('click', () => {
       chkEditMode[c.id] = !chkEditMode[c.id];
       renderChecklists();
     });
-    head.appendChild(iconSpan);
     head.appendChild(nameSpan);
     head.appendChild(editBtn);
     card.appendChild(head);
@@ -3435,7 +3430,7 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
     if (!items.length) {
       const empty = document.createElement('div');
       empty.className = 'chk-empty';
-      empty.textContent = editing ? 'Add a task below.' : 'No tasks yet — tap ✏️ to add one.';
+      empty.textContent = editing ? 'Add a task below.' : 'No tasks yet — tap + to add one.';
       list.appendChild(empty);
     }
 
