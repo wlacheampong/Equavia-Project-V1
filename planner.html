@@ -1137,6 +1137,7 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
   display: flex; align-items: center; justify-content: center;
 }
 .cal-day-col.is-today .cal-day-num { background: var(--eq-text-primary); color: var(--eq-bg-primary); }
+.cal-day-head.is-today .cal-day-num { background: var(--eq-text-primary); color: var(--eq-bg-primary); }
 .cal-day-events {
   flex: 1; padding: 6px; display: flex; flex-direction: column; gap: 4px;
   overflow-y: auto; max-height: 640px;
@@ -1195,9 +1196,12 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
 .cal-month-events { width: 100%; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .cal-month-event {
   width: 100%;
-  font-size: 9.5px; line-height: 1.35;
-  padding: 1px 5px;
-  border-radius: 4px;
+  /* radius/font-size/padding matched to .cal-event (week) and
+     .cal-day-event-block (day) -- one shared chip treatment across all
+     three views instead of three different sets of numbers. */
+  font-size: 10.5px; line-height: 1.35;
+  padding: 5px 7px;
+  border-radius: 7px;
   background: rgba(var(--eq-accent-rgb), 0.14);
   border-left: 2px solid var(--eq-accent);
   color: var(--text-primary);
@@ -1246,10 +1250,12 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
 .cal-day-row-slot:hover { background: rgba(var(--eq-text-primary-rgb), 0.03); }
 .cal-day-row.is-current-hour .cal-day-row-slot { background: rgba(var(--eq-accent-rgb), 0.07); }
 .cal-day-event-block {
-  padding: 6px 9px; border-radius: 8px;
+  /* Same match-up as .cal-month-event's comment -- shared with .cal-event
+     (week) and .cal-month-event (month) rather than a third set of numbers. */
+  padding: 5px 7px; border-radius: 7px;
   background: rgba(var(--eq-accent-rgb), 0.14);
   border-left: 2px solid var(--eq-accent);
-  font-size: 11.5px; line-height: 1.3;
+  font-size: 10.5px; line-height: 1.3;
   color: var(--text-primary);
   cursor: pointer;
 }
@@ -2000,6 +2006,7 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
     </div>
     <div class="cal-quickadd-preview" id="calQuickAddPreview" style="display:none;"></div>
     <div class="cal-day-grid" id="calDayGrid" style="display:none;">
+      <div class="cal-day-head" id="calDayHead"></div>
       <div class="cal-day-allday" id="calDayAllDay"></div>
       <div class="cal-day-timeline" id="calDayTimeline"></div>
     </div>
@@ -4202,9 +4209,11 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
   }
 
   function renderDayGrid(events) {
+    const head = document.getElementById('calDayHead');
     const allDayWrap = document.getElementById('calDayAllDay');
     const timeline = document.getElementById('calDayTimeline');
-    if (!allDayWrap || !timeline) return;
+    if (!head || !allDayWrap || !timeline) return;
+    head.innerHTML = '';
     allDayWrap.innerHTML = '';
     timeline.innerHTML = '';
 
@@ -4228,6 +4237,20 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
 
     const now = new Date();
     const isToday = calIsSameDay(calAnchor, now);
+
+    // Same treatment as week view's per-column header (.cal-day-name +
+    // .cal-day-num) -- day view previously had no header at all, which was
+    // the main visible inconsistency against week/month.
+    head.className = 'cal-day-head' + (isToday ? ' is-today' : '');
+    const dname = document.createElement('div');
+    dname.className = 'cal-day-name';
+    dname.textContent = CAL_DOW[calAnchor.getDay()];
+    const dnum = document.createElement('div');
+    dnum.className = 'cal-day-num';
+    dnum.textContent = String(calAnchor.getDate());
+    head.appendChild(dname);
+    head.appendChild(dnum);
+
     for (let hour = 0; hour < 24; hour++) {
       const row = document.createElement('div');
       row.className = 'cal-day-row' + (isToday && now.getHours() === hour ? ' is-current-hour' : '');
