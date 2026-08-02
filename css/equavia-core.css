@@ -35,7 +35,7 @@
   --eq-text-muted:        #5a5d64;
   --eq-text-placeholder:  #5a5d64; /* same value as muted */
 
-  --eq-accent:            #ff9860; /* coral-orange: toggles on, primary action. Use sparingly -- it reads as premium because it's rare (design-tokens.md), not on every button. */
+  --eq-accent:            #c9cbd1; /* neutral off-white: toggles on, primary action. Deliberately distinct in lightness from --eq-text-primary (#f5f5f5) and --eq-text-secondary (#8a8d94) so active/selected/today/focus states stay visible against both. Use sparingly -- it reads as premium because it's rare (design-tokens.md), not on every button. */
   --eq-danger:            #f01a28; /* vivid crimson */
   --eq-success:           #6fa491; /* muted sage green -- deliberately not neon */
   --eq-warning:           #F2C063; /* design-tokens.md has no warning/caution token -- left at its prior value, still a distinct semantic from danger/negative */
@@ -58,7 +58,7 @@
   --eq-chart-grid: #1e2024;
 
   /* ---- RGB triplets, for rgba(var(--eq-*-rgb), alpha) translucent fills ---- */
-  --eq-accent-rgb:        255, 152, 96;
+  --eq-accent-rgb:        201, 203, 209;
   --eq-danger-rgb:        240, 26, 40;
   --eq-success-rgb:       111, 164, 145;
   --eq-warning-rgb:       242, 192, 99;
