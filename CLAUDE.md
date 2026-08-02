@@ -31,6 +31,14 @@ onboarding. One user, one dataset.
   page's own local `:root` only aliases those tokens under page-local names,
   it doesn't redefine values.
 - Mobile matters — this gets used on a phone. Don't build desktop-only layouts.
+- Any change to a file listed in `sw.js`'s `APP_SHELL` requires bumping
+  `CACHE_NAME` in that same commit. `sw.js` serves the app shell cache-first
+  with no revalidation against a stale precache manifest (even after moving
+  to stale-while-revalidate — that still serves the stale cached copy for the
+  *current* load, only refreshing it in the background for next time), so a
+  forgotten bump means clients keep serving old code indefinitely, silently.
+  This already caused one real incident — see the CACHE_NAME history around
+  2026-08-02 for the planner.html/js/sync.js version-skew case.
 
 ## Testing
 
