@@ -368,6 +368,22 @@ a { color: inherit; text-decoration: none; }
 .cal-day-allday:empty { display: none; padding: 0; }
 .cal-day-allday:not(:empty) { border-bottom: 1px solid var(--eq-border); }
 .cal-day-timeline { max-height: 560px; overflow-y: auto; }
+/* .cal-tile-body/.cal-expand-modal's own scrollbar-width:none (above) only
+   hides those two containers' own scrollbars -- it never reaches these
+   inner elements, which are the ones that actually overflow and scroll.
+   24 hourly rows / a day's events / a week grid scrolling is legitimate;
+   give them a visible thin scrollbar instead of the raw browser default,
+   same treatment as planner.html's .cal-week-grid/.shop-scroll exception. */
+.cal-day-timeline, .cal-day-events, .cal-week-grid {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(var(--eq-text-primary-rgb), 0.25) transparent;
+}
+.cal-day-timeline::-webkit-scrollbar, .cal-day-events::-webkit-scrollbar, .cal-week-grid::-webkit-scrollbar {
+  width: 6px !important; height: 6px !important; display: block !important;
+}
+.cal-day-timeline::-webkit-scrollbar-thumb, .cal-day-events::-webkit-scrollbar-thumb, .cal-week-grid::-webkit-scrollbar-thumb {
+  background: rgba(var(--eq-text-primary-rgb), 0.25); border-radius: 999px;
+}
 .cal-day-row { display: grid; grid-template-columns: 64px 1fr; border-bottom: 1px solid var(--eq-border); min-height: 52px; }
 .cal-day-row:last-child { border-bottom: none; }
 .cal-day-row-time { padding: 6px 10px 0 0; text-align: right; font-family: var(--eq-font-mono); font-size: 9.5px; color: var(--eq-text-muted); }

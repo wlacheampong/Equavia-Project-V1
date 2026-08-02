@@ -93,17 +93,20 @@ body::after {
 html, body { scrollbar-width: none; -ms-overflow-style: none; }
 *::-webkit-scrollbar { width: 0 !important; height: 0 !important; display: none !important; }
 
-/* ...except the calendar week grid and shopping list, which scroll
-   horizontally with no other visual cue that they do -- give these two a
-   deliberately thin, visible scrollbar instead of inheriting the global hide. */
-.cal-week-grid, .shop-scroll {
+/* ...except a handful of elements that scroll with no other visual cue that
+   they do -- the calendar week grid (horizontal), the shopping list
+   (horizontal), the day view's 24-hour timeline, and the week view's
+   per-day event list (both vertical, both legitimately overflow). Give
+   these a deliberately thin, visible scrollbar instead of inheriting the
+   global hide. */
+.cal-week-grid, .shop-scroll, .cal-day-timeline, .cal-day-events {
   scrollbar-width: thin;
   scrollbar-color: rgba(var(--eq-text-primary-rgb), 0.25) transparent;
 }
-.cal-week-grid::-webkit-scrollbar, .shop-scroll::-webkit-scrollbar {
+.cal-week-grid::-webkit-scrollbar, .shop-scroll::-webkit-scrollbar, .cal-day-timeline::-webkit-scrollbar, .cal-day-events::-webkit-scrollbar {
   width: 6px !important; height: 6px !important; display: block !important;
 }
-.cal-week-grid::-webkit-scrollbar-thumb, .shop-scroll::-webkit-scrollbar-thumb {
+.cal-week-grid::-webkit-scrollbar-thumb, .shop-scroll::-webkit-scrollbar-thumb, .cal-day-timeline::-webkit-scrollbar-thumb, .cal-day-events::-webkit-scrollbar-thumb {
   background: rgba(var(--eq-text-primary-rgb), 0.25); border-radius: 999px;
 }
 
@@ -1508,10 +1511,6 @@ body::after {
   margin: 0 auto;
   padding: 24px 16px 60px;
 }
-
-/* Hide scrollbars everywhere */
-html, body { scrollbar-width: none; -ms-overflow-style: none; }
-*::-webkit-scrollbar { width: 0 !important; height: 0 !important; display: none !important; }
 
 /* Section title */
 .section { margin-bottom: 18px; scroll-margin-top: 18px; }

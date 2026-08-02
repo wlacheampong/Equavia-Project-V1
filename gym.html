@@ -522,6 +522,11 @@ img, video, canvas, svg { max-width: 100%; }
   /* ── popups (history / form / swap / tune / overflow menu) ─────────── */
   .scrim { position:fixed; inset:0; z-index:60; display:flex; align-items:flex-start; justify-content:center; padding: max(20px, env(safe-area-inset-top)) 14px 40px; overflow-y:auto; background: rgba(0,0,0,.28); opacity:0; animation: scrimIn .18s var(--ease) forwards; }
   @keyframes scrimIn { to { opacity:1; } }
+  /* No global scrollbar-hide on this page -- .scrim scrolls when modal
+     content exceeds the viewport, raw browser default otherwise. */
+  .scrim { scrollbar-width: thin; scrollbar-color: rgba(var(--eq-text-primary-rgb), 0.25) transparent; }
+  .scrim::-webkit-scrollbar { width: 6px !important; height: 6px !important; display: block !important; }
+  .scrim::-webkit-scrollbar-thumb { background: rgba(var(--eq-text-primary-rgb), 0.25); border-radius: 999px; }
   .pop { width:100%; max-width:520px; margin:auto; background: var(--card); border:1px solid var(--line); border-radius: var(--radius-lg); padding:24px 22px 26px; position:relative; backdrop-filter: blur(20px) saturate(1.2); -webkit-backdrop-filter: blur(20px) saturate(1.2); box-shadow:0 30px 80px rgba(0,0,0,.55); opacity:0; transform: translateY(12px) scale(.985); animation: popIn .42s var(--spring) forwards; }
   @keyframes popIn { to { opacity:1; transform:none; } }
   .popHead { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
@@ -917,7 +922,11 @@ img, video, canvas, svg { max-width: 100%; }
   border: 1px solid var(--border-strong);
   border-radius: 16px;
   padding: 22px; max-height: 88vh; overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(var(--eq-text-primary-rgb), 0.25) transparent;
 }
+.po-modal::-webkit-scrollbar { width: 6px !important; height: 6px !important; display: block !important; }
+.po-modal::-webkit-scrollbar-thumb { background: rgba(var(--eq-text-primary-rgb), 0.25); border-radius: 999px; }
 .po-modal h3 {
   margin: 0 0 16px; font-size: 17px; font-weight: 700;
 }
