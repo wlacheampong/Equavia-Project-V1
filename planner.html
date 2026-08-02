@@ -474,7 +474,6 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
 .gm-priority-badge.gm-priority-p2 { background: rgba(var(--eq-text-primary-rgb), 0.08); color: var(--text-tertiary); }
 .gm-priority-badge.gm-priority-p3 { background: rgba(var(--eq-text-primary-rgb), 0.04); color: var(--eq-text-secondary); } /* was --text-quaternary (~2.3:1, fails AA) */
 .gm-priority-badge:disabled { cursor: not-allowed; opacity: 0.5; }
-.ss-p1-hint { font-size: 12px; color: var(--eq-warning); margin: -4px 0 10px; }
 @keyframes gm-queue-flash {
   0%   { background: rgba(var(--eq-text-primary-rgb), 0.035); transform: scale(1); }
   40%  { background: rgba(var(--eq-warning-rgb), 0.32); transform: scale(1.015); }
@@ -2018,12 +2017,15 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
 
 <div class="dr-modal-bg" id="ssModalBg">
   <div class="dr-modal">
-    <h3>Suggest a time slot</h3>
+    <h3>Set a time</h3>
     <div class="dr-field">
       <label>Task</label>
       <div class="ss-task-text" id="ssTaskText"></div>
     </div>
-    <div class="ss-p1-hint" id="ssP1Hint" style="display:none;"></div>
+    <div class="dr-field">
+      <label for="ssTimeInput">Time</label>
+      <input type="time" id="ssTimeInput">
+    </div>
     <div class="dr-field">
       <label for="ssDurationInput">Duration (minutes)</label>
       <input type="number" id="ssDurationInput" min="5" step="5" value="30">
@@ -2031,7 +2033,8 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
     <div class="ss-result" id="ssResult"></div>
     <div class="dr-modal-actions">
       <button type="button" class="dr-btn-cancel" id="ssCancelBtn">Cancel</button>
-      <button type="button" class="dr-btn-save" id="ssAcceptBtn" disabled>Add to Calendar</button>
+      <button type="button" class="dr-btn-cancel" id="ssGcalBtn" style="display:none;">Also add to Calendar</button>
+      <button type="button" class="dr-btn-save" id="ssSaveBtn">Save</button>
     </div>
   </div>
 </div>
@@ -2700,8 +2703,8 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
       slotBtn.type = 'button';
       slotBtn.className = 'gm-slot-btn';
       slotBtn.textContent = '🕐';
-      slotBtn.title = 'Suggest a time slot';
-      slotBtn.addEventListener('click', (e) => { e.stopPropagation(); ssOpen(goal.text, priorityOf(goal), key); });
+      slotBtn.title = 'Set a time';
+      slotBtn.addEventListener('click', (e) => { e.stopPropagation(); ssOpen(goal.text, key, idx, reload); });
       li.appendChild(slotBtn);
     }
 
@@ -3670,133 +3673,66 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
   }
 
   // ============================================================
-  // AUTO-SUGGEST TIME SLOT (3.6) -- rules-based, no AI. Finds the first
-  // open gap today that fits the task's duration, inside waking hours,
-  // that doesn't overlap any real event (local or Google Calendar). No
-  // protected blocks for v1 (confirmed) -- only actual calendar events
-  // are treated as busy.
+  // SET A TIME -- the task's time is chosen directly, not suggested. No
+  // gap-finding, no waking-hours/busy-interval logic. Saving writes
+  // task.time onto the goal itself; if Google Calendar is connected, a
+  // second button optionally pushes the same time to it as an event.
   // ============================================================
   const SS_DEFAULT_DURATION_MIN = 30;
 
-  function ssWakingHours() {
-    const saved = storeGet('day_ring_times_v1');
-    const wakeHour = saved && typeof saved.wakeHour === 'number' ? saved.wakeHour : 8;
-    const bedHourRaw = saved && typeof saved.bedHour === 'number' ? saved.bedHour : 0;
-    const bedHour = bedHourRaw <= wakeHour ? bedHourRaw + 24 : bedHourRaw; // past-midnight bedtime, same convention as dashboard's day ring
-    return { wakeHour, bedHour };
-  }
-
-  async function ssGatherBusyIntervals() {
-    const intervals = [];
-    const todayKeyStr = calDateKey(new Date());
-    getLocalCalEvents().filter(e => e.dateKey === todayKeyStr && e.time).forEach(e => {
-      const [h, m] = e.time.split(':').map(Number);
-      const start = new Date(); start.setHours(h, m || 0, 0, 0);
-      const end = new Date(start.getTime() + (Number(e.duration) || 30) * 60000);
-      intervals.push({ start, end });
-    });
-    const tokens = getGcalTokens();
-    if (tokens && tokens.access_token) {
-      try {
-        const start = calMidnight(new Date());
-        const events = await fetchGcalEvents(start.toISOString(), calAddDays(start, 1).toISOString());
-        (events || []).forEach(ev => {
-          const s = ev.start && (ev.start.dateTime || ev.start.date);
-          const e2 = ev.end && (ev.end.dateTime || ev.end.date);
-          if (s && e2) intervals.push({ start: new Date(s), end: new Date(e2) });
-        });
-      } catch (e) { /* no Google Calendar connected, or a transient failure -- suggest around local events only */ }
-    }
-    return intervals.sort((a, b) => a.start - b.start);
-  }
-
-  // Walks forward from max(wake time, now), stepping past each busy
-  // interval in order, returning the first gap that both fits the
-  // duration and ends before bedtime. Cursor is rounded up to the next
-  // 5-minute mark so a suggestion never lands on an odd time like 2:47.
-  function ssFindSlot(busyIntervals, durationMin, wakeHour, bedHour) {
-    const today = new Date(); today.setHours(0, 0, 0, 0);
-    const dayEnd = new Date(today.getTime() + bedHour * 3600000);
-    const durationMs = durationMin * 60000;
-    let cursor = new Date(Math.max(today.getTime() + wakeHour * 3600000, Date.now()));
-    cursor = new Date(Math.ceil(cursor.getTime() / 300000) * 300000);
-
-    for (const busy of busyIntervals) {
-      if (busy.end <= cursor) continue;
-      if (cursor.getTime() + durationMs <= busy.start.getTime()) {
-        return cursor.getTime() + durationMs <= dayEnd.getTime() ? { start: cursor, end: new Date(cursor.getTime() + durationMs) } : null;
-      }
-      if (busy.start <= cursor) cursor = new Date(Math.max(cursor.getTime(), busy.end.getTime()));
-    }
-    return cursor.getTime() + durationMs <= dayEnd.getTime() ? { start: cursor, end: new Date(cursor.getTime() + durationMs) } : null;
-  }
-
-  function ssFmtTime(d) { return d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }); }
-
   let ssCurrentTaskText = null;
-  let ssCurrentSlot = null;
+  let ssCurrentKey = null;
+  let ssCurrentIdx = null;
+  let ssCurrentReload = null;
 
-  async function ssRecompute() {
-    const resultEl = document.getElementById('ssResult');
-    const acceptBtn = document.getElementById('ssAcceptBtn');
-    resultEl.textContent = 'Finding a slot…';
-    acceptBtn.disabled = true;
-    ssCurrentSlot = null;
-    const duration = Number(document.getElementById('ssDurationInput').value) || SS_DEFAULT_DURATION_MIN;
-    const { wakeHour, bedHour } = ssWakingHours();
-    const busy = await ssGatherBusyIntervals();
-    const slot = ssFindSlot(busy, duration, wakeHour, bedHour);
-    ssCurrentSlot = slot;
-    if (!slot) {
-      resultEl.textContent = 'No open slot left today for ' + duration + ' minutes — try a shorter duration.';
-      return;
-    }
-    resultEl.textContent = 'Suggested: ' + ssFmtTime(slot.start) + ' – ' + ssFmtTime(slot.end) + ' today.';
-    acceptBtn.disabled = false;
-  }
-
-  // 6.6: "schedules P1s first" -- this modal only ever suggests one task's
-  // slot at a time (no batch-scheduling flow exists to literally enforce an
-  // order on), so this is a soft advisory nudge rather than a hard block:
-  // if suggesting a slot for a non-P1 task while an undone P1 task in the
-  // same list hasn't had a slot suggested yet, say so.
-  function ssOpen(taskText, priority, key) {
+  function ssOpen(taskText, key, idx, reload) {
     ssCurrentTaskText = taskText;
-    ssCurrentSlot = null;
+    ssCurrentKey = key;
+    ssCurrentIdx = idx;
+    ssCurrentReload = reload;
     document.getElementById('ssTaskText').textContent = taskText;
+    const existing = getGoals(key)[idx] || {};
+    document.getElementById('ssTimeInput').value = existing.time || '';
     document.getElementById('ssDurationInput').value = SS_DEFAULT_DURATION_MIN;
     document.getElementById('ssResult').textContent = '';
-    document.getElementById('ssAcceptBtn').disabled = true;
-
-    const hint = document.getElementById('ssP1Hint');
-    const unscheduledP1 = (priority !== 'P1' && key) ? getGoals(key).find(g => !g.done && priorityOf(g) === 'P1' && g.text !== taskText) : null;
-    if (unscheduledP1) {
-      hint.textContent = '⚠ P1 task "' + unscheduledP1.text + '" hasn\'t been scheduled yet — suggest its slot first?';
-      hint.style.display = '';
-    } else {
-      hint.style.display = 'none';
-    }
-
+    document.getElementById('ssGcalBtn').style.display = getGcalTokens() ? '' : 'none';
     document.getElementById('ssModalBg').classList.add('show');
-    ssRecompute();
   }
   function ssClose() {
     document.getElementById('ssModalBg').classList.remove('show');
   }
+  function ssSaveTime() {
+    const time = document.getElementById('ssTimeInput').value;
+    const list = getGoals(ssCurrentKey);
+    if (!list[ssCurrentIdx]) return null;
+    if (time) list[ssCurrentIdx].time = time; else delete list[ssCurrentIdx].time;
+    setGoals(ssCurrentKey, list);
+    if (ssCurrentReload) ssCurrentReload();
+    return time;
+  }
   function initSuggestSlot() {
-    document.getElementById('ssDurationInput').addEventListener('change', ssRecompute);
     document.getElementById('ssCancelBtn').addEventListener('click', ssClose);
     document.getElementById('ssModalBg').addEventListener('click', (e) => { if (e.target === e.currentTarget) ssClose(); });
-    document.getElementById('ssAcceptBtn').addEventListener('click', async () => {
-      if (!ssCurrentSlot || !ssCurrentTaskText) return;
-      const btn = document.getElementById('ssAcceptBtn');
+    document.getElementById('ssSaveBtn').addEventListener('click', () => {
+      ssSaveTime();
+      ssClose();
+    });
+    document.getElementById('ssGcalBtn').addEventListener('click', async () => {
+      const time = document.getElementById('ssTimeInput').value;
+      if (!time) { document.getElementById('ssResult').textContent = 'Pick a time first.'; return; }
+      const btn = document.getElementById('ssGcalBtn');
       btn.disabled = true; btn.textContent = 'Adding…';
       try {
+        const [h, m] = time.split(':').map(Number);
+        const duration = Number(document.getElementById('ssDurationInput').value) || SS_DEFAULT_DURATION_MIN;
+        const start = new Date(); start.setHours(h, m || 0, 0, 0);
+        const end = new Date(start.getTime() + duration * 60000);
         await createGcalEvent({
           summary: ssCurrentTaskText,
-          start: { dateTime: ssCurrentSlot.start.toISOString(), timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone },
-          end: { dateTime: ssCurrentSlot.end.toISOString(), timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone }
+          start: { dateTime: start.toISOString(), timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone },
+          end: { dateTime: end.toISOString(), timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone }
         });
+        ssSaveTime();
         ssClose();
         // loadCalendar() drives calStatus itself (its own loading/blank
         // states) -- await it first so this confirmation is the last
@@ -3807,7 +3743,7 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
       } catch (e) {
         document.getElementById('ssResult').textContent = e.message || 'Could not add to calendar.';
       } finally {
-        btn.textContent = 'Add to Calendar'; btn.disabled = false;
+        btn.textContent = 'Also add to Calendar'; btn.disabled = false;
       }
     });
   }
