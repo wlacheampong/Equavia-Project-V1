@@ -1346,6 +1346,12 @@ img, video, canvas, svg { max-width: 100%; }
     </div>
 
     <div class="po-set-section">
+      <h4>Custom Exercises</h4>
+      <div class="po-set-list" id="setCustomEx"></div>
+      <button class="po-add-row-btn" id="setAddCustomEx">+ Add custom exercise</button>
+    </div>
+
+    <div class="po-set-section">
       <h4>Data</h4>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
         <button class="po-btn-secondary" id="setExport">Export JSON</button>
@@ -1564,6 +1570,12 @@ img, video, canvas, svg { max-width: 100%; }
     // only script B has in scope. See that function for why this replaced
     // the old, disconnected state.days list this section used to edit.
     if (window.renderPlanDaysSettings) window.renderPlanDaysSettings();
+    // Custom Exercises writes into state.exercises (this store), but the
+    // popup UI it needs (openPop/popHead/svg) and the built-in-library
+    // name check it needs (PROGRAM/SWAPS) only exist in script B's own
+    // scope -- same reason Days is rendered through a window bridge
+    // rather than here.
+    if (window.renderCustomExercises) window.renderCustomExercises();
     $('setGyms').querySelectorAll('.po-set-row').forEach(row => {
       const i = parseInt(row.dataset.i, 10);
       row.querySelector('input').addEventListener('input', e => {
@@ -1606,6 +1618,9 @@ img, video, canvas, svg { max-width: 100%; }
     const name = (prompt('New day name:') || '').trim();
     if (!name) return;
     if (window.addPlanDayFromSettings) window.addPlanDayFromSettings(name);
+  });
+  $('setAddCustomEx').addEventListener('click', () => {
+    if (window.openCustomExerciseForm) window.openCustomExerciseForm(null);
   });
 
   // Export / Import / Reset
@@ -2245,12 +2260,11 @@ function tpDayKey(iso){ return String(iso==null?'':iso).slice(0,10); }
 /* Resolves a plan exercise to its po_coach exercise, creating one the
    first time a lift is seen so nothing is logged into a void.
 
-   A created exercise must carry gym + day: the Progressive Overload
-   picker above filters on exactly those two fields (see getFiltered), so
-   an exercise without them is in the shared log but unreachable from the
-   other half of the page -- which would defeat the point of one log. It
-   is filed under the training day it appears on, and 'both' gyms so no
-   gym filter can hide it. */
+   A created exercise still carries gym + day to match the schema every
+   other state.exercises entry uses, even though nothing in this merged
+   page currently filters by either field. 'both' gym costs nothing and
+   guards against a filter reappearing; day just records where it was
+   actually seen. */
 function tpResolveExercise(S, ex, dayKey, dayName){
   S.exercises = Array.isArray(S.exercises) ? S.exercises : [];
   if(ex.poId){ const hit=S.exercises.find(e=>e.id===ex.poId); if(hit) return hit; }
@@ -2272,6 +2286,130 @@ function tpResolveExercise(S, ex, dayKey, dayName){
   };
   S.exercises.push(created); ex.poId=id; return created;
 }
+
+/* ---- Custom Exercises (Settings) ----------------------------------
+   The only direct create/edit UI onto state.exercises -- everything else
+   that lands there arrives via tpResolveExercise's lazy auto-create just
+   above, untagged, so this list only ever shows what was made here on
+   purpose (state.exercises entries with custom:true).
+
+   Lives in this IIFE (not script A's, where the Settings modal itself is
+   rendered) because it needs the popup shell (openPop/popHead/svg) and
+   the built-in library (PROGRAM/SWAPS) for the duplicate-name check, and
+   only this scope has those -- same reason Days is rendered through a
+   window.renderPlanDaysSettings() bridge instead of inline in script A.
+   Data access goes back through window.PoCoach.getState()/.save(), same
+   as tpResolveExercise, so there is still exactly one writer of state. */
+function tpSlug(name){
+  return String(name||'').toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'').slice(0,40) || 'ex';
+}
+function nextCustomExId(S, name){
+  const used=new Set(S.exercises.map(x=>x.id));
+  const base='custom_'+tpSlug(name);
+  let id=base, n=2; while(used.has(id)) id=base+'_'+(n++);
+  return id;
+}
+/* Built-in library = PROGRAM/SWAPS, a completely separate id namespace
+   from state.exercises -- a name match here can only ever be warned
+   about, never reused/linked.
+
+   Identity uses tpSlug, not tpNormName: tpNormName only lowercases +
+   collapses whitespace, so "Pull Up" and "Pull-Up" read as different
+   names to it even though they slug to the identical "custom_pull_up"
+   id. nextCustomExId's own collision loop keeps that case from ever
+   silently overwriting an id, but a weaker check here would still let
+   the two coexist as unlinked, unwarned duplicates -- exactly the
+   split-history outcome the warning exists to prevent. Matching the
+   ID's own notion of "same exercise" closes that gap. */
+function findLibraryNameMatch(name){
+  const key=tpSlug(name);
+  for(const k of Object.keys(PROGRAM)){
+    const hit=(PROGRAM[k].exercises||[]).find(o=>tpSlug(o.name)===key);
+    if(hit) return hit;
+  }
+  for(const k of Object.keys(SWAPS)){
+    const hit=(SWAPS[k]||[]).find(o=>tpSlug(o.name)===key);
+    if(hit) return hit;
+  }
+  return null;
+}
+function findStateNameMatch(S, name, excludeId){
+  const key=tpSlug(name);
+  return S.exercises.find(x=>x.id!==excludeId && tpSlug(x.name)===key) || null;
+}
+window.renderCustomExercises = function(){
+  const wrap=document.getElementById('setCustomEx'); if(!wrap) return;
+  const PC=window.PoCoach, S=PC && PC.getState && PC.getState(); if(!S) return;
+  S.exercises = Array.isArray(S.exercises) ? S.exercises : [];
+  const customs=S.exercises.filter(x=>x.custom);
+  wrap.innerHTML = customs.length ? customs.map(x=>
+    '<div class="po-set-row" data-id="'+x.id+'" style="cursor:pointer">'
+    + '<span style="flex:1">'+escapeHtml(x.name)
+    + '<span style="display:block;color:var(--text-3);font-size:11px;margin-top:2px">'
+    + (x.bw ? 'bodyweight' : (x.startWeight+S.units)) + ' · ' + x.repMin+'-'+x.repMax+' reps · +'+x.step+S.units
+    + '</span></span>'
+    + '</div>'
+  ).join('') : '<p style="color:var(--text-3);font-size:12px;margin:2px 0 0">No custom exercises yet.</p>';
+  wrap.querySelectorAll('.po-set-row').forEach(row=>{
+    row.addEventListener('click', ()=>{
+      const ex=S.exercises.find(x=>x.id===row.dataset.id);
+      if(ex) window.openCustomExerciseForm(ex);
+    });
+  });
+};
+window.openCustomExerciseForm = function(existing){
+  const PC=window.PoCoach, S=PC && PC.getState && PC.getState(); if(!S) return;
+  S.exercises = Array.isArray(S.exercises) ? S.exercises : [];
+  const draft = existing
+    ? { name:existing.name, bw:!!existing.bw, startWeight:existing.startWeight||0, repMin:existing.repMin, repMax:existing.repMax, step:existing.step }
+    : { name:'', bw:false, startWeight:0, repMin:8, repMax:12, step:2.5 };
+  const u = S.units;
+  const html = popHead(existing?'Edit':'Add', existing?existing.name:'Custom exercise')
+    + '<div class="po-field" style="margin-top:18px"><label>Name</label><input id="ceName" type="text" maxlength="40" value="'+escapeHtml(draft.name)+'" placeholder="Exercise name"></div>'
+    + '<div style="display:flex;align-items:center;gap:8px;margin:14px 0"><input id="ceBw" type="checkbox"'+(draft.bw?' checked':'')+'><label for="ceBw" style="font-size:13px;color:var(--muted)">Bodyweight (no added load)</label></div>'
+    + '<div class="po-field" id="ceWeightField" style="margin-bottom:14px"><label>Starting weight ('+u+')</label><input id="ceWeight" type="number" step="0.5" value="'+draft.startWeight+'"></div>'
+    + '<div style="display:flex;gap:10px;margin-bottom:14px">'
+    +   '<div class="po-field" style="flex:1"><label>Rep min</label><input id="ceRepMin" type="number" value="'+draft.repMin+'"></div>'
+    +   '<div class="po-field" style="flex:1"><label>Rep max</label><input id="ceRepMax" type="number" value="'+draft.repMax+'"></div>'
+    + '</div>'
+    + '<div class="po-field"><label>Increment ('+u+')</label><input id="ceStep" type="number" step="0.25" value="'+draft.step+'"></div>'
+    + '<div class="popBtns" style="margin-top:18px"><button class="pbtn ghost" id="ceCancel">cancel</button><button class="pbtn save" id="ceSave">save</button></div>';
+  openPop(html, scrim=>{
+    // The Settings modal (.po-modal-bg) sits at z-index:100, above this
+    // popup's normal z-index:60 -- since this is the one place a workout
+    // popup opens nested inside Settings, bump just this instance above it.
+    scrim.style.zIndex = 110;
+    const bwEl=scrim.querySelector('#ceBw'), weightField=scrim.querySelector('#ceWeightField');
+    const syncBw=()=>{ weightField.style.display = bwEl.checked ? 'none' : ''; };
+    syncBw(); bwEl.onchange=syncBw;
+    scrim.querySelector('#ceCancel').onclick = closePop;
+    scrim.querySelector('#ceSave').onclick = ()=>{
+      const nameField=scrim.querySelector('#ceName');
+      const name=(nameField.value||'').trim();
+      if(!name){ nameField.focus(); return; }
+      const bw=bwEl.checked;
+      const startWeight = bw ? 0 : (parseFloat(scrim.querySelector('#ceWeight').value)||0);
+      const repMin=Math.max(1, parseInt(scrim.querySelector('#ceRepMin').value,10)||1);
+      const repMax=Math.max(repMin, parseInt(scrim.querySelector('#ceRepMax').value,10)||repMin);
+      const step=Math.max(0.25, parseFloat(scrim.querySelector('#ceStep').value)||2.5);
+
+      const libMatch=findLibraryNameMatch(name);
+      if(libMatch && !confirm('"'+name+'" matches the built-in exercise "'+libMatch.name+'", already available via swap search. Create a separate custom exercise anyway?')) return;
+      const stateMatch=findStateNameMatch(S, name, existing && existing.id);
+      if(stateMatch && !confirm('An exercise named "'+stateMatch.name+'" already exists in your training history. Creating a new one will split that history across two entries. Continue anyway?')) return;
+
+      if(existing){
+        existing.name=name; existing.bw=bw; existing.startWeight=startWeight;
+        existing.repMin=repMin; existing.repMax=repMax; existing.step=step;
+      } else {
+        S.exercises.push({ id: nextCustomExId(S, name), name, bw, startWeight, repMin, repMax, step, gym:'both', day:(S.days[0]&&S.days[0].id)||'push', custom:true });
+      }
+      PC.save();
+      closePop();
+      window.renderCustomExercises();
+    };
+  });
+};
 
 function tpEachPlanExercise(fn){
   if(!STATE || !STATE.days) return;
@@ -3248,49 +3386,101 @@ function drawTable(e, all){
 }
 
 /* ---- swap popup --------------------------------------------------- */
+/* Forgiving search match: tokenize both sides, naively singularize (drop
+   a trailing 's' on words long enough that it's plural, not part of the
+   word itself), then every query token just needs to be a prefix/stem of
+   some name token, in any order. Handles "tricep pushdown" -> "Cable
+   Triceps Pushdown" (word order + plural) without a fuzzy-match library. */
+function searchTokens(s){
+  return String(s==null?'':s).toLowerCase().replace(/[^a-z0-9]+/g,' ').trim().split(' ').filter(Boolean)
+    .map(w => (w.length>3 && w.endsWith('s')) ? w.slice(0,-1) : w);
+}
+function matchesSearch(query, name){
+  const q=searchTokens(query); if(!q.length) return true;
+  const n=searchTokens(name);
+  return q.every(qt => n.some(nt => nt.startsWith(qt) || qt.startsWith(nt)));
+}
+/* Everything eligible to add/swap in for the day currently open: the
+   hand-picked SWAPS library for this tab, plus every exercise ever
+   logged anywhere -- state.exercises, the Progressive Overload Coach's
+   own store (see tpResolveExercise) -- so a lift from another day/tab
+   surfaces as real history instead of being invisible here.
+
+   Two different dedup rules, not one, both keyed on tpSlug (see
+   findStateNameMatch's comment for why tpNormName alone isn't enough):
+     - `already` (this day's own exercises) excludes a state.exercises
+       candidate from the results entirely -- this is what keeps every
+       exercise already on the day from reappearing as a "new" option
+       via its own tpResolveExercise-created twin.
+     - `historySlugs` only suppresses a SWAPS library entry once a real
+       state.exercises record of the same identity is already in the
+       results (history wins over library, since it carries actual
+       progress). It must NOT be used to suppress one state.exercises
+       record against another: two custom exercises can share a slug on
+       purpose (the duplicate-name warning in openCustomExerciseForm
+       allows confirming past it), and each is a distinct id with its
+       own logs -- collapsing them here would make the second one an
+       exercise that exists, is editable in Settings, and can never be
+       reached from search again. */
+function buildSwapCandidates(day){
+  const already=new Set(day.ex.map(x=>tpSlug(x.name)));
+  const historySlugs=new Set();
+  const out=[];
+  const PC=window.PoCoach, st=PC && PC.getState && PC.getState();
+  (st && Array.isArray(st.exercises) ? st.exercises : []).forEach(se=>{
+    const key=tpSlug(se.name);
+    if(already.has(key)) return;
+    historySlugs.add(key);
+    const logs=(st.logs && st.logs[se.id]) || [];
+    const last=logs[logs.length-1];
+    out.push({
+      source:'history', id:se.id, name:se.name,
+      tag: last ? (se.bw ? last.reps+' reps last time' : last.weight+(st.units||'kg')+' last time') : 'from your history',
+      sets:3, reps: last ? last.reps : (se.repMax||10), kg: last ? last.weight : (se.startWeight||0),
+      perHand:false, rest:90,
+    });
+  });
+  (SWAPS[STATE.active]||[]).forEach(o=>{
+    const key=tpSlug(o.name);
+    if(already.has(key) || historySlugs.has(key)) return;
+    out.push({ source:'library', id:o.id, name:o.name, tier:o.tier,
+      tag:(TIER_LABEL[o.tier]||'')+(o.perHand?' · per hand':''),
+      sets:3, reps:10, kg:20, perHand:!!o.perHand, rest:120 });
+  });
+  out.sort((a,b)=>a.name.localeCompare(b.name));
+  return out;
+}
 function openSwap(e){
   const day=curDay(); const adding=!e;
-  const opts=(SWAPS[STATE.active]||[]).filter(o=> !day.ex.some(x=>x.id===o.id));
-  const rows=opts.map(o=>'<button class="swapItem" data-id="'+o.id+'"><span><span class="nm">'+o.name+'</span><span class="mu">'+(TIER_LABEL[o.tier]||'')+(o.perHand?' · per hand':'')+'</span></span><span class="arr">'+svg('<path d="M5 12h14M13 6l6 6-6 6"/>',' fill="none" stroke="currentColor"')+'</span></button>').join('') || '<p class="emptyHist">No more options for this day.</p>';
-  // Custom exercises only make sense on the "add" flow — the recommended
-  // library above is tied to the built-in Push/Pull/Legs keys, so a
-  // renamed or brand-new tab (e.g. "Cardio") has nothing in it otherwise.
-  const customBlock = adding
-    ? '<div class="secLbl">Or add a custom exercise</div>'
-      + '<div class="searchRow" style="margin-bottom:10px">'
-      +   svg('<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/>',' fill="none" stroke="currentColor"')
-      +   '<input id="customExName" type="text" placeholder="Exercise name" maxlength="40">'
-      + '</div>'
-      + '<button class="pbtn save" id="customExAdd" style="width:100%;margin-bottom:20px">add custom exercise</button>'
-    : '';
+  const pool=buildSwapCandidates(day);
+  const renderRows=list => list.length
+    ? list.map(o=>'<button class="swapItem" data-id="'+o.id+'"><span><span class="nm">'+o.name+'</span><span class="mu">'+o.tag+'</span></span><span class="arr">'+svg('<path d="M5 12h14M13 6l6 6-6 6"/>',' fill="none" stroke="currentColor"')+'</span></button>').join('')
+    : '<p class="emptyHist">No results</p>';
   openPop(popHead(adding?'Add':'Swap', adding? day.name+' day' : e.name)
     + (adding? '<p class="formGist" style="font-size:15px;font-weight:500;color:var(--muted-strong)">Add a lift to today’s '+day.name.toLowerCase()+'. It starts fresh and you set the weight.</p>'
              : '<p class="formGist" style="font-size:15px;font-weight:500;color:var(--muted-strong)">Swap this lift for today. The new exercise starts fresh on this day.</p>')
-    + customBlock
-    + '<div class="secLbl">'+(adding?'From the '+day.name.toLowerCase()+' library':'Recommended swaps')+'</div>'
-    + '<div class="swapList">'+rows+'</div>',
+    + '<div class="searchRow" style="margin-bottom:14px">'
+    +   svg('<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/>',' fill="none" stroke="currentColor"')
+    +   '<input id="swapSearch" type="text" placeholder="Search exercises" autocomplete="off">'
+    + '</div>'
+    + '<div class="swapList" id="swapResults">'+renderRows(pool)+'</div>',
     scrim=>{
-      scrim.querySelectorAll('.swapItem').forEach(b=> b.onclick=()=>{
-        const o=opts.find(x=>x.id===b.dataset.id); if(!o) return;
-        const def={ id:o.id, name:o.name, tier:o.tier, sets:(e?e.sets:3), reps:(e?e.reps:10), kg:(e?e.kg:20), perHand:!!o.perHand, rest:(e?e.rest:120), lastKg:null, pinned:false, collapsed:false, deload:false, note:'', log:Array(e?e.sets:3).fill(null), hist:[] };
-        if(adding){ day.ex.push(def); }
-        else { const i=day.ex.findIndex(x=>x.id===e.id); if(i>=0) day.ex[i]=def; stopRest(e.id); }
-        closePop(); render();
-      });
-      const customBtn = scrim.querySelector('#customExAdd');
-      if(customBtn){
-        const nameField = scrim.querySelector('#customExName');
-        const doAddCustom=()=>{
-          const name = nameField.value.trim();
-          if(!name){ nameField.focus(); return; }
-          const id = 'custom_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
-          const def={ id, name, tier:2, sets:3, reps:10, kg:20, perHand:false, rest:90, lastKg:null, pinned:false, collapsed:false, deload:false, note:'', log:Array(3).fill(null), hist:[] };
-          day.ex.push(def);
+      const input=scrim.querySelector('#swapSearch');
+      const results=scrim.querySelector('#swapResults');
+      const wire=list=>{
+        results.innerHTML=renderRows(list);
+        results.querySelectorAll('.swapItem').forEach(b=> b.onclick=()=>{
+          const o=list.find(x=>x.id===b.dataset.id); if(!o) return;
+          const def={ id:o.id, name:o.name, tier:o.tier||2, sets:(e?e.sets:o.sets), reps:(e?e.reps:o.reps), kg:(e?e.kg:o.kg), perHand:!!o.perHand, rest:(e?e.rest:o.rest), lastKg:null, pinned:false, collapsed:false, deload:false, note:'', log:Array(e?e.sets:o.sets).fill(null), hist:[] };
+          if(o.source==='history') def.poId=o.id;
+          if(adding){ day.ex.push(def); }
+          else { const i=day.ex.findIndex(x=>x.id===e.id); if(i>=0) day.ex[i]=def; stopRest(e.id); }
           closePop(); render();
-        };
-        customBtn.onclick = doAddCustom;
-        nameField.addEventListener('keydown', ev=>{ if(ev.key==='Enter'){ ev.preventDefault(); doAddCustom(); } });
-      }
+        });
+      };
+      wire(pool);
+      input.addEventListener('input', ()=> wire(pool.filter(o=>matchesSearch(input.value,o.name))));
+      input.focus();
     });
 }
 
