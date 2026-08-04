@@ -567,7 +567,9 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
   border-radius: 6px;
   opacity: 0.55;
   transition: opacity 0.2s, color 0.2s;
+  display: inline-flex; align-items: center;
 }
+.gm-slot-btn svg { width: 13px; height: 13px; }
 .gm-slot-btn:hover { opacity: 1; color: var(--accent); }
 .ss-task-text { font-size: 14px; color: var(--text-primary); padding: 2px 0; }
 .ss-result { font-size: 13px; color: var(--text-secondary); min-height: 20px; margin: 4px 0 0; line-height: 1.5; }
@@ -837,6 +839,8 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
 .proj-tool-btn:hover { color: var(--text-secondary); }
 .proj-tool-btn:disabled { cursor: not-allowed; opacity: 0.35; }
 .proj-tool-btn.is-active { color: var(--eq-accent); }
+#projSearchBtn { display: inline-flex; align-items: center; }
+#projSearchBtn svg { width: 15px; height: 15px; }
 .proj-search {
   width: 0; opacity: 0; padding: 0; border: 0;
   background: rgba(0,0,0,0.28); color: var(--text-primary);
@@ -978,8 +982,10 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
 }
 .chk-item-del {
   flex: 0 0 auto; border: 0; background: transparent; cursor: pointer;
-  font-size: 12px; padding: 4px 6px; border-radius: 8px; opacity: 0.75;
+  padding: 4px 6px; border-radius: 8px; opacity: 0.75;
+  display: inline-flex; align-items: center; color: var(--text-tertiary);
 }
+.chk-item-del svg { width: 13px; height: 13px; }
 .chk-item-del:hover { opacity: 1; background: rgba(var(--eq-text-primary-rgb), 0.06); }
 
 .chk-add-row { display: flex; gap: 6px; margin-top: 8px; }
@@ -1304,7 +1310,8 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
 }
 .proj-card:hover .proj-card-actions { opacity: 0.85; }
 .proj-card-actions:hover { opacity: 1; }
-.proj-obsidian-badge { font-size: 11px; opacity: 0.85; }
+.proj-obsidian-badge { opacity: 0.85; display: inline-flex; align-items: center; }
+.proj-obsidian-badge svg { width: 12px; height: 12px; }
 .proj-card-edit {
   border: 0; background: transparent; color: var(--text-tertiary);
   font-size: 12px; cursor: pointer; padding: 0;
@@ -2077,7 +2084,7 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
         <div class="proj-tools">
           <button type="button" class="proj-tool-btn" id="projFilterBtn" disabled title="Filter — coming soon" hidden>⏷</button>
           <button type="button" class="proj-tool-btn" id="projSortBtn" disabled title="Sort — coming soon" hidden>⇅</button>
-          <button type="button" class="proj-tool-btn" id="projSearchBtn" title="Search projects">🔍</button>
+          <button type="button" class="proj-tool-btn" id="projSearchBtn" title="Search projects"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></button>
           <input type="text" class="proj-search" id="projSearchInput" placeholder="Search…">
         </div>
       </div>
@@ -2742,7 +2749,9 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
       const slotBtn = document.createElement('button');
       slotBtn.type = 'button';
       slotBtn.className = 'gm-slot-btn';
-      slotBtn.textContent = '🕐';
+      // Same clock icon as the Learn Hub inactive-tracks toggle further
+      // down this file, sourced from the shared js/icons.js.
+      slotBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + window.EqIcons.clock + '</svg>';
       slotBtn.title = 'Set a time';
       slotBtn.addEventListener('click', (e) => { e.stopPropagation(); ssOpen(goal.text, key, idx, reload); });
       li.appendChild(slotBtn);
@@ -3498,7 +3507,7 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
         delBtn.type = 'button';
         delBtn.className = 'chk-item-del';
         delBtn.title = 'Remove task';
-        delBtn.textContent = '🗑️';
+        delBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>';
         delBtn.addEventListener('click', () => {
           setChecklistItems(c.id, getChecklistItems(c.id).filter(x => x.id !== item.id));
           const d = getChecklistDone(c.id);
@@ -4549,7 +4558,7 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
 
     card.innerHTML =
       '<div class="proj-card-actions">' +
-        (obsLinked ? '<span class="proj-obsidian-badge" title="Linked to Obsidian">🔗</span>' : '') +
+        (obsLinked ? '<span class="proj-obsidian-badge" title="Linked to Obsidian"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 15l6-6"/><path d="M11 6l1-1a4 4 0 0 1 6 6l-1 1"/><path d="M13 18l-1 1a4 4 0 0 1-6-6l1-1"/></svg></span>' : '') +
         '<button type="button" class="proj-card-edit" aria-label="Edit project">✎</button>' +
         '<button type="button" class="proj-card-del" aria-label="Delete project">×</button>' +
       '</div>' +
