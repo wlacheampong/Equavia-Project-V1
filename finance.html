@@ -1571,8 +1571,7 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
 }
 
 /* ============================================================
-   DATE FIELDS — wrap each date input in a label that shows a
-   📅 emoji prefix so it's obvious what the field is. The native
+   DATE FIELDS — wrap each date input in a styled label. The native
    picker icon gets a dark-mode filter so it shows up on the
    dark background instead of vanishing into it.
    ============================================================ */
@@ -1588,11 +1587,6 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
   color: var(--text-primary);
   min-width: 0;
   cursor: pointer;
-}
-.date-field .date-emoji {
-  font-size: 15px;
-  line-height: 1;
-  flex-shrink: 0;
 }
 .date-field input[type="date"] {
   background: transparent !important;
@@ -2080,7 +2074,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
         <option value="yearly">Yearly</option>
         <option value="weekly">Weekly</option>
       </select>
-      <label class="date-field" title="Next renewal date" style="min-width:150px"><span class="date-emoji" aria-hidden="true">📅</span><input type="date" id="subRenewal" /></label>
+      <label class="date-field" title="Next renewal date" style="min-width:150px"><input type="date" id="subRenewal" /></label>
       <select id="subFromCat" title="Which net worth account to deduct from" style="padding:6px 10px;border:0.5px solid var(--border);border-radius:var(--radius-md);font-size:12px;font-family:inherit;background:var(--bg-card);color:var(--text-primary);min-width:130px">
         <option value="">No accounts yet</option>
       </select>
@@ -2119,7 +2113,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
       <select id="ordFromCat" class="ord-input ord-input-from" title="Which net worth account this comes out of">
         <option value="">No accounts yet</option>
       </select>
-      <label class="date-field ord-input-date" title="Expected arrival"><span class="date-emoji" aria-hidden="true">📅</span><input type="date" id="ordArrival" /></label>
+      <label class="date-field ord-input-date" title="Expected arrival"><input type="date" id="ordArrival" /></label>
       <button class="ord-add-btn" id="ordAddBtn" onclick="window.__addOrder && window.__addOrder()">+ Add Order</button>
     </div>
     <div class="ord-add-preview" id="ordAddPreview">Type a cost — preview will show what % of net worth it takes.</div>
@@ -2223,7 +2217,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
         <option value="EUR">EUR</option>
         <option value="CHF">CHF</option>
       </select>
-      <label class="date-field inc-input-date" title="First / next date"><span class="date-emoji" aria-hidden="true">📅</span><input type="date" id="incDate"></label>
+      <label class="date-field inc-input-date" title="First / next date"><input type="date" id="incDate"></label>
       <select id="incRecurrence" class="inc-input inc-input-recur" title="How often this repeats">
         <option value="none">Doesn't repeat</option>
         <option value="weekly">Weekly</option>
@@ -3334,7 +3328,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
       '<input type="number" step="0.01" class="se-amt" value="' + Number(enteredAmt).toFixed(2) + '" style="width:90px;padding:6px 10px;border:0.5px solid rgba(var(--eq-text-primary-rgb), 0.10);border-radius:var(--radius-md);font-size:12px;font-family:inherit;background:var(--bg-card);color:var(--text-primary)" />' +
       '<select class="se-ccy" style="padding:6px 10px;border:0.5px solid rgba(var(--eq-text-primary-rgb), 0.10);border-radius:var(--radius-md);font-size:12px;font-family:inherit;background:var(--bg-card);color:var(--text-primary)">' + ccyOpts + '</select>' +
       '<select class="se-per" style="padding:6px 10px;border:0.5px solid rgba(var(--eq-text-primary-rgb), 0.10);border-radius:var(--radius-md);font-size:12px;font-family:inherit;background:var(--bg-card);color:var(--text-primary)">' + periodOpts + '</select>' +
-      '<label class="date-field" style="min-width:140px"><span class="date-emoji" aria-hidden="true">📅</span><input type="date" class="se-ren" value="' + (it.renewal && /^\d{4}-\d{2}-\d{2}/.test(it.renewal) ? it.renewal.slice(0,10) : '') + '" /></label>' +
+      '<label class="date-field" style="min-width:140px"><input type="date" class="se-ren" value="' + (it.renewal && /^\d{4}-\d{2}-\d{2}/.test(it.renewal) ? it.renewal.slice(0,10) : '') + '" /></label>' +
       '<select class="se-from" style="padding:6px 10px;border:0.5px solid rgba(var(--eq-text-primary-rgb), 0.10);border-radius:var(--radius-md);font-size:12px;font-family:inherit;background:var(--bg-card);color:var(--text-primary);min-width:130px">' + fromOpts + '</select>' +
       '<label class="sub-auto-toggle" style="padding:6px 10px"><input type="checkbox" class="se-auto"' + (it.autoDeduct ? ' checked' : '') + ' /><span class="sub-auto-track"><span class="sub-auto-thumb"></span></span><span class="sub-auto-label">Auto-deduct</span></label>' +
       '<button class="se-save quick-add-btn">Save</button>' +
