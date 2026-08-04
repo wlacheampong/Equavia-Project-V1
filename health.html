@@ -444,7 +444,8 @@ main {
 }
 .stack-result:hover, .stack-result.is-focused { background: rgba(var(--eq-text-primary-rgb), 0.06); }
 
-.stack-result-icon { font-size: 17px; flex-shrink: 0; width: 24px; text-align: center; }
+.stack-result-icon { flex-shrink: 0; width: 24px; display: flex; align-items: center; justify-content: center; }
+.stack-result-icon svg { width: 17px; height: 17px; }
 .stack-result-body { min-width: 0; flex: 1; }
 .stack-result-name {
   font-size: 13px; font-weight: 600;
@@ -3416,82 +3417,109 @@ main {
     { key: 'anytime', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2"/><path d="M9 2h6"/></svg>', title: 'Anytime', time: 'No fixed window', cutoffHour: null },
   ];
 
+  // 18 distinct icons cover all ~70 entries below (many entries share the
+  // same category icon) -- defined once here and referenced by name,
+  // rather than repeating full <svg> markup at every entry. Same minimal
+  // style as everywhere else (viewBox 24x24, no fill, currentColor,
+  // stroke-width 1.8). SUP_MOON/SUP_DUMBBELL intentionally reuse the exact
+  // paths already used for STACK_WINDOWS' evening icon and topbar.js's
+  // Training nav icon, for visual consistency rather than a redesign.
+  function supIcon(inner) { return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + inner + '</svg>'; }
+  const SUP_PILL = supIcon('<rect x="4.93" y="9.5" width="14.14" height="5" rx="2.5" transform="rotate(45 12 12)"/><path d="M8.5 8.5l7 7"/>');
+  const SUP_HERB = supIcon('<path d="M11 20A7 7 0 0 1 4 13c0-3 2-6 7-11 5 5 7 8 7 11a7 7 0 0 1-7 7z"/><path d="M11 20v-8"/>');
+  const SUP_MOON = supIcon('<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>');
+  const SUP_DUMBBELL = supIcon('<path d="M6.5 9v6M17.5 9v6M3 10.5v3M21 10.5v3M6.5 12h11"/>');
+  const SUP_BRAIN = supIcon('<path d="M9 3a3 3 0 0 0-3 3 3 3 0 0 0-2 5 3 3 0 0 0 2 5.5A3 3 0 0 0 9 21a3 3 0 0 0 3-3V6a3 3 0 0 0-3-3z"/><path d="M15 3a3 3 0 0 1 3 3 3 3 0 0 1 2 5 3 3 0 0 1-2 5.5A3 3 0 0 1 15 21a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3z"/>');
+  const SUP_BONE = supIcon('<path d="M18 6a2.5 2.5 0 1 0-4 2l-4 4a2.5 2.5 0 1 0-2 4 2.5 2.5 0 1 0 4-2l4-4a2.5 2.5 0 1 0 2-4z"/>');
+  const SUP_MUSHROOM = supIcon('<path d="M4 12a8 4 0 0 1 16 0z"/><path d="M9 12v6a3 3 0 0 0 6 0v-6"/>');
+  const SUP_GEM = supIcon('<path d="M12 2 4 9l8 13 8-13z"/><path d="M4 9h16"/><path d="M9 9l3-7 3 7"/>');
+  const SUP_SEEDLING = supIcon('<path d="M12 20v-8"/><path d="M12 12c-4 0-7-3-7-7 4 0 7 3 7 7z"/><path d="M12 12c4 0 7-3 7-7-4 0-7 3-7 7z"/>');
+  const SUP_SHAKE = supIcon('<path d="M6 8h12l-1.5 12a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1z"/><path d="M5 8l1-4h12l1 4"/><path d="M12 8v6"/>');
+  const SUP_FISH = supIcon('<path d="M2 12s4-6 12-6c4 0 8 3 8 6s-4 6-8 6c-8 0-12-6-12-6z"/><path d="M17 9v6"/><circle cx="7" cy="12" r=".5" fill="currentColor"/>');
+  const SUP_BOLT = supIcon('<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>');
+  const SUP_MICROBE = supIcon('<circle cx="12" cy="12" r="6"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>');
+  const SUP_COCONUT = supIcon('<circle cx="12" cy="13" r="8"/><path d="M9 10c0-2 1-4 3-4s3 2 3 4"/>');
+  const SUP_CITRUS = supIcon('<circle cx="12" cy="13" r="8"/><path d="M12 5V2"/><path d="M12 13 8 9M12 13l4-4M12 13V8"/>');
+  const SUP_GRAPES = supIcon('<circle cx="8" cy="10" r="2.5"/><circle cx="13" cy="8" r="2.5"/><circle cx="16" cy="12" r="2.5"/><circle cx="11" cy="14" r="2.5"/><circle cx="8" cy="17" r="2.5"/><path d="M11 5V2"/>');
+  const SUP_COFFEE = supIcon('<path d="M4 9h13v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z"/><path d="M17 10h1a2 2 0 0 1 0 4h-1"/><path d="M7 3c0 1-1 1-1 2s1 1 1 2"/><path d="M11 3c0 1-1 1-1 2s1 1 1 2"/>');
+  const SUP_SUN = supIcon('<circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4l1.4-1.4M17 7l1.4-1.4"/>');
+
   // ====== SUPPLEMENT DATABASE — researched defaults ======
   const SUPPLEMENT_DB = [
-    { name: 'Creatine monohydrate', dose: '5g', window: 'anytime', note: 'Daily — consistency matters more than timing', icon: '🏋️', aliases: ['creatine'] },
-    { name: 'Beta-alanine', dose: '2–5g', window: 'morning', note: 'Pre-workout — split doses to avoid tingles', icon: '🏋️', aliases: ['beta alanine'] },
-    { name: 'L-citrulline', dose: '6–8g', window: 'morning', note: '~30 min pre-workout for pump', icon: '🏋️', aliases: ['citrulline'] },
-    { name: 'BCAAs', dose: '5–10g', window: 'anytime', note: 'Around workout window', icon: '🏋️', aliases: ['bcaa'] },
-    { name: 'Whey protein', dose: '25–40g', window: 'anytime', note: 'Post-workout or to hit daily target', icon: '🥤', aliases: ['whey'] },
-    { name: 'Casein protein', dose: '25–40g', window: 'evening', note: 'Before bed for slow overnight aminos', icon: '🥤', aliases: ['casein'] },
-    { name: 'L-carnitine', dose: '1–2g', window: 'morning', note: 'With carbs for best uptake', icon: '🏋️', aliases: ['carnitine'] },
-    { name: 'Acetyl-L-carnitine', dose: '500mg–2g', window: 'morning', note: 'Cognitive variant — crosses BBB', icon: '🧠', aliases: ['alcar'] },
-    { name: 'HMB', dose: '3g', window: 'anytime', note: 'Split 3x daily — muscle preservation', icon: '🏋️', aliases: ['hmb'] },
-    { name: 'Glutamine', dose: '5g', window: 'anytime', note: 'Recovery — post-workout or before bed', icon: '🏋️', aliases: ['l-glutamine'] },
-    { name: 'Vitamin D3', dose: '2000–5000 IU', window: 'lunch', note: 'Fat-soluble — take with biggest meal', icon: '☀️', aliases: ['vit d', 'vitamin d', 'd3', 'cholecalciferol'] },
-    { name: 'Vitamin K2 (MK-7)', dose: '100–200 mcg', window: 'lunch', note: 'Pairs with D3 — same meal', icon: '💊', aliases: ['vit k', 'vitamin k', 'k2', 'mk7'] },
-    { name: 'Vitamin C', dose: '500–1000mg', window: 'morning', note: 'Water-soluble — split if over 500mg', icon: '🍊', aliases: ['vit c', 'ascorbic acid'] },
-    { name: 'Vitamin B12', dose: '500–1000mcg', window: 'morning', note: 'Methylcobalamin form preferred', icon: '⚡', aliases: ['b12', 'methylcobalamin'] },
-    { name: 'B-complex', dose: '1 cap', window: 'morning', note: 'All B vitamins — energy', icon: '⚡', aliases: ['b complex', 'b vitamins'] },
-    { name: 'Vitamin A', dose: '5000 IU', window: 'lunch', note: 'Fat-soluble — with fat', icon: '💊', aliases: ['vit a', 'retinol'] },
-    { name: 'Vitamin E', dose: '400 IU', window: 'lunch', note: 'Fat-soluble — with fat', icon: '💊', aliases: ['vit e', 'tocopherol'] },
-    { name: 'Folate', dose: '400–800mcg', window: 'morning', note: 'Methylfolate preferred', icon: '💊', aliases: ['folic acid', 'b9', 'methylfolate'] },
-    { name: 'Biotin', dose: '30mcg–5mg', window: 'anytime', note: 'Hair, skin, nails', icon: '💅', aliases: ['biotin', 'b7'] },
-    { name: 'Multivitamin', dose: '1 serving', window: 'lunch', note: 'Take with food', icon: '💊', aliases: ['multi', 'multivitamin'] },
-    { name: 'Magnesium glycinate', dose: '200–400mg', window: 'evening', note: '30–60 min before bed — sleep helper', icon: '🌙', aliases: ['magnesium', 'mag glycinate', 'bisglycinate'] },
-    { name: 'Magnesium L-threonate', dose: '144mg elemental', window: 'evening', note: 'Cognitive variant — crosses BBB', icon: '🧠', aliases: ['magtein', 'threonate'] },
-    { name: 'Magnesium citrate', dose: '200–400mg', window: 'evening', note: 'Also supports digestion', icon: '🌙', aliases: ['mag citrate'] },
-    { name: 'Zinc', dose: '15–30mg', window: 'evening', note: 'With food — not with calcium or iron', icon: '💊', aliases: ['zinc'] },
-    { name: 'Iron', dose: '18–65mg', window: 'morning', note: 'Empty stomach with vit C', icon: '💊', aliases: ['iron'] },
-    { name: 'Calcium', dose: '500mg', window: 'evening', note: 'With food — not with iron', icon: '🦴', aliases: ['calcium'] },
-    { name: 'Selenium', dose: '100–200mcg', window: 'anytime', note: 'Thyroid + antioxidant', icon: '💊', aliases: ['selenium'] },
-    { name: 'Iodine', dose: '150mcg', window: 'morning', note: 'Thyroid support', icon: '💊', aliases: ['iodine'] },
-    { name: 'Omega-3 (Fish oil)', dose: '2–3g EPA+DHA', window: 'lunch', note: 'With biggest fatty meal', icon: '🐟', aliases: ['omega 3', 'omega3', 'fish oil', 'epa', 'dha'] },
-    { name: 'Krill oil', dose: '500–1000mg', window: 'lunch', note: 'More absorbable than fish oil', icon: '🐟', aliases: ['krill'] },
-    { name: 'MCT oil', dose: '1–2 tbsp', window: 'morning', note: 'Fast energy — start low', icon: '🥥', aliases: ['mct'] },
-    { name: 'Flaxseed oil', dose: '1–2g', window: 'lunch', note: 'Plant omega-3 — with food', icon: '🌱', aliases: ['flax', 'flaxseed'] },
-    { name: 'L-theanine', dose: '100–200mg', window: 'morning', note: 'Stacks with caffeine 2:1', icon: '🧠', aliases: ['theanine'] },
-    { name: 'Caffeine', dose: '100–200mg', window: 'morning', note: 'Stack with L-theanine for cleaner focus', icon: '☕', aliases: ['caffeine'] },
-    { name: 'Rhodiola rosea', dose: '200–400mg', window: 'morning', note: 'Adaptogen — energy and stress', icon: '🌿', aliases: ['rhodiola'] },
-    { name: 'Lion\'s mane', dose: '500–1000mg', window: 'morning', note: 'Cognitive support — daily', icon: '🍄', aliases: ['lions mane', 'hericium'] },
-    { name: 'Bacopa monnieri', dose: '300–600mg', window: 'morning', note: 'With fat — long-term memory', icon: '🌿', aliases: ['bacopa'] },
-    { name: 'Ginkgo biloba', dose: '120–240mg', window: 'morning', note: 'Circulation and cognition', icon: '🌿', aliases: ['ginkgo'] },
-    { name: 'Alpha-GPC', dose: '300–600mg', window: 'morning', note: 'Choline — focus and learning', icon: '🧠', aliases: ['alpha gpc'] },
-    { name: 'Phosphatidylserine', dose: '100–300mg', window: 'evening', note: 'Cortisol regulation', icon: '🧠', aliases: ['ps'] },
-    { name: 'NAC', dose: '600–1800mg', window: 'morning', note: 'Glutathione precursor — split doses', icon: '💊', aliases: ['nac', 'n-acetyl cysteine'] },
-    { name: 'Melatonin', dose: '0.3–3mg', window: 'evening', note: '30–60 min before bed — start low', icon: '🌙', aliases: ['melatonin'] },
-    { name: 'Glycine', dose: '3g', window: 'evening', note: 'Body temp drop = better sleep onset', icon: '🌙', aliases: ['glycine'] },
-    { name: 'Apigenin', dose: '50mg', window: 'evening', note: 'From chamomile — before bed', icon: '🌙', aliases: ['apigenin'] },
-    { name: 'Ashwagandha', dose: '300–600mg', window: 'evening', note: 'KSM-66 form — stress and cortisol', icon: '🌿', aliases: ['ashwagandha', 'ksm-66'] },
-    { name: 'L-tryptophan', dose: '500mg–1g', window: 'evening', note: 'Serotonin precursor — sleep onset', icon: '🌙', aliases: ['tryptophan'] },
-    { name: 'GABA', dose: '500–750mg', window: 'evening', note: 'Calming — before bed', icon: '🌙', aliases: ['gaba'] },
-    { name: 'Valerian root', dose: '300–600mg', window: 'evening', note: 'Sleep onset support', icon: '🌙', aliases: ['valerian'] },
-    { name: 'Probiotics', dose: '10–50 billion CFU', window: 'morning', note: 'Empty stomach or with food', icon: '🦠', aliases: ['probiotic'] },
-    { name: 'Quercetin', dose: '500–1000mg', window: 'anytime', note: 'Pairs well with vitamin C', icon: '🌿', aliases: ['quercetin'] },
-    { name: 'Curcumin', dose: '500–1000mg', window: 'lunch', note: 'With black pepper + fat', icon: '🌿', aliases: ['curcumin', 'turmeric'] },
-    { name: 'Resveratrol', dose: '250–500mg', window: 'morning', note: 'With fat for absorption', icon: '🍇', aliases: ['resveratrol'] },
-    { name: 'CoQ10 / Ubiquinol', dose: '100–200mg', window: 'lunch', note: 'Fat-soluble — with biggest meal', icon: '💊', aliases: ['coq10', 'ubiquinol'] },
-    { name: 'Alpha lipoic acid', dose: '300–600mg', window: 'morning', note: 'Empty stomach for absorption', icon: '💊', aliases: ['ala', 'alpha lipoic'] },
-    { name: 'Glutathione', dose: '250–1000mg', window: 'morning', note: 'Liposomal form for absorption', icon: '💊', aliases: ['glutathione'] },
-    { name: 'Astaxanthin', dose: '4–12mg', window: 'lunch', note: 'Fat-soluble — with fatty meal', icon: '💊', aliases: ['astaxanthin'] },
-    { name: 'Berberine', dose: '500mg', window: 'lunch', note: 'Before meals — glucose support', icon: '💊', aliases: ['berberine'] },
-    { name: 'Milk thistle', dose: '200–400mg', window: 'anytime', note: 'Silymarin — liver support', icon: '🌿', aliases: ['milk thistle', 'silymarin'] },
-    { name: 'Spirulina', dose: '3–5g', window: 'morning', note: 'Algae — protein and antioxidants', icon: '🌱', aliases: ['spirulina'] },
-    { name: 'Chlorella', dose: '2–4g', window: 'morning', note: 'Algae — detox support', icon: '🌱', aliases: ['chlorella'] },
-    { name: 'Tongkat ali', dose: '200–400mg', window: 'morning', note: 'Cycle 8 weeks on/off', icon: '🌿', aliases: ['tongkat', 'longjack'] },
-    { name: 'Fadogia agrestis', dose: '600mg', window: 'morning', note: 'Cycle 8 weeks on/off', icon: '🌿', aliases: ['fadogia'] },
-    { name: 'DHEA', dose: '25–50mg', window: 'morning', note: 'Hormonal — consult doctor', icon: '💊', aliases: ['dhea'] },
-    { name: 'Pregnenolone', dose: '10–50mg', window: 'morning', note: 'Hormonal — consult doctor', icon: '💊', aliases: ['pregnenolone'] },
-    { name: 'Tribulus terrestris', dose: '250–750mg', window: 'morning', note: 'Libido and energy', icon: '🌿', aliases: ['tribulus'] },
-    { name: 'Maca root', dose: '1.5–3g', window: 'morning', note: 'Adaptogen — energy and libido', icon: '🌿', aliases: ['maca'] },
-    { name: 'Collagen peptides', dose: '10–20g', window: 'anytime', note: 'With vitamin C for synthesis', icon: '💅', aliases: ['collagen'] },
-    { name: 'Glucosamine', dose: '1500mg', window: 'lunch', note: 'With food', icon: '🦴', aliases: ['glucosamine'] },
-    { name: 'Chondroitin', dose: '1200mg', window: 'lunch', note: 'Often paired with glucosamine', icon: '🦴', aliases: ['chondroitin'] },
-    { name: 'MSM', dose: '1–3g', window: 'anytime', note: 'Joint support', icon: '🦴', aliases: ['msm'] },
-    { name: 'Hyaluronic acid', dose: '120–200mg', window: 'anytime', note: 'Skin and joint hydration', icon: '💅', aliases: ['hyaluronic', 'ha'] },
-    { name: 'Cordyceps', dose: '1–3g', window: 'morning', note: 'Energy and endurance', icon: '🍄', aliases: ['cordyceps'] },
-    { name: 'Reishi', dose: '1–2g', window: 'evening', note: 'Calming adaptogen', icon: '🍄', aliases: ['reishi', 'ganoderma'] },
-    { name: 'Chaga', dose: '1–2g', window: 'morning', note: 'Antioxidant and immune', icon: '🍄', aliases: ['chaga'] },
+    { name: 'Creatine monohydrate', dose: '5g', window: 'anytime', note: 'Daily — consistency matters more than timing', icon: SUP_DUMBBELL, aliases: ['creatine'] },
+    { name: 'Beta-alanine', dose: '2–5g', window: 'morning', note: 'Pre-workout — split doses to avoid tingles', icon: SUP_DUMBBELL, aliases: ['beta alanine'] },
+    { name: 'L-citrulline', dose: '6–8g', window: 'morning', note: '~30 min pre-workout for pump', icon: SUP_DUMBBELL, aliases: ['citrulline'] },
+    { name: 'BCAAs', dose: '5–10g', window: 'anytime', note: 'Around workout window', icon: SUP_DUMBBELL, aliases: ['bcaa'] },
+    { name: 'Whey protein', dose: '25–40g', window: 'anytime', note: 'Post-workout or to hit daily target', icon: SUP_SHAKE, aliases: ['whey'] },
+    { name: 'Casein protein', dose: '25–40g', window: 'evening', note: 'Before bed for slow overnight aminos', icon: SUP_SHAKE, aliases: ['casein'] },
+    { name: 'L-carnitine', dose: '1–2g', window: 'morning', note: 'With carbs for best uptake', icon: SUP_DUMBBELL, aliases: ['carnitine'] },
+    { name: 'Acetyl-L-carnitine', dose: '500mg–2g', window: 'morning', note: 'Cognitive variant — crosses BBB', icon: SUP_BRAIN, aliases: ['alcar'] },
+    { name: 'HMB', dose: '3g', window: 'anytime', note: 'Split 3x daily — muscle preservation', icon: SUP_DUMBBELL, aliases: ['hmb'] },
+    { name: 'Glutamine', dose: '5g', window: 'anytime', note: 'Recovery — post-workout or before bed', icon: SUP_DUMBBELL, aliases: ['l-glutamine'] },
+    { name: 'Vitamin D3', dose: '2000–5000 IU', window: 'lunch', note: 'Fat-soluble — take with biggest meal', icon: SUP_SUN, aliases: ['vit d', 'vitamin d', 'd3', 'cholecalciferol'] },
+    { name: 'Vitamin K2 (MK-7)', dose: '100–200 mcg', window: 'lunch', note: 'Pairs with D3 — same meal', icon: SUP_PILL, aliases: ['vit k', 'vitamin k', 'k2', 'mk7'] },
+    { name: 'Vitamin C', dose: '500–1000mg', window: 'morning', note: 'Water-soluble — split if over 500mg', icon: SUP_CITRUS, aliases: ['vit c', 'ascorbic acid'] },
+    { name: 'Vitamin B12', dose: '500–1000mcg', window: 'morning', note: 'Methylcobalamin form preferred', icon: SUP_BOLT, aliases: ['b12', 'methylcobalamin'] },
+    { name: 'B-complex', dose: '1 cap', window: 'morning', note: 'All B vitamins — energy', icon: SUP_BOLT, aliases: ['b complex', 'b vitamins'] },
+    { name: 'Vitamin A', dose: '5000 IU', window: 'lunch', note: 'Fat-soluble — with fat', icon: SUP_PILL, aliases: ['vit a', 'retinol'] },
+    { name: 'Vitamin E', dose: '400 IU', window: 'lunch', note: 'Fat-soluble — with fat', icon: SUP_PILL, aliases: ['vit e', 'tocopherol'] },
+    { name: 'Folate', dose: '400–800mcg', window: 'morning', note: 'Methylfolate preferred', icon: SUP_PILL, aliases: ['folic acid', 'b9', 'methylfolate'] },
+    { name: 'Biotin', dose: '30mcg–5mg', window: 'anytime', note: 'Hair, skin, nails', icon: SUP_GEM, aliases: ['biotin', 'b7'] },
+    { name: 'Multivitamin', dose: '1 serving', window: 'lunch', note: 'Take with food', icon: SUP_PILL, aliases: ['multi', 'multivitamin'] },
+    { name: 'Magnesium glycinate', dose: '200–400mg', window: 'evening', note: '30–60 min before bed — sleep helper', icon: SUP_MOON, aliases: ['magnesium', 'mag glycinate', 'bisglycinate'] },
+    { name: 'Magnesium L-threonate', dose: '144mg elemental', window: 'evening', note: 'Cognitive variant — crosses BBB', icon: SUP_BRAIN, aliases: ['magtein', 'threonate'] },
+    { name: 'Magnesium citrate', dose: '200–400mg', window: 'evening', note: 'Also supports digestion', icon: SUP_MOON, aliases: ['mag citrate'] },
+    { name: 'Zinc', dose: '15–30mg', window: 'evening', note: 'With food — not with calcium or iron', icon: SUP_PILL, aliases: ['zinc'] },
+    { name: 'Iron', dose: '18–65mg', window: 'morning', note: 'Empty stomach with vit C', icon: SUP_PILL, aliases: ['iron'] },
+    { name: 'Calcium', dose: '500mg', window: 'evening', note: 'With food — not with iron', icon: SUP_BONE, aliases: ['calcium'] },
+    { name: 'Selenium', dose: '100–200mcg', window: 'anytime', note: 'Thyroid + antioxidant', icon: SUP_PILL, aliases: ['selenium'] },
+    { name: 'Iodine', dose: '150mcg', window: 'morning', note: 'Thyroid support', icon: SUP_PILL, aliases: ['iodine'] },
+    { name: 'Omega-3 (Fish oil)', dose: '2–3g EPA+DHA', window: 'lunch', note: 'With biggest fatty meal', icon: SUP_FISH, aliases: ['omega 3', 'omega3', 'fish oil', 'epa', 'dha'] },
+    { name: 'Krill oil', dose: '500–1000mg', window: 'lunch', note: 'More absorbable than fish oil', icon: SUP_FISH, aliases: ['krill'] },
+    { name: 'MCT oil', dose: '1–2 tbsp', window: 'morning', note: 'Fast energy — start low', icon: SUP_COCONUT, aliases: ['mct'] },
+    { name: 'Flaxseed oil', dose: '1–2g', window: 'lunch', note: 'Plant omega-3 — with food', icon: SUP_SEEDLING, aliases: ['flax', 'flaxseed'] },
+    { name: 'L-theanine', dose: '100–200mg', window: 'morning', note: 'Stacks with caffeine 2:1', icon: SUP_BRAIN, aliases: ['theanine'] },
+    { name: 'Caffeine', dose: '100–200mg', window: 'morning', note: 'Stack with L-theanine for cleaner focus', icon: SUP_COFFEE, aliases: ['caffeine'] },
+    { name: 'Rhodiola rosea', dose: '200–400mg', window: 'morning', note: 'Adaptogen — energy and stress', icon: SUP_HERB, aliases: ['rhodiola'] },
+    { name: 'Lion\'s mane', dose: '500–1000mg', window: 'morning', note: 'Cognitive support — daily', icon: SUP_MUSHROOM, aliases: ['lions mane', 'hericium'] },
+    { name: 'Bacopa monnieri', dose: '300–600mg', window: 'morning', note: 'With fat — long-term memory', icon: SUP_HERB, aliases: ['bacopa'] },
+    { name: 'Ginkgo biloba', dose: '120–240mg', window: 'morning', note: 'Circulation and cognition', icon: SUP_HERB, aliases: ['ginkgo'] },
+    { name: 'Alpha-GPC', dose: '300–600mg', window: 'morning', note: 'Choline — focus and learning', icon: SUP_BRAIN, aliases: ['alpha gpc'] },
+    { name: 'Phosphatidylserine', dose: '100–300mg', window: 'evening', note: 'Cortisol regulation', icon: SUP_BRAIN, aliases: ['ps'] },
+    { name: 'NAC', dose: '600–1800mg', window: 'morning', note: 'Glutathione precursor — split doses', icon: SUP_PILL, aliases: ['nac', 'n-acetyl cysteine'] },
+    { name: 'Melatonin', dose: '0.3–3mg', window: 'evening', note: '30–60 min before bed — start low', icon: SUP_MOON, aliases: ['melatonin'] },
+    { name: 'Glycine', dose: '3g', window: 'evening', note: 'Body temp drop = better sleep onset', icon: SUP_MOON, aliases: ['glycine'] },
+    { name: 'Apigenin', dose: '50mg', window: 'evening', note: 'From chamomile — before bed', icon: SUP_MOON, aliases: ['apigenin'] },
+    { name: 'Ashwagandha', dose: '300–600mg', window: 'evening', note: 'KSM-66 form — stress and cortisol', icon: SUP_HERB, aliases: ['ashwagandha', 'ksm-66'] },
+    { name: 'L-tryptophan', dose: '500mg–1g', window: 'evening', note: 'Serotonin precursor — sleep onset', icon: SUP_MOON, aliases: ['tryptophan'] },
+    { name: 'GABA', dose: '500–750mg', window: 'evening', note: 'Calming — before bed', icon: SUP_MOON, aliases: ['gaba'] },
+    { name: 'Valerian root', dose: '300–600mg', window: 'evening', note: 'Sleep onset support', icon: SUP_MOON, aliases: ['valerian'] },
+    { name: 'Probiotics', dose: '10–50 billion CFU', window: 'morning', note: 'Empty stomach or with food', icon: SUP_MICROBE, aliases: ['probiotic'] },
+    { name: 'Quercetin', dose: '500–1000mg', window: 'anytime', note: 'Pairs well with vitamin C', icon: SUP_HERB, aliases: ['quercetin'] },
+    { name: 'Curcumin', dose: '500–1000mg', window: 'lunch', note: 'With black pepper + fat', icon: SUP_HERB, aliases: ['curcumin', 'turmeric'] },
+    { name: 'Resveratrol', dose: '250–500mg', window: 'morning', note: 'With fat for absorption', icon: SUP_GRAPES, aliases: ['resveratrol'] },
+    { name: 'CoQ10 / Ubiquinol', dose: '100–200mg', window: 'lunch', note: 'Fat-soluble — with biggest meal', icon: SUP_PILL, aliases: ['coq10', 'ubiquinol'] },
+    { name: 'Alpha lipoic acid', dose: '300–600mg', window: 'morning', note: 'Empty stomach for absorption', icon: SUP_PILL, aliases: ['ala', 'alpha lipoic'] },
+    { name: 'Glutathione', dose: '250–1000mg', window: 'morning', note: 'Liposomal form for absorption', icon: SUP_PILL, aliases: ['glutathione'] },
+    { name: 'Astaxanthin', dose: '4–12mg', window: 'lunch', note: 'Fat-soluble — with fatty meal', icon: SUP_PILL, aliases: ['astaxanthin'] },
+    { name: 'Berberine', dose: '500mg', window: 'lunch', note: 'Before meals — glucose support', icon: SUP_PILL, aliases: ['berberine'] },
+    { name: 'Milk thistle', dose: '200–400mg', window: 'anytime', note: 'Silymarin — liver support', icon: SUP_HERB, aliases: ['milk thistle', 'silymarin'] },
+    { name: 'Spirulina', dose: '3–5g', window: 'morning', note: 'Algae — protein and antioxidants', icon: SUP_SEEDLING, aliases: ['spirulina'] },
+    { name: 'Chlorella', dose: '2–4g', window: 'morning', note: 'Algae — detox support', icon: SUP_SEEDLING, aliases: ['chlorella'] },
+    { name: 'Tongkat ali', dose: '200–400mg', window: 'morning', note: 'Cycle 8 weeks on/off', icon: SUP_HERB, aliases: ['tongkat', 'longjack'] },
+    { name: 'Fadogia agrestis', dose: '600mg', window: 'morning', note: 'Cycle 8 weeks on/off', icon: SUP_HERB, aliases: ['fadogia'] },
+    { name: 'DHEA', dose: '25–50mg', window: 'morning', note: 'Hormonal — consult doctor', icon: SUP_PILL, aliases: ['dhea'] },
+    { name: 'Pregnenolone', dose: '10–50mg', window: 'morning', note: 'Hormonal — consult doctor', icon: SUP_PILL, aliases: ['pregnenolone'] },
+    { name: 'Tribulus terrestris', dose: '250–750mg', window: 'morning', note: 'Libido and energy', icon: SUP_HERB, aliases: ['tribulus'] },
+    { name: 'Maca root', dose: '1.5–3g', window: 'morning', note: 'Adaptogen — energy and libido', icon: SUP_HERB, aliases: ['maca'] },
+    { name: 'Collagen peptides', dose: '10–20g', window: 'anytime', note: 'With vitamin C for synthesis', icon: SUP_GEM, aliases: ['collagen'] },
+    { name: 'Glucosamine', dose: '1500mg', window: 'lunch', note: 'With food', icon: SUP_BONE, aliases: ['glucosamine'] },
+    { name: 'Chondroitin', dose: '1200mg', window: 'lunch', note: 'Often paired with glucosamine', icon: SUP_BONE, aliases: ['chondroitin'] },
+    { name: 'MSM', dose: '1–3g', window: 'anytime', note: 'Joint support', icon: SUP_BONE, aliases: ['msm'] },
+    { name: 'Hyaluronic acid', dose: '120–200mg', window: 'anytime', note: 'Skin and joint hydration', icon: SUP_GEM, aliases: ['hyaluronic', 'ha'] },
+    { name: 'Cordyceps', dose: '1–3g', window: 'morning', note: 'Energy and endurance', icon: SUP_MUSHROOM, aliases: ['cordyceps'] },
+    { name: 'Reishi', dose: '1–2g', window: 'evening', note: 'Calming adaptogen', icon: SUP_MUSHROOM, aliases: ['reishi', 'ganoderma'] },
+    { name: 'Chaga', dose: '1–2g', window: 'morning', note: 'Antioxidant and immune', icon: SUP_MUSHROOM, aliases: ['chaga'] },
   ];
 
   let todayKey = `stack:taken:${getActiveDate()}`;
@@ -3865,7 +3893,7 @@ main {
       const winMeta = STACK_WINDOWS.find(w => w.key === s.window) || STACK_WINDOWS[3];
       return `
         <button class="stack-result" data-name="${escapeHtml(s.name)}" data-dose="${escapeHtml(s.dose)}" data-window="${s.window}" data-note="${escapeHtml(s.note)}">
-          <div class="stack-result-icon">${s.icon || '💊'}</div>
+          <div class="stack-result-icon">${s.icon || SUP_PILL}</div>
           <div class="stack-result-body">
             <div class="stack-result-name">${escapeHtml(s.name)}</div>
             <div class="stack-result-meta">${escapeHtml(s.dose)} · ${winMeta.icon} ${winMeta.title.toLowerCase()} · ${escapeHtml(s.note)}</div>
