@@ -2292,6 +2292,12 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     other:  { name: 'Other',  color: 'var(--eq-chart-2)' }
   };
 
+  // Was independently re-declared as a local `const ICONS` in 4 separate
+  // functions (From-account selects on Subscriptions/Orders/Deductions,
+  // plus the Deduct-from-account modal) -- consolidated to one definition
+  // so a future icon change only happens once.
+  const NW_ACCOUNT_ICONS = { bank: '🏦', stocks: '📈', crypto: '🪙', other: '💼' };
+
   // ============================================================
   // NET WORTH (copied from the main dashboard, verbatim logic)
   // ============================================================
@@ -3236,7 +3242,6 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     if (!sel) return;
     const prev = sel.value;
     const accounts = (typeof listAllNwAccounts === 'function') ? listAllNwAccounts() : [];
-    const ICONS = { bank: '🏦', stocks: '📈', crypto: '🪙', other: '💼' };
     if (!accounts.length) {
       sel.innerHTML = '<option value="">No accounts yet</option>';
       sel.disabled = true;
@@ -3245,7 +3250,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     sel.disabled = false;
     sel.innerHTML = accounts.map(a => {
       const value = a.catKey + '::' + a.itemName;
-      return '<option value="' + value + '">' + ICONS[a.catKey] + ' ' + escapeHtml(a.itemName) + '</option>';
+      return '<option value="' + value + '">' + NW_ACCOUNT_ICONS[a.catKey] + ' ' + escapeHtml(a.itemName) + '</option>';
     }).join('');
     if (prev && [...sel.options].some(o => o.value === prev)) sel.value = prev;
   }
@@ -3314,11 +3319,10 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     ).join('');
     // Build From-account options from the live NW accounts
     const accounts = (typeof listAllNwAccounts === 'function') ? listAllNwAccounts() : [];
-    const ICONS = { bank: '🏦', stocks: '📈', crypto: '🪙', other: '💼' };
     const currentFrom = (it.fromCat && it.fromAccount) ? (it.fromCat + '::' + it.fromAccount) : '';
     const fromOpts = '<option value="">No account linked</option>' + accounts.map(a => {
       const v = a.catKey + '::' + a.itemName;
-      return '<option value="' + v + '"' + (v === currentFrom ? ' selected' : '') + '>' + ICONS[a.catKey] + ' ' + escapeHtml(a.itemName) + '</option>';
+      return '<option value="' + v + '"' + (v === currentFrom ? ' selected' : '') + '>' + NW_ACCOUNT_ICONS[a.catKey] + ' ' + escapeHtml(a.itemName) + '</option>';
     }).join('');
     row.innerHTML = '';
     row.style.gridTemplateColumns = '1fr';
@@ -3620,7 +3624,6 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     if (!sel) return;
     const accounts = listAllNwAccounts();
     const prev = sel.value;
-    const ICONS = { bank: '🏦', stocks: '📈', crypto: '🪙', other: '💼' };
     if (!accounts.length) {
       sel.innerHTML = '<option value="">No accounts yet</option>';
       sel.disabled = true;
@@ -3629,7 +3632,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     sel.disabled = false;
     sel.innerHTML = accounts.map(a => {
       const value = a.catKey + '::' + a.itemName;
-      return '<option value="' + value + '">' + ICONS[a.catKey] + ' ' + escapeHtml(a.itemName) + '</option>';
+      return '<option value="' + value + '">' + NW_ACCOUNT_ICONS[a.catKey] + ' ' + escapeHtml(a.itemName) + '</option>';
     }).join('');
     if (prev && [...sel.options].some(o => o.value === prev)) sel.value = prev;
   }
@@ -3739,7 +3742,6 @@ input[type="date"]::-webkit-calendar-picker-indicator {
       alert('Add at least one net worth account before deducting.');
       return;
     }
-    const ICONS = { bank: '🏦', stocks: '📈', crypto: '🪙', other: '💼' };
     const cost = Number(order.amount) || 0;
     const optsHtml = accounts.map(a => {
       const insufficient = a.amountGBP < cost - 0.005;
@@ -3749,7 +3751,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
         + 'data-name="' + escapeHtml(a.itemName) + '" '
         + (insufficient ? 'data-insuf="1" ' : '')
         + '>'
-        + ICONS[a.catKey] + ' ' + escapeHtml(a.itemName)
+        + NW_ACCOUNT_ICONS[a.catKey] + ' ' + escapeHtml(a.itemName)
         + '<small>' + fmtMoney(a.amountGBP) + (insufficient ? ' · not enough' : ' available') + '</small>'
         + '</button>';
     }).join('');
