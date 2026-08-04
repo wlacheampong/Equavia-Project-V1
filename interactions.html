@@ -303,6 +303,42 @@ body {
   background: transparent; color: var(--text-secondary); font-family: inherit; font-size: 12px; font-weight: 600; cursor: pointer; margin-top: 4px;
   min-height: 44px; /* was ~30px tall */
 }
+
+/* ===== Movie/TV Tracker (clone of the Book Tracker in habits.html/planner.html) ===== */
+.watch-year-stat { font-family: var(--font-mono); font-size: 11px; color: var(--text-tertiary); margin-bottom: 12px; }
+.watch-year-stat b { color: var(--text-primary); font-weight: 700; }
+.watch-add-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: stretch; padding: 4px; background: rgba(0, 0, 0, 0.30); border-radius: 12px; margin-bottom: 16px; }
+.watch-input { flex: 1.4; min-width: 120px; background: transparent; border: none; outline: none; color: var(--text-primary); padding: 9px 12px; font-family: inherit; font-size: 16px; }
+.watch-input:focus { box-shadow: inset 0 -2px 0 rgba(var(--eq-text-primary-rgb), 0.4); }
+.watch-input::placeholder { color: var(--text-tertiary); }
+.watch-input.watch-creator-input { flex: 1; min-width: 100px; }
+.watch-add-btn { padding: 0 16px; background: rgba(var(--eq-text-primary-rgb), 0.06); border: none; color: var(--text-secondary); border-radius: 9px; font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+.watch-add-btn:hover { background: rgba(var(--eq-text-primary-rgb), 0.12); color: var(--text-primary); }
+.watch-add-btn:active { transform: scale(0.97); }
+.watch-shelf { margin-bottom: 16px; }
+.watch-shelf:last-child { margin-bottom: 0; }
+.watch-shelf-title { font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.10em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 8px; }
+.watch-row { padding: 12px 14px; background: rgba(var(--eq-text-primary-rgb), 0.025); border-radius: 12px; margin-bottom: 8px; }
+.watch-row:hover { background: rgba(var(--eq-text-primary-rgb), 0.04); }
+.watch-row-top { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 8px; }
+.watch-titles { flex: 1; min-width: 0; }
+.watch-title { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+.watch-creator { font-size: 12px; color: var(--text-tertiary); margin-top: 1px; }
+.watch-status-select { background: rgba(var(--eq-text-primary-rgb), 0.06); border: none; color: var(--text-secondary); border-radius: 7px; padding: 5px 8px; font-family: inherit; font-size: 11px; font-weight: 700; cursor: pointer; flex-shrink: 0; }
+.watch-status-select[data-status="want"] { color: var(--eq-text-muted); }
+.watch-status-select[data-status="reading"] { color: var(--eq-accent); }
+.watch-status-select[data-status="read"] { color: var(--eq-positive); }
+.watch-del { background: transparent; border: 1px solid rgba(var(--eq-text-primary-rgb), 0.08); color: var(--text-tertiary); cursor: pointer; font-size: 13px; padding: 4px 8px; border-radius: 6px; font-family: inherit; line-height: 1; flex-shrink: 0; }
+.watch-del:hover { color: var(--danger); }
+.watch-meta-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
+.watch-stars { display: inline-flex; gap: 6px; }
+.watch-star { background: transparent; border: none; cursor: pointer; font-size: 15px; color: var(--text-quaternary); padding: 0; line-height: 1; position: relative; }
+.watch-star::before { content: ''; position: absolute; inset: -8px; }
+.watch-star.is-filled { color: var(--warning); }
+.watch-finished-date { font-family: var(--font-mono); font-size: 11px; color: var(--text-tertiary); }
+.watch-notes-input { width: 100%; display: block; background: rgba(0,0,0,0.25); border: 1px solid transparent; border-radius: 8px; color: var(--text-secondary); font-family: inherit; font-size: 12px; padding: 7px 9px; resize: none; }
+.watch-notes-input::placeholder { color: var(--text-quaternary); }
+.watch-notes-input:focus { outline: none; border-color: rgba(var(--eq-text-primary-rgb), 0.14); color: var(--text-primary); }
 </style>
 </head>
 <body>
@@ -524,6 +560,21 @@ body {
         <div class="feed-status" id="feedStatus"></div>
         <button type="button" class="feed-load-more" id="feedLoadMoreBtn" style="display:none;">Load more</button>
       </div>
+    </div>
+  </div>
+
+  <!-- ===== MOVIE/TV TRACKER (clone of the Book Tracker) ===== -->
+  <div data-eq-collapse="social:watchlist">
+    <div class="section-title" data-eq-collapse-keep data-eq-collapse-trigger style="margin-top:26px;">Movies &amp; TV<span class="eq-collapse-chevron"></span></div>
+    <div>
+      <div class="watch-year-stat" id="watchYearStat"></div>
+      <div class="watch-add-row">
+        <input type="text" class="watch-input" id="watchTitleInput" placeholder="Title…">
+        <input type="text" class="watch-input watch-creator-input" id="watchCreatorInput" placeholder="Director / creator…">
+        <button type="button" class="watch-add-btn" id="watchAddBtn">+ Add</button>
+      </div>
+      <div id="watchShelves"></div>
+      <div class="empty-state" id="watchEmptyState" style="display:none;">Nothing tracked yet — add a movie or show above.</div>
     </div>
   </div>
 </div>
@@ -1579,6 +1630,185 @@ body {
   renderCatTabs();
   renderDigest();
   window.addEventListener('storage', renderDigest);
+})();
+</script>
+
+<script>
+(function () {
+  'use strict';
+
+  // ============================================================
+  // MOVIE/TV TRACKER -- functional clone of the Book Tracker in
+  // habits.html/planner.html, with its own storage (watchlist_v1) so
+  // nothing is shared with books_v1.
+  // ============================================================
+  function storeGet(key) {
+    try { const raw = localStorage.getItem(key); return raw == null ? null : JSON.parse(raw); }
+    catch (e) { return null; }
+  }
+  function storeSet(key, value) {
+    try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) {}
+  }
+
+  const WATCH_KEY = 'watchlist_v1';
+  const WATCH_SHELVES = [
+    { status: 'want',    label: 'Not Started' },
+    { status: 'reading', label: 'Started' },
+    { status: 'read',    label: 'Finished' }
+  ];
+  // Entries saved before status existed (or with a since-removed status
+  // value) fall back to "Started" so they still render in a real shelf.
+  function watchStatus(item) { return item.status || 'reading'; }
+
+  function getWatchItems() { const v = storeGet(WATCH_KEY); return Array.isArray(v) ? v : []; }
+  function setWatchItems(list) { storeSet(WATCH_KEY, list); }
+
+  const WATCH_TARGET_KEY = 'watchlist_yearly_target_v1';
+  const DEFAULT_WATCH_TARGET = 6;
+  function getWatchTarget() { const v = storeGet(WATCH_TARGET_KEY); return (typeof v === 'number' && v > 0) ? v : DEFAULT_WATCH_TARGET; }
+
+  function renderWatchYearStat() {
+    const el = document.getElementById('watchYearStat');
+    if (!el) return;
+    const year = new Date().getFullYear();
+    const count = getWatchItems().filter(w => w.status === 'read' && w.finishedAt && new Date(w.finishedAt).getFullYear() === year).length;
+    const target = getWatchTarget();
+    el.innerHTML = '<b>' + count + '</b> / ' + target + ' title' + (target === 1 ? '' : 's') + ' finished in ' + year;
+  }
+
+  function buildWatchRow(item) {
+    const row = document.createElement('div');
+    row.className = 'watch-row';
+    row.dataset.id = item.id;
+
+    const top = document.createElement('div');
+    top.className = 'watch-row-top';
+    top.innerHTML =
+      '<div class="watch-titles">' +
+        '<div class="watch-title"></div>' +
+        '<div class="watch-creator"></div>' +
+      '</div>' +
+      '<select class="watch-status-select">' +
+        WATCH_SHELVES.map(s => '<option value="' + s.status + '">' + s.label + '</option>').join('') +
+      '</select>' +
+      '<button type="button" class="watch-del" aria-label="Delete title">×</button>';
+    top.querySelector('.watch-title').textContent = item.title;
+    top.querySelector('.watch-creator').textContent = item.creator || '';
+    const statusSel = top.querySelector('.watch-status-select');
+    statusSel.value = watchStatus(item);
+    statusSel.dataset.status = watchStatus(item);
+    statusSel.addEventListener('change', () => {
+      statusSel.dataset.status = statusSel.value;
+      const list = getWatchItems();
+      const idx = list.findIndex(w => w.id === item.id);
+      if (idx === -1) return;
+      const next = Object.assign({}, list[idx], { status: statusSel.value });
+      if (statusSel.value === 'read' && !next.finishedAt) next.finishedAt = new Date().toISOString();
+      if (statusSel.value !== 'read') next.finishedAt = null;
+      list[idx] = next;
+      setWatchItems(list);
+      renderWatchlist();
+    });
+    top.querySelector('.watch-del').addEventListener('click', () => {
+      setWatchItems(getWatchItems().filter(w => w.id !== item.id));
+      renderWatchlist();
+    });
+    row.appendChild(top);
+
+    if (watchStatus(item) === 'read') {
+      const meta = document.createElement('div');
+      meta.className = 'watch-meta-row';
+      const stars = document.createElement('div');
+      stars.className = 'watch-stars';
+      for (let i = 1; i <= 5; i++) {
+        const starBtn = document.createElement('button');
+        starBtn.type = 'button';
+        starBtn.className = 'watch-star' + ((item.rating || 0) >= i ? ' is-filled' : '');
+        starBtn.textContent = '★';
+        starBtn.setAttribute('aria-label', 'Rate ' + i + ' star' + (i === 1 ? '' : 's'));
+        starBtn.addEventListener('click', () => {
+          const list = getWatchItems();
+          const idx = list.findIndex(w => w.id === item.id);
+          if (idx === -1) return;
+          const newRating = list[idx].rating === i ? 0 : i;
+          list[idx] = Object.assign({}, list[idx], { rating: newRating });
+          setWatchItems(list);
+          renderWatchlist();
+        });
+        stars.appendChild(starBtn);
+      }
+      meta.appendChild(stars);
+      if (item.finishedAt) {
+        const dateEl = document.createElement('span');
+        dateEl.className = 'watch-finished-date';
+        dateEl.textContent = 'Finished ' + new Date(item.finishedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+        meta.appendChild(dateEl);
+      }
+      row.appendChild(meta);
+    }
+
+    const notes = document.createElement('textarea');
+    notes.className = 'watch-notes-input';
+    notes.rows = 1;
+    notes.placeholder = 'Notes…';
+    notes.value = item.notes || '';
+    notes.addEventListener('change', () => {
+      const list = getWatchItems();
+      const idx = list.findIndex(w => w.id === item.id);
+      if (idx === -1) return;
+      list[idx] = Object.assign({}, list[idx], { notes: notes.value.trim() });
+      setWatchItems(list);
+    });
+    row.appendChild(notes);
+
+    return row;
+  }
+
+  function renderWatchlist() {
+    const wrap = document.getElementById('watchShelves');
+    const emptyState = document.getElementById('watchEmptyState');
+    if (!wrap) return;
+    const list = getWatchItems();
+    wrap.innerHTML = '';
+    emptyState.style.display = list.length ? 'none' : '';
+    WATCH_SHELVES.forEach(shelf => {
+      const items = list.filter(w => watchStatus(w) === shelf.status);
+      const section = document.createElement('div');
+      section.className = 'watch-shelf';
+      const title = document.createElement('div');
+      title.className = 'watch-shelf-title';
+      title.textContent = shelf.label + ' (' + items.length + ')';
+      section.appendChild(title);
+      items.forEach(w => section.appendChild(buildWatchRow(w)));
+      wrap.appendChild(section);
+    });
+    renderWatchYearStat();
+  }
+
+  function initWatchAddForm() {
+    document.getElementById('watchAddBtn').addEventListener('click', () => {
+      const titleInput = document.getElementById('watchTitleInput');
+      const creatorInput = document.getElementById('watchCreatorInput');
+      const title = titleInput.value.trim();
+      if (!title) return;
+      const list = getWatchItems();
+      list.push({
+        id: 'wl' + Date.now() + Math.random().toString(36).slice(2, 7),
+        title, creator: creatorInput.value.trim(),
+        status: 'want', rating: 0, notes: '', finishedAt: null,
+        addedAt: new Date().toISOString()
+      });
+      setWatchItems(list);
+      titleInput.value = '';
+      creatorInput.value = '';
+      renderWatchlist();
+    });
+  }
+
+  renderWatchlist();
+  initWatchAddForm();
+
+  window.addEventListener('storage', renderWatchlist);
 })();
 </script>
 
