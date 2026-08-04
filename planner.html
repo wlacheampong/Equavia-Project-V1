@@ -1952,6 +1952,11 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
         <option value="Week">Week</option>
         <option value="Day">Day</option>
       </select>
+      <select id="dgtGoalPriority">
+        <option value="p1">P1</option>
+        <option value="p2">P2</option>
+        <option value="p3" selected>P3</option>
+      </select>
       <input type="date" id="dgtGoalDeadline">
       <button type="button" id="dgtGoalAddBtn">+ Add Goal</button>
     </div>
@@ -3010,10 +3015,20 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
 
   // ---------- Goals (Year/Quarter/Month/Week/Day) ----------
   const GOAL_RANKS = ['Year', 'Quarter', 'Month', 'Week', 'Day'];
+  // 'p1'|'p2'|'p3', separate from the goal-rank timeframe above and from
+  // this same IIFE's unrelated priorityOf()/PRIORITY_CYCLE (daily-task
+  // priority, a different persisted array -- goals:<date>, not
+  // longterm_goals_v1). Not surfaced in the card view yet, data + forms
+  // only.
+  const GOAL_PRIORITIES = ['p1', 'p2', 'p3'];
   let goalEditingId = null;
 
   function getLongtermGoals() { const g = storeGet('longterm_goals_v1'); return Array.isArray(g) ? g : []; }
   function setLongtermGoals(list) { storeSet('longterm_goals_v1', list); }
+  // Read-time fallback only -- a goal that predates this field and one
+  // deliberately set to 'p3' both read as P3, but only the latter has
+  // priority actually stored. Never write 'p3' back in here.
+  function goalPriorityOf(g) { return g.priority || 'p3'; }
 
   function goalDeadlineMs(g) {
     if (!g.deadline) return null;
@@ -3111,23 +3126,28 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
         '<select class="dgt-edit-rank">' +
           GOAL_RANKS.map(r => '<option value="' + r + '">' + r + '</option>').join('') +
         '</select>' +
+        '<select class="dgt-edit-priority">' +
+          GOAL_PRIORITIES.map(p => '<option value="' + p + '">' + p.toUpperCase() + '</option>').join('') +
+        '</select>' +
         '<input type="date" class="dgt-edit-deadline">' +
         '<button type="button" class="dgt-edit-save">Save</button>' +
         '<button type="button" class="dgt-edit-cancel">Cancel</button>' +
       '</div>';
     item.querySelector('.dgt-edit-title').value = g.title;
     item.querySelector('.dgt-edit-rank').value = g.rank;
+    item.querySelector('.dgt-edit-priority').value = goalPriorityOf(g);
     item.querySelector('.dgt-edit-deadline').value = g.deadline || '';
 
     item.querySelector('.dgt-edit-save').addEventListener('click', () => {
       const title = item.querySelector('.dgt-edit-title').value.trim();
       if (!title) return;
       const rank = item.querySelector('.dgt-edit-rank').value;
+      const priority = item.querySelector('.dgt-edit-priority').value;
       const deadline = item.querySelector('.dgt-edit-deadline').value;
       const cur = getLongtermGoals();
       const idx = cur.findIndex(x => x.id === g.id);
       if (idx !== -1) {
-        cur[idx] = Object.assign({}, cur[idx], { title, rank, deadline });
+        cur[idx] = Object.assign({}, cur[idx], { title, rank, priority, deadline });
         setLongtermGoals(cur);
       }
       goalEditingId = null;
@@ -3409,6 +3429,7 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
     btn.addEventListener('click', () => {
       const titleEl = document.getElementById('dgtGoalTitle');
       const rankEl = document.getElementById('dgtGoalRank');
+      const priorityEl = document.getElementById('dgtGoalPriority');
       const deadlineEl = document.getElementById('dgtGoalDeadline');
       const title = titleEl.value.trim();
       if (!title) return;
@@ -3417,6 +3438,7 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
         id: 'g' + Date.now() + Math.random().toString(36).slice(2, 7),
         title,
         rank: rankEl.value,
+        priority: priorityEl.value,
         deadline: deadlineEl.value,
         value: 0,
         createdAt: new Date().toISOString()

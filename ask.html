@@ -480,6 +480,11 @@ body.has-eq-dock .ask-input-bar { bottom: calc(72px + env(safe-area-inset-bottom
   // rank / deadline / value / createdAt) so a goal added here is
   // indistinguishable from one typed in by hand.
   const GOAL_RANKS = ['Year', 'Quarter', 'Month', 'Week', 'Day'];
+  // 'p1'|'p2'|'p3', matching planner.html's Goals form exactly (same
+  // longterm_goals_v1 records). Optional -- omitted means no priority
+  // field is written at all, the same read-time fallback-to-P3 every
+  // other unset goal gets, not an explicit 'p3'.
+  const GOAL_PRIORITIES = ['p1', 'p2', 'p3'];
   const ADD_GOAL_TOOL = {
     name: 'add_goal',
     description: 'Create a new longterm goal immediately. Use for "add X to my goals". Resolve a stated deadline ("by August 25th") into an ISO date against the current date given in context.',
@@ -489,12 +494,15 @@ body.has-eq-dock .ask-input-bar { bottom: calc(72px + env(safe-area-inset-bottom
         title: { type: 'string', description: 'The goal itself, e.g. "get to 77kg".' },
         deadline: { type: 'string', description: 'Optional ISO deadline, YYYY-MM-DD.' },
         rank: { type: 'string', enum: GOAL_RANKS, description: 'Time horizon. Infer from the deadline if one is given (within a week => Week, within a month => Month, and so on). Defaults to Year.' },
+        priority: { type: 'string', enum: GOAL_PRIORITIES, description: 'Optional: p1 (highest) to p3 (lowest). Omit if the user didn\'t state one -- do not guess a priority that wasn\'t asked for.' },
       },
       required: ['title'],
     },
   };
   async function exec_add_goal(input) {
     const list = storeGet('longterm_goals_v1') || [];
+    const normalizedPriority = typeof input.priority === 'string'
+      ? input.priority.trim().toLowerCase() : '';
     const goal = {
       id: genId('g'),
       title: input.title,
@@ -504,6 +512,7 @@ body.has-eq-dock .ask-input-bar { bottom: calc(72px + env(safe-area-inset-bottom
       createdAt: new Date().toISOString(),
       source: 'assistant',
     };
+    if (GOAL_PRIORITIES.indexOf(normalizedPriority) !== -1) goal.priority = normalizedPriority;
     list.push(goal);
     storeSet('longterm_goals_v1', list);
     const activityId = logAssistantActivity('add_goal', 'Added goal: "' + goal.title + '"', async () => {
