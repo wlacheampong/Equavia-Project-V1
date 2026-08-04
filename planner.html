@@ -1742,6 +1742,11 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
 /* ============================================================
    BOOK TRACKER
    ============================================================ */
+/* order:1 pushes the button past .section-title's ::after divider line,
+   which is otherwise always last in DOM/box order regardless of where a
+   real child sits -- see equavia-core.css's .section-title. */
+.book-alt-toggle-btn { order: 1; background: transparent; border: 1px solid rgba(var(--eq-text-primary-rgb), 0.08); color: var(--text-tertiary); cursor: pointer; font-size: 13px; line-height: 1; padding: 3px 9px; border-radius: 6px; font-family: inherit; flex-shrink: 0; text-transform: none; letter-spacing: normal; }
+.book-alt-toggle-btn:hover { color: var(--text-primary); }
 .book-year-stat {
   font-family: var(--font-mono); font-size: 11px; color: var(--text-tertiary);
   margin-bottom: 12px;
@@ -2204,8 +2209,9 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
 <div class="section" data-section="books" id="book-tracker" data-eq-collapse="ability:books">
   <div class="section-title" data-eq-collapse-keep data-eq-collapse-trigger>
     <span class="section-title-text">BOOK TRACKER<span class="eq-collapse-chevron"></span></span>
+    <button type="button" class="book-alt-toggle-btn" id="bookAltToggleBtn" aria-label="Switch to alternate book tracker" title="Switch book tracker">&minus;</button>
   </div>
-  <div class="card">
+  <div class="card" id="bookTrackerRegular">
     <div class="book-year-stat" id="bookYearStat"></div>
     <div class="book-add-row">
       <input type="text" class="hab-input" id="bookTitleInput" placeholder="Book title…">
@@ -2214,6 +2220,20 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
     </div>
     <div id="bookShelves"></div>
     <div class="empty-state" id="bookEmptyState" style="display:none;">No books yet — add one above.</div>
+  </div>
+  <!-- Independent alternate tracker: own storage key (books_alt_v1), no
+       data shared with the regular tracker above. Hidden by default;
+       toggled by #bookAltToggleBtn. Visibility is not persisted -- it
+       always reverts to the regular tracker on reload/navigation. -->
+  <div class="card" id="bookTrackerAlt" style="display:none;">
+    <div class="book-year-stat" id="bookYearStatAlt"></div>
+    <div class="book-add-row">
+      <input type="text" class="hab-input" id="bookTitleInputAlt" placeholder="Book title…">
+      <input type="text" class="hab-input book-author-input" id="bookAuthorInputAlt" placeholder="Author…">
+      <button type="button" class="hab-add-btn" id="bookAddBtnAlt">+ Add</button>
+    </div>
+    <div id="bookShelvesAlt"></div>
+    <div class="empty-state" id="bookEmptyStateAlt" style="display:none;">No books yet — add one above.</div>
   </div>
 </div>
 
@@ -5357,8 +5377,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // ============================================================
   // BOOK TRACKER
+  //
+  // makeBookTracker() is instantiated twice: once for the regular
+  // tracker (id suffix '', books_v1) and once for the alternate one
+  // toggled into view via #bookAltToggleBtn (id suffix 'Alt',
+  // books_alt_v1) -- own storage, no data shared with the regular
+  // tracker. One implementation, two storage keys, so a future change
+  // to shelf logic/row rendering only happens once. Which tracker is
+  // showing is in-memory only and always resets to the regular one on
+  // reload/navigation.
   // ============================================================
-  const BOOKS_KEY = 'books_v1';
   const BOOK_SHELVES = [
     { status: 'want',    label: 'Not Started' },
     { status: 'reading', label: 'Started' },
@@ -5368,152 +5396,181 @@ document.addEventListener('DOMContentLoaded', function () {
   // value) fall back to "Started" so they still render in a real shelf.
   function bookStatus(book) { return book.status || 'reading'; }
 
-  function getBooks() { const v = storeGet(BOOKS_KEY); return Array.isArray(v) ? v : []; }
-  function setBooks(list) { storeSet(BOOKS_KEY, list); }
-
   // Re-walk vs equavia-pre-answers-final.md 1.1: yearly "books finished"
   // target, Goodreads-challenge style -- wasn't tracked at all before,
   // just a bare count. Stored (not hardcoded) so it can be adjusted the
   // same way sleep_target_hours_v1 is, without another code change.
-  const BOOKS_TARGET_KEY = 'books_yearly_target_v1';
   const DEFAULT_BOOKS_TARGET = 6;
-  function getBooksTarget() { const v = storeGet(BOOKS_TARGET_KEY); return (typeof v === 'number' && v > 0) ? v : DEFAULT_BOOKS_TARGET; }
 
-  function renderBookYearStat() {
-    const el = document.getElementById('bookYearStat');
-    if (!el) return;
-    const year = new Date().getFullYear();
-    const count = getBooks().filter(b => b.status === 'read' && b.finishedAt && new Date(b.finishedAt).getFullYear() === year).length;
-    const target = getBooksTarget();
-    el.innerHTML = '<b>' + count + '</b> / ' + target + ' book' + (target === 1 ? '' : 's') + ' finished in ' + year;
-  }
+  function makeBookTracker(idSuffix, booksKey, targetKey, onRender) {
+    function getBooks() { const v = storeGet(booksKey); return Array.isArray(v) ? v : []; }
+    function setBooks(list) { storeSet(booksKey, list); }
+    function getBooksTarget() { const v = storeGet(targetKey); return (typeof v === 'number' && v > 0) ? v : DEFAULT_BOOKS_TARGET; }
 
-  function buildBookRow(book) {
-    const row = document.createElement('div');
-    row.className = 'book-row';
-    row.dataset.id = book.id;
-
-    const top = document.createElement('div');
-    top.className = 'book-row-top';
-    top.innerHTML =
-      '<div class="book-titles">' +
-        '<div class="book-title"></div>' +
-        '<div class="book-author"></div>' +
-      '</div>' +
-      '<select class="book-status-select">' +
-        BOOK_SHELVES.map(s => '<option value="' + s.status + '">' + s.label + '</option>').join('') +
-      '</select>' +
-      '<button type="button" class="book-del" aria-label="Delete book">×</button>';
-    top.querySelector('.book-title').textContent = book.title;
-    top.querySelector('.book-author').textContent = book.author || '';
-    const statusSel = top.querySelector('.book-status-select');
-    statusSel.value = bookStatus(book);
-    statusSel.dataset.status = bookStatus(book);
-    statusSel.addEventListener('change', () => {
-      statusSel.dataset.status = statusSel.value;
-      const list = getBooks();
-      const idx = list.findIndex(b => b.id === book.id);
-      if (idx === -1) return;
-      const next = Object.assign({}, list[idx], { status: statusSel.value });
-      if (statusSel.value === 'read' && !next.finishedAt) next.finishedAt = new Date().toISOString();
-      if (statusSel.value !== 'read') next.finishedAt = null;
-      list[idx] = next;
-      setBooks(list);
-      renderBooks();
-    });
-    top.querySelector('.book-del').addEventListener('click', () => {
-      setBooks(getBooks().filter(b => b.id !== book.id));
-      renderBooks();
-    });
-    row.appendChild(top);
-
-    if (bookStatus(book) === 'read') {
-      const meta = document.createElement('div');
-      meta.className = 'book-meta-row';
-      const stars = document.createElement('div');
-      stars.className = 'book-stars';
-      for (let i = 1; i <= 5; i++) {
-        const starBtn = document.createElement('button');
-        starBtn.type = 'button';
-        starBtn.className = 'book-star' + ((book.rating || 0) >= i ? ' is-filled' : '');
-        starBtn.textContent = '★';
-        starBtn.setAttribute('aria-label', 'Rate ' + i + ' star' + (i === 1 ? '' : 's'));
-        starBtn.addEventListener('click', () => {
-          const list = getBooks();
-          const idx = list.findIndex(b => b.id === book.id);
-          if (idx === -1) return;
-          const newRating = list[idx].rating === i ? 0 : i;
-          list[idx] = Object.assign({}, list[idx], { rating: newRating });
-          setBooks(list);
-          renderBooks();
-        });
-        stars.appendChild(starBtn);
-      }
-      meta.appendChild(stars);
-      if (book.finishedAt) {
-        const dateEl = document.createElement('span');
-        dateEl.className = 'book-finished-date';
-        dateEl.textContent = 'Finished ' + new Date(book.finishedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-        meta.appendChild(dateEl);
-      }
-      row.appendChild(meta);
+    function renderBookYearStat() {
+      const el = document.getElementById('bookYearStat' + idSuffix);
+      if (!el) return;
+      const year = new Date().getFullYear();
+      const count = getBooks().filter(b => b.status === 'read' && b.finishedAt && new Date(b.finishedAt).getFullYear() === year).length;
+      const target = getBooksTarget();
+      el.innerHTML = '<b>' + count + '</b> / ' + target + ' book' + (target === 1 ? '' : 's') + ' finished in ' + year;
     }
 
-    const notes = document.createElement('textarea');
-    notes.className = 'book-notes-input';
-    notes.rows = 1;
-    notes.placeholder = 'Notes…';
-    notes.value = book.notes || '';
-    notes.addEventListener('change', () => {
-      const list = getBooks();
-      const idx = list.findIndex(b => b.id === book.id);
-      if (idx === -1) return;
-      list[idx] = Object.assign({}, list[idx], { notes: notes.value.trim() });
-      setBooks(list);
-    });
-    row.appendChild(notes);
+    function buildBookRow(book) {
+      const row = document.createElement('div');
+      row.className = 'book-row';
+      row.dataset.id = book.id;
 
-    return row;
-  }
-
-  function renderBooks() {
-    const wrap = document.getElementById('bookShelves');
-    const emptyState = document.getElementById('bookEmptyState');
-    if (!wrap) return;
-    const list = getBooks();
-    wrap.innerHTML = '';
-    emptyState.style.display = list.length ? 'none' : '';
-    BOOK_SHELVES.forEach(shelf => {
-      const items = list.filter(b => bookStatus(b) === shelf.status);
-      const section = document.createElement('div');
-      section.className = 'book-shelf';
-      const title = document.createElement('div');
-      title.className = 'book-shelf-title';
-      title.textContent = shelf.label + ' (' + items.length + ')';
-      section.appendChild(title);
-      items.forEach(b => section.appendChild(buildBookRow(b)));
-      wrap.appendChild(section);
-    });
-    renderBookYearStat();
-  }
-
-  function initBookAddForm() {
-    document.getElementById('bookAddBtn').addEventListener('click', () => {
-      const titleInput = document.getElementById('bookTitleInput');
-      const authorInput = document.getElementById('bookAuthorInput');
-      const title = titleInput.value.trim();
-      if (!title) return;
-      const list = getBooks();
-      list.push({
-        id: 'bk' + Date.now() + Math.random().toString(36).slice(2, 7),
-        title, author: authorInput.value.trim(),
-        status: 'want', rating: 0, notes: '', finishedAt: null,
-        addedAt: new Date().toISOString()
+      const top = document.createElement('div');
+      top.className = 'book-row-top';
+      top.innerHTML =
+        '<div class="book-titles">' +
+          '<div class="book-title"></div>' +
+          '<div class="book-author"></div>' +
+        '</div>' +
+        '<select class="book-status-select">' +
+          BOOK_SHELVES.map(s => '<option value="' + s.status + '">' + s.label + '</option>').join('') +
+        '</select>' +
+        '<button type="button" class="book-del" aria-label="Delete book">×</button>';
+      top.querySelector('.book-title').textContent = book.title;
+      top.querySelector('.book-author').textContent = book.author || '';
+      const statusSel = top.querySelector('.book-status-select');
+      statusSel.value = bookStatus(book);
+      statusSel.dataset.status = bookStatus(book);
+      statusSel.addEventListener('change', () => {
+        statusSel.dataset.status = statusSel.value;
+        const list = getBooks();
+        const idx = list.findIndex(b => b.id === book.id);
+        if (idx === -1) return;
+        const next = Object.assign({}, list[idx], { status: statusSel.value });
+        if (statusSel.value === 'read' && !next.finishedAt) next.finishedAt = new Date().toISOString();
+        if (statusSel.value !== 'read') next.finishedAt = null;
+        list[idx] = next;
+        setBooks(list);
+        renderBooks();
       });
-      setBooks(list);
-      titleInput.value = '';
-      authorInput.value = '';
-      renderBooks();
+      top.querySelector('.book-del').addEventListener('click', () => {
+        setBooks(getBooks().filter(b => b.id !== book.id));
+        renderBooks();
+      });
+      row.appendChild(top);
+
+      if (bookStatus(book) === 'read') {
+        const meta = document.createElement('div');
+        meta.className = 'book-meta-row';
+        const stars = document.createElement('div');
+        stars.className = 'book-stars';
+        for (let i = 1; i <= 5; i++) {
+          const starBtn = document.createElement('button');
+          starBtn.type = 'button';
+          starBtn.className = 'book-star' + ((book.rating || 0) >= i ? ' is-filled' : '');
+          starBtn.textContent = '★';
+          starBtn.setAttribute('aria-label', 'Rate ' + i + ' star' + (i === 1 ? '' : 's'));
+          starBtn.addEventListener('click', () => {
+            const list = getBooks();
+            const idx = list.findIndex(b => b.id === book.id);
+            if (idx === -1) return;
+            const newRating = list[idx].rating === i ? 0 : i;
+            list[idx] = Object.assign({}, list[idx], { rating: newRating });
+            setBooks(list);
+            renderBooks();
+          });
+          stars.appendChild(starBtn);
+        }
+        meta.appendChild(stars);
+        if (book.finishedAt) {
+          const dateEl = document.createElement('span');
+          dateEl.className = 'book-finished-date';
+          dateEl.textContent = 'Finished ' + new Date(book.finishedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+          meta.appendChild(dateEl);
+        }
+        row.appendChild(meta);
+      }
+
+      const notes = document.createElement('textarea');
+      notes.className = 'book-notes-input';
+      notes.rows = 1;
+      notes.placeholder = 'Notes…';
+      notes.value = book.notes || '';
+      notes.addEventListener('change', () => {
+        const list = getBooks();
+        const idx = list.findIndex(b => b.id === book.id);
+        if (idx === -1) return;
+        list[idx] = Object.assign({}, list[idx], { notes: notes.value.trim() });
+        setBooks(list);
+      });
+      row.appendChild(notes);
+
+      return row;
+    }
+
+    function renderBooks() {
+      const wrap = document.getElementById('bookShelves' + idSuffix);
+      const emptyState = document.getElementById('bookEmptyState' + idSuffix);
+      if (!wrap) return;
+      const list = getBooks();
+      wrap.innerHTML = '';
+      emptyState.style.display = list.length ? 'none' : '';
+      BOOK_SHELVES.forEach(shelf => {
+        const items = list.filter(b => bookStatus(b) === shelf.status);
+        const section = document.createElement('div');
+        section.className = 'book-shelf';
+        const title = document.createElement('div');
+        title.className = 'book-shelf-title';
+        title.textContent = shelf.label + ' (' + items.length + ')';
+        section.appendChild(title);
+        items.forEach(b => section.appendChild(buildBookRow(b)));
+        wrap.appendChild(section);
+      });
+      renderBookYearStat();
+      if (onRender) onRender(list.length);
+    }
+
+    function initAddForm() {
+      document.getElementById('bookAddBtn' + idSuffix).addEventListener('click', () => {
+        const titleInput = document.getElementById('bookTitleInput' + idSuffix);
+        const authorInput = document.getElementById('bookAuthorInput' + idSuffix);
+        const title = titleInput.value.trim();
+        if (!title) return;
+        const list = getBooks();
+        list.push({
+          id: 'bk' + Date.now() + Math.random().toString(36).slice(2, 7),
+          title, author: authorInput.value.trim(),
+          status: 'want', rating: 0, notes: '', finishedAt: null,
+          addedAt: new Date().toISOString()
+        });
+        setBooks(list);
+        titleInput.value = '';
+        authorInput.value = '';
+        renderBooks();
+      });
+    }
+
+    return { getBooks, render: renderBooks, initAddForm };
+  }
+
+  // Alt tracker data has no other visible trace once the view resets to
+  // the regular tracker on reload -- a count on the toggle button is the
+  // only reminder it isn't empty.
+  function updateBookAltIndicator(count) {
+    const btn = document.getElementById('bookAltToggleBtn');
+    if (!btn) return;
+    btn.textContent = count > 0 ? ('− ' + count) : '−';
+    btn.title = count > 0 ? ('Switch book tracker (' + count + ' in alternate)') : 'Switch book tracker';
+  }
+
+  const bookTracker = makeBookTracker('', 'books_v1', 'books_yearly_target_v1');
+  const bookTrackerAlt = makeBookTracker('Alt', 'books_alt_v1', 'books_alt_yearly_target_v1', updateBookAltIndicator);
+
+  function initBookAltToggle() {
+    const btn = document.getElementById('bookAltToggleBtn');
+    const regular = document.getElementById('bookTrackerRegular');
+    const alt = document.getElementById('bookTrackerAlt');
+    let showingAlt = false;
+    btn.addEventListener('click', () => {
+      showingAlt = !showingAlt;
+      regular.style.display = showingAlt ? 'none' : '';
+      alt.style.display = showingAlt ? '' : 'none';
     });
   }
 
@@ -5522,11 +5579,14 @@ document.addEventListener('DOMContentLoaded', function () {
   renderHabits();
   initHabitAddForm();
   initHabitYearModal();
-  renderBooks();
-  initBookAddForm();
+  bookTracker.render();
+  bookTracker.initAddForm();
+  bookTrackerAlt.render();
+  bookTrackerAlt.initAddForm();
+  initBookAltToggle();
 
   // Re-render if storage changes from another tab.
-  window.addEventListener('storage', () => { renderHabits(); renderBooks(); });
+  window.addEventListener('storage', () => { renderHabits(); bookTracker.render(); bookTrackerAlt.render(); });
 })();
 </script>
 <script>
