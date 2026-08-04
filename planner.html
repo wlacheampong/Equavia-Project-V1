@@ -1679,6 +1679,12 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
 .hab-year-modal-grid { display: grid; grid-template-rows: repeat(7, 1fr); grid-auto-flow: column; gap: 3px; width: max-content; }
 
 /* ===== Learn Hub (6.3) ===== */
+/* order:1 pushes the button past .section-title's ::after divider line,
+   which is otherwise always last in DOM/box order regardless of where a
+   real child sits -- see equavia-core.css's .section-title (same trick
+   as habits.html/planner.html's .book-alt-toggle-btn). */
+.learn-inactive-toggle-btn { order: 1; background: transparent; border: 1px solid rgba(var(--eq-text-primary-rgb), 0.08); color: var(--text-tertiary); cursor: pointer; font-size: 13px; line-height: 1; padding: 3px 9px; border-radius: 6px; font-family: inherit; flex-shrink: 0; }
+.learn-inactive-toggle-btn:hover { color: var(--text-primary); }
 .learn-due-chip {
   background: rgba(var(--eq-accent-rgb), 0.16); color: var(--accent); border-radius: 999px;
   padding: 3px 10px; font-size: 10.5px; font-weight: 700;
@@ -2242,6 +2248,7 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
   <div class="section-title" data-eq-collapse-keep data-eq-collapse-trigger>
     <span class="section-title-text">LEARN HUB<span class="eq-collapse-chevron"></span></span>
     <span class="learn-due-chip" id="learnDueChip" style="display:none;"></span>
+    <button type="button" class="learn-inactive-toggle-btn" id="learnInactiveToggleBtn" aria-label="Toggle inactive tracks">🕐</button>
   </div>
   <div class="card">
     <div class="learn-track-add-row">
@@ -2250,6 +2257,16 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
     </div>
     <div id="learnTracksList"></div>
     <div class="empty-state" id="learnEmptyState" style="display:none;">No tracks yet — add one above.</div>
+    <!-- Plain show/hide, own localStorage key -- deliberately NOT
+         data-eq-collapse/collapsible.js, since Learn Hub's outer .section
+         already uses that mechanism and nesting a second instance inside
+         it would mean two independent ways to hide the same rows. This
+         toggle only ever touches display + eq.learn.inactiveTracksShown_v1,
+         never a track's own status. -->
+    <div id="learnInactiveGroup" style="display:none;">
+      <div class="learn-subsection-title" id="learnInactiveGroupTitle">Inactive</div>
+      <div id="learnInactiveTracksList"></div>
+    </div>
   </div>
 </div>
 
@@ -4851,6 +4868,7 @@ document.addEventListener('DOMContentLoaded', function () {
         <option value="active">Active</option>
         <option value="paused">Paused</option>
         <option value="done">Done</option>
+        <option value="inactive">Inactive</option>
       </select>
       <input type="date" id="learnTrackEndDate">
       <button type="button" class="hab-add-btn" id="learnTrackDelBtn">Delete track</button>
@@ -5637,23 +5655,55 @@ document.addEventListener('DOMContentLoaded', function () {
   function getLearnLog() { return storeGet(LOG_KEY) || []; }
   function setLearnLog(v) { storeSet(LOG_KEY, v); }
 
+  // Display-only filter preference, separate from data-eq-collapse/collapsible.js
+  // on purpose (Learn Hub's outer .section already uses that mechanism -- a
+  // second nested instance would mean two ways to hide the same rows). Never
+  // reads or writes a track's own status. Persists across refresh/nav (unlike
+  // the book tracker's in-memory "-" toggle); hidden by default when never set.
+  const INACTIVE_SHOWN_KEY = 'eq.learn.inactiveTracksShown_v1';
+  function getInactiveShown() { return storeGet(INACTIVE_SHOWN_KEY) === true; }
+  function setInactiveShown(v) { storeSet(INACTIVE_SHOWN_KEY, v); }
+
   let activeTrackId = null;
 
   // ---- Tracks ----
+  function buildTrackRow(t) {
+    const row = document.createElement('div');
+    row.className = 'learn-track-row';
+    row.innerHTML = '<span class="learn-track-name"></span><span class="learn-track-status"></span>';
+    row.querySelector('.learn-track-name').textContent = t.name;
+    row.querySelector('.learn-track-status').textContent = t.status;
+    row.addEventListener('click', () => openTrackModal(t.id));
+    return row;
+  }
+
+  function updateInactiveToggleBtn(count) {
+    const btn = $('learnInactiveToggleBtn');
+    if (!btn) return;
+    const shown = getInactiveShown();
+    btn.textContent = count > 0 ? ('🕐 ' + count) : '🕐';
+    btn.title = count > 0 ? ((shown ? 'Hide' : 'Show') + ' inactive tracks (' + count + ')') : 'No inactive tracks';
+  }
+
   function renderTracks() {
     const wrap = $('learnTracksList');
     const tracks = getTracks();
+    const visibleTracks = tracks.filter((t) => t.status !== 'inactive');
+    const inactiveTracks = tracks.filter((t) => t.status === 'inactive');
+
     wrap.innerHTML = '';
+    // Full track count, not just the visible subset -- inactive tracks are
+    // hidden, not gone, so having only inactive tracks isn't an empty state.
     $('learnEmptyState').style.display = tracks.length ? 'none' : '';
-    tracks.forEach((t) => {
-      const row = document.createElement('div');
-      row.className = 'learn-track-row';
-      row.innerHTML = '<span class="learn-track-name"></span><span class="learn-track-status"></span>';
-      row.querySelector('.learn-track-name').textContent = t.name;
-      row.querySelector('.learn-track-status').textContent = t.status;
-      row.addEventListener('click', () => openTrackModal(t.id));
-      wrap.appendChild(row);
-    });
+    visibleTracks.forEach((t) => wrap.appendChild(buildTrackRow(t)));
+
+    const inactiveWrap = $('learnInactiveTracksList');
+    inactiveWrap.innerHTML = '';
+    inactiveTracks.forEach((t) => inactiveWrap.appendChild(buildTrackRow(t)));
+    $('learnInactiveGroupTitle').textContent = 'Inactive (' + inactiveTracks.length + ')';
+    $('learnInactiveGroup').style.display = getInactiveShown() ? '' : 'none';
+
+    updateInactiveToggleBtn(inactiveTracks.length);
   }
   $('learnTrackAddBtn').addEventListener('click', () => {
     const input = $('learnTrackInput');
@@ -5914,6 +5964,11 @@ document.addEventListener('DOMContentLoaded', function () {
     setLearnLog(list);
     $('learnLogText').value = ''; $('learnLogLink').value = '';
     renderLearnLog();
+  });
+
+  $('learnInactiveToggleBtn').addEventListener('click', () => {
+    setInactiveShown(!getInactiveShown());
+    renderTracks();
   });
 
   renderTracks();
