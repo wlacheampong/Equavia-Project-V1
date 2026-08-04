@@ -335,7 +335,7 @@ button:focus-visible, a:focus-visible, [tabindex]:focus-visible {
   padding: var(--eq-space-md) 0; border-top: 1px solid var(--eq-border);
 }
 .eq-changes-row:first-child { border-top: 0; }
-.eq-changes-row-text { font-size: var(--eq-font-sm); color: var(--eq-text-primary); }
+.eq-changes-row-text { font-size: var(--eq-font-sm); color: var(--eq-text-primary); display: flex; align-items: center; gap: 5px; }
 .eq-changes-row-action { flex-shrink: 0; }
 .eq-changes-row-action.is-undone { font-size: var(--eq-font-xs); color: var(--eq-text-muted); font-style: italic; }
 .eq-changes-undo-btn {

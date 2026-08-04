@@ -122,7 +122,9 @@ body {
 .ct-row-status { font-size: 11.5px; color: var(--text-tertiary); margin-top: 3px; }
 .ct-row-status.is-overdue { color: var(--eq-danger); }
 .ct-row-status.is-due { color: var(--warning); }
-.ct-cake { font-size: 12px; }
+.ct-cake { font-size: 12px; display: inline-flex; align-items: center; gap: 3px; }
+.ct-cake-icon { display: inline-flex; flex-shrink: 0; }
+.ct-cake-icon svg { width: 13px; height: 13px; }
 .ct-chevron { color: var(--text-quaternary); flex-shrink: 0; }
 
 /* ---- detail / profile ---- */
@@ -135,7 +137,7 @@ body {
 .ct-del-btn { background: none; border: none; color: var(--text-quaternary); font-size: 20px; cursor: pointer; padding: 0 4px; line-height: 1; position: relative; }
 .ct-del-btn::before { content: ''; position: absolute; inset: -12px; } /* invisible tap-target expansion to ~44x44px */
 .ct-del-btn:hover { color: var(--danger); }
-.ct-profile-status { font-size: 12.5px; color: var(--text-tertiary); margin-bottom: 16px; }
+.ct-profile-status { font-size: 12.5px; color: var(--text-tertiary); margin-bottom: 16px; display: flex; align-items: center; gap: 3px; }
 .ct-profile-status.is-overdue { color: var(--eq-danger); }
 .ct-profile-status.is-due { color: var(--warning); }
 .ct-actions-row { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
@@ -586,6 +588,16 @@ body {
   function storeSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
 
   const CONTACTS_KEY = 'contacts_v1';
+  // Local to this file -- doesn't recur elsewhere. Same minimal-icon
+  // style as js/icons.js: viewBox 0 0 24 24, no fill, currentColor,
+  // stroke-width 1.8.
+  const CAKE_ICON_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="12" width="16" height="8" rx="1"/><path d="M4 16h16"/><path d="M8 12V8M12 12V8M16 12V8"/><circle cx="8" cy="6" r="1"/><circle cx="12" cy="6" r="1"/><circle cx="16" cy="6" r="1"/></svg>';
+  function cakeIconSpan() {
+    const span = document.createElement('span');
+    span.className = 'ct-cake-icon';
+    span.innerHTML = CAKE_ICON_SVG;
+    return span;
+  }
   // Phase 5.2 tiers/cadences, as answered -- 'close' cadence changed 14->21,
   // 'network' renamed to 'networking' at 30->90, 'acquaintance' is new.
   // Re-walk vs equavia-pre-answers-final.md 5.2: Close 21d->14d,
@@ -738,8 +750,8 @@ body {
     const nameSpan = document.createElement('span');
     nameSpan.textContent = c.name;
     nameLine.appendChild(nameSpan);
-    if (bdayToday) { const cake = document.createElement('span'); cake.className = 'ct-cake'; cake.textContent = '🎂 today'; nameLine.appendChild(cake); }
-    else if (isBirthdayUpcoming(c.birthday)) { const cake = document.createElement('span'); cake.className = 'ct-cake'; cake.textContent = '🎂'; nameLine.appendChild(cake); }
+    if (bdayToday) { const cake = document.createElement('span'); cake.className = 'ct-cake'; cake.appendChild(cakeIconSpan()); cake.appendChild(document.createTextNode('today')); nameLine.appendChild(cake); }
+    else if (isBirthdayUpcoming(c.birthday)) { const cake = document.createElement('span'); cake.className = 'ct-cake'; cake.appendChild(cakeIconSpan()); nameLine.appendChild(cake); }
     main.appendChild(nameLine);
     const status = document.createElement('div');
     status.className = 'ct-row-status' + (overdue ? ' is-overdue' : '') + (due ? ' is-due' : '');
@@ -1021,7 +1033,13 @@ body {
     const overdue = isOverdue(c), due = isDue(c);
     const statusEl = $('ctpStatus');
     statusEl.className = 'ct-profile-status' + (overdue ? ' is-overdue' : '') + (due ? ' is-due' : '');
-    statusEl.textContent = statusText(c) + (isBirthdayToday(c.birthday) ? ' · 🎂 Birthday today!' : '');
+    statusEl.innerHTML = '';
+    statusEl.appendChild(document.createTextNode(statusText(c)));
+    if (isBirthdayToday(c.birthday)) {
+      statusEl.appendChild(document.createTextNode(' · '));
+      statusEl.appendChild(cakeIconSpan());
+      statusEl.appendChild(document.createTextNode('Birthday today!'));
+    }
     $('ctpType').value = c.type;
     fillTierSelect($('ctpTier'));
     $('ctpTier').value = c.tier;

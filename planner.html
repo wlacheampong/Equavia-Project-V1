@@ -13,6 +13,7 @@
 <title>Ability — Project Equavia</title>
 <link rel="stylesheet" href="css/equavia-core.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/icons.js"></script>
 <script src="js/sync.js" defer></script>
 <script src="js/obsidian-sync.js"></script>
 <script src="js/daily-report.js" defer></script>
@@ -1285,9 +1286,11 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
 .proj-obsidian-gear {
   border: 1px solid rgba(var(--eq-text-primary-rgb), 0.08); background: transparent;
   color: var(--text-tertiary); cursor: pointer;
-  width: 30px; height: 30px; border-radius: 8px; font-size: 14px;
+  width: 30px; height: 30px; border-radius: 8px;
+  display: inline-flex; align-items: center; justify-content: center;
   transition: color 0.2s, border-color 0.2s;
 }
+.proj-obsidian-gear svg { width: 16px; height: 16px; }
 .proj-obsidian-gear:hover { color: var(--text-primary); border-color: rgba(var(--eq-text-primary-rgb), 0.22); }
 .proj-obsidian-status { font-size: 11px; color: var(--text-tertiary); min-height: 14px; margin: -6px 0 10px; }
 .proj-obsidian-status.is-error { color: var(--danger); }
@@ -2085,7 +2088,7 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
         <option value="all">All Projects</option>
         <option value="unassigned">Unassigned</option>
       </select>
-      <a href="settings.html" class="proj-obsidian-gear" title="Obsidian sync settings">⚙️</a>
+      <a href="settings.html" class="proj-obsidian-gear" title="Obsidian sync settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1-1.55 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.55-1 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34h.09a1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55h.09a1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87v.09a1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.55 1z"/></svg></a>
     </div>
     <div class="proj-obsidian-status" id="projObsidianStatus"></div>
 
@@ -2249,7 +2252,7 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
   <div class="section-title" data-eq-collapse-keep data-eq-collapse-trigger>
     <span class="section-title-text">LEARN HUB<span class="eq-collapse-chevron"></span></span>
     <span class="learn-due-chip" id="learnDueChip" style="display:none;"></span>
-    <button type="button" class="learn-inactive-toggle-btn" id="learnInactiveToggleBtn" aria-label="Toggle inactive tracks"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg><span id="learnInactiveToggleCount"></span></button>
+    <button type="button" class="learn-inactive-toggle-btn" id="learnInactiveToggleBtn" aria-label="Toggle inactive tracks"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></svg><span id="learnInactiveToggleCount"></span></button>
   </div>
   <div class="card">
     <div class="learn-track-add-row">
@@ -5966,6 +5969,10 @@ document.addEventListener('DOMContentLoaded', function () {
     $('learnLogText').value = ''; $('learnLogLink').value = '';
     renderLearnLog();
   });
+
+  // Same clock icon as settings.html's Activity category, sourced from
+  // the shared js/icons.js instead of a second pasted-in copy.
+  document.querySelector('#learnInactiveToggleBtn svg').innerHTML = window.EqIcons.clock;
 
   $('learnInactiveToggleBtn').addEventListener('click', () => {
     setInactiveShown(!getInactiveShown());

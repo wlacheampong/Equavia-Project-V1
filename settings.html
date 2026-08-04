@@ -12,6 +12,7 @@
 <meta name="apple-mobile-web-app-title" content="Project Equavia">
 <title>Settings — Project Equavia</title>
 <link rel="stylesheet" href="css/equavia-core.css">
+<script src="js/icons.js"></script>
 <script src="js/assistant-tools.js"></script>
 <script src="js/topbar.js" defer></script>
 <script src="js/collapsible.js" defer></script>
@@ -92,9 +93,11 @@ input:focus, select:focus { border-color: rgba(var(--eq-text-primary-rgb), 0.3);
   min-height: 44px; /* was ~27px tall */
 }
 .seg button.active { background: rgba(var(--eq-text-primary-rgb), 0.10); color: var(--text-primary); }
-.status-line { font-size: 12px; color: var(--text-tertiary); margin-top: 8px; min-height: 16px; }
+.status-line { font-size: 12px; color: var(--text-tertiary); margin-top: 8px; min-height: 16px; display: inline-flex; align-items: center; gap: 5px; }
 .status-line.ok { color: var(--success); }
 .status-line.err { color: var(--danger); }
+.settings-status-icon { display: inline-flex; flex-shrink: 0; }
+.settings-status-icon svg { width: 13px; height: 13px; }
 /* ===== 6.8 System Health strip ===== */
 .health-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--border); }
 .health-row:last-child { border-bottom: 0; }
@@ -164,8 +167,9 @@ input:focus, select:focus { border-color: rgba(var(--eq-text-primary-rgb), 0.3);
 .settings-cat-icon {
   width: 27px; height: 27px; border-radius: 8px; flex-shrink: 0;
   display: flex; align-items: center; justify-content: center;
-  font-size: 13px; background: rgba(var(--eq-text-primary-rgb), 0.07);
+  background: rgba(var(--eq-text-primary-rgb), 0.07);
 }
+.settings-cat-icon svg { width: 15px; height: 15px; }
 .settings-cat-label { font-size: 13px; font-weight: 700; color: var(--text-primary); }
 .settings-cat-body { min-width: 0; }
 .settings-cat-body .card:last-child { margin-bottom: 0; }
@@ -207,7 +211,7 @@ input:focus, select:focus { border-color: rgba(var(--eq-text-primary-rgb), 0.3);
       <!-- Account -->
       <div class="settings-cat" data-eq-collapse="settings:account">
         <div class="settings-cat-head" data-eq-collapse-keep data-eq-collapse-trigger>
-          <span class="settings-cat-icon">👤</span><span class="settings-cat-label">Account</span>
+          <span class="settings-cat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></span><span class="settings-cat-label">Account</span>
           <span class="eq-collapse-chevron"></span>
         </div>
         <div class="settings-cat-body">
@@ -226,7 +230,7 @@ input:focus, select:focus { border-color: rgba(var(--eq-text-primary-rgb), 0.3);
       <!-- Display -->
       <div class="settings-cat" data-eq-collapse="settings:display">
         <div class="settings-cat-head" data-eq-collapse-keep data-eq-collapse-trigger>
-          <span class="settings-cat-icon">🎛️</span><span class="settings-cat-label">Display</span>
+          <span class="settings-cat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="6" r="2"/><path d="M3 6h3M11 6h10"/><circle cx="16" cy="12" r="2"/><path d="M3 12h11M20 12h1"/><circle cx="10" cy="18" r="2"/><path d="M3 18h5M14 18h7"/></svg></span><span class="settings-cat-label">Display</span>
           <span class="eq-collapse-chevron"></span>
         </div>
         <div class="settings-cat-body">
@@ -278,7 +282,7 @@ input:focus, select:focus { border-color: rgba(var(--eq-text-primary-rgb), 0.3);
       <!-- Sync -->
       <div class="settings-cat" data-eq-collapse="settings:sync">
         <div class="settings-cat-head" data-eq-collapse-keep data-eq-collapse-trigger>
-          <span class="settings-cat-icon">🔄</span><span class="settings-cat-label">Sync</span>
+          <span class="settings-cat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 1-9 9 9 9 0 0 1-6.3-2.6L3 16"/><path d="M3 12a9 9 0 0 1 9-9 9 9 0 0 1 6.3 2.6L21 8"/><path d="M3 16v4h4"/><path d="M21 8V4h-4"/></svg></span><span class="settings-cat-label">Sync</span>
           <span class="eq-collapse-chevron"></span>
         </div>
         <div class="settings-cat-body">
@@ -320,7 +324,7 @@ input:focus, select:focus { border-color: rgba(var(--eq-text-primary-rgb), 0.3);
       <!-- Data -->
       <div class="settings-cat" data-eq-collapse="settings:data">
         <div class="settings-cat-head" data-eq-collapse-keep data-eq-collapse-trigger>
-          <span class="settings-cat-icon">💾</span><span class="settings-cat-label">Data</span>
+          <span class="settings-cat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h11l3 3v14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M8 3v5h7V3"/><path d="M8 21v-6h8v6"/></svg></span><span class="settings-cat-label">Data</span>
           <span class="eq-collapse-chevron"></span>
         </div>
         <div class="settings-cat-body">
@@ -355,7 +359,7 @@ input:focus, select:focus { border-color: rgba(var(--eq-text-primary-rgb), 0.3);
       <!-- Finance -->
       <div class="settings-cat" data-eq-collapse="settings:finance">
         <div class="settings-cat-head" data-eq-collapse-keep data-eq-collapse-trigger>
-          <span class="settings-cat-icon">📈</span><span class="settings-cat-label">Finance</span>
+          <span class="settings-cat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg></span><span class="settings-cat-label">Finance</span>
           <span class="eq-collapse-chevron"></span>
         </div>
         <div class="settings-cat-body">
@@ -374,7 +378,7 @@ input:focus, select:focus { border-color: rgba(var(--eq-text-primary-rgb), 0.3);
       <!-- Assistant -->
       <div class="settings-cat" data-eq-collapse="settings:assistant">
         <div class="settings-cat-head" data-eq-collapse-keep data-eq-collapse-trigger>
-          <span class="settings-cat-icon">✨</span><span class="settings-cat-label">Assistant</span>
+          <span class="settings-cat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M18.4 5.6l-2.8 2.8M8.4 15.6l-2.8 2.8"/></svg></span><span class="settings-cat-label">Assistant</span>
           <span class="eq-collapse-chevron"></span>
         </div>
         <div class="settings-cat-body">
@@ -399,7 +403,7 @@ input:focus, select:focus { border-color: rgba(var(--eq-text-primary-rgb), 0.3);
       <!-- Activity -->
       <div class="settings-cat" data-eq-collapse="settings:activity">
         <div class="settings-cat-head" data-eq-collapse-keep data-eq-collapse-trigger>
-          <span class="settings-cat-icon">🕘</span><span class="settings-cat-label">Activity</span>
+          <span class="settings-cat-icon" id="settingsActivityIcon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></svg></span><span class="settings-cat-label">Activity</span>
           <span class="eq-collapse-chevron"></span>
         </div>
         <div class="settings-cat-body">
@@ -421,7 +425,7 @@ input:focus, select:focus { border-color: rgba(var(--eq-text-primary-rgb), 0.3);
       <!-- About -->
       <div class="settings-cat" data-eq-collapse="settings:about">
         <div class="settings-cat-head" data-eq-collapse-keep data-eq-collapse-trigger>
-          <span class="settings-cat-icon">ℹ️</span><span class="settings-cat-label">About</span>
+          <span class="settings-cat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg></span><span class="settings-cat-label">About</span>
           <span class="eq-collapse-chevron"></span>
         </div>
         <div class="settings-cat-body">
@@ -460,6 +464,10 @@ input:focus, select:focus { border-color: rgba(var(--eq-text-primary-rgb), 0.3);
 (function () {
   'use strict';
   const $ = (id) => document.getElementById(id);
+  // Same clock icon as planner.html's Learn Hub inactive-tracks toggle,
+  // sourced from the shared js/icons.js instead of a second pasted copy.
+  const activityIconSvg = document.querySelector('#settingsActivityIcon svg');
+  if (activityIconSvg) activityIconSvg.innerHTML = window.EqIcons.clock;
   function storeGet(key) { try { return JSON.parse(localStorage.getItem(key)); } catch (e) { return null; } }
   function storeSet(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) {} }
 
@@ -535,8 +543,20 @@ input:focus, select:focus { border-color: rgba(var(--eq-text-primary-rgb), 0.3);
   });
   renderHealthStrip();
   window.addEventListener('storage', () => { renderHealthStrip(); renderObsConnectionCard(); });
-  function showStatus(el, msg, kind) {
-    el.textContent = msg;
+  // iconName is optional and additive -- the other 23 call sites in this
+  // file that don't pass it keep the exact plain-text behavior they had
+  // before. Icon markup is always our own fixed EqIcons string, never
+  // derived from msg, so msg stays a safe text node even when an icon
+  // is added (msg can contain arbitrary text, e.g. res.reason below).
+  function showStatus(el, msg, kind, iconName) {
+    el.innerHTML = '';
+    if (iconName && window.EqIcons && window.EqIcons[iconName]) {
+      const icon = document.createElement('span');
+      icon.className = 'settings-status-icon';
+      icon.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + window.EqIcons[iconName] + '</svg>';
+      el.appendChild(icon);
+    }
+    el.appendChild(document.createTextNode(msg));
     el.classList.remove('ok', 'err');
     if (kind) el.classList.add(kind);
   }
@@ -849,7 +869,7 @@ input:focus, select:focus { border-color: rgba(var(--eq-text-primary-rgb), 0.3);
       ObsidianSync.setConfig(readObsidianForm());
       showStatus($('obsStatus'), 'Testing…', null);
       ObsidianSync.testConnection().then((ok) => {
-        showStatus($('obsStatus'), ok ? '✅ Connected' : '❌ Not reachable', ok ? 'ok' : 'err');
+        showStatus($('obsStatus'), ok ? 'Connected' : 'Not reachable', ok ? 'ok' : 'err', ok ? 'check' : 'x');
         renderObsConnectionCard();
       });
     });
@@ -858,9 +878,9 @@ input:focus, select:focus { border-color: rgba(var(--eq-text-primary-rgb), 0.3);
       if (!cfg.enabled) { showStatus($('obsAboutMeStatus'), 'Enable and save sync first.', 'err'); return; }
       showStatus($('obsAboutMeStatus'), 'Pushing…', null);
       ObsidianSync.pushIfAbsent(cfg.folder + '/About Me.md', buildAboutMeTemplate()).then((res) => {
-        if (res.ok) showStatus($('obsAboutMeStatus'), '✅ Created ' + res.path + ' — edit it in Obsidian.', 'ok');
+        if (res.ok) showStatus($('obsAboutMeStatus'), 'Created ' + res.path + ' — edit it in Obsidian.', 'ok', 'check');
         else if (res.reason === 'exists') showStatus($('obsAboutMeStatus'), 'Already exists — edit it directly in Obsidian, this only creates it once.', null);
-        else showStatus($('obsAboutMeStatus'), '❌ Could not push (' + res.reason + ')', 'err');
+        else showStatus($('obsAboutMeStatus'), 'Could not push (' + res.reason + ')', 'err', 'x');
       });
     });
   }

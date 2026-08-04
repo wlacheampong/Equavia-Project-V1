@@ -148,7 +148,8 @@ main {
   margin-bottom: 8px; padding-bottom: 6px;
   border-bottom: 1px solid var(--border-soft);
 }
-.stack-window-icon { font-size: 16px; }
+.stack-window-icon { display: inline-flex; }
+.stack-window-icon svg { width: 16px; height: 16px; }
 .stack-window-title { font-size: 13px; font-weight: 700; color: var(--text-primary); }
 .stack-window-time { font-size: 11px; color: var(--text-tertiary); font-weight: 500; }
 
@@ -453,6 +454,7 @@ main {
   font-size: 11px; color: var(--text-tertiary);
   margin-top: 2px;
 }
+.stack-result-meta svg { width: 10px; height: 10px; vertical-align: -1px; }
 
 .attribution {
   text-align: center; margin-top: 28px;
@@ -1716,7 +1718,7 @@ main {
         <span class="hw-unit" id="hwUnit">kg</span>
       </div>
       <div class="hw-delta hidden" id="hwDelta"></div>
-      <div class="hw-streak hidden" id="hwStreak">🔥<span id="hwStreakNum">0 day streak</span></div>
+      <div class="hw-streak hidden" id="hwStreak"><span class="hw-streak-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg></span><span id="hwStreakNum">0 day streak</span></div>
       <div class="hw-empty" id="hwEmpty">Log your first weight to start tracking.</div>
 
       <div class="hw-chart-wrap hidden" id="hwChartWrap">
@@ -1887,6 +1889,8 @@ main {
     .hw-delta.up { color:var(--warning); }
     .hw-delta.down { color:var(--success); }
     .hw-streak { color:var(--success); font-size:12.5px; font-weight:500; margin-bottom:10px; display:inline-flex; align-items:center; gap:6px; }
+    .hw-streak-icon { display:inline-flex; flex-shrink:0; }
+    .hw-streak-icon svg { width:14px; height:14px; }
     .hw-empty { text-align:center; padding:20px 12px; color:var(--text-tertiary); font-size:12.5px; border:1px dashed var(--border); border-radius:12px; margin-bottom:4px; }
     .hw-chart-wrap { margin:12px 0 4px; }
     .hw-chart { width:100%; height:90px; display:block; }
@@ -3401,11 +3405,15 @@ main {
     { id: 'e3', name: 'XXXXX - Supplement of choice', dose: '', window: 'evening', note: 'how much MG, meal times, any data below', tag: null,    ordered: true  },
   ];
 
+  // icon values are now full <svg> markup (not bare emoji) -- both render
+  // sites (stack-window-icon, stack-result-meta) assign via innerHTML/
+  // template literal already, and every field here is source-authored,
+  // never user input, so embedding markup directly is safe.
   const STACK_WINDOWS = [
-    { key: 'morning', icon: '🌅', title: 'Morning', time: '7–10 AM', cutoffHour: 10 },
-    { key: 'lunch',   icon: '🍽️', title: 'Lunch',   time: '12–2 PM', cutoffHour: 14 },
-    { key: 'evening', icon: '🌙', title: 'Evening', time: '9–11 PM', cutoffHour: 23 },
-    { key: 'anytime', icon: '⏱️', title: 'Anytime', time: 'No fixed window', cutoffHour: null },
+    { key: 'morning', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v6"/><path d="M4.9 8.9 6.3 10.3"/><path d="M19.1 8.9 17.7 10.3"/><path d="M2 18h20"/><path d="M6 18a6 6 0 0 1 12 0"/></svg>', title: 'Morning', time: '7–10 AM', cutoffHour: 10 },
+    { key: 'lunch',   icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v18"/><path d="M4 3v6a2 2 0 0 0 2 2h2"/><path d="M17 3c-1.5 2-2 4-2 6a2 2 0 0 0 2 2 2 2 0 0 0 2-2c0-2-.5-4-2-6z"/><path d="M17 11v10"/></svg>', title: 'Lunch',   time: '12–2 PM', cutoffHour: 14 },
+    { key: 'evening', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>', title: 'Evening', time: '9–11 PM', cutoffHour: 23 },
+    { key: 'anytime', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2"/><path d="M9 2h6"/></svg>', title: 'Anytime', time: 'No fixed window', cutoffHour: null },
   ];
 
   // ====== SUPPLEMENT DATABASE — researched defaults ======

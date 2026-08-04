@@ -1009,9 +1009,11 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
 }
 .ord-empty-card.hidden { display: none; }
 .ord-empty-icon {
-  font-size: 36px; margin-bottom: 8px;
+  margin-bottom: 8px;
   opacity: 0.6;
+  display: flex; justify-content: center;
 }
+.ord-empty-icon svg, .wish-empty-icon svg { width: 36px; height: 36px; }
 .ord-empty-title {
   font-size: 15px; font-weight: 700;
   color: var(--text-primary); margin-bottom: 4px;
@@ -1164,8 +1166,9 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
 }
 .wish-empty-card.hidden { display: none; }
 .wish-empty-icon {
-  font-size: 36px; margin-bottom: 8px;
+  margin-bottom: 8px;
   opacity: 0.6;
+  display: flex; justify-content: center;
 }
 .wish-empty-title {
   font-size: 15px; font-weight: 700;
@@ -1427,6 +1430,7 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
   background: rgba(var(--eq-info-rgb), 0.10);
   border-color: rgba(var(--eq-info-rgb), 0.30);
 }
+.nw-icon { display: inline-block; width: 12px; height: 12px; vertical-align: -2px; }
 .ord-deduct-opt small {
   display: block;
   font-size: 10px;
@@ -1911,7 +1915,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     <div class="card-grid" style="gap:10px">
       <!-- Bank accounts -->
       <div class="card nw-subcard">
-        <div class="label" style="display:flex;justify-content:space-between;align-items:center"><span>🏦 Bank accounts</span><span id="bankTotal" style="font-size:13px;color:var(--text-primary);font-weight:600">0</span></div>
+        <div class="label" style="display:flex;justify-content:space-between;align-items:center"><span><svg class="nw-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M4 21V9l8-5 8 5v12"/><path d="M9 21V12h6v9"/></svg> Bank accounts</span><span id="bankTotal" style="font-size:13px;color:var(--text-primary);font-weight:600">0</span></div>
         <div id="bankList" class="nw-list"></div>
         <div class="quick-add">
           <input type="text" placeholder="Account name" id="bankName" />
@@ -1921,7 +1925,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
       </div>
       <!-- Stocks / Investments -->
       <div class="card nw-subcard">
-        <div class="label" style="display:flex;justify-content:space-between;align-items:center"><span>📈 Stocks / Investments</span><span id="stocksTotal" style="font-size:13px;color:var(--text-primary);font-weight:600">0</span></div>
+        <div class="label" style="display:flex;justify-content:space-between;align-items:center"><span><svg class="nw-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg> Stocks / Investments</span><span id="stocksTotal" style="font-size:13px;color:var(--text-primary);font-weight:600">0</span></div>
         <div id="stocksList" class="nw-list"></div>
         <div class="quick-add">
           <input type="text" placeholder="Stock / fund" id="stocksName" />
@@ -1931,7 +1935,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
       </div>
       <!-- Crypto -->
       <div class="card nw-subcard">
-        <div class="label" style="display:flex;justify-content:space-between;align-items:center"><span>🪙 Crypto</span><span id="cryptoTotal" style="font-size:13px;color:var(--text-primary);font-weight:600">0</span></div>
+        <div class="label" style="display:flex;justify-content:space-between;align-items:center"><span><svg class="nw-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 9a3 3 0 0 1 3-1.5 3 3 0 0 1 0 6 3 3 0 0 1 0 6 3 3 0 0 1-3-1.5"/><path d="M12 6v2M12 16v2"/></svg> Crypto</span><span id="cryptoTotal" style="font-size:13px;color:var(--text-primary);font-weight:600">0</span></div>
         <div id="cryptoList" class="nw-list"></div>
         <div class="quick-add">
           <input type="text" placeholder="Coin / wallet" id="cryptoName" />
@@ -1941,7 +1945,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
       </div>
       <!-- Other assets -->
       <div class="card nw-subcard">
-        <div class="label" style="display:flex;justify-content:space-between;align-items:center"><span>💼 Other assets</span><span id="otherTotal" style="font-size:13px;color:var(--text-primary);font-weight:600">0</span></div>
+        <div class="label" style="display:flex;justify-content:space-between;align-items:center"><span><svg class="nw-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M3 12h18"/></svg> Other assets</span><span id="otherTotal" style="font-size:13px;color:var(--text-primary);font-weight:600">0</span></div>
         <div id="otherList" class="nw-list"></div>
         <div class="quick-add">
           <input type="text" placeholder="Asset name" id="otherName" />
@@ -2126,7 +2130,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   </div>
   <div id="ordList"></div>
   <div class="ord-empty-card" id="ordEmpty">
-    <div class="ord-empty-icon">📦</div>
+    <div class="ord-empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg></div>
     <div class="ord-empty-title">Nothing on the way</div>
     <div class="ord-empty-sub">Log an order above. Pick the account it comes out of, the expected arrival date, and the dashboard will show what % of your net worth it costs.</div>
   </div>
@@ -2182,7 +2186,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   </div>
   <div id="wishList"></div>
   <div class="wish-empty-card" id="wishEmpty">
-    <div class="wish-empty-icon">🎯</div>
+    <div class="wish-empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/></svg></div>
     <div class="wish-empty-title">No wishes yet</div>
     <div class="wish-empty-sub">Add anything you're saving for — the dashboard will calculate what % of your net worth it'd cost.</div>
   </div>
@@ -2289,8 +2293,18 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   // Was independently re-declared as a local `const ICONS` in 4 separate
   // functions (From-account selects on Subscriptions/Orders/Deductions,
   // plus the Deduct-from-account modal) -- consolidated to one definition
-  // so a future icon change only happens once.
-  const NW_ACCOUNT_ICONS = { bank: '🏦', stocks: '📈', crypto: '🪙', other: '💼' };
+  // so a future icon change only happens once. Now holds real SVG markup
+  // (used by the Deduct chooser's <button> options), NOT usable inside a
+  // native <option> element -- browsers only ever render <option> content
+  // as plain text, no markup of any kind. The three From-account <select>
+  // populators below intentionally don't reference this at all; they show
+  // the account name alone.
+  const NW_ACCOUNT_ICONS = {
+    bank: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="nw-icon"><path d="M3 21h18"/><path d="M4 21V9l8-5 8 5v12"/><path d="M9 21V12h6v9"/></svg>',
+    stocks: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="nw-icon"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>',
+    crypto: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="nw-icon"><circle cx="12" cy="12" r="9"/><path d="M9 9a3 3 0 0 1 3-1.5 3 3 0 0 1 0 6 3 3 0 0 1 0 6 3 3 0 0 1-3-1.5"/><path d="M12 6v2M12 16v2"/></svg>',
+    other: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="nw-icon"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M3 12h18"/></svg>'
+  };
 
   // ============================================================
   // NET WORTH (copied from the main dashboard, verbatim logic)
@@ -3244,7 +3258,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     sel.disabled = false;
     sel.innerHTML = accounts.map(a => {
       const value = a.catKey + '::' + a.itemName;
-      return '<option value="' + value + '">' + NW_ACCOUNT_ICONS[a.catKey] + ' ' + escapeHtml(a.itemName) + '</option>';
+      return '<option value="' + value + '">' + escapeHtml(a.itemName) + '</option>';
     }).join('');
     if (prev && [...sel.options].some(o => o.value === prev)) sel.value = prev;
   }
@@ -3316,7 +3330,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     const currentFrom = (it.fromCat && it.fromAccount) ? (it.fromCat + '::' + it.fromAccount) : '';
     const fromOpts = '<option value="">No account linked</option>' + accounts.map(a => {
       const v = a.catKey + '::' + a.itemName;
-      return '<option value="' + v + '"' + (v === currentFrom ? ' selected' : '') + '>' + NW_ACCOUNT_ICONS[a.catKey] + ' ' + escapeHtml(a.itemName) + '</option>';
+      return '<option value="' + v + '"' + (v === currentFrom ? ' selected' : '') + '>' + escapeHtml(a.itemName) + '</option>';
     }).join('');
     row.innerHTML = '';
     row.style.gridTemplateColumns = '1fr';
@@ -3626,7 +3640,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     sel.disabled = false;
     sel.innerHTML = accounts.map(a => {
       const value = a.catKey + '::' + a.itemName;
-      return '<option value="' + value + '">' + NW_ACCOUNT_ICONS[a.catKey] + ' ' + escapeHtml(a.itemName) + '</option>';
+      return '<option value="' + value + '">' + escapeHtml(a.itemName) + '</option>';
     }).join('');
     if (prev && [...sel.options].some(o => o.value === prev)) sel.value = prev;
   }

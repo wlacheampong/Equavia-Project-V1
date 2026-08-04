@@ -22,6 +22,7 @@ const APP_SHELL = [
   'status.html',
   'manifest.json',
   'js/topbar.js',
+  'js/icons.js',
   'js/landing-guard.js',
   'js/auth-gate.js',
   'js/assistant-tools.js',
