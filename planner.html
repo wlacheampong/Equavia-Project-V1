@@ -5360,10 +5360,13 @@ document.addEventListener('DOMContentLoaded', function () {
   // ============================================================
   const BOOKS_KEY = 'books_v1';
   const BOOK_SHELVES = [
-    { status: 'want',    label: 'Want to Read' },
-    { status: 'reading', label: 'Reading' },
-    { status: 'read',    label: 'Read' }
+    { status: 'want',    label: 'Not Started' },
+    { status: 'reading', label: 'Started' },
+    { status: 'read',    label: 'Finished' }
   ];
+  // Books saved before status existed (or with a since-removed status
+  // value) fall back to "Started" so they still render in a real shelf.
+  function bookStatus(book) { return book.status || 'reading'; }
 
   function getBooks() { const v = storeGet(BOOKS_KEY); return Array.isArray(v) ? v : []; }
   function setBooks(list) { storeSet(BOOKS_KEY, list); }
@@ -5404,8 +5407,8 @@ document.addEventListener('DOMContentLoaded', function () {
     top.querySelector('.book-title').textContent = book.title;
     top.querySelector('.book-author').textContent = book.author || '';
     const statusSel = top.querySelector('.book-status-select');
-    statusSel.value = book.status;
-    statusSel.dataset.status = book.status;
+    statusSel.value = bookStatus(book);
+    statusSel.dataset.status = bookStatus(book);
     statusSel.addEventListener('change', () => {
       statusSel.dataset.status = statusSel.value;
       const list = getBooks();
@@ -5424,7 +5427,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     row.appendChild(top);
 
-    if (book.status === 'read') {
+    if (bookStatus(book) === 'read') {
       const meta = document.createElement('div');
       meta.className = 'book-meta-row';
       const stars = document.createElement('div');
@@ -5481,8 +5484,7 @@ document.addEventListener('DOMContentLoaded', function () {
     wrap.innerHTML = '';
     emptyState.style.display = list.length ? 'none' : '';
     BOOK_SHELVES.forEach(shelf => {
-      const items = list.filter(b => b.status === shelf.status);
-      if (!items.length) return;
+      const items = list.filter(b => bookStatus(b) === shelf.status);
       const section = document.createElement('div');
       section.className = 'book-shelf';
       const title = document.createElement('div');
