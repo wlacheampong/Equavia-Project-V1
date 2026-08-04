@@ -1683,8 +1683,9 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
    which is otherwise always last in DOM/box order regardless of where a
    real child sits -- see equavia-core.css's .section-title (same trick
    as habits.html/planner.html's .book-alt-toggle-btn). */
-.learn-inactive-toggle-btn { order: 1; background: transparent; border: 1px solid rgba(var(--eq-text-primary-rgb), 0.08); color: var(--text-tertiary); cursor: pointer; font-size: 13px; line-height: 1; padding: 3px 9px; border-radius: 6px; font-family: inherit; flex-shrink: 0; }
+.learn-inactive-toggle-btn { order: 1; display: inline-flex; align-items: center; gap: 4px; background: transparent; border: 1px solid rgba(var(--eq-text-primary-rgb), 0.08); color: var(--text-tertiary); cursor: pointer; font-size: 13px; line-height: 1; padding: 3px 9px; border-radius: 6px; font-family: inherit; flex-shrink: 0; }
 .learn-inactive-toggle-btn:hover { color: var(--text-primary); }
+.learn-inactive-toggle-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
 .learn-due-chip {
   background: rgba(var(--eq-accent-rgb), 0.16); color: var(--accent); border-radius: 999px;
   padding: 3px 10px; font-size: 10.5px; font-weight: 700;
@@ -2248,7 +2249,7 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
   <div class="section-title" data-eq-collapse-keep data-eq-collapse-trigger>
     <span class="section-title-text">LEARN HUB<span class="eq-collapse-chevron"></span></span>
     <span class="learn-due-chip" id="learnDueChip" style="display:none;"></span>
-    <button type="button" class="learn-inactive-toggle-btn" id="learnInactiveToggleBtn" aria-label="Toggle inactive tracks">🕐</button>
+    <button type="button" class="learn-inactive-toggle-btn" id="learnInactiveToggleBtn" aria-label="Toggle inactive tracks"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg><span id="learnInactiveToggleCount"></span></button>
   </div>
   <div class="card">
     <div class="learn-track-add-row">
@@ -5681,7 +5682,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const btn = $('learnInactiveToggleBtn');
     if (!btn) return;
     const shown = getInactiveShown();
-    btn.textContent = count > 0 ? ('🕐 ' + count) : '🕐';
+    $('learnInactiveToggleCount').textContent = count > 0 ? String(count) : '';
     btn.title = count > 0 ? ((shown ? 'Hide' : 'Show') + ' inactive tracks (' + count + ')') : 'No inactive tracks';
   }
 
