@@ -249,6 +249,12 @@
     })();
     window.addEventListener('beforeunload', flushOnUnload);
     window.addEventListener('pagehide', flushOnUnload);
+    // beforeunload/pagehide cover a real navigation/close, but on mobile
+    // backgrounding a PWA (switching apps, locking the screen) doesn't
+    // reliably fire either -- visibilitychange is the signal that
+    // actually catches that case, so it gets its own flush rather than
+    // depending on an unload event that may never come.
+    document.addEventListener('visibilitychange', () => { if (document.hidden) flushOnUnload(); });
     window.addEventListener('storage', (e) => { if (e.key && matches(e.key)) schedulePush(); });
     document.addEventListener('focusout', () => { setTimeout(applyPendingIfReady, 0); }, true);
   };
