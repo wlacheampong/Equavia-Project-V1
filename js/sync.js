@@ -123,7 +123,13 @@
           if (k === META_KEY || !matches(k)) continue;
           const remoteTs = remoteMeta.timestamps[k] || 0;
           const localTs = localMeta.timestamps[k] || 0;
-          if (remoteTs < localTs) continue; // local is newer -- keep it, it'll push up
+          // Watermark, not just localTs: a key local just tombstoned has no
+          // timestamps entry (touchTombstone deletes it), so checking localTs
+          // alone reads as "untouched" and lets remote's still-live copy --
+          // fetched before the tombstone had a chance to push -- resurrect it
+          // and clobber the tombstone. Mirrors loop 2's localKnownTs below.
+          const localWatermark = Math.max(localTs, localMeta.tombstones[k] || 0);
+          if (remoteTs < localWatermark) continue; // local is newer -- keep it, it'll push up
           const incoming = JSON.stringify(remote[k]);
           const local = localStorage.getItem(k);
           if (local !== incoming) { try { origSet(k, incoming); changed = true; } catch (e) {} }

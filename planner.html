@@ -2671,15 +2671,27 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
   // eq.tasks.yesterday snapshot BEFORE it's deleted, and only ever carry a
   // task into today when the user taps "Do today" on it themselves (see
   // the Yesterday panel below). Completion-rate snapshotting is unchanged.
-  function rollover() {
+  //
+  // Split in two: this only computes snapshots and collects which goals:
+  // keys are stale -- it does NOT delete them. js/sync.js is loaded
+  // `defer`, so initCloudSync/its patched localStorage.removeItem don't
+  // exist yet at boot time (this script runs during parsing, before any
+  // deferred script). A delete that goes through the raw, unpatched
+  // removeItem records no tombstone, so the next applyRemote() pull finds
+  // the key still present in remote's stale copy and resurrects it
+  // locally. The actual deletion happens later, once initCloudSync has
+  // installed its hooks -- see window.__eqDeleteRolloverStaleKeys below.
+  function computeRolloverStaleKeys() {
     if (window.AssistantTools) window.AssistantTools.ensureYesterdaySnapshot();
     const todayDateStr = getActiveDateString();
+    const stale = [];
     storeListKeys('goals:').forEach(k => {
       const dateStr = k.slice('goals:'.length);
       if (dateStr >= todayDateStr) return;
       snapshotCompletionForDay(dateStr, getGoals(k));
-      storeDelete(k);
+      stale.push(k);
     });
+    return stale;
   }
 
   // ---------- Row building (Tasks) ----------
@@ -5259,7 +5271,14 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
   }
 
   // ---------- Boot ----------
-  rollover();
+  // Deletion of the stale keys collected here is deferred to
+  // window.__eqDeleteRolloverStaleKeys, called once initCloudSync has
+  // installed its hooks (see the DOMContentLoaded block below) -- see
+  // computeRolloverStaleKeys' comment for why.
+  const rolloverStaleKeys = computeRolloverStaleKeys();
+  window.__eqDeleteRolloverStaleKeys = function () {
+    rolloverStaleKeys.forEach(storeDelete);
+  };
   loadToday();
   loadTomorrow();
   renderYesterdayPanel();
@@ -5315,6 +5334,13 @@ document.addEventListener('DOMContentLoaded', function () {
       window.dispatchEvent(new Event('storage'));
     }
   });
+  // initCloudSync() installs its setItem/removeItem hooks synchronously
+  // (before its own internal fetch/applyRemote resolves), so calling this
+  // immediately after guarantees rollover's stale-key deletions go through
+  // the patched removeItem -- tombstoned and pushed, not silently dropped.
+  if (typeof window.__eqDeleteRolloverStaleKeys === 'function') {
+    window.__eqDeleteRolloverStaleKeys();
+  }
 });
 </script>
 <div class="hab-year-modal-bg" id="learnTrackModalBg">
