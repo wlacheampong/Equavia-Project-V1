@@ -1337,6 +1337,11 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
 .proj-obsidian-gear:hover { color: var(--text-primary); border-color: rgba(var(--eq-text-primary-rgb), 0.22); }
 .proj-obsidian-status { font-size: 11px; color: var(--text-tertiary); min-height: 14px; margin: -6px 0 10px; }
 .proj-obsidian-status.is-error { color: var(--danger); }
+/* Not a failure -- used when the vault-name-missing notice fires after the
+   page was already created and linked successfully; .is-error stays
+   reserved for genuine failures elsewhere (pushProjectPage's own error,
+   and the unrelated goalArchiveStatus reuse of this same base class). */
+.proj-obsidian-status.is-info { color: var(--text-secondary); }
 
 /* ===== Projects: card collapse/expand + slider / actions / tags / archive ===== */
 .proj-card-collapsed-line { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
@@ -5193,8 +5198,18 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
     });
   }
 
-  function openObsidianVaultFile(path, cfg) {
-    if (!cfg.vaultName) { showProjObsidianStatus('Add your vault name in Settings to open Obsidian directly.', true); return; }
+  // justCreated distinguishes the two callers below: createAndOpen... just
+  // wrote and linked the page in this same call, so a missing vault name
+  // there means "saved, just can't launch the app" -- not a failure, hence
+  // the different wording and the neutral (not error) status styling.
+  // openProjectObsidianPage's own direct-open call (already-linked project,
+  // nothing just created) keeps the original wording/styling unchanged.
+  function openObsidianVaultFile(path, cfg, justCreated) {
+    if (!cfg.vaultName) {
+      if (justCreated) showProjObsidianStatus('Page created and saved in Obsidian — add your vault name in Settings to open it directly.', 'info');
+      else showProjObsidianStatus('Add your vault name in Settings to open Obsidian directly.', true);
+      return;
+    }
     const fileParam = path.replace(/\.md$/, '');
     window.open('obsidian://open?vault=' + encodeURIComponent(cfg.vaultName) + '&file=' + encodeURIComponent(fileParam), '_blank');
   }
@@ -5228,14 +5243,17 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
     cur[idx] = Object.assign({}, project, { obsidian: { path, lastSyncedAt: new Date().toISOString() } });
     setProjectsList(cur);
     renderProjects();
-    openObsidianVaultFile(path, ObsidianSync.getConfig());
+    openObsidianVaultFile(path, ObsidianSync.getConfig(), true);
   }
 
-  function showProjObsidianStatus(msg, isError) {
+  // variant: true (existing callers) -> .is-error, a genuine failure.
+  // 'info' -> .is-info, the not-an-error vault-name-missing-after-success case.
+  function showProjObsidianStatus(msg, variant) {
     const el = document.getElementById('projObsidianStatus');
     if (!el) return;
     el.textContent = msg;
-    el.classList.toggle('is-error', !!isError);
+    el.classList.toggle('is-error', variant === true);
+    el.classList.toggle('is-info', variant === 'info');
     clearTimeout(el._t);
     el._t = setTimeout(() => { el.textContent = ''; }, 4000);
   }
