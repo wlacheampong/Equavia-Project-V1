@@ -606,8 +606,8 @@ a { color: inherit; text-decoration: none; }
     </a>
 
     <div class="card">
-      <div class="card-title" id="checklistHeader" style="margin-bottom:12px;cursor:pointer;user-select:none;" title="Press and hold to switch checklist">
-        <span id="checklistTitle">Morning Checklist</span>
+      <div class="card-title" id="checklistHeader" style="margin-bottom:12px;cursor:pointer;user-select:none;" title="Press and hold to switch routine">
+        <span id="checklistTitle">Morning Routine</span>
       </div>
       <div id="checklistItems"></div>
     </div>
@@ -1652,11 +1652,11 @@ a { color: inherit; text-decoration: none; }
   }
   function renderChecklist() {
     const current = CHECKLISTS.find((c) => c.id === getCurrentChecklistId());
-    document.getElementById('checklistTitle').textContent = current.label + ' Checklist';
+    document.getElementById('checklistTitle').textContent = current.label + ' Routine';
     const items = storeGet('checklist:items:' + current.id) || [];
     const doneMap = storeGet('checklist:done:' + current.id + ':' + getActiveDateStringForChecklist()) || {};
     const wrap = document.getElementById('checklistItems');
-    if (!items.length) { wrap.innerHTML = '<div class="empty-note">No ' + current.label.toLowerCase() + ' checklist items yet — add some on Planner.</div>'; return; }
+    if (!items.length) { wrap.innerHTML = '<div class="empty-note">No ' + current.label.toLowerCase() + ' routine items yet — add some on Planner.</div>'; return; }
     wrap.innerHTML = items.map((it) =>
       '<div class="chk-row">' +
         '<button type="button" class="chk-box' + (doneMap[it.id] ? ' is-done' : '') + '" data-id="' + esc(it.id) + '" aria-label="Toggle done">' +

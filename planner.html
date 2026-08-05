@@ -2157,7 +2157,7 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
 <!-- ===== CHECKLISTS ===== -->
 <div class="section" data-section="checklists" id="checklists" data-eq-collapse="planner:checklists">
   <div class="section-title" data-eq-collapse-keep data-eq-collapse-trigger>
-    <span class="section-title-text">CHECKLISTS<span class="eq-collapse-chevron"></span></span>
+    <span class="section-title-text">ROUTINES<span class="eq-collapse-chevron"></span></span>
   </div>
   <div class="chk-list-row" id="chkList"></div>
 </div>
@@ -3705,9 +3705,9 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
 
   // ---------- Checklists (Morning / Mid-Day / Evening) ----------
   const CHECKLISTS = [
-    { id: 'morning', name: 'Morning Checklist' },
-    { id: 'midday',  name: 'Mid-Day Checklist' },
-    { id: 'evening', name: 'Evening Checklist' }
+    { id: 'morning', name: 'Morning Routine' },
+    { id: 'midday',  name: 'Midday Routine' },
+    { id: 'evening', name: 'Evening Routine' }
   ];
   let chkEditMode = {};
   let chkExpandedItem = {};
@@ -3739,7 +3739,7 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
     const editBtn = document.createElement('button');
     editBtn.type = 'button';
     editBtn.className = 'chk-edit-toggle' + (editing ? ' active' : '');
-    editBtn.title = editing ? 'Done editing' : 'Edit checklist';
+    editBtn.title = editing ? 'Done editing' : 'Edit routine';
     editBtn.textContent = editing ? '✓' : '+';
     editBtn.addEventListener('click', () => {
       chkEditMode[c.id] = !chkEditMode[c.id];
@@ -6471,7 +6471,7 @@ document.addEventListener('DOMContentLoaded', function () {
     { key: 'tasks',      label: 'Tasks' },
     { key: 'goals',      label: 'Goals' },
     { key: 'calendar',   label: 'Calendar' },
-    { key: 'checklists', label: 'Checklists' },
+    { key: 'checklists', label: 'Routines' },
     { key: 'projects',   label: 'Projects' },
     { key: 'shopping',   label: 'Shopping List' },
     { key: 'habits',     label: 'Habit Tracker' },
