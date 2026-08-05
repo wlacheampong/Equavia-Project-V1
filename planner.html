@@ -571,6 +571,10 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
 }
 .gm-slot-btn svg { width: 13px; height: 13px; }
 .gm-slot-btn:hover { opacity: 1; color: var(--accent); }
+.gm-note-btn { border: 0; background: transparent; color: var(--text-tertiary); font-size: 13px; cursor: pointer; padding: 4px 6px; border-radius: 6px; opacity: 0.55; transition: opacity 0.2s, color 0.2s; display: inline-flex; align-items: center; }
+.gm-note-btn svg { width: 13px; height: 13px; }
+.gm-note-btn:hover { opacity: 1; color: var(--accent); }
+.gm-note-btn.gm-note-has-content { opacity: 0.85; }
 .ss-task-text { font-size: 14px; color: var(--text-primary); padding: 2px 0; }
 .ss-result { font-size: 13px; color: var(--text-secondary); min-height: 20px; margin: 4px 0 0; line-height: 1.5; }
 .gm-queue-btn.gm-queue-active {
@@ -1946,7 +1950,7 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
       <div class="goal-input-wrap gm-input-wrap">
         <input id="goalInput" class="gm-input" type="text" placeholder="Add a task for today…" autocomplete="off">
         <button type="button" id="goalAddBtn"    class="gm-add">+ Add</button>
-        <button type="button" id="goalPolishBtn" class="gm-polish">✨ Polish</button>
+        <button type="button" id="goalPolishBtn" class="gm-polish">Polish</button>
         <div class="gm-status" id="polishStatus"></div>
       </div>
     </div>
@@ -1964,7 +1968,7 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
       <div class="goal-input-wrap gm-input-wrap">
         <input id="tomorrowInput" class="gm-input" type="text" placeholder="Add a task for tomorrow…" autocomplete="off">
         <button type="button" id="tomorrowAddBtn"    class="gm-add">+ Add</button>
-        <button type="button" id="tomorrowPolishBtn" class="gm-polish">✨ Polish</button>
+        <button type="button" id="tomorrowPolishBtn" class="gm-polish">Polish</button>
         <div class="gm-status" id="tomorrowStatus"></div>
       </div>
     </div>
@@ -2096,6 +2100,24 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
       <button type="button" class="dr-btn-cancel" id="ssCancelBtn">Cancel</button>
       <button type="button" class="dr-btn-cancel" id="ssGcalBtn" style="display:none;">Also add to Calendar</button>
       <button type="button" class="dr-btn-save" id="ssSaveBtn">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="dr-modal-bg" id="taskNoteModalBg">
+  <div class="dr-modal">
+    <h3>Note</h3>
+    <div class="dr-field">
+      <label>Task</label>
+      <div class="ss-task-text" id="taskNoteTaskText"></div>
+    </div>
+    <div class="dr-field">
+      <label for="taskNoteInput">Description</label>
+      <textarea id="taskNoteInput" rows="4" placeholder="Add a note…"></textarea>
+    </div>
+    <div class="dr-modal-actions">
+      <button type="button" class="dr-btn-cancel" id="taskNoteCancelBtn">Cancel</button>
+      <button type="button" class="dr-btn-save" id="taskNoteSaveBtn">Save</button>
     </div>
   </div>
 </div>
@@ -2697,6 +2719,13 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
   const PRIORITY_CYCLE = ['P1', 'P2', 'P3'];
   const PRIORITY_CAP = { P1: 3 };
   function priorityOf(goal) { return goal.priority || 'P2'; }
+  // Read-time fallback only, never backfilled -- same rule as priorityOf.
+  // Named 'note' (not 'description') so it can't collide with the
+  // longterm-goal-card's own goal.description field (#7) -- different
+  // storage key (goals:<date> vs longterm_goals_v1) so it can't actually
+  // collide in practice either, but the distinct name keeps the two
+  // concepts from being confused when reading this file.
+  function goalNoteOf(goal) { return goal.note || ''; }
   function countPriority(list, p, excludeIdx) {
     return list.filter((g, i) => i !== excludeIdx && priorityOf(g) === p).length;
   }
@@ -2796,6 +2825,14 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
       slotBtn.addEventListener('click', (e) => { e.stopPropagation(); ssOpen(goal.text, key, idx, reload); });
       li.appendChild(slotBtn);
     }
+
+    const noteBtn = document.createElement('button');
+    noteBtn.type = 'button';
+    noteBtn.className = 'gm-note-btn' + (goalNoteOf(goal) ? ' gm-note-has-content' : '');
+    noteBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/><path d="M8 13h8"/><path d="M8 17h5"/></svg>';
+    noteBtn.title = 'Note';
+    noteBtn.addEventListener('click', (e) => { e.stopPropagation(); taskNoteOpen(goal.text, key, idx, reload); });
+    li.appendChild(noteBtn);
 
     const del = document.createElement('button');
     del.type = 'button';
@@ -4000,6 +4037,43 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
   }
 
   // ============================================================
+  // TASK NOTE — a per-task description popout, same dr-modal pattern as
+  // "Set a time" above. Saves onto the task's own 'note' field (goals:<date>
+  // list), read-time fallback to '' for tasks without one, never backfilled.
+  // ============================================================
+  let taskNoteCurrentKey = null;
+  let taskNoteCurrentIdx = null;
+  let taskNoteCurrentReload = null;
+
+  function taskNoteOpen(taskText, key, idx, reload) {
+    taskNoteCurrentKey = key;
+    taskNoteCurrentIdx = idx;
+    taskNoteCurrentReload = reload;
+    document.getElementById('taskNoteTaskText').textContent = taskText;
+    document.getElementById('taskNoteInput').value = goalNoteOf(getGoals(key)[idx] || {});
+    document.getElementById('taskNoteModalBg').classList.add('show');
+  }
+  function taskNoteClose() {
+    document.getElementById('taskNoteModalBg').classList.remove('show');
+  }
+  function taskNoteSave() {
+    const value = document.getElementById('taskNoteInput').value;
+    const list = getGoals(taskNoteCurrentKey);
+    if (!list[taskNoteCurrentIdx]) return;
+    if (value) list[taskNoteCurrentIdx].note = value; else delete list[taskNoteCurrentIdx].note;
+    setGoals(taskNoteCurrentKey, list);
+    if (taskNoteCurrentReload) taskNoteCurrentReload();
+  }
+  function initTaskNoteModal() {
+    document.getElementById('taskNoteCancelBtn').addEventListener('click', taskNoteClose);
+    document.getElementById('taskNoteModalBg').addEventListener('click', (e) => { if (e.target === e.currentTarget) taskNoteClose(); });
+    document.getElementById('taskNoteSaveBtn').addEventListener('click', () => {
+      taskNoteSave();
+      taskNoteClose();
+    });
+  }
+
+  // ============================================================
   // QUICK-ADD — lightweight "natural-ish" parsing, not full NLP.
   // Recognizes one date token (today/tomorrow/a weekday name/M/D or
   // M-D), one time token (h[:mm] am/pm, or 24h HH:MM), and an optional
@@ -5033,6 +5107,7 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
   initCalendar();
   initProjects();
   initSuggestSlot();
+  initTaskNoteModal();
 
   // A same-tab "planner.html#projects" link (e.g. the dashboard's Project
   // card long-press) should reliably show the kanban, not just scroll to a
