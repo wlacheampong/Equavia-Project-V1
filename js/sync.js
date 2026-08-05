@@ -17,6 +17,16 @@
   // look up specific known keys.
   const META_KEY = '__sync_meta__';
 
+  // Known appKey key-lists shared by every initCloudSync call for that
+  // domain. collect()/pushNow() below build the ENTIRE push payload from
+  // an instance's own syncedKeys -- upsert() replaces the row's whole
+  // `data` column, it doesn't merge at the field level. Two pages pushing
+  // under the same appKey with two different (even overlapping) lists
+  // will silently drop whatever fields the narrower one doesn't know
+  // about. One shared array per appKey, referenced by every call site
+  // for that appKey, is what keeps that from happening.
+  window.EqPoCoachSyncedKeys = ['po_coach_v1', 'po_coach_workout_done', 'po_coach_weights', 'po_coach_goal_weight', 'calorie_log_v1', 'session_feel_log_v1'];
+
   window.initCloudSync = function (config) {
     const appKey = config && config.appKey;
     const syncedKeys = (config && config.syncedKeys) || [];
