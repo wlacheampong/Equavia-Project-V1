@@ -4090,6 +4090,17 @@ document.addEventListener('DOMContentLoaded', function () {
     syncedPrefixes: ['stack:taken:'],
     onApplied: function () { window.dispatchEvent(new Event('storage')); }
   });
+  // Weight/goal-weight/calories are entered here but were never in this
+  // page's own syncedKeys -- previously synced only from ask.html/
+  // gym.html's scopes, neither of which see an edit made on this page,
+  // so it never left this device. Joins the same appKey:'po-coach' scope
+  // those pages use (shared syncedKeys, see js/sync.js) instead of a
+  // third, disconnected one.
+  initCloudSync({
+    appKey: 'po-coach',
+    syncedKeys: window.EqPoCoachSyncedKeys,
+    onApplied: function () { window.dispatchEvent(new Event('storage')); }
+  });
 });
 </script>
 <script>

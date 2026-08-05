@@ -1711,10 +1711,11 @@ body.has-eq-dock .ask-input-bar { bottom: calc(72px + env(safe-area-inset-bottom
   // navigated to would pull its own last-known-good cloud snapshot on load
   // and silently overwrite/delete everything just added here. Joining the
   // same channels those pages already register (identical configs, see
-  // js/sync.js) fixes that. gym.html's weight/workout channel is bespoke
-  // (not built on the shared initCloudSync helper) but reads/writes the
-  // same Supabase app_state row, so joining it here via the shared helper
-  // is safe -- the two never run in the same page at once.
+  // js/sync.js) fixes that. gym.html used to run its own bespoke
+  // 'po-coach' pipeline in parallel with this one (same row, no shared
+  // timestamp basis -- a real bug, not by design); it's since been
+  // retired in favor of this same shared helper, same appKey, same
+  // window.EqPoCoachSyncedKeys list.
   document.addEventListener('DOMContentLoaded', function () {
     if (typeof initCloudSync !== 'function') return;
     initCloudSync({
@@ -1739,7 +1740,7 @@ body.has-eq-dock .ask-input-bar { bottom: calc(72px + env(safe-area-inset-bottom
     });
     initCloudSync({
       appKey: 'po-coach',
-      syncedKeys: ['po_coach_v1', 'po_coach_workout_done', 'po_coach_weights', 'po_coach_goal_weight', 'calorie_log_v1'],
+      syncedKeys: window.EqPoCoachSyncedKeys,
       onApplied: function () { window.dispatchEvent(new Event('storage')); }
     });
     initCloudSync({

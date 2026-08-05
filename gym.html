@@ -1240,6 +1240,7 @@ img, video, canvas, svg { max-width: 100%; }
 
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/sync.js" defer></script>
 <script src="js/plan-sync.js"></script>
 </head>
 <body>
@@ -1746,76 +1747,11 @@ img, video, canvas, svg { max-width: 100%; }
   renderAll();
   publishFitnessSummary();
 
-  // ============================================================
-  // CLOUD SYNC via Supabase  (OPTIONAL — leave blank for local-only)
-  // ------------------------------------------------------------
-  // Stores your gym state as one JSONB row in the public.app_state
-  // table, keyed by APP_KEY. Supabase's realtime channel pushes
-  // changes to every device the instant they happen.
-  //
-  // SETUP (5 minutes, all in a browser):
-  //   1. Make a free account at https://supabase.com
-  //   2. Create a new project
-  //   3. In your project: Settings → API → copy your Project URL +
-  //      "Publishable" key (the one starting with `sb_publishable_`)
-  //   4. Paste them below, replacing the two placeholder strings
-  //   5. Open the SQL Editor and run the SQL block from README.md
-  //
-  // If you leave the placeholders unchanged the app still works,
-  // just only on this device (data stays in your browser).
-  // ============================================================
-  const SUPABASE_URL = 'https://ubhjdibldkknviezrjys.supabase.co';
-  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InViaGpkaWJsZGtrbnZpZXpyanlzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3NzAyNjEsImV4cCI6MjA5OTM0NjI2MX0.ODgzRHVYLEaDCUBXmmSd3oENXlSlarRYVERagHbVCK0';
-  const APP_KEY = 'po-coach';
-  // 6.9: po_coach_photos removed -- photos moved to IndexedDB, no longer
-  // written to localStorage at all, so this bespoke Supabase sync (which
-  // only ever reads/writes localStorage keys) has nothing to pick up for
-  // them anymore. Cross-device photo sync goes through the Obsidian vault
-  // instead (pushPhotoToVault, now on health.html alongside the rest of
-  // Progress Photos), per the user's own earlier choice.
-  // Weight/calories/photos all moved to health.html, but this page's own
-  // sync mechanism still carries po_coach_weights/po_coach_goal_weight/
-  // calorie_log_v1 cross-device -- sync ownership was never tied to which
-  // page's UI reads/writes a key, same as before that move.
-  const PC_SYNCED_KEYS = ['po_coach_v1', 'po_coach_workout_done', 'po_coach_weights', 'po_coach_goal_weight', 'calorie_log_v1', 'session_feel_log_v1'];
-
-  let pcSupa = null;
-  let pcPushTimer = null;
-  let pcSuppressSync = false;
-  let pcPendingRemote = null;
-  // JSON of the last state we sent or received — used to ignore
-  // realtime echoes of our own pushes so we don't infinite-loop.
-  let pcLastSyncedJson = null;
-
-  const _pcOrigSet = localStorage.setItem.bind(localStorage);
-  const _pcOrigRemove = localStorage.removeItem.bind(localStorage);
-  // Wrap setItem/removeItem so a sync-side error can NEVER prevent the
-  // underlying write from happening. The original call always runs;
-  // any error in the sync scheduling is swallowed.
-  localStorage.setItem = function(k, v) {
-    _pcOrigSet(k, v);
-    try {
-      if (!pcSuppressSync && PC_SYNCED_KEYS.indexOf(k) !== -1) pcSchedulePush();
-    } catch (e) {}
-  };
-  localStorage.removeItem = function(k) {
-    _pcOrigRemove(k);
-    try {
-      if (!pcSuppressSync && PC_SYNCED_KEYS.indexOf(k) !== -1) pcSchedulePush();
-    } catch (e) {}
-  };
-
-  function pcCollectState() {
-    const out = {};
-    for (const k of PC_SYNCED_KEYS) {
-      const v = localStorage.getItem(k);
-      if (v == null) continue;
-      try { out[k] = JSON.parse(v); } catch {}
-    }
-    return out;
-  }
-
-  function pcIsUserEditing() {
+  // isUserEditing() is a small DOM utility, kept standalone -- it's not
+  // part of the bespoke Supabase pipeline retired below. plan-sync.js's
+  // PlanSync.init() (day-list sync, a separate system, left alone) reuses
+  // it as its own typing guard.
+  function isUserEditing() {
     const ae = document.activeElement;
     if (!ae) return false;
     const tag = ae.tagName;
@@ -1824,138 +1760,30 @@ img, video, canvas, svg { max-width: 100%; }
     return false;
   }
 
-  function pcRerender() {
-    // Reload every closure variable that mirrors a synced localStorage key —
-    // otherwise renderAll would read a stale in-memory copy from before the
-    // remote pull. Weight/calories/photos all moved to health.html; this
-    // page's own PC_SYNCED_KEYS still carries po_coach_weights/
-    // po_coach_goal_weight/calorie_log_v1 cross-device regardless (sync
-    // ownership never depended on which page's UI reads/writes a key), but
-    // there's nothing left here that reads them back, so no reload needed.
-    try { state = loadState(); } catch {}
-    try { renderAll(); } catch {}
-    try { publishFitnessSummary(); } catch {}
-  }
-
-  function pcApplyRemoteState(remote) {
-    if (!remote || typeof remote !== 'object') return false;
-    pcSuppressSync = true;
-    let changed = false;
-    try {
-      for (const k of PC_SYNCED_KEYS) {
-        if (k in remote) {
-          const incoming = JSON.stringify(remote[k]);
-          const local = localStorage.getItem(k);
-          if (local !== incoming) { try { _pcOrigSet(k, incoming); changed = true; } catch {} }
-        } else if (localStorage.getItem(k) != null) {
-          try { _pcOrigRemove(k); changed = true; } catch {}
-        }
+  // ============================================================
+  // CLOUD SYNC via Supabase -- consolidated onto the shared js/sync.js
+  // helper. This page used to run its own hand-rolled pipeline here
+  // (pcInitCloudSync/pcApplyRemoteState/pcPushNow) targeting the same
+  // app_state row (appKey 'po-coach') that ask.html's initCloudSync call
+  // also writes to -- two independent implementations racing over one
+  // row with no shared timestamp basis, and this one had no LWW/tombstone
+  // protection at all (a blind full-mirror, delete-by-absence overwrite,
+  // the exact bug class js/sync.js's applyRemote was fixed for). Retired
+  // in favor of the one shared implementation every other synced page
+  // already uses. js/sync.js is loaded `defer`, so initCloudSync isn't
+  // defined yet at this point in the parse -- deferred to
+  // DOMContentLoaded like every other page's sync wiring.
+  document.addEventListener('DOMContentLoaded', function () {
+    if (typeof initCloudSync !== 'function') return;
+    initCloudSync({
+      appKey: 'po-coach',
+      syncedKeys: window.EqPoCoachSyncedKeys,
+      onApplied: function () {
+        try { state = loadState(); } catch (e) {}
+        try { renderAll(); } catch (e) {}
+        try { publishFitnessSummary(); } catch (e) {}
       }
-    } finally {
-      pcSuppressSync = false;
-    }
-    if (changed) { try { pcRerender(); } catch (e) {} }
-    return changed;
-  }
-
-  function pcMaybeApplyRemote(remote) {
-    if (pcIsUserEditing()) { pcPendingRemote = remote; return; }
-    pcApplyRemoteState(remote);
-  }
-
-  function pcApplyPendingIfReady() {
-    if (pcPendingRemote && !pcIsUserEditing()) {
-      const r = pcPendingRemote;
-      pcPendingRemote = null;
-      pcApplyRemoteState(r);
-    }
-  }
-
-  async function pcPushNow() {
-    if (!pcSupa) return;
-    const state = pcCollectState();
-    const json = JSON.stringify(state);
-    if (json === pcLastSyncedJson) return;
-    try {
-      const { error } = await pcSupa
-        .from('app_state')
-        .upsert(
-          { key: APP_KEY, data: state, updated_at: new Date().toISOString() },
-          { onConflict: 'key' }
-        );
-      if (!error) pcLastSyncedJson = json;
-    } catch (_) {}
-  }
-
-  function pcSchedulePush() {
-    if (pcSuppressSync) return;
-    clearTimeout(pcPushTimer);
-    pcPushTimer = setTimeout(pcPushNow, 250);
-  }
-
-  // Backup push on unload via fetch keepalive so a fast refresh
-  // doesn't lose the latest change before the debounced push fires.
-  function pcFlushPushOnUnload() {
-    if (!pcSupa) return;
-    const state = pcCollectState();
-    const json = JSON.stringify(state);
-    if (json === pcLastSyncedJson) return;
-    try {
-      fetch(SUPABASE_URL + '/rest/v1/app_state?on_conflict=key', {
-        method: 'POST',
-        headers: {
-          'apikey': SUPABASE_KEY,
-          'Authorization': 'Bearer ' + SUPABASE_KEY,
-          'Content-Type': 'application/json',
-          'Prefer': 'resolution=merge-duplicates',
-        },
-        body: JSON.stringify({ key: APP_KEY, data: state, updated_at: new Date().toISOString() }),
-        keepalive: true,
-      }).catch(() => {});
-      pcLastSyncedJson = json;
-    } catch (_) {}
-  }
-
-  // Initial sync: connect Supabase, pull current state, subscribe to
-  // realtime updates so other devices' changes appear instantly.
-  (async function pcInitCloudSync() {
-    if (!window.supabase || !SUPABASE_URL || !SUPABASE_KEY) return;
-    // Skip if the placeholder values are still in place (local-only mode)
-    if (SUPABASE_URL.indexOf('PASTE-') === 0 || SUPABASE_KEY.indexOf('PASTE-') === 0) return;
-    pcSupa = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    try {
-      const { data, error } = await pcSupa
-        .from('app_state').select('data').eq('key', APP_KEY).maybeSingle();
-      if (!error && data && data.data && Object.keys(data.data).length > 0) {
-        pcLastSyncedJson = JSON.stringify(data.data);
-        pcMaybeApplyRemote(data.data);
-      } else if (Object.keys(pcCollectState()).length > 0) {
-        pcSchedulePush();
-      }
-    } catch (_) {}
-    pcSupa.channel('app_state_' + APP_KEY)
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'app_state',
-        filter: 'key=eq.' + APP_KEY,
-      }, (payload) => {
-        if (!payload.new || !payload.new.data) return;
-        const incoming = JSON.stringify(payload.new.data);
-        if (incoming === pcLastSyncedJson) return; // echo of our own push
-        pcLastSyncedJson = incoming;
-        pcMaybeApplyRemote(payload.new.data);
-      })
-      .subscribe();
-  })();
-
-  document.addEventListener('focusout', () => {
-    setTimeout(pcApplyPendingIfReady, 0);
-  }, true);
-  window.addEventListener('pagehide', pcFlushPushOnUnload);
-  window.addEventListener('beforeunload', pcFlushPushOnUnload);
-  document.addEventListener('visibilitychange', () => {
-    if (document.hidden) pcFlushPushOnUnload();
+    });
   });
 
   // ------------------------------------------------------------
@@ -1991,7 +1819,7 @@ img, video, canvas, svg { max-width: 100%; }
       plan: 'gym',
       getLocalSnapshot: () => state.days.map((d) => ({ key: d.id, name: d.name })),
       applyRemote: applyRemotePlanDaysGym,
-      isUserEditing: pcIsUserEditing,
+      isUserEditing: isUserEditing,
       onStatus: updatePlanSyncIndicator,
     });
   }
