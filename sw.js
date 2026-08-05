@@ -7,7 +7,7 @@
 // Bump CACHE_NAME on any app-shell file change so clients pick up
 // the new list and drop the old cache on next activate.
 // =============================================================
-const CACHE_NAME = 'equavia-shell-v51';
+const CACHE_NAME = 'equavia-shell-v52';
 const APP_SHELL = [
   'lock.html',
   'dashboard.html',
@@ -30,6 +30,7 @@ const APP_SHELL = [
   'js/obsidian-sync.js',
   'js/sync.js',
   'js/collapsible.js',
+  'js/dashboard-view.js',
   'js/dexie.min.js',
   'js/status.js',
   'docs/programme.json',

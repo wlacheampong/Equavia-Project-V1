@@ -16,6 +16,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/sync.js" defer></script>
 <script src="js/assistant-tools.js"></script>
+<script src="js/dashboard-view.js"></script>
 <script src="js/topbar.js" defer></script>
 <script src="js/collapsible.js" defer></script>
 <script src="js/obsidian-sync.js"></script>
@@ -1708,6 +1709,27 @@ main {
     }
     wireManualAdjustments();
     render();
+
+    // Dashboard view (js/dashboard-view.js) -- reads the eq.health.summary
+    // cache loadData() already publishes above, same as every other
+    // cross-surface consumer (daily-report.js, ask.html, gym.html,
+    // status.html). Deliberately does NOT call loadData() itself, so
+    // opening the dashboard never triggers a live WHOOP API call.
+    function renderDashboardWhoop() {
+      let h = null;
+      try { h = JSON.parse(localStorage.getItem('eq.health.summary')); } catch (e) {}
+      if (!h) return 'Not connected to WHOOP yet.';
+      const rows = [];
+      if (h.recovery != null) rows.push('Recovery: ' + h.recovery + '%' + (h.recoveryTrend ? ' (' + h.recoveryTrend + ')' : ''));
+      if (h.sleepPerf != null) rows.push('Sleep: ' + (h.sleepHours != null ? h.sleepHours + 'h · ' : '') + h.sleepPerf + '%');
+      if (h.hrv != null) rows.push('HRV: ' + h.hrv + 'ms' + (h.hrvTrend ? ' (' + h.hrvTrend + ')' : ''));
+      if (h.rhr != null) rows.push('RHR: ' + h.rhr + 'bpm' + (h.rhrTrend ? ' (' + h.rhrTrend + ')' : ''));
+      if (h.strain != null) rows.push('Strain: ' + h.strain + (h.yesterdayStrain != null ? ' (yesterday ' + h.yesterdayStrain + ')' : ''));
+      if (!rows.length) return 'No WHOOP data yet.';
+      const asOf = h.at ? '<div>as of ' + new Date(h.at).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) + '</div>' : '';
+      return rows.map((r) => '<div>' + r + '</div>').join('') + asOf;
+    }
+    if (window.EqDashboard) window.EqDashboard.register('health', 'whoop', 'Whoop', renderDashboardWhoop);
   })();
   </script>
 
@@ -2759,6 +2781,51 @@ main {
     render();
     photosLoad().then(photosRender);
     window.addEventListener('storage', () => { wtEntries = wtLoad(); goalWeight = goalLoad(); calEntries = calLoad(); render(); calRender(); });
+
+    // Dashboard view (js/dashboard-view.js) -- three tiles from this one
+    // IIFE, reusing the same wtEntries/goalWeight/units/calEntries/photos
+    // state this section already maintains for its own live render(),
+    // rather than re-deriving anything.
+    function renderDashboardWeightGoal() {
+      const last = wtEntries.length ? wtEntries[wtEntries.length - 1] : null;
+      if (!last) return 'No weight logged yet.';
+      let out = 'Weight: ' + last.weight.toFixed(1) + ' ' + units + ' (' + last.dateKey + ')';
+      if (wtEntries.length >= 2) {
+        const cutoff = new Date(wtParseKey(last.dateKey)); cutoff.setDate(cutoff.getDate() - 7);
+        const baseline = wtEntries.find((e) => wtParseKey(e.dateKey) >= cutoff) || wtEntries[0];
+        const diff = last.weight - baseline.weight;
+        if (Math.abs(diff) >= 0.05) out += ' · ' + (diff > 0 ? '+' : '−') + Math.abs(diff).toFixed(1) + ' ' + units + ' last 7d';
+      }
+      if (goalWeight != null) {
+        const remaining = Math.abs(goalWeight - last.weight);
+        out += remaining < 0.05
+          ? ' · at goal (' + goalWeight.toFixed(1) + ' ' + units + ')'
+          : ' · ' + remaining.toFixed(1) + ' ' + units + ' to ' + (goalWeight < last.weight ? 'lose' : 'gain') + ' (goal ' + goalWeight.toFixed(1) + ' ' + units + ')';
+      } else {
+        out += ' · no goal set';
+      }
+      return out;
+    }
+    function renderDashboardCalories() {
+      const todayKey = wtDateKey(new Date());
+      const today = calEntries.find((e) => e.dateKey === todayKey);
+      if (!today) return 'Not logged today.';
+      const cutoffKey = wtDateKey(new Date(Date.now() - 7 * 86400000));
+      const recent = calEntries.filter((e) => e.dateKey >= cutoffKey);
+      const avg7 = recent.length ? Math.round(recent.reduce((s, e) => s + e.kcal, 0) / recent.length) : null;
+      return today.kcal + ' kcal today' + (avg7 != null ? ' · 7-day avg ' + avg7 + ' kcal' : '');
+    }
+    // Count-only: `photos` is the in-memory array photosLoad() already
+    // populated for the live page's own render/viewer/compare functions
+    // above -- this reads that existing array, it does not query Dexie.
+    function renderDashboardPhotos() {
+      return photos.length + (photos.length === 1 ? ' photo' : ' photos');
+    }
+    if (window.EqDashboard) {
+      window.EqDashboard.register('health', 'weight-goal', 'Weight & Goal', renderDashboardWeightGoal);
+      window.EqDashboard.register('health', 'calories', 'Calories Today', renderDashboardCalories);
+      window.EqDashboard.register('health', 'photos', 'Progress Photos', renderDashboardPhotos);
+    }
   })();
   </script>
 
@@ -3122,6 +3189,30 @@ main {
     renderTypeSelector(); renderLogList(); renderChart();
     setInterval(renderChart, 5 * 60000); // keeps the "now" line/score fresh without a full reload
     window.addEventListener('storage', () => { renderLogList(); renderChart(); });
+
+    // Dashboard view (js/dashboard-view.js) -- reuses this section's own
+    // curveNow()/scoreAtHour()/tierFor() rather than re-deriving the
+    // circadian + pharmacokinetic math a second time. Custom entries
+    // display via l.key directly (no separate .name field), same
+    // fallback renderLogList() already uses above.
+    function renderDashboardEnergy() {
+      const logs = getTodayLogs();
+      const now = new Date();
+      const nowHour = now.getHours() + now.getMinutes() / 60;
+      const nowScore = Math.round(scoreAtHour(curveNow(), nowHour));
+      let out = 'Predicted now: ' + nowScore + ' (' + tierFor(nowScore) + ')';
+      if (logs.length) {
+        const items = logs.slice().sort((a, b) => a.takenHour - b.takenHour).map((l) => {
+          const s = SUBSTANCES[l.key] || { name: l.key };
+          return s.name + ' ' + (l.dose || 0) + 'mg @ ' + hourToClockStr(l.takenHour);
+        });
+        out += ' · ' + items.join(', ');
+      } else {
+        out += ' · nothing logged today';
+      }
+      return out;
+    }
+    if (window.EqDashboard) window.EqDashboard.register('health', 'energy', 'Energy', renderDashboardEnergy);
   })();
   </script>
   </div>
@@ -3330,6 +3421,19 @@ main {
 
     slRender();
     window.addEventListener('storage', slRender);
+
+    // Dashboard view (js/dashboard-view.js).
+    function renderDashboardSleep() {
+      const entries = slLoad().slice().sort((a, b) => a.dateKey.localeCompare(b.dateKey));
+      if (!entries.length) return 'No sleep logged yet.';
+      const last = entries[entries.length - 1];
+      const target = getTarget();
+      const diff = last.hours - target;
+      let out = 'Last night: ' + last.hours.toFixed(1) + 'h (' + (last.source === 'manual' ? 'manual' : 'WHOOP') + ', ' + last.dateKey + ') · target ' + target + 'h';
+      if (Math.abs(diff) >= 0.1) out += ' · ' + (diff > 0 ? '+' : '−') + Math.abs(diff).toFixed(1) + 'h vs target';
+      return out;
+    }
+    if (window.EqDashboard) window.EqDashboard.register('health', 'sleep', 'Sleep Log', renderDashboardSleep);
   })();
   </script>
   </div>
@@ -3959,6 +4063,22 @@ main {
 
   render();
   startTicker();
+
+  // Dashboard view (js/dashboard-view.js).
+  function renderDashboardStack() {
+    const items = getItems();
+    if (!items.length) return 'No stack items configured.';
+    const taken = getTaken();
+    const low = getLow();
+    const takenCount = items.filter((it) => taken[it.id]).length;
+    const lines = items.map((it) => {
+      const mark = taken[it.id] ? '✓' : '·';
+      const lowFlag = low.includes(it.id) ? ' (low)' : '';
+      return mark + ' ' + it.name + (it.dose ? ' (' + it.dose + ')' : '') + lowFlag;
+    });
+    return '<div>' + takenCount + '/' + items.length + ' taken today</div><div>' + lines.join('<br>') + '</div>';
+  }
+  if (window.EqDashboard) window.EqDashboard.register('health', 'stack', 'Daily Stack', renderDashboardStack);
 })();
 </script>
 <script>
@@ -3970,6 +4090,16 @@ document.addEventListener('DOMContentLoaded', function () {
     syncedPrefixes: ['stack:taken:'],
     onApplied: function () { window.dispatchEvent(new Event('storage')); }
   });
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  if (!window.EqDashboard) return;
+  // #wtOverlay/#wtCam/#wtViewer are the photo viewer/camera overlays --
+  // direct children of <main>, deliberately kept outside every
+  // data-eq-collapse wrapper above so an in-progress photo capture is
+  // never hidden. They must stay visible in dashboard mode too.
+  window.EqDashboard.init('health', { keepVisible: ['#wtOverlay', '#wtCam', '#wtViewer'] });
 });
 </script>
 
