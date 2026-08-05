@@ -724,6 +724,16 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
 }
 .dgt-add-form button:hover { color: var(--text-primary); border-color: rgba(var(--eq-text-primary-rgb), 0.3); }
 .dgt-empty { font-size: 11.5px; font-style: italic; color: var(--text-tertiary); padding: 6px 2px; }
+/* order:1 pushes the button past .section-title's ::after divider line,
+   which is otherwise always last in DOM/box order regardless of where a
+   real child sits -- see equavia-core.css's .section-title (same trick
+   as .book-alt-toggle-btn/.learn-inactive-toggle-btn). Same properties as
+   .book-alt-toggle-btn, kept as its own class rather than reused since
+   this toggles an unrelated thing (the add-goal form, not a tracker
+   swap). */
+.goal-add-toggle-btn { order: 1; background: transparent; border: 1px solid rgba(var(--eq-text-primary-rgb), 0.08); color: var(--text-tertiary); cursor: pointer; font-size: 13px; line-height: 1; padding: 3px 9px; border-radius: 6px; font-family: inherit; flex-shrink: 0; text-transform: none; letter-spacing: normal; }
+.goal-add-toggle-btn:hover { color: var(--text-primary); }
+#dgtAddForm[hidden] { display: none; }
 
 .dgt-goals { display: flex; flex-direction: column; gap: 14px; }
 .dgt-rank-group { display: flex; flex-direction: column; gap: 8px; }
@@ -1965,9 +1975,10 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
 <div class="section" data-section="goals" id="goals" data-eq-collapse="planner:goals">
   <div class="section-title" data-eq-collapse-keep data-eq-collapse-trigger>
     <span class="section-title-text">GOALS<span class="eq-collapse-chevron"></span></span>
+    <button type="button" class="goal-add-toggle-btn" id="goalAddToggleBtn" aria-label="Show add-goal form" title="Add a goal">+</button>
   </div>
   <div class="card">
-    <div class="dgt-add-form" id="dgtAddForm">
+    <div class="dgt-add-form" id="dgtAddForm" hidden>
       <input type="text" id="dgtGoalTitle" placeholder="Goal name…">
       <select id="dgtGoalRank">
         <option value="Year">Year</option>
@@ -3579,6 +3590,23 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
   }
   setInterval(tickGoalCountdowns, 1000);
 
+  // In-memory only, no storage key -- the add-goal form starts hidden on
+  // every load, same as #8's spec (matches the alt-book-tracker toggle's
+  // own "visibility is not persisted" precedent, not Learn Hub's
+  // persisted inactive-tracks toggle).
+  function initGoalAddToggle() {
+    const btn = document.getElementById('goalAddToggleBtn');
+    const form = document.getElementById('dgtAddForm');
+    if (!btn || !form) return;
+    let shown = false;
+    btn.addEventListener('click', () => {
+      shown = !shown;
+      form.hidden = !shown;
+      btn.textContent = shown ? '−' : '+';
+      btn.title = shown ? 'Hide add-goal form' : 'Add a goal';
+    });
+  }
+
   function initGoalAddForm() {
     const btn = document.getElementById('dgtGoalAddBtn');
     if (!btn) return;
@@ -4999,6 +5027,7 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
   renderYesterdayPanel();
 
   renderLongtermGoals();
+  initGoalAddToggle();
   initGoalAddForm();
   renderChecklists();
   initCalendar();
