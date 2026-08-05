@@ -1018,7 +1018,6 @@ a { color: inherit; text-decoration: none; }
       return '<div class="goal-row">' +
         '<div class="goal-row-top"><span>' + esc(g.title) + '</span><span>' + pct + '%</span></div>' +
         '<div class="goal-row-bar-track"><div class="goal-row-bar-fill" style="width:' + pct + '%;"></div></div>' +
-        (countdown ? '<div class="goal-row-countdown">' + esc(countdown) + '</div>' : '') +
       '</div>';
     }).join('');
   }
