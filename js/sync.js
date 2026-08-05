@@ -36,7 +36,7 @@
     if (!SUPABASE_URL || !SUPABASE_KEY) return;
     if (SUPABASE_URL.indexOf('PASTE-') === 0 || SUPABASE_KEY.indexOf('PASTE-') === 0) return;
 
-    let supa = null, pushTimer = null, suppressSync = false, lastSyncedJson = null;
+    let supa = null, pushTimer = null, suppressSync = false, lastSyncedJson = null, pendingRemote = null;
 
     function matches(k) {
       if (!k) return false;
@@ -161,6 +161,33 @@
       if (changed && typeof onApplied === 'function') { try { onApplied(); } catch (e) {} }
       return changed;
     }
+    // A remote update landing mid-keystroke -- the user is still editing,
+    // hasn't saved yet, so nothing they've typed has a timestamp of its
+    // own to defend it via applyRemote's own LWW check above. Queue it
+    // instead of applying immediately; flushed on focusout once the field
+    // isn't active. Only the single latest pending payload is kept -- a
+    // second remote update arriving before the field blurs just replaces
+    // the queued one, same as it would have applied immediately in series
+    // if the user hadn't been mid-edit.
+    function isUserEditing() {
+      const ae = document.activeElement;
+      if (!ae) return false;
+      const tag = ae.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return true;
+      if (ae.getAttribute && ae.getAttribute('contenteditable') === 'true') return true;
+      return false;
+    }
+    function maybeApplyRemote(remote) {
+      if (isUserEditing()) { pendingRemote = remote; return; }
+      applyRemote(remote);
+    }
+    function applyPendingIfReady() {
+      if (pendingRemote && !isUserEditing()) {
+        const r = pendingRemote;
+        pendingRemote = null;
+        applyRemote(r);
+      }
+    }
     async function pushNow() {
       if (!supa) return;
       const state = collect();
@@ -200,7 +227,7 @@
         const { data, error } = await supa.from('app_state').select('data').eq('key', appKey).maybeSingle();
         if (!error && data && data.data && Object.keys(data.data).length > 0) {
           lastSyncedJson = JSON.stringify(data.data);
-          applyRemote(data.data);
+          maybeApplyRemote(data.data);
         } else if (listAllKeys().length > 0) {
           // Note: not collect().length -- collect() always includes
           // META_KEY now, which would make this true even with nothing
@@ -216,12 +243,13 @@
           const incoming = JSON.stringify(payload.new.data);
           if (incoming === lastSyncedJson) return;
           lastSyncedJson = incoming;
-          applyRemote(payload.new.data);
+          maybeApplyRemote(payload.new.data);
         })
         .subscribe();
     })();
     window.addEventListener('beforeunload', flushOnUnload);
     window.addEventListener('pagehide', flushOnUnload);
     window.addEventListener('storage', (e) => { if (e.key && matches(e.key)) schedulePush(); });
+    document.addEventListener('focusout', () => { setTimeout(applyPendingIfReady, 0); }, true);
   };
 })();
