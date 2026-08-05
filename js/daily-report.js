@@ -109,9 +109,9 @@
   // ---------- Checklists (planner.html: checklist:items:<id> / checklist:done:<id>:<dateKey>) ----------
   function sectionChecklists(dateKey) {
     const CHECKLISTS = [
-      { id: 'morning', name: 'Morning Checklist' },
-      { id: 'midday', name: 'Mid-Day Checklist' },
-      { id: 'evening', name: 'Evening Checklist' },
+      { id: 'morning', name: 'Morning Routine' },
+      { id: 'midday', name: 'Midday Routine' },
+      { id: 'evening', name: 'Evening Routine' },
     ];
     let out = '';
     CHECKLISTS.forEach((c) => {
