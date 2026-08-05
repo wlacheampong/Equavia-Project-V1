@@ -926,15 +926,10 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
 .proj-card-tag[data-priority="medium"] { color: var(--eq-warning); border-color: rgba(var(--eq-warning-rgb), 0.35); }
 .proj-card-tag[data-priority="low"]    { color: var(--eq-success); border-color: rgba(var(--eq-success-rgb), 0.30); }
 .proj-card-del {
-  position: absolute; top: 8px; right: 8px;
   border: 0; background: transparent; color: var(--text-tertiary);
-  font-size: 15px; cursor: pointer; opacity: 0.4; transition: opacity 0.2s; /* was opacity:0 -- invisible on touch devices, which have no :hover */
+  font-size: 15px; cursor: pointer;
 }
-@media (hover: hover) {
-  .proj-card-del { opacity: 0; }
-  .proj-card:hover .proj-card-del { opacity: 0.7; }
-}
-.proj-card-del:hover { color: var(--danger); opacity: 1; }
+.proj-card-del:hover { color: var(--danger); }
 .proj-col-empty { font-size: 11.5px; font-style: italic; color: var(--text-tertiary); }
 
 .proj-gantt-stub {
@@ -1339,15 +1334,32 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
 .proj-obsidian-status { font-size: 11px; color: var(--text-tertiary); min-height: 14px; margin: -6px 0 10px; }
 .proj-obsidian-status.is-error { color: var(--danger); }
 
-/* ===== Projects: card slider / actions / tags / archive ===== */
-.proj-card { cursor: pointer; }
-.proj-card-actions {
-  position: absolute; top: 8px; right: 8px;
-  display: flex; align-items: center; gap: 6px;
-  opacity: 0; transition: opacity 0.2s;
+/* ===== Projects: card collapse/expand + slider / actions / tags / archive ===== */
+.proj-card-collapsed-line { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.proj-card-collapsed-title {
+  font-size: 19px; font-weight: 700; color: var(--text-primary);
+  cursor: pointer; border-radius: 8px; padding: 6px 4px; margin: -6px 0 -6px -4px;
+  transition: background 0.15s ease;
+  flex: 1; min-width: 0; overflow-wrap: break-word;
 }
-.proj-card:hover .proj-card-actions { opacity: 0.85; }
-.proj-card-actions:hover { opacity: 1; }
+.proj-card-collapsed-title:hover { background: rgba(var(--eq-text-primary-rgb), 0.05); }
+.proj-card-collapsed-title:active { background: rgba(var(--eq-text-primary-rgb), 0.09); }
+.proj-card-expanded-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.proj-card-expanded-head .proj-card-title { cursor: pointer; }
+.proj-card-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.proj-card-obsidian-btn {
+  position: relative; flex-shrink: 0;
+  border: 0; background: transparent; color: var(--text-tertiary);
+  cursor: pointer; padding: 4px; border-radius: 6px;
+  opacity: 0.7; transition: opacity 0.2s, color 0.2s;
+  display: inline-flex; align-items: center;
+}
+.proj-card-obsidian-btn svg { width: 14px; height: 14px; }
+.proj-card-obsidian-btn:hover { opacity: 1; color: var(--accent); }
+.proj-card-obsidian-btn::before {
+  /* invisible tap-target expansion: real hit area without reaching left into the collapsed title's own tap target (right side is spare card padding, so it can take more) */
+  content: ''; position: absolute; top: -13px; bottom: -13px; left: -6px; right: -10px;
+}
 .proj-obsidian-badge { opacity: 0.85; display: inline-flex; align-items: center; }
 .proj-obsidian-badge svg { width: 12px; height: 12px; }
 .proj-card-edit {
@@ -2118,6 +2130,17 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
     <div class="dr-modal-actions">
       <button type="button" class="dr-btn-cancel" id="taskNoteCancelBtn">Cancel</button>
       <button type="button" class="dr-btn-save" id="taskNoteSaveBtn">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="dr-modal-bg" id="projObsConfirmModalBg">
+  <div class="dr-modal">
+    <h3>Create Obsidian page?</h3>
+    <div class="ss-task-text" id="projObsConfirmText"></div>
+    <div class="dr-modal-actions">
+      <button type="button" class="dr-btn-cancel" id="projObsConfirmCancelBtn">Cancel</button>
+      <button type="button" class="dr-btn-save" id="projObsConfirmCreateBtn">Create</button>
     </div>
   </div>
 </div>
@@ -4723,6 +4746,9 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
   let projSearchTerm = '';
   let projGoalFilter = 'all'; // 'all' | 'unassigned' | goal id
   let projEditingId = null;
+  // Card-level, in-memory only (no persisted key), one card open at a time --
+  // same expandedGoalId pattern as the goal cards (f95c4ab).
+  let expandedProjectId = null;
 
   function goalTitleById(goalId) {
     const g = getLongtermGoals().find(x => x.id === goalId);
@@ -4826,24 +4852,67 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
     return card;
   }
 
+  // Editing wins over expansion, same rule as buildGoalCard (f95c4ab) --
+  // a card mid-edit ignores expandedProjectId; expandedProjectId is left
+  // untouched by entering/leaving edit mode.
   function buildProjCard(p) {
     if (projEditingId === p.id) return buildProjEditForm(p);
+    return expandedProjectId === p.id ? buildProjCardExpanded(p) : buildProjCardCollapsed(p);
+  }
 
+  function obsidianBtnHTML(obsLinked) {
+    return '<button type="button" class="proj-card-obsidian-btn" title="' + (obsLinked ? 'Open in Obsidian' : 'Create Obsidian page') + '">' +
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 15l6-6"/><path d="M11 6l1-1a4 4 0 0 1 6 6l-1 1"/><path d="M13 18l-1 1a4 4 0 0 1-6-6l1-1"/></svg>' +
+      '</button>';
+  }
+
+  // Collapsed: title (the sole expand target) plus one always-visible
+  // exception -- the Obsidian open/create action, kept reachable without
+  // expanding first since (unlike edit/delete) it's not an administrative
+  // action, it's the primary reason a project has a page at all. Its own
+  // click stops propagation so it never also triggers the title's expand.
+  function buildProjCardCollapsed(p) {
     const card = document.createElement('div');
     card.className = 'proj-card';
+    card.dataset.status = p.status;
+
+    const obsLinked = !!(p.obsidian && p.obsidian.path);
+    const line = document.createElement('div');
+    line.className = 'proj-card-collapsed-line';
+    line.innerHTML = '<span class="proj-card-collapsed-title" role="button" tabindex="0"></span>' + obsidianBtnHTML(obsLinked);
+    line.querySelector('.proj-card-collapsed-title').textContent = p.title;
+
+    line.querySelector('.proj-card-collapsed-title').addEventListener('click', () => {
+      expandedProjectId = p.id;
+      renderProjects();
+    });
+    line.querySelector('.proj-card-obsidian-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      openProjectObsidianPage(p.id);
+    });
+
+    card.appendChild(line);
+    return card;
+  }
+
+  function buildProjCardExpanded(p) {
+    const card = document.createElement('div');
+    card.className = 'proj-card is-expanded';
     card.dataset.status = p.status;
 
     const goalTitle = p.goalId ? goalTitleById(p.goalId) : null;
     const obsLinked = !!(p.obsidian && p.obsidian.path);
 
     card.innerHTML =
-      '<div class="proj-card-actions">' +
-        (obsLinked ? '<span class="proj-obsidian-badge" title="Linked to Obsidian"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 15l6-6"/><path d="M11 6l1-1a4 4 0 0 1 6 6l-1 1"/><path d="M13 18l-1 1a4 4 0 0 1-6-6l1-1"/></svg></span>' : '') +
-        '<button type="button" class="proj-card-edit" aria-label="Edit project">✎</button>' +
-        '<button type="button" class="proj-card-del" aria-label="Delete project">×</button>' +
+      '<div class="proj-card-expanded-head">' +
+        '<span class="proj-card-title proj-card-collapse-toggle"></span>' +
+        '<div class="proj-card-actions">' +
+          obsidianBtnHTML(obsLinked) +
+          '<button type="button" class="proj-card-edit" aria-label="Edit project">✎</button>' +
+          '<button type="button" class="proj-card-del" aria-label="Delete project">×</button>' +
+        '</div>' +
       '</div>' +
-      '<div class="proj-card-row">' +
-        '<span class="proj-card-title"></span>' +
+      '<div class="proj-card-row" style="justify-content:flex-end;">' +
         '<span class="proj-card-value">' + (p.value || 0) + '%</span>' +
       '</div>' +
       '<div class="proj-card-slider-row">' +
@@ -4858,6 +4927,14 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
     card.querySelector('.proj-card-title').textContent = p.title;
     if (goalTitle) card.querySelector('.proj-card-tag-goal').textContent = goalTitle;
 
+    card.querySelector('.proj-card-collapse-toggle').addEventListener('click', () => {
+      expandedProjectId = null;
+      renderProjects();
+    });
+    card.querySelector('.proj-card-obsidian-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      openProjectObsidianPage(p.id);
+    });
     card.querySelector('.proj-card-edit').addEventListener('click', (e) => {
       e.stopPropagation();
       projEditingId = p.id;
@@ -4888,8 +4965,6 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
       const idx = cur.findIndex(x => x.id === p.id);
       if (idx !== -1) { cur[idx] = Object.assign({}, cur[idx], { value: Number(slider.value) }); setProjectsList(cur); }
     });
-
-    card.addEventListener('click', () => openProjectObsidianPage(p.id));
 
     return card;
   }
@@ -5061,6 +5136,37 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
   }
 
   // ---------- Obsidian project pages ----------
+  // Confirm only on first-time creation -- a mistap on the small
+  // collapsed-card icon shouldn't silently write a new vault file.
+  // Already-linked projects (the common case) open straight through.
+  // Uses the same dr-modal-bg/.dr-modal popout as the task note popout --
+  // no native window.confirm anywhere in this codebase.
+  let projObsConfirmProjectId = null;
+  function projObsConfirmOpen(projectId, title) {
+    projObsConfirmProjectId = projectId;
+    document.getElementById('projObsConfirmText').textContent = 'Create an Obsidian page for "' + title + '"?';
+    document.getElementById('projObsConfirmModalBg').classList.add('show');
+  }
+  function projObsConfirmClose() {
+    document.getElementById('projObsConfirmModalBg').classList.remove('show');
+    projObsConfirmProjectId = null;
+  }
+  function initProjObsConfirmModal() {
+    document.getElementById('projObsConfirmCancelBtn').addEventListener('click', projObsConfirmClose);
+    document.getElementById('projObsConfirmModalBg').addEventListener('click', (e) => { if (e.target === e.currentTarget) projObsConfirmClose(); });
+    document.getElementById('projObsConfirmCreateBtn').addEventListener('click', () => {
+      const id = projObsConfirmProjectId;
+      projObsConfirmClose();
+      if (id) createAndOpenProjectObsidianPage(id);
+    });
+  }
+
+  function openObsidianVaultFile(path, cfg) {
+    if (!cfg.vaultName) { showProjObsidianStatus('Add your vault name in Settings to open Obsidian directly.', true); return; }
+    const fileParam = path.replace(/\.md$/, '');
+    window.open('obsidian://open?vault=' + encodeURIComponent(cfg.vaultName) + '&file=' + encodeURIComponent(fileParam), '_blank');
+  }
+
   async function openProjectObsidianPage(projectId) {
     if (!window.ObsidianSync) return;
     const cfg = ObsidianSync.getConfig();
@@ -5068,21 +5174,29 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
     const cur = getProjects();
     const idx = cur.findIndex(x => x.id === projectId);
     if (idx === -1) return;
-    let project = cur[idx];
+    const project = cur[idx];
 
-    let path = project.obsidian && project.obsidian.path;
+    const path = project.obsidian && project.obsidian.path;
     if (!path) {
-      const res = await ObsidianSync.pushProjectPage(project);
-      if (!res.ok) { showProjObsidianStatus('Could not reach Obsidian — check Settings.', true); return; }
-      path = res.path;
-      cur[idx] = Object.assign({}, project, { obsidian: { path, lastSyncedAt: new Date().toISOString() } });
-      setProjectsList(cur);
-      renderProjects();
+      projObsConfirmOpen(projectId, project.title);
+      return;
     }
+    openObsidianVaultFile(path, cfg);
+  }
 
-    if (!cfg.vaultName) { showProjObsidianStatus('Add your vault name in Settings to open Obsidian directly.', true); return; }
-    const fileParam = path.replace(/\.md$/, '');
-    window.open('obsidian://open?vault=' + encodeURIComponent(cfg.vaultName) + '&file=' + encodeURIComponent(fileParam), '_blank');
+  // Runs after the create-page confirm modal is accepted.
+  async function createAndOpenProjectObsidianPage(projectId) {
+    const cur = getProjects();
+    const idx = cur.findIndex(x => x.id === projectId);
+    if (idx === -1) return;
+    const project = cur[idx];
+    const res = await ObsidianSync.pushProjectPage(project);
+    if (!res.ok) { showProjObsidianStatus('Could not reach Obsidian — check Settings.', true); return; }
+    const path = res.path;
+    cur[idx] = Object.assign({}, project, { obsidian: { path, lastSyncedAt: new Date().toISOString() } });
+    setProjectsList(cur);
+    renderProjects();
+    openObsidianVaultFile(path, ObsidianSync.getConfig());
   }
 
   function showProjObsidianStatus(msg, isError) {
@@ -5108,6 +5222,7 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
   initProjects();
   initSuggestSlot();
   initTaskNoteModal();
+  initProjObsConfirmModal();
 
   // A same-tab "planner.html#projects" link (e.g. the dashboard's Project
   // card long-press) should reliably show the kanban, not just scroll to a
