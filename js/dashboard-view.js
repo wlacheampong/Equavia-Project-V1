@@ -81,9 +81,22 @@
     const style = document.createElement('style');
     style.id = styleId;
     style.textContent = `
-#${viewElId(pageId)} { display: none; }
+#${viewElId(pageId)} {
+  display: none;
+  /* Every section concatenated into one plain-text list runs taller than
+     the normal page ever does at the same scroll depth (each section
+     here is just text, none of the normal page's own collapsible/capped
+     widgets) -- main/body's own dock-clearance padding isn't enough on
+     its own to keep the last section's last row from landing under the
+     fixed dock. Same value body.has-eq-dock already uses for exactly
+     this (see js/topbar.js), reused here rather than invented. */
+  padding-bottom: calc(72px + env(safe-area-inset-bottom));
+}
 body.eq-dashboard-active #${viewElId(pageId)} { display: block; }
 body.eq-dashboard-active main > *${excludes} { display: none; }
+@media (max-width: 480px) {
+  #${viewElId(pageId)} { padding-bottom: calc(62px + env(safe-area-inset-bottom)); }
+}
 
 .eq-dash-toggle-wrap {
   display: flex; align-items: center; gap: 10px;

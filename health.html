@@ -1724,7 +1724,7 @@ main {
       if (h.sleepPerf != null) rows.push('Sleep: ' + (h.sleepHours != null ? h.sleepHours + 'h · ' : '') + h.sleepPerf + '%');
       if (h.hrv != null) rows.push('HRV: ' + h.hrv + 'ms' + (h.hrvTrend ? ' (' + h.hrvTrend + ')' : ''));
       if (h.rhr != null) rows.push('RHR: ' + h.rhr + 'bpm' + (h.rhrTrend ? ' (' + h.rhrTrend + ')' : ''));
-      if (h.strain != null) rows.push('Strain: ' + h.strain + (h.yesterdayStrain != null ? ' (yesterday ' + h.yesterdayStrain + ')' : ''));
+      if (h.strain != null) rows.push('Strain: ' + h.strain.toFixed(1) + (h.yesterdayStrain != null ? ' (yesterday ' + h.yesterdayStrain.toFixed(1) + ')' : ''));
       if (!rows.length) return 'No WHOOP data yet.';
       const asOf = h.at ? '<div>as of ' + new Date(h.at).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) + '</div>' : '';
       return rows.map((r) => '<div>' + r + '</div>').join('') + asOf;
