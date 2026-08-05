@@ -749,17 +749,45 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
   background: rgba(0,0,0,0.24);
   position: relative;
 }
-.dgt-goal-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-right: 40px; }
 .dgt-goal-title { font-size: 12.5px; font-weight: 600; color: var(--text-primary); }
-.dgt-goal-rank-badge {
-  font-family: var(--font-mono);
-  font-size: 9.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
-  color: var(--eq-accent);
-  background: rgba(var(--eq-accent-rgb), 0.14);
-  border-radius: 5px;
-  padding: 2px 6px;
-  white-space: nowrap;
+.dgt-goal-collapsed-line {
+  font-size: 19px; font-weight: 700; color: var(--text-primary);
+  cursor: pointer; border-radius: 8px; padding: 6px 4px; margin: -6px -4px;
+  transition: background 0.15s ease;
 }
+.dgt-goal-collapsed-line:hover { background: rgba(var(--eq-text-primary-rgb), 0.05); }
+.dgt-goal-collapsed-line:active { background: rgba(var(--eq-text-primary-rgb), 0.09); }
+.dgt-goal-expanded-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.dgt-goal-expanded-head .dgt-goal-title { cursor: pointer; }
+.dgt-goal-priority {
+  font-family: var(--font-mono); font-size: 10.5px; font-weight: 700;
+  letter-spacing: 0.06em; color: var(--text-tertiary); margin-top: 4px;
+}
+.dgt-goal-desc {
+  width: 100%; margin-top: 8px; padding: 8px 10px;
+  border: 1px solid rgba(var(--eq-text-primary-rgb), 0.08); border-radius: 8px;
+  background: rgba(0,0,0,0.28); color: var(--text-primary);
+  font-family: inherit; font-size: 13px; resize: vertical; outline: none;
+}
+.dgt-goal-info-group {
+  margin-top: 10px; padding-top: 10px;
+  border-top: 1px solid rgba(var(--eq-text-primary-rgb), 0.06);
+  display: flex; flex-direction: column; gap: 6px;
+}
+.dgt-goal-info-group .dgt-goal-countdown { margin-top: 0; }
+.dgt-goal-projects {
+  font-size: 11px; color: var(--text-tertiary);
+}
+.dgt-goal-projects-label { color: var(--text-secondary); }
+.dgt-goal-hint {
+  display: flex; align-items: flex-end; justify-content: space-between; gap: 8px;
+  font-size: 11px; color: var(--text-secondary); font-style: italic;
+}
+.dgt-goal-hint-arrow {
+  flex-shrink: 0; border: 0; background: transparent; color: var(--text-tertiary);
+  font-size: 14px; cursor: pointer; padding: 0; line-height: 1;
+}
+.dgt-goal-hint-arrow:hover { color: var(--text-primary); }
 .dgt-goal-countdown {
   font-family: var(--font-mono);
   font-size: 10.5px; color: var(--text-secondary);
@@ -782,12 +810,8 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
   cursor: pointer;
 }
 .dgt-goal-actions {
-  position: absolute; top: 8px; right: 8px;
-  display: flex; align-items: center; gap: 6px;
-  opacity: 0; transition: opacity 0.2s;
+  display: flex; align-items: center; gap: 6px; flex-shrink: 0;
 }
-.dgt-goal:hover .dgt-goal-actions { opacity: 0.7; }
-.dgt-goal-actions:hover { opacity: 1; }
 .dgt-goal-edit, .dgt-goal-del {
   border: 0; background: transparent; color: var(--text-tertiary);
   font-size: 13px; cursor: pointer; padding: 0;
@@ -3022,6 +3046,25 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
   // only.
   const GOAL_PRIORITIES = ['p1', 'p2', 'p3'];
   let goalEditingId = null;
+  // Which card (if any) is expanded. In-memory only, no storage key --
+  // resets on every load by design, unlike Learn Hub's inactive-tracks
+  // toggle which deliberately persists. Nested inside the outer
+  // data-eq-collapse="planner:goals" collapsible, so this stays a plain
+  // style.display toggle rather than a second data-eq-collapse instance,
+  // same reasoning as INACTIVE_SHOWN_KEY's own comment.
+  let expandedGoalId = null;
+  // Per-card cycling hint index, keyed by goal id. In-memory only, resets
+  // on load. A tap on one goal's hint arrow must not move another goal's.
+  let goalHintIndex = {};
+  const GOAL_HINTS = [
+    'Break it into the next single physical action, not the whole goal.',
+    'Shrink the target for one week and see if momentum builds itself.',
+    'Tell one other person the deadline -- accountability beats willpower.',
+    'Attach it to an existing habit ("after X, I do 10 minutes of Y").',
+    'Review what almost worked last time before trying something new.',
+    'Lower the daily bar until skipping a day feels harder than doing it.',
+    'Remove one piece of friction between you and the next step, today.',
+  ];
 
   function getLongtermGoals() { const g = storeGet('longterm_goals_v1'); return Array.isArray(g) ? g : []; }
   function setLongtermGoals(list) { storeSet('longterm_goals_v1', list); }
@@ -3029,6 +3072,38 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
   // deliberately set to 'p3' both read as P3, but only the latter has
   // priority actually stored. Never write 'p3' back in here.
   function goalPriorityOf(g) { return g.priority || 'p3'; }
+  // Same read-time-fallback rule as priority: absence reads as '', never
+  // backfilled into storage just by viewing the card.
+  function goalDescriptionOf(g) { return g.description || ''; }
+  // A read over projects_v1's existing goalId field, not a stored join --
+  // same filter buildGoalHistoryRow's linkedCount already uses, so this
+  // can never drift from the real link.
+  function goalProjectsOf(g) { return getProjects().filter(p => p.goalId === g.id); }
+
+  // Description autosave: debounced while typing, flushed immediately on
+  // blur AND at the top of every renderLongtermGoals() call -- collapsing
+  // the card (or any other action that re-renders) unmounts the textarea
+  // synchronously, and whether 'blur' fires before that unmount happens
+  // isn't something to leave to the browser. At most one textarea can
+  // exist at a time (only one card expands at once), so a single
+  // module-level slot is enough.
+  let pendingDescSave = null; // { goalId, value, timer } | null
+  function scheduleDescSave(goalId, value) {
+    if (pendingDescSave && pendingDescSave.timer) clearTimeout(pendingDescSave.timer);
+    pendingDescSave = { goalId, value, timer: setTimeout(flushDescSave, 600) };
+  }
+  function flushDescSave() {
+    if (!pendingDescSave) return;
+    const { goalId, value, timer } = pendingDescSave;
+    if (timer) clearTimeout(timer);
+    pendingDescSave = null;
+    const cur = getLongtermGoals();
+    const idx = cur.findIndex(x => x.id === goalId);
+    if (idx !== -1 && cur[idx].description !== value) {
+      cur[idx] = Object.assign({}, cur[idx], { description: value });
+      setLongtermGoals(cur);
+    }
+  }
 
   function goalDeadlineMs(g) {
     if (!g.deadline) return null;
@@ -3160,11 +3235,38 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
     return item;
   }
 
+  // Editing wins over expansion (a card mid-edit ignores expandedGoalId);
+  // expandedGoalId is left untouched by entering/leaving edit mode, so
+  // Save/Cancel returns the card to whatever expand state it had before.
   function buildGoalCard(g) {
     if (goalEditingId === g.id) return buildGoalEditCard(g);
+    return expandedGoalId === g.id ? buildGoalCardExpanded(g) : buildGoalCardCollapsed(g);
+  }
 
+  // Collapsed: the goal title and nothing else. This line (and only this
+  // line) is the toggle target -- scoped narrowly on purpose, so nothing
+  // inside the expanded body needs stopPropagation to avoid re-collapsing
+  // the card when clicked.
+  function buildGoalCardCollapsed(g) {
     const item = document.createElement('div');
     item.className = 'dgt-goal';
+    item.dataset.id = g.id;
+    const line = document.createElement('div');
+    line.className = 'dgt-goal-collapsed-line';
+    line.textContent = g.title;
+    line.setAttribute('role', 'button');
+    line.setAttribute('tabindex', '0');
+    line.addEventListener('click', () => {
+      expandedGoalId = g.id;
+      renderLongtermGoals();
+    });
+    item.appendChild(line);
+    return item;
+  }
+
+  function buildGoalCardExpanded(g) {
+    const item = document.createElement('div');
+    item.className = 'dgt-goal is-expanded';
     item.dataset.id = g.id;
 
     const deadlineMs = goalDeadlineMs(g);
@@ -3172,26 +3274,76 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
     const isOverdue = remaining !== null && remaining <= 0;
     item.dataset.deadlineMs = deadlineMs === null ? '' : String(deadlineMs);
 
+    const projects = goalProjectsOf(g);
+    const hintIdx = goalHintIndex[g.id] || 0;
+
     item.innerHTML =
-      '<div class="dgt-goal-actions">' +
-        '<button type="button" class="dgt-goal-edit" aria-label="Edit goal">✎</button>' +
-        '<button type="button" class="dgt-goal-del" aria-label="Delete goal">×</button>' +
+      '<div class="dgt-goal-expanded-head">' +
+        '<span class="dgt-goal-title dgt-goal-collapse-toggle"></span>' +
+        '<div class="dgt-goal-actions">' +
+          '<button type="button" class="dgt-goal-edit" aria-label="Edit goal">✎</button>' +
+          '<button type="button" class="dgt-goal-del" aria-label="Delete goal">×</button>' +
+        '</div>' +
       '</div>' +
-      '<div class="dgt-goal-row">' +
-        '<span class="dgt-goal-title"></span>' +
-        '<span class="dgt-goal-rank-badge"></span>' +
-      '</div>' +
-      '<div class="dgt-goal-countdown' + (isOverdue ? ' is-overdue' : '') + '">' + formatCountdown(remaining) + '</div>' +
+      '<div class="dgt-goal-priority"></div>' +
       '<div class="dgt-goal-slider-row">' +
         '<span class="dgt-goal-value">' + (g.value || 0) + '%</span>' +
       '</div>' +
       '<input type="range" class="dgt-goal-slider" min="0" max="100" value="' + (g.value || 0) + '">' +
+      '<textarea class="dgt-goal-desc" placeholder="Notes on how you’ll get there…" rows="3"></textarea>' +
+      '<div class="dgt-goal-info-group">' +
+        // No deadline set -- omit the row entirely rather than render a
+        // lone "--" floating with no context, especially since a
+        // brand-new goal (no description/projects yet either) is the
+        // most common thing this expanded view shows.
+        (deadlineMs !== null ? '<div class="dgt-goal-countdown' + (isOverdue ? ' is-overdue' : '') + '"></div>' : '') +
+        '<div class="dgt-goal-projects"></div>' +
+        '<div class="dgt-goal-hint">' +
+          '<span class="dgt-goal-hint-text"></span>' +
+          '<button type="button" class="dgt-goal-hint-arrow" aria-label="Next hint">→</button>' +
+        '</div>' +
+      '</div>' +
       ((g.value || 0) >= 100 ? '<button type="button" class="dgt-goal-archive">Archive</button>' : '');
 
     item.querySelector('.dgt-goal-title').textContent = g.title;
-    item.querySelector('.dgt-goal-rank-badge').textContent = g.rank;
-    applyGoalCountdownColor(item.querySelector('.dgt-goal-countdown'), g, deadlineMs);
+    item.querySelector('.dgt-goal-priority').textContent = 'Priority: ' + goalPriorityOf(g).toUpperCase();
+    const countdownEl = item.querySelector('.dgt-goal-countdown'); // null when no deadline is set
+    if (countdownEl) {
+      countdownEl.textContent = formatCountdown(remaining);
+      applyGoalCountdownColor(countdownEl, g, deadlineMs);
+    }
 
+    const desc = item.querySelector('.dgt-goal-desc');
+    desc.value = goalDescriptionOf(g);
+    desc.addEventListener('input', () => scheduleDescSave(g.id, desc.value));
+    desc.addEventListener('blur', flushDescSave);
+
+    const projWrap = item.querySelector('.dgt-goal-projects');
+    if (projects.length) {
+      projWrap.innerHTML = '<span class="dgt-goal-projects-label">Linked projects:</span> ' +
+        projects.map(() => '<span class="dgt-goal-project-name"></span>').join(', ');
+      const nameEls = projWrap.querySelectorAll('.dgt-goal-project-name');
+      projects.forEach((p, i) => { nameEls[i].textContent = p.title; });
+    } else {
+      projWrap.textContent = 'No linked projects.';
+    }
+
+    const hintTextEl = item.querySelector('.dgt-goal-hint-text');
+    hintTextEl.textContent = GOAL_HINTS[hintIdx];
+    item.querySelector('.dgt-goal-hint-arrow').addEventListener('click', () => {
+      // Direct text update, not a re-render -- a re-render here would blow
+      // away focus/cursor position in the description textarea mid-edit.
+      // goalHintIndex[g.id] is still read fresh by buildGoalCardExpanded
+      // on the next real render (e.g. a slider release), so a hint tap
+      // followed by a slider drag doesn't snap the hint back to index 0.
+      goalHintIndex[g.id] = ((goalHintIndex[g.id] || 0) + 1) % GOAL_HINTS.length;
+      hintTextEl.textContent = GOAL_HINTS[goalHintIndex[g.id]];
+    });
+
+    item.querySelector('.dgt-goal-collapse-toggle').addEventListener('click', () => {
+      expandedGoalId = null;
+      renderLongtermGoals();
+    });
     item.querySelector('.dgt-goal-edit').addEventListener('click', () => {
       goalEditingId = g.id;
       renderLongtermGoals();
@@ -3207,10 +3359,9 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
 
     const slider = item.querySelector('.dgt-goal-slider');
     const valueLabel = item.querySelector('.dgt-goal-value');
-    const countdownEl = item.querySelector('.dgt-goal-countdown');
     slider.addEventListener('input', () => {
       valueLabel.textContent = slider.value + '%';
-      applyGoalCountdownColor(countdownEl, Object.assign({}, g, { value: Number(slider.value) }), deadlineMs);
+      if (countdownEl) applyGoalCountdownColor(countdownEl, Object.assign({}, g, { value: Number(slider.value) }), deadlineMs);
     });
     slider.addEventListener('change', () => {
       const cur = getLongtermGoals();
@@ -3226,6 +3377,11 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
   }
 
   function renderLongtermGoals() {
+    // Must run before the wrap is torn down below -- any re-render (slider
+    // change, edit, delete, archive, collapse-toggle, a new goal being
+    // added) unmounts the expanded card's textarea, so a pending debounce
+    // has to be committed first or it fires later against a stale record.
+    flushDescSave();
     const wrap = document.getElementById('dgtGoals');
     if (!wrap) return;
     const list = getLongtermGoals().filter(g => !g.archived);
