@@ -877,6 +877,10 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
 .proj-tool-btn:hover { color: var(--text-secondary); }
 .proj-tool-btn:disabled { cursor: not-allowed; opacity: 0.35; }
 .proj-tool-btn.is-active { color: var(--eq-accent); }
+/* Neutral override, not accent -- #15 strips accent from this section next,
+   this button shouldn't be adding new accent usage in the meantime. Same
+   grey-tint-background scheme as .proj-view-btn.is-active/.cal-view-btn.is-active. */
+#projSortBtn.is-active { color: var(--text-primary); background: rgba(var(--eq-text-primary-rgb), 0.10); }
 #projSearchBtn { display: inline-flex; align-items: center; }
 #projSearchBtn svg { width: 15px; height: 15px; }
 .proj-search {
@@ -2168,7 +2172,7 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
         </div>
         <div class="proj-tools">
           <button type="button" class="proj-tool-btn" id="projFilterBtn" disabled title="Filter — coming soon" hidden>⏷</button>
-          <button type="button" class="proj-tool-btn" id="projSortBtn" disabled title="Sort — coming soon" hidden>⇅</button>
+          <button type="button" class="proj-tool-btn" id="projSortBtn" title="Sort by priority">⇅</button>
           <button type="button" class="proj-tool-btn" id="projSearchBtn" title="Search projects"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></button>
           <input type="text" class="proj-search" id="projSearchInput" placeholder="Search…">
         </div>
@@ -2200,9 +2204,9 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
         <option value="done">Done</option>
       </select>
       <select id="projPriorityInput">
-        <option value="low">Low</option>
-        <option value="medium">Medium</option>
-        <option value="high">High</option>
+        <option value="low">P3</option>
+        <option value="medium">P2</option>
+        <option value="high">P1</option>
       </select>
       <select id="projGoalInput">
         <option value="">No linked goal</option>
@@ -4749,6 +4753,21 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
   // Card-level, in-memory only (no persisted key), one card open at a time --
   // same expandedGoalId pattern as the goal cards (f95c4ab).
   let expandedProjectId = null;
+  // In-memory only, resets on reload -- same convention as projSearchTerm
+  // right above, not a persisted key.
+  let projPrioritySortOn = false;
+
+  // Projects' own priority naming -- a third, distinct name from this
+  // IIFE's priorityOf()/PRIORITY_CYCLE (daily-task priority, goals:<date>)
+  // and goalPriorityOf()/GOAL_PRIORITIES (longterm_goals_v1). Stored values
+  // stay 'low'/'medium'/'high' unchanged (no migration) -- only the
+  // display label is P1/P2/P3 (high->P1, medium->P2, low->P3). Read-time
+  // fallback to 'low' (P3, the lowest tier) for projects with no priority
+  // field, never backfilled -- same rule as priorityOf/goalPriorityOf.
+  const PROJ_PRIORITY_ORDER = ['high', 'medium', 'low']; // P1 -> P2 -> P3
+  const PROJ_PRIORITY_LABELS = { high: 'P1', medium: 'P2', low: 'P3' };
+  function projPriorityOf(p) { return p.priority || 'low'; }
+  function projPriorityLabel(p) { return PROJ_PRIORITY_LABELS[projPriorityOf(p)]; }
 
   function goalTitleById(goalId) {
     const g = getLongtermGoals().find(x => x.id === goalId);
@@ -4807,9 +4826,9 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
           '<option value="done">Done</option>' +
         '</select>' +
         '<select class="proj-edit-priority">' +
-          '<option value="low">Low</option>' +
-          '<option value="medium">Medium</option>' +
-          '<option value="high">High</option>' +
+          '<option value="low">P3</option>' +
+          '<option value="medium">P2</option>' +
+          '<option value="high">P1</option>' +
         '</select>' +
         '<select class="proj-edit-goal">' +
           '<option value="">No linked goal</option>' +
@@ -4820,7 +4839,7 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
     appendGoalOptions(card.querySelector('.proj-edit-goal'), goals);
     card.querySelector('.proj-edit-title').value = p.title;
     card.querySelector('.proj-edit-status').value = p.status;
-    card.querySelector('.proj-edit-priority').value = p.priority;
+    card.querySelector('.proj-edit-priority').value = projPriorityOf(p);
     card.querySelector('.proj-edit-goal').value = p.goalId || '';
 
     card.querySelector('.proj-edit-save').addEventListener('click', () => {
@@ -4919,7 +4938,7 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
         '<input type="range" class="proj-card-slider dgt-goal-slider" min="0" max="100" value="' + (p.value || 0) + '">' +
       '</div>' +
       '<div class="proj-card-tags">' +
-        '<span class="proj-card-tag" data-priority="' + p.priority + '">' + p.priority + '</span>' +
+        '<span class="proj-card-tag" data-priority="' + projPriorityOf(p) + '">' + projPriorityLabel(p) + '</span>' +
         (goalTitle ? '<span class="proj-card-tag proj-card-tag-goal"></span>' : '') +
       '</div>' +
       (p.status === 'done' ? '<button type="button" class="proj-card-archive">Archive</button>' : '');
@@ -5031,6 +5050,12 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
       const term = projSearchTerm.toLowerCase();
       all = all.filter(p => p.title.toLowerCase().indexOf(term) !== -1);
     }
+    // No manual/drag order exists for projects to override -- sorts the
+    // already-filtered copy, stable within each status column below too
+    // since they slice from this same ordered array.
+    if (projPrioritySortOn) {
+      all = all.slice().sort((a, b) => PROJ_PRIORITY_ORDER.indexOf(projPriorityOf(a)) - PROJ_PRIORITY_ORDER.indexOf(projPriorityOf(b)));
+    }
 
     if (projView === 'all') {
       const col = document.createElement('div');
@@ -5079,6 +5104,13 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
         document.querySelectorAll('.proj-view-btn').forEach(b => b.classList.toggle('is-active', b === btn));
         renderProjects();
       });
+    });
+
+    const sortBtn = document.getElementById('projSortBtn');
+    sortBtn.addEventListener('click', () => {
+      projPrioritySortOn = !projPrioritySortOn;
+      sortBtn.classList.toggle('is-active', projPrioritySortOn);
+      renderProjects();
     });
 
     const searchBtn = document.getElementById('projSearchBtn');
