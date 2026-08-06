@@ -505,15 +505,24 @@ body.topbar-modal-open { overflow: hidden; touch-action: none; }
   // for Notes (silent, mtime-based last-write-wins), just extended to
   // every namespace instead of one page's data.
   //
-  // Deliberately EXCLUDES: session/OAuth tokens (device-local by nature,
-  // syncing them across devices makes no sense); anything already synced
-  // by the existing Supabase-backed sync.js/vitality-bridge.js (goals:,
-  // checklist:*, longterm_goals_v1, projects_v1, local_cal_events_v1,
-  // stack:*, eq.energy.logs_v1, vitality_bridge:*) -- running
-  // two sync mechanisms over the same keys would fight each other, not
-  // complement; and po_coach_photos (base64 progress photos -- 6.9 moves
-  // these to IndexedDB specifically because they're too large for this
-  // kind of JSON round trip).
+  // RULE: a key is synced by exactly one mechanism. Anything in a
+  // Supabase initCloudSync() syncedKeys list, or matching one of its
+  // syncedPrefixes (see js/sync.js), must NOT appear in SYNCED_KEYS here.
+  // Two sync mechanisms racing over the same key don't complement each
+  // other -- this function's own applyRemote() writes through the plain
+  // (already-patched-by-sync.js) localStorage.setItem, so a pulled vault
+  // value for an overlapping key gets treated by sync.js as a fresh local
+  // edit and re-pushed to Supabase with a new timestamp, which can shove
+  // a stale vault value over newer correct data with no deterministic
+  // winner -- the two mechanisms have independent, uncoordinated LWW
+  // clocks (this one's eq.sync.* keys vs. sync.js's __eq_sync_meta__*).
+  // Before adding a key here, check every appKey's syncedKeys/
+  // syncedPrefixes in js/sync.js first.
+  //
+  // Also EXCLUDES: session/OAuth tokens (device-local by nature, syncing
+  // them across devices makes no sense); and po_coach_photos (base64
+  // progress photos -- 6.9 moves these to IndexedDB specifically because
+  // they're too large for this kind of JSON round trip).
   //
   // "Namespace" = one localStorage key, not a finer-grained diff within a
   // key's own JSON value -- matches this app's own existing convention
@@ -521,10 +530,10 @@ body.topbar-modal-open { overflow: hidden; touch-action: none; }
   // ============================================================
   const SYNCED_KEYS = [
     'contacts_v1',
-    'nw:bank', 'nw:stocks', 'nw:crypto', 'nw:other', 'nw:activity', 'nw:history', 'budget:income', 'budget:expenses', 'nw_currency', 'eq.finance.allocation.buckets',
+    'nw_currency', 'eq.finance.allocation.buckets',
     'sleep_log_v1', 'sleep_target_hours_v1', 'recovery_log_v1', 'hydration_manual_v1',
-    'po_coach_v1', 'po_coach_weights', 'po_coach_goal_weight', 'po_coach_workout_done', 'eq.training.programs_v1', 'eq.training.activeProgramId_v1', 'eq.training.reducedDecisions_v1', 'eq.training.restSeconds_v1', 'eq.fitness.summary',
-    'shopping_list_v1', 'books_v1', 'skills_v1', 'habits_v1', 'todo_completion_snapshots_v1', 'weekly_reports_v1',
+    'eq.training.programs_v1', 'eq.training.activeProgramId_v1', 'eq.training.reducedDecisions_v1', 'eq.training.restSeconds_v1', 'eq.fitness.summary',
+    'shopping_list_v1', 'books_v1', 'skills_v1', 'todo_completion_snapshots_v1', 'weekly_reports_v1',
     'eq.learn.tracks_v1', 'eq.learn.deadlines_v1', 'eq.learn.hours_v1', 'eq.learn.decks_v1', 'eq.learn.log_v1',
     'eq.news.items_v1', 'eq.news.digests_v1', 'eq.news.seen_v1',
     'eq.assistant.memory', 'eq.assistant.activity_log_v1', 'eq.assistant.morning_brief_v1', 'eq.assistant.close_day_v1', 'eq.audits.v1', 'eq.rules.v1', 'eq.rules.fired.v1', 'ask_messages_v1',

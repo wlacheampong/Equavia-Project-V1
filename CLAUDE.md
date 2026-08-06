@@ -39,6 +39,16 @@ onboarding. One user, one dataset.
   forgotten bump means clients keep serving old code indefinitely, silently.
   This already caused one real incident — see the CACHE_NAME history around
   2026-08-02 for the planner.html/js/sync.js version-skew case.
+- A localStorage key is synced by exactly one mechanism. `js/topbar.js`'s
+  Obsidian vault sync (`SYNCED_KEYS`) and `js/sync.js`'s per-page
+  `initCloudSync()` calls (`syncedKeys`/`syncedPrefixes`) must never overlap.
+  `runObsidianSync()`'s pulled values are written through the plain
+  `localStorage.setItem`, which `js/sync.js` has already patched for any
+  matching key — so an overlapping key gets re-pushed to Supabase as if it
+  were a fresh local edit, with no coordination between the two mechanisms'
+  independent LWW clocks (`eq.sync.*` vs. `__eq_sync_meta__*`). A stale vault
+  value can silently overwrite newer correct data this way. Before adding a
+  key to either list, check it isn't already covered by the other.
 
 ## Testing
 
