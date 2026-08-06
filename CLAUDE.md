@@ -49,6 +49,18 @@ onboarding. One user, one dataset.
   independent LWW clocks (`eq.sync.*` vs. `__eq_sync_meta__*`). A stale vault
   value can silently overwrite newer correct data this way. Before adding a
   key to either list, check it isn't already covered by the other.
+- "After `initCloudSync`" means after its **returned promise resolves**, not
+  after the call itself returns — `initCloudSync()` kicks off its initial
+  Supabase pull asynchronously and returns immediately, well before that
+  pull (or its `applyRemote()`) has actually run. Code that computes a plan
+  or a stale-key list from `localStorage` and only defers the *write* until
+  after the call returns is still reading pre-pull state — writing that
+  stale plan back still stamps it with a fresh LWW timestamp, which then
+  wins against the real, older-timestamped remote copy on the next
+  comparison, silently clobbering data this device hadn't caught up to yet.
+  This caused a real incident — see the `tasks_week_v1` data-loss fix around
+  2026-08-06 in `planner.html`'s auto-promotion/rollover. Always await the
+  promise before running logic that depends on post-sync state.
 
 ## Testing
 

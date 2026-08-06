@@ -576,22 +576,6 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
 .gm-note-btn:hover { opacity: 1; color: var(--accent); }
 .gm-note-btn.gm-note-has-content { opacity: 0.85; }
 
-.gm-date-wrap { position: relative; display: inline-flex; align-items: center; }
-.gm-date-btn {
-  border: 0; background: transparent;
-  color: var(--text-tertiary);
-  font-size: 13px;
-  cursor: pointer;
-  padding: 4px 6px;
-  border-radius: 6px;
-  opacity: 0.6;
-}
-.gm-date-btn:hover { opacity: 1; color: var(--accent); }
-.gm-date-btn:disabled { cursor: not-allowed; opacity: 0.3; }
-.gm-date-input {
-  position: absolute; width: 1px; height: 1px; margin: -1px;
-  opacity: 0; pointer-events: none; border: 0; padding: 0;
-}
 .gm-date-badge {
   font-family: var(--font-mono, inherit); font-size: 10px; font-weight: 600;
   color: var(--text-tertiary);
@@ -2219,6 +2203,10 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
       <div class="ss-task-text" id="taskNoteTaskText"></div>
     </div>
     <div class="dr-field">
+      <label for="taskNoteDateInput">Date</label>
+      <input type="date" id="taskNoteDateInput">
+    </div>
+    <div class="dr-field">
       <label for="taskNoteInput">Description</label>
       <textarea id="taskNoteInput" rows="4" placeholder="Add a note…"></textarea>
     </div>
@@ -2967,41 +2955,18 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
     });
     li.appendChild(queueBtn);
 
+    // Compact, display-only -- setting/changing a date happens in the note
+    // modal (taskNoteOpen below), not on the row. No date-set path here at
+    // all: a native date input tappable on the row is what regressed to a
+    // hidden showPicker()/focus() proxy in the first place (mobile Safari
+    // never reliably opens it that way), and a visible one wide enough to
+    // be genuinely tappable doesn't fit this row's eight other controls at
+    // narrow widths without cutting one of them, which wasn't wanted either.
     if (goal.date) {
       const dateBadge = document.createElement('span');
       dateBadge.className = 'gm-date-badge';
       dateBadge.textContent = formatShortDate(goal.date);
       li.appendChild(dateBadge);
-    }
-
-    if (!readOnly) {
-      const dateWrap = document.createElement('span');
-      dateWrap.className = 'gm-date-wrap';
-      const dateBtn = document.createElement('button');
-      dateBtn.type = 'button';
-      dateBtn.className = 'gm-date-btn';
-      dateBtn.textContent = '📅';
-      dateBtn.title = goal.date ? 'Change date' : 'Add a date';
-      const dateInput = document.createElement('input');
-      dateInput.type = 'date';
-      dateInput.className = 'gm-date-input';
-      dateInput.tabIndex = -1;
-      dateInput.value = goal.date || '';
-      dateInput.addEventListener('change', () => {
-        const list = getGoals(key);
-        if (!list[idx]) return;
-        if (dateInput.value) list[idx].date = dateInput.value; else delete list[idx].date;
-        setGoals(key, list);
-        reload();
-      });
-      dateBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (dateInput.showPicker) { try { dateInput.showPicker(); return; } catch (err) { /* fall through */ } }
-        dateInput.focus();
-      });
-      dateWrap.appendChild(dateBtn);
-      dateWrap.appendChild(dateInput);
-      li.appendChild(dateWrap);
     }
 
     if (!goal.done && !readOnly) {
@@ -4373,6 +4338,7 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
     taskNoteCurrentReload = reload;
     document.getElementById('taskNoteTaskText').textContent = taskText;
     document.getElementById('taskNoteInput').value = goalNoteOf(getGoals(key)[idx] || {});
+    document.getElementById('taskNoteDateInput').value = (getGoals(key)[idx] || {}).date || '';
     document.getElementById('taskNoteModalBg').classList.add('show');
   }
   function taskNoteClose() {
@@ -4386,6 +4352,19 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
     setGoals(taskNoteCurrentKey, list);
     if (taskNoteCurrentReload) taskNoteCurrentReload();
   }
+  // Saves immediately on change, independent of the note's Save/Cancel --
+  // same immediate-write behaviour the old row-level date input had, just
+  // relocated. Cancelling the modal only discards an in-progress note edit,
+  // never a date change (mirrors "do not touch the note field": the date
+  // field is handled entirely separately from it).
+  function taskNoteDateChange() {
+    const list = getGoals(taskNoteCurrentKey);
+    if (!list[taskNoteCurrentIdx]) return;
+    const val = document.getElementById('taskNoteDateInput').value;
+    if (val) list[taskNoteCurrentIdx].date = val; else delete list[taskNoteCurrentIdx].date;
+    setGoals(taskNoteCurrentKey, list);
+    if (taskNoteCurrentReload) taskNoteCurrentReload();
+  }
   function initTaskNoteModal() {
     document.getElementById('taskNoteCancelBtn').addEventListener('click', taskNoteClose);
     document.getElementById('taskNoteModalBg').addEventListener('click', (e) => { if (e.target === e.currentTarget) taskNoteClose(); });
@@ -4393,6 +4372,7 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
       taskNoteSave();
       taskNoteClose();
     });
+    document.getElementById('taskNoteDateInput').addEventListener('change', taskNoteDateChange);
   }
 
   // ============================================================
