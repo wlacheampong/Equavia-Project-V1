@@ -2818,8 +2818,15 @@ main {
     // Count-only: `photos` is the in-memory array photosLoad() already
     // populated for the live page's own render/viewer/compare functions
     // above -- this reads that existing array, it does not query Dexie.
+    // The only one of health.html's 7 dashboard sections that's genuinely
+    // a single value with nothing else to show -- returns the
+    // { value } shape so js/dashboard-view.js renders it as .eq-card-value
+    // instead of a plain body. The other six (whoop's multi-metric list,
+    // weight-goal/calories/energy/sleep's headline-number-plus-context
+    // sentences, stack's checklist) don't reduce to one value without
+    // rewriting their own content, so they keep returning plain strings.
     function renderDashboardPhotos() {
-      return photos.length + (photos.length === 1 ? ' photo' : ' photos');
+      return { value: photos.length + (photos.length === 1 ? ' photo' : ' photos') };
     }
     if (window.EqDashboard) {
       window.EqDashboard.register('health', 'weight-goal', 'Weight & Goal', renderDashboardWeightGoal);
