@@ -48,11 +48,20 @@
     const syncedKeys = (config && config.syncedKeys) || [];
     const syncedPrefixes = (config && config.syncedPrefixes) || [];
     const onApplied = config && config.onApplied;
-    if (!appKey || !window.supabase) return;
-    if (!SUPABASE_URL || !SUPABASE_KEY) return;
-    if (SUPABASE_URL.indexOf('PASTE-') === 0 || SUPABASE_KEY.indexOf('PASTE-') === 0) return;
+    if (!appKey || !window.supabase) return Promise.resolve();
+    if (!SUPABASE_URL || !SUPABASE_KEY) return Promise.resolve();
+    if (SUPABASE_URL.indexOf('PASTE-') === 0 || SUPABASE_KEY.indexOf('PASTE-') === 0) return Promise.resolve();
 
     let supa = null, pushTimer = null, suppressSync = false, lastSyncedJson = null, pendingRemote = null;
+    // Resolves once the initial pull has been attempted and (if it landed)
+    // applied to localStorage -- before the realtime subscription, which is
+    // ongoing rather than a one-shot event. None of the existing call sites
+    // use this return value, so adding it changes nothing for them; a
+    // caller that needs to run logic against post-pull state (e.g.
+    // planner.html's auto-promotion) can await it instead of racing the
+    // pull with boot-time code.
+    let resolveReady;
+    const ready = new Promise((resolve) => { resolveReady = resolve; });
 
     function matches(k) {
       if (!k) return false;
@@ -251,6 +260,7 @@
           schedulePush();
         }
       } catch (e) {}
+      resolveReady();
       supa.channel('app_state_' + appKey)
         .on('postgres_changes', {
           event: '*', schema: 'public', table: 'app_state', filter: 'key=eq.' + appKey,
@@ -273,5 +283,6 @@
     document.addEventListener('visibilitychange', () => { if (document.hidden) flushOnUnload(); });
     window.addEventListener('storage', (e) => { if (e.key && matches(e.key)) schedulePush(); });
     document.addEventListener('focusout', () => { setTimeout(applyPendingIfReady, 0); }, true);
+    return ready;
   };
 })();

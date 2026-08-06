@@ -2770,15 +2770,14 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
   // task into today when the user taps "Do today" on it themselves (see
   // the Yesterday panel below). Completion-rate snapshotting is unchanged.
   //
-  // Split in two: this only computes snapshots and collects which goals:
-  // keys are stale -- it does NOT delete them. js/sync.js is loaded
-  // `defer`, so initCloudSync/its patched localStorage.removeItem don't
-  // exist yet at boot time (this script runs during parsing, before any
-  // deferred script). A delete that goes through the raw, unpatched
-  // removeItem records no tombstone, so the next applyRemote() pull finds
-  // the key still present in remote's stale copy and resurrects it
-  // locally. The actual deletion happens later, once initCloudSync has
-  // installed its hooks -- see window.__eqDeleteRolloverStaleKeys below.
+  // Only computes snapshots and collects which goals: keys are stale -- it
+  // does NOT delete them. Called from window.__eqRunRolloverAndAutoPromotion
+  // (below), only once initCloudSync's initial pull has resolved and been
+  // applied -- both the read here and the actual delete need post-pull
+  // state, not boot-time state, or a key this device hasn't caught up to
+  // yet can be tombstoned with a fresh timestamp that then beats the real,
+  // older-timestamped remote copy. See that function's comment for the
+  // full reasoning.
   function computeRolloverStaleKeys() {
     if (window.AssistantTools) window.AssistantTools.ensureYesterdaySnapshot();
     const todayDateStr = getActiveDateString();
@@ -3183,15 +3182,16 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
   }
 
   // ---------- Auto-promotion (Month -> Week -> Today) ----------
-  // Split the same way rollover's stale-key deletion was: this only reads
-  // existing state and computes what SHOULD move where -- no writes.
-  // js/sync.js is loaded `defer`, so initCloudSync's patched setItem
-  // doesn't exist yet at boot time (this runs during parsing, before any
-  // deferred script) -- a write here would go through the raw,
-  // unpatched setItem, invisible to LWW, the same bug class rollover()
-  // had. The actual writes happen later, in applyAutoPromotionPlan,
-  // once initCloudSync has installed its hooks -- see
-  // window.__eqApplyAutoPromotion below.
+  // Only reads existing state and computes what SHOULD move where -- no
+  // writes. Called from window.__eqRunRolloverAndAutoPromotion (below),
+  // together with applyAutoPromotionPlan, only once initCloudSync's initial
+  // pull has resolved and been applied. Computing this from boot-time
+  // (pre-pull) state and merely deferring the WRITE isn't enough: the plan
+  // itself would already be built from data this device hasn't caught up
+  // to yet, and applying it still stamps that stale content with a fresh
+  // LWW timestamp that then wins against the real, older-timestamped
+  // remote copy -- this was the actual root cause of a newly-added Week
+  // task silently disappearing after a later load.
   //
   // The original version wrote WEEK_KEY mid-function and re-read it from
   // storage for the Week->Today pass, so a same-day Month task could
@@ -5549,20 +5549,22 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
   }
 
   // ---------- Boot ----------
-  // Deletion of the stale keys collected here is deferred to
-  // window.__eqDeleteRolloverStaleKeys, called once initCloudSync has
-  // installed its hooks (see the DOMContentLoaded block below) -- see
-  // computeRolloverStaleKeys' comment for why.
-  const rolloverStaleKeys = computeRolloverStaleKeys();
-  window.__eqDeleteRolloverStaleKeys = function () {
-    rolloverStaleKeys.forEach(storeDelete);
-  };
-  // Same reasoning, same pattern: computed here (read-only), applied
-  // (writes) after initCloudSync installs its hooks -- see
-  // computeAutoPromotionPlan's comment for why.
-  const autoPromotionPlan = computeAutoPromotionPlan();
-  window.__eqApplyAutoPromotion = function () {
-    applyAutoPromotionPlan(autoPromotionPlan);
+  // Rollover's stale-key deletions and auto-promotion's Month/Week/Today
+  // writes must both COMPUTE and APPLY only after initCloudSync's initial
+  // pull has resolved and been applied -- not at boot. Computing here (from
+  // pre-pull localStorage) and merely deferring the WRITE to after the pull,
+  // as an earlier version did, isn't enough: the plan/stale-list itself can
+  // already be built from data this device hasn't caught up to yet, and
+  // writing that stale content back still stamps it with a fresh LWW
+  // timestamp that then wins against the real (older-timestamped) remote
+  // copy the next time it's compared -- silently reintroducing exactly the
+  // data loss this was meant to prevent. See window.__eqRunRolloverAndAutoPromotion
+  // below, invoked once initCloudSync's own pull-settled signal fires (the
+  // DOMContentLoaded block further down).
+  window.__eqRunRolloverAndAutoPromotion = function () {
+    computeRolloverStaleKeys().forEach(storeDelete);
+    applyAutoPromotionPlan(computeAutoPromotionPlan());
+    loadToday(); loadTomorrow(); loadWeek(); loadMonth(); renderYesterdayPanel();
   };
   loadToday();
   loadTomorrow();
@@ -5612,7 +5614,7 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
   if (typeof initCloudSync !== 'function') return;
-  initCloudSync({
+  const goalsSyncReady = initCloudSync({
     appKey: 'goals',
     syncedKeys: window.EqGoalsSyncedKeys,
     syncedPrefixes: ['goals:', 'checklist:items:', 'checklist:done:'],
@@ -5621,18 +5623,16 @@ document.addEventListener('DOMContentLoaded', function () {
       window.dispatchEvent(new Event('storage'));
     }
   });
-  // initCloudSync() installs its setItem/removeItem hooks synchronously
-  // (before its own internal fetch/applyRemote resolves), so calling this
-  // immediately after guarantees rollover's stale-key deletions go through
-  // the patched removeItem -- tombstoned and pushed, not silently dropped.
-  if (typeof window.__eqDeleteRolloverStaleKeys === 'function') {
-    window.__eqDeleteRolloverStaleKeys();
-  }
-  // Same reasoning -- auto-promotion's Month/Week/Today writes need the
-  // patched setItem too, so they wait for the same hook-install point.
-  if (typeof window.__eqApplyAutoPromotion === 'function') {
-    window.__eqApplyAutoPromotion();
-  }
+  // Wait for initCloudSync's own pull-settled signal -- not a delay/timeout
+  // standing in for it -- so rollover/auto-promotion compute against
+  // whatever the pull actually applied, not boot-time state. See
+  // window.__eqRunRolloverAndAutoPromotion's comment above for why
+  // computing early and only deferring the write wasn't sufficient.
+  Promise.resolve(goalsSyncReady).then(function () {
+    if (typeof window.__eqRunRolloverAndAutoPromotion === 'function') {
+      window.__eqRunRolloverAndAutoPromotion();
+    }
+  });
 });
 </script>
 <div class="hab-year-modal-bg" id="learnTrackModalBg">
