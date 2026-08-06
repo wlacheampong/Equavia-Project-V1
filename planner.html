@@ -575,6 +575,46 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
 .gm-note-btn svg { width: 13px; height: 13px; }
 .gm-note-btn:hover { opacity: 1; color: var(--accent); }
 .gm-note-btn.gm-note-has-content { opacity: 0.85; }
+
+.gm-date-wrap { position: relative; display: inline-flex; align-items: center; }
+.gm-date-btn {
+  border: 0; background: transparent;
+  color: var(--text-tertiary);
+  font-size: 13px;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 6px;
+  opacity: 0.6;
+}
+.gm-date-btn:hover { opacity: 1; color: var(--accent); }
+.gm-date-btn:disabled { cursor: not-allowed; opacity: 0.3; }
+.gm-date-input {
+  position: absolute; width: 1px; height: 1px; margin: -1px;
+  opacity: 0; pointer-events: none; border: 0; padding: 0;
+}
+.gm-date-badge {
+  font-family: var(--font-mono, inherit); font-size: 10px; font-weight: 600;
+  color: var(--text-tertiary);
+  background: rgba(var(--eq-text-primary-rgb), 0.06);
+  padding: 3px 7px; border-radius: 999px; flex-shrink: 0; white-space: nowrap;
+}
+.gm-promote-btn {
+  border: 0; background: transparent;
+  color: var(--text-tertiary);
+  font-size: 13px;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 6px;
+  opacity: 0.6;
+}
+.gm-promote-btn:hover { opacity: 1; color: var(--accent); }
+.gm-overdue-badge {
+  font-size: 10px; font-weight: 800; letter-spacing: 0.06em;
+  color: var(--eq-warning);
+  background: rgba(var(--eq-warning-rgb), 0.14);
+  border: 1px solid rgba(var(--eq-warning-rgb), 0.35);
+  padding: 3px 7px; border-radius: 999px; flex-shrink: 0;
+}
 .ss-task-text { font-size: 14px; color: var(--text-primary); padding: 2px 0; }
 .ss-result { font-size: 13px; color: var(--text-secondary); min-height: 20px; margin: 4px 0 0; line-height: 1.5; }
 .gm-queue-btn.gm-queue-active {
@@ -1996,6 +2036,52 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
   </div>
 </div>
 
+<!-- ===== WEEK TASKS ===== -->
+<div class="section" data-section="tasks" id="tasksWeek" data-eq-collapse="planner:tasks-week">
+  <div class="section-title" data-eq-collapse-keep data-eq-collapse-trigger>
+    <span class="section-title-text">WEEK TASKS<span class="eq-collapse-chevron"></span></span>
+  </div>
+  <div class="card">
+    <div class="gm-header">
+      <div class="gm-header-left">
+        <div class="gm-eyebrow">This week</div>
+      </div>
+      <div class="gm-tomorrow-count" id="weekCount">0 tasks</div>
+    </div>
+    <ul id="weekList" class="goal-list gm-list"></ul>
+    <div id="weekEmpty" class="empty-state">Nothing filed for this week yet.</div>
+    <div class="goal-input-wrap gm-input-wrap">
+      <input id="weekInput" class="gm-input" type="text" placeholder="Add a task for this week…" autocomplete="off">
+      <button type="button" id="weekAddBtn"    class="gm-add">+ Add</button>
+      <button type="button" id="weekPolishBtn" class="gm-polish">✨ Polish</button>
+      <div class="gm-status" id="weekStatus"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MONTH TASKS ===== -->
+<div class="section" data-section="tasks" id="tasksMonth" data-eq-collapse="planner:tasks-month">
+  <div class="section-title" data-eq-collapse-keep data-eq-collapse-trigger>
+    <span class="section-title-text">MONTH TASKS<span class="eq-collapse-chevron"></span></span>
+  </div>
+  <div class="card">
+    <div class="gm-header">
+      <div class="gm-header-left">
+        <div class="gm-eyebrow">This month</div>
+      </div>
+      <div class="gm-tomorrow-count" id="monthCount">0 tasks</div>
+    </div>
+    <ul id="monthList" class="goal-list gm-list"></ul>
+    <div id="monthEmpty" class="empty-state">Nothing filed for this month yet.</div>
+    <div class="goal-input-wrap gm-input-wrap">
+      <input id="monthInput" class="gm-input" type="text" placeholder="Add a task for this month…" autocomplete="off">
+      <button type="button" id="monthAddBtn"    class="gm-add">+ Add</button>
+      <button type="button" id="monthPolishBtn" class="gm-polish">✨ Polish</button>
+      <div class="gm-status" id="monthStatus"></div>
+    </div>
+  </div>
+</div>
+
 <!-- ===== GOALS ===== -->
 <div class="section" data-section="goals" id="goals" data-eq-collapse="planner:goals">
   <div class="section-title" data-eq-collapse-keep data-eq-collapse-trigger>
@@ -2588,6 +2674,12 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
     const mo = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()];
     return wk + ', ' + mo + ' ' + d.getDate();
   }
+  function formatShortDate(yyyy_mm_dd) {
+    const parts = yyyy_mm_dd.split('-').map(Number);
+    const d = new Date(parts[0], parts[1] - 1, parts[2]);
+    const mo = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()];
+    return mo + ' ' + d.getDate();
+  }
   function formatClock(d) {
     let h = d.getHours();
     const m = d.getMinutes();
@@ -2610,6 +2702,12 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
     d.setHours(h, m, 0, 0);
     return formatClock(d);
   }
+
+  // Flat (not per-date) keys -- Week/Month tasks aren't tied to a specific
+  // day the way Today/Tomorrow are, so they're exempt from rollover()'s
+  // 'goals:' prefix sweep and simply persist until moved or deleted.
+  const WEEK_KEY = 'tasks_week_v1';
+  const MONTH_KEY = 'tasks_month_v1';
 
   function todayKey()    { return 'goals:' + getActiveDateString(); }
   function tomorrowKey() { return 'goals:' + getTomorrowDateString(); }
@@ -2784,7 +2882,12 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
     return sorted;
   }
 
-  function buildGoalRow(goal, idx, key, readOnly, reload) {
+  // cfg: { key, readOnly, reload, enforceP1Cap, statusElId, promote }
+  // promote (optional): { label, onClick(idx) } -- rendered as a ▲ button;
+  // used by Week/Month rows to move a task down a tier manually. See
+  // WEEK_KEY/MONTH_KEY loaders below for what onClick actually does.
+  function buildGoalRow(goal, idx, cfg) {
+    const key = cfg.key, readOnly = cfg.readOnly, reload = cfg.reload;
     const li = document.createElement('li');
     li.className = 'gm-row';
     li.dataset.idx = String(idx);
@@ -2813,6 +2916,13 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
     });
     li.appendChild(cb);
 
+    if (goal.overdue) {
+      const overdueBadge = document.createElement('span');
+      overdueBadge.className = 'gm-overdue-badge';
+      overdueBadge.textContent = 'OVERDUE';
+      li.appendChild(overdueBadge);
+    }
+
     const priBtn = document.createElement('button');
     priBtn.type = 'button';
     const pri = priorityOf(goal);
@@ -2825,8 +2935,8 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
       if (!list[idx]) return;
       const current = priorityOf(list[idx]);
       const next = PRIORITY_CYCLE[(PRIORITY_CYCLE.indexOf(current) + 1) % PRIORITY_CYCLE.length];
-      if (next === 'P1' && countPriority(list, 'P1', idx) >= PRIORITY_CAP.P1) {
-        showStatus(document.getElementById(key === todayKey() ? 'polishStatus' : 'tomorrowStatus'), 'Already 3 P1 tasks today — demote one first.', true);
+      if (cfg.enforceP1Cap && next === 'P1' && countPriority(list, 'P1', idx) >= PRIORITY_CAP.P1) {
+        if (cfg.statusElId) showStatus(document.getElementById(cfg.statusElId), 'Already 3 P1 tasks today — demote one first.', true);
         return;
       }
       list[idx].priority = next;
@@ -2858,6 +2968,43 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
     });
     li.appendChild(queueBtn);
 
+    if (goal.date) {
+      const dateBadge = document.createElement('span');
+      dateBadge.className = 'gm-date-badge';
+      dateBadge.textContent = formatShortDate(goal.date);
+      li.appendChild(dateBadge);
+    }
+
+    if (!readOnly) {
+      const dateWrap = document.createElement('span');
+      dateWrap.className = 'gm-date-wrap';
+      const dateBtn = document.createElement('button');
+      dateBtn.type = 'button';
+      dateBtn.className = 'gm-date-btn';
+      dateBtn.textContent = '📅';
+      dateBtn.title = goal.date ? 'Change date' : 'Add a date';
+      const dateInput = document.createElement('input');
+      dateInput.type = 'date';
+      dateInput.className = 'gm-date-input';
+      dateInput.tabIndex = -1;
+      dateInput.value = goal.date || '';
+      dateInput.addEventListener('change', () => {
+        const list = getGoals(key);
+        if (!list[idx]) return;
+        if (dateInput.value) list[idx].date = dateInput.value; else delete list[idx].date;
+        setGoals(key, list);
+        reload();
+      });
+      dateBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (dateInput.showPicker) { try { dateInput.showPicker(); return; } catch (err) { /* fall through */ } }
+        dateInput.focus();
+      });
+      dateWrap.appendChild(dateBtn);
+      dateWrap.appendChild(dateInput);
+      li.appendChild(dateWrap);
+    }
+
     if (!goal.done && !readOnly) {
       const slotBtn = document.createElement('button');
       slotBtn.type = 'button';
@@ -2877,6 +3024,19 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
     noteBtn.title = 'Note';
     noteBtn.addEventListener('click', (e) => { e.stopPropagation(); taskNoteOpen(goal.text, key, idx, reload); });
     li.appendChild(noteBtn);
+
+    if (cfg.promote && !goal.done) {
+      const promoteBtn = document.createElement('button');
+      promoteBtn.type = 'button';
+      promoteBtn.className = 'gm-promote-btn';
+      promoteBtn.textContent = '▲';
+      promoteBtn.title = cfg.promote.label;
+      promoteBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        cfg.promote.onClick(idx);
+      });
+      li.appendChild(promoteBtn);
+    }
 
     const del = document.createElement('button');
     del.type = 'button';
@@ -2932,13 +3092,16 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
       'Plan tomorrow — ' + formatDate(getTomorrowDateString());
   }
 
-  function renderListInto(goals, listEl, emptyEl, key, readOnly) {
+  // cfg is the same shape buildGoalRow takes -- passed straight through to
+  // every row built here, including the "show more" expansion, so all rows
+  // in a list (visible or expanded) share one config.
+  function renderListInto(goals, listEl, emptyEl, cfg) {
     listEl.innerHTML = '';
     emptyEl.style.display = goals.length === 0 ? 'block' : 'none';
-    const reload = () => (key === todayKey() ? loadToday() : loadTomorrow());
+    const rowCfg = cfg;
 
     const visible = goals.length > 5 ? goals.slice(0, 5) : goals;
-    visible.forEach((g, i) => listEl.appendChild(buildGoalRow(g, i, key, readOnly, reload)));
+    visible.forEach((g, i) => listEl.appendChild(buildGoalRow(g, i, rowCfg)));
 
     if (goals.length > 5) {
       let expanded = false;
@@ -2953,7 +3116,7 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
         expanded = !expanded;
         if (expanded) {
           goals.slice(5).forEach((g, i) => {
-            const row = buildGoalRow(g, i + 5, key, readOnly, reload);
+            const row = buildGoalRow(g, i + 5, rowCfg);
             listEl.insertBefore(row, toggle);
           });
         } else {
@@ -2963,18 +3126,117 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
       });
       listEl.appendChild(toggle);
     }
-
-    if (key === todayKey()) renderTodayHeader();
-    else                    renderTomorrowCount();
   }
 
   function loadToday() {
     const goals = sortAndPersistPriority(todayKey());
-    renderListInto(goals, document.getElementById('goalList'), document.getElementById('emptyState'), todayKey(), false);
+    renderListInto(goals, document.getElementById('goalList'), document.getElementById('emptyState'), {
+      key: todayKey(), readOnly: false, reload: loadToday, enforceP1Cap: true, statusElId: 'polishStatus', promote: null
+    });
+    renderTodayHeader();
   }
   function loadTomorrow() {
     const goals = sortAndPersistPriority(tomorrowKey());
-    renderListInto(goals, document.getElementById('tomorrowList'), document.getElementById('tomorrowEmpty'), tomorrowKey(), true);
+    renderListInto(goals, document.getElementById('tomorrowList'), document.getElementById('tomorrowEmpty'), {
+      key: tomorrowKey(), readOnly: true, reload: loadTomorrow, enforceP1Cap: true, statusElId: 'tomorrowStatus', promote: null
+    });
+    renderTomorrowCount();
+  }
+  function loadWeek() {
+    const goals = sortAndPersistPriority(WEEK_KEY);
+    renderListInto(goals, document.getElementById('weekList'), document.getElementById('weekEmpty'), {
+      key: WEEK_KEY, readOnly: false, reload: loadWeek, enforceP1Cap: false, statusElId: null,
+      promote: { label: 'Move to Today', onClick: (idx) => { promoteTask(WEEK_KEY, idx, todayKey(), true); loadWeek(); loadToday(); } }
+    });
+    document.getElementById('weekCount').textContent = goals.length + (goals.length === 1 ? ' task' : ' tasks');
+  }
+  function loadMonth() {
+    const goals = sortAndPersistPriority(MONTH_KEY);
+    renderListInto(goals, document.getElementById('monthList'), document.getElementById('monthEmpty'), {
+      key: MONTH_KEY, readOnly: false, reload: loadMonth, enforceP1Cap: false, statusElId: null,
+      promote: { label: 'Move to Week', onClick: (idx) => { promoteTask(MONTH_KEY, idx, WEEK_KEY, false); loadMonth(); loadWeek(); } }
+    });
+    document.getElementById('monthCount').textContent = goals.length + (goals.length === 1 ? ' task' : ' tasks');
+  }
+
+  // Shared move-and-splice used by both the manual ▲ button and
+  // runAutoPromotion() -- a task only gets touched while it's still
+  // sitting in the source list, so this is naturally idempotent: once a
+  // task is moved (by either path) there's nothing left to re-trigger.
+  // toToday strips the date (it's served its purpose) and flags overdue
+  // if that date had already passed, per spec -- Month->Week keeps the
+  // date intact since it hasn't arrived yet.
+  function promoteTask(fromKey, idx, toKey, toToday) {
+    const fromList = getGoals(fromKey);
+    const task = fromList[idx];
+    if (!task) return;
+    fromList.splice(idx, 1);
+    setGoals(fromKey, fromList);
+    const copy = Object.assign({}, task);
+    if (toToday) {
+      if (copy.date && copy.date < getActiveDateString()) copy.overdue = true;
+      delete copy.date;
+    }
+    const toList = getGoals(toKey);
+    toList.push(copy);
+    setGoals(toKey, toList);
+  }
+
+  // ---------- Auto-promotion (Month -> Week -> Today) ----------
+  // Split the same way rollover's stale-key deletion was: this only reads
+  // existing state and computes what SHOULD move where -- no writes.
+  // js/sync.js is loaded `defer`, so initCloudSync's patched setItem
+  // doesn't exist yet at boot time (this runs during parsing, before any
+  // deferred script) -- a write here would go through the raw,
+  // unpatched setItem, invisible to LWW, the same bug class rollover()
+  // had. The actual writes happen later, in applyAutoPromotionPlan,
+  // once initCloudSync has installed its hooks -- see
+  // window.__eqApplyAutoPromotion below.
+  //
+  // The original version wrote WEEK_KEY mid-function and re-read it from
+  // storage for the Week->Today pass, so a same-day Month task could
+  // cascade through in one load. Chaining that merge in memory instead
+  // (weekAfterMonthMerge) gets the identical result without needing an
+  // actual write to get there.
+  function computeAutoPromotionPlan() {
+    const weekStart = calStartOfWeek(new Date());
+    const weekEnd = calAddDays(weekStart, 6);
+    const weekEndStr = dateToKey(weekEnd);
+    const todayStr = getActiveDateString();
+
+    // Month -> Week. Upper-bound check, not a closed range: a task dated
+    // before this week (already overdue) must still cascade through, not
+    // wait forever for a week window it already missed.
+    const month = getGoals(MONTH_KEY);
+    const stillMonth = [];
+    const toWeek = [];
+    month.forEach((t) => { (t.date && t.date <= weekEndStr ? toWeek : stillMonth).push(t); });
+
+    // Week -> Today. Anything strictly before today is flagged overdue
+    // before its date is stripped.
+    const weekAfterMonthMerge = toWeek.length ? getGoals(WEEK_KEY).concat(toWeek) : getGoals(WEEK_KEY);
+    const stillWeek = [];
+    const toToday = [];
+    weekAfterMonthMerge.forEach((t) => { (t.date && t.date <= todayStr ? toToday : stillWeek).push(t); });
+    const promoted = toToday.map((t) => {
+      const c = Object.assign({}, t);
+      if (c.date < todayStr) c.overdue = true;
+      delete c.date;
+      return c;
+    });
+
+    return {
+      monthChanged: toWeek.length > 0,
+      weekChanged: toWeek.length > 0 || toToday.length > 0,
+      todayChanged: toToday.length > 0,
+      stillMonth, stillWeek, promoted,
+    };
+  }
+  function applyAutoPromotionPlan(plan) {
+    if (plan.monthChanged) setGoals(MONTH_KEY, plan.stillMonth);
+    if (plan.weekChanged) setGoals(WEEK_KEY, plan.stillWeek);
+    if (plan.todayChanged) setGoals(todayKey(), getGoals(todayKey()).concat(plan.promoted));
+    if (plan.monthChanged || plan.weekChanged || plan.todayChanged) { loadToday(); loadWeek(); loadMonth(); }
   }
 
   // Batch-2 fix #1b: reference view of yesterday's full task history (done
@@ -3127,6 +3389,22 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
     tomorrowKey(),
     document.getElementById('tomorrowStatus'),
     loadTomorrow
+  );
+  makeAddHandlers(
+    document.getElementById('weekInput'),
+    document.getElementById('weekAddBtn'),
+    document.getElementById('weekPolishBtn'),
+    WEEK_KEY,
+    document.getElementById('weekStatus'),
+    loadWeek
+  );
+  makeAddHandlers(
+    document.getElementById('monthInput'),
+    document.getElementById('monthAddBtn'),
+    document.getElementById('monthPolishBtn'),
+    MONTH_KEY,
+    document.getElementById('monthStatus'),
+    loadMonth
   );
 
   // ---------- Goals (Year/Quarter/Month/Week/Day) ----------
@@ -5279,8 +5557,17 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
   window.__eqDeleteRolloverStaleKeys = function () {
     rolloverStaleKeys.forEach(storeDelete);
   };
+  // Same reasoning, same pattern: computed here (read-only), applied
+  // (writes) after initCloudSync installs its hooks -- see
+  // computeAutoPromotionPlan's comment for why.
+  const autoPromotionPlan = computeAutoPromotionPlan();
+  window.__eqApplyAutoPromotion = function () {
+    applyAutoPromotionPlan(autoPromotionPlan);
+  };
   loadToday();
   loadTomorrow();
+  loadWeek();
+  loadMonth();
   renderYesterdayPanel();
 
   renderLongtermGoals();
@@ -5318,7 +5605,7 @@ tr.hab-row-selected > td { background: rgba(var(--eq-text-primary-rgb), 0.045); 
   }
 
   window.addEventListener('storage', () => {
-    loadToday(); loadTomorrow(); renderStreak(); renderLongtermGoals(); renderChecklists(); renderProjects(); renderYesterdayPanel();
+    loadToday(); loadTomorrow(); loadWeek(); loadMonth(); renderLongtermGoals(); renderChecklists(); renderProjects(); renderYesterdayPanel();
   });
 })();
 </script>
@@ -5327,7 +5614,7 @@ document.addEventListener('DOMContentLoaded', function () {
   if (typeof initCloudSync !== 'function') return;
   initCloudSync({
     appKey: 'goals',
-    syncedKeys: ['longterm_goals_v1', 'projects_v1', 'local_cal_events_v1'],
+    syncedKeys: window.EqGoalsSyncedKeys,
     syncedPrefixes: ['goals:', 'checklist:items:', 'checklist:done:'],
     onApplied: function () {
       window.dispatchEvent(new CustomEvent('goals-changed'));
@@ -5340,6 +5627,11 @@ document.addEventListener('DOMContentLoaded', function () {
   // the patched removeItem -- tombstoned and pushed, not silently dropped.
   if (typeof window.__eqDeleteRolloverStaleKeys === 'function') {
     window.__eqDeleteRolloverStaleKeys();
+  }
+  // Same reasoning -- auto-promotion's Month/Week/Today writes need the
+  // patched setItem too, so they wait for the same hook-install point.
+  if (typeof window.__eqApplyAutoPromotion === 'function') {
+    window.__eqApplyAutoPromotion();
   }
 });
 </script>

@@ -1923,7 +1923,7 @@ document.addEventListener('DOMContentLoaded', function () {
   if (typeof initCloudSync !== 'function') return;
   initCloudSync({
     appKey: 'goals',
-    syncedKeys: ['longterm_goals_v1', 'projects_v1', 'local_cal_events_v1'],
+    syncedKeys: window.EqGoalsSyncedKeys,
     syncedPrefixes: ['goals:', 'checklist:items:', 'checklist:done:'],
     onApplied: function () {
       window.dispatchEvent(new CustomEvent('goals-changed'));

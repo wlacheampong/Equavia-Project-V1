@@ -27,6 +27,12 @@
   // for that appKey, is what keeps that from happening.
   window.EqPoCoachSyncedKeys = ['po_coach_v1', 'po_coach_workout_done', 'po_coach_weights', 'po_coach_goal_weight', 'calorie_log_v1', 'session_feel_log_v1'];
 
+  // Same reasoning as EqPoCoachSyncedKeys above -- 'goals' is called from
+  // planner.html, ask.html, and dashboard.html; all three need the
+  // identical list or a push from the narrower one drops fields the
+  // others rely on off the row.
+  window.EqGoalsSyncedKeys = ['longterm_goals_v1', 'projects_v1', 'local_cal_events_v1', 'tasks_week_v1', 'tasks_month_v1'];
+
   window.initCloudSync = function (config) {
     const appKey = config && config.appKey;
     const syncedKeys = (config && config.syncedKeys) || [];
