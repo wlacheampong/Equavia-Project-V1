@@ -49,6 +49,25 @@ onboarding. One user, one dataset.
   independent LWW clocks (`eq.sync.*` vs. `__eq_sync_meta__*`). A stale vault
   value can silently overwrite newer correct data this way. Before adding a
   key to either list, check it isn't already covered by the other.
+  Known exceptions to "exactly one mechanism," none of which should ever
+  gain a second: `lib/mcp-data.js` (server-side mirror of `js/sync.js`'s
+  own read/upsert pattern against `app_state`, used by MCP tool calls —
+  a legitimate "one more synced device," not a second mechanism over the
+  same keys); `health.html`'s Apple Health card (read-only direct
+  `supabase.from('app_state')` read of key `apple_health`, written only
+  by an external iOS Shortcut); `gym.html`'s `migrateFromOldTrainPage()`
+  (a one-time, flag-guarded, read-only fetch of the retired Train page's
+  `vitality_train` row — runs at most once per device, not an ongoing
+  sync path). `js/busy-mode.js` (`window.EqBusyMode`) is a fourth,
+  different case: a full, ongoing, independent read **and** write
+  implementation against `app_state` key `busy_mode`, deliberately
+  outside `js/sync.js`'s LWW mechanism entirely (see that file's own
+  header comment — cross-device-authoritative-immediately requirement)
+  and not mirrored into any localStorage key at all. `busy_mode` must
+  never appear in any appKey's `syncedKeys`/`syncedPrefixes` list —
+  doing so would run it through `js/sync.js`'s LWW clock in parallel
+  with `busy-mode.js`'s own direct writes, the same two-mechanism
+  collision this rule exists to prevent.
 - "After `initCloudSync`" means after its **returned promise resolves**, not
   after the call itself returns — `initCloudSync()` kicks off its initial
   Supabase pull asynchronously and returns immediately, well before that

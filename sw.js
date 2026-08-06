@@ -7,7 +7,7 @@
 // Bump CACHE_NAME on any app-shell file change so clients pick up
 // the new list and drop the old cache on next activate.
 // =============================================================
-const CACHE_NAME = 'equavia-shell-v63';
+const CACHE_NAME = 'equavia-shell-v64';
 const APP_SHELL = [
   'lock.html',
   'dashboard.html',
@@ -20,7 +20,9 @@ const APP_SHELL = [
   'settings.html',
   'ask.html',
   'status.html',
+  'habits.html',
   'manifest.json',
+  'css/equavia-core.css',
   'js/topbar.js',
   'js/icons.js',
   'js/landing-guard.js',
@@ -29,8 +31,11 @@ const APP_SHELL = [
   'js/expand-primitives.js',
   'js/obsidian-sync.js',
   'js/sync.js',
+  'js/plan-sync.js',
+  'js/busy-mode.js',
   'js/collapsible.js',
   'js/dashboard-view.js',
+  'js/daily-report.js',
   'js/dexie.min.js',
   'js/status.js',
   'docs/programme.json',
