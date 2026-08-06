@@ -97,6 +97,15 @@
   --eq-input-radius:     8px;
   --eq-btn-radius:       10px;
   --eq-card-padding:  var(--eq-space-lg);
+  /* Dashboard-view card contract (.eq-card family below) -- deliberately
+     separate from --eq-card-radius/--eq-card-padding above, which several
+     pages (gym.html, finance.html, planner.html, status.html) already
+     read directly or through their own --radius-md/--radius-lg aliases.
+     Changing those would ripple into pages this contract has nothing to
+     do with; these two exist so .eq-card can carry dashboard.html's own
+     .card values (20px/22px) without disturbing them. */
+  --eq-dashcard-radius:   20px;
+  --eq-dashcard-padding:  22px;
   --eq-page-padding:  var(--eq-space-lg);
   --eq-touch-min:     44px;  /* minimum touch target */
   --eq-touch-gap:     8px;   /* minimum gap between adjacent touch targets */
@@ -161,12 +170,59 @@ button:focus-visible, a:focus-visible, [tabindex]:focus-visible {
   outline-offset: 2px;
 }
 
-/* Cards -- shared pattern */
+/* ==========================================================================
+   Dashboard-view card contract -- matches dashboard.html's own .card
+   exactly (background/border/radius/padding, no box-shadow, no
+   backdrop-filter -- dashboard.html's cards have neither). This is the
+   shared primitive for embedded dashboard views (js/dashboard-view.js on
+   health.html, and Finance/Planner's upcoming ones) so they render
+   identically to the main dashboard without copying its CSS per page.
+   dashboard.html itself is NOT switched onto this in this batch -- its
+   inline .card stays as-is; this only adds the shared copy.
+
+   Every class below is prefixed .eq-card-* specifically so it cannot
+   collide with any page's own .card/.card-title/.grid family (six pages
+   currently define their own .card; dashboard.html and others define
+   their own .grid) -- confirmed via the accompanying Playwright test that
+   no rule here matches any element on any existing page.
+   ========================================================================== */
 .eq-card {
   background: var(--eq-bg-card);
   border: 1px solid var(--eq-border);
-  border-radius: var(--eq-card-radius);
-  padding: var(--eq-card-padding);
+  border-radius: var(--eq-dashcard-radius);
+  padding: var(--eq-dashcard-padding);
+}
+.eq-card-title {
+  font-size: var(--eq-font-sm);
+  color: var(--eq-text-secondary);
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 14px;
+}
+/* Generalised from dashboard.html's per-metric label classes
+   (.dw-sub, .fin-label) -- both use --eq-text-muted; picked 12px
+   (matches --eq-font-xs) over .fin-label's 11px as the shared default. */
+.eq-card-label {
+  font-size: var(--eq-font-xs);
+  color: var(--eq-text-muted);
+}
+/* Generalised from dashboard.html's per-metric value classes
+   (.dw-remaining 32px/700, .fin-val 18px/700, .sleep-duration 26px/800) --
+   picked 26px/700 as a middle default: the median size of the three, and
+   700 is the more common weight (2 of 3). Individual embedded metrics that
+   want a different emphasis size can still override per element. */
+.eq-card-value {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--eq-text-primary);
+}
+.eq-card-grid { display: grid; gap: 16px; }
+.eq-card-grid-2, .eq-card-grid-3, .eq-card-grid-4 { grid-template-columns: 1fr; }
+@media (min-width: 640px) {
+  .eq-card-grid-2, .eq-card-grid-3, .eq-card-grid-4 { grid-template-columns: 1fr 1fr; }
+}
+@media (min-width: 980px) {
+  .eq-card-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .eq-card-grid-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
 }
 
 /* Page content padding -- accounts for the fixed bottom nav */
