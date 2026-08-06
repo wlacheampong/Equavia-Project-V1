@@ -1734,8 +1734,8 @@ body.has-eq-dock .ask-input-bar { bottom: calc(72px + env(safe-area-inset-bottom
     });
     initCloudSync({
       appKey: 'health',
-      syncedKeys: ['stack:items', 'stack:version', 'stack:low', 'eq.energy.logs_v1', 'eq.health.summary'],
-      syncedPrefixes: ['stack:taken:'],
+      syncedKeys: window.EqHealthSyncedKeys,
+      syncedPrefixes: window.EqHealthSyncedPrefixes,
       onApplied: function () { window.dispatchEvent(new Event('storage')); }
     });
     initCloudSync({
@@ -1745,8 +1745,8 @@ body.has-eq-dock .ask-input-bar { bottom: calc(72px + env(safe-area-inset-bottom
     });
     initCloudSync({
       appKey: 'finance',
-      syncedKeys: ['subs', 'wishlist', 'incoming_orders'],
-      syncedPrefixes: ['nw:', 'budget:'],
+      syncedKeys: window.EqFinanceSyncedKeys,
+      syncedPrefixes: window.EqFinanceSyncedPrefixes,
       onApplied: function () { window.dispatchEvent(new Event('storage')); }
     });
   });

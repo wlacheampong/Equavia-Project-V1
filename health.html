@@ -4086,8 +4086,8 @@ document.addEventListener('DOMContentLoaded', function () {
   if (typeof initCloudSync !== 'function') return;
   initCloudSync({
     appKey: 'health',
-    syncedKeys: ['stack:items', 'stack:version', 'stack:low', 'eq.energy.logs_v1', 'eq.health.summary'],
-    syncedPrefixes: ['stack:taken:'],
+    syncedKeys: window.EqHealthSyncedKeys,
+    syncedPrefixes: window.EqHealthSyncedPrefixes,
     onApplied: function () { window.dispatchEvent(new Event('storage')); }
   });
   // Weight/goal-weight/calories are entered here but were never in this

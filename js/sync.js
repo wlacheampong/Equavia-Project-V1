@@ -33,6 +33,16 @@
   // others rely on off the row.
   window.EqGoalsSyncedKeys = ['longterm_goals_v1', 'projects_v1', 'local_cal_events_v1', 'tasks_week_v1', 'tasks_month_v1'];
 
+  // Same reasoning again -- 'health' is called from ask.html and
+  // health.html.
+  window.EqHealthSyncedKeys = ['stack:items', 'stack:version', 'stack:low', 'eq.energy.logs_v1', 'eq.health.summary', 'eq.energy.customSources_v1'];
+  window.EqHealthSyncedPrefixes = ['stack:taken:'];
+
+  // Same reasoning again -- 'finance' is called from ask.html and
+  // finance.html.
+  window.EqFinanceSyncedKeys = ['subs', 'wishlist', 'incoming_orders', 'fin:income_events'];
+  window.EqFinanceSyncedPrefixes = ['nw:', 'budget:'];
+
   window.initCloudSync = function (config) {
     const appKey = config && config.appKey;
     const syncedKeys = (config && config.syncedKeys) || [];

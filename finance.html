@@ -4744,8 +4744,8 @@ document.addEventListener('DOMContentLoaded', function () {
   // dashboard's summary card reads.
   initCloudSync({
     appKey: 'finance',
-    syncedKeys: ['subs', 'wishlist', 'incoming_orders'],
-    syncedPrefixes: ['nw:', 'budget:'],
+    syncedKeys: window.EqFinanceSyncedKeys,
+    syncedPrefixes: window.EqFinanceSyncedPrefixes,
     onApplied: function () { window.dispatchEvent(new Event('storage')); }
   });
 });
