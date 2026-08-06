@@ -16,40 +16,22 @@
 //     has its data in hand (same spot health.html's Whoop section
 //     already publishes eq.health.summary for the same cross-surface-
 //     reuse reason). renderFn() is called fresh every time the
-//     dashboard opens -- never cached -- and must return one of:
-//       - a plain string or Node, read-only markup only (no <input>,
-//         <button>, <textarea>, ids colliding with the live page, or
-//         data-eq-collapse attributes) -- rendered as a plain body.
-//         This is the right shape for anything that isn't genuinely a
-//         single value: a multi-metric list, a checklist, a sentence
-//         mixing a headline number with other context, etc.
-//       - a { value, label? } object, for a section whose content
-//         really is one value with nothing else -- rendered with
-//         .eq-card-value (and .eq-card-label, if given). Don't force a
-//         section into this shape just because it CAN return a string;
-//         only use it when the content has no other rows/context to
-//         lose by doing so (health.html's Progress Photos count is the
-//         only current example).
-//     Every card gets a .eq-card wrapper + .eq-card-title header
-//     (equavia-core.css) regardless of which body shape it returns.
+//     dashboard opens -- never cached -- and must return a plain
+//     string or Node built from read-only markup only: no <input>,
+//     <button>, <textarea>, ids that collide with the live page, or
+//     data-eq-collapse attributes anywhere in the output.
 //
-//   window.EqDashboard.init(pageId, { keepVisible, gridCols })
+//   window.EqDashboard.init(pageId, { keepVisible })
 //     Call once per page, after DOMContentLoaded (so <main> and every
 //     section registration already exist). Builds the toggle switch as
-//     <main>'s first child, an empty dashboard container (laid out via
-//     the shared .eq-card-grid family, same 640px/980px breakpoints as
-//     dashboard.html's own .grid) as <main>'s last child, and the one
-//     CSS rule that hides every other direct child of <main> while the
-//     toggle is on.
+//     <main>'s first child, an empty dashboard container as <main>'s
+//     last child, and the one CSS rule that hides every other direct
+//     child of <main> while the toggle is on.
 //
 //     keepVisible: array of CSS selectors for elements that must stay
 //     visible regardless of toggle state (health.html passes its three
 //     photo-overlay divs, #wtOverlay/#wtCam/#wtViewer -- this file has
 //     no way to know a page's own overlays, so the page declares them).
-//
-//     gridCols: 2, 3, or 4 -- picks .eq-card-grid-2/3/4. Defaults to 3.
-//     Page-agnostic: any page can pass a different count, none is
-//     hardcoded here for a specific page's section count.
 //
 //   window.EqDashboard.toggle(pageId)
 //     Flips the in-memory (never persisted) state for that page.
@@ -110,14 +92,7 @@
      this (see js/topbar.js), reused here rather than invented. */
   padding-bottom: calc(72px + env(safe-area-inset-bottom));
 }
-/* display: grid, not block -- the view container also carries
-   .eq-card-grid (equavia-core.css), and an ID selector's display value
-   always wins over a class selector's regardless of source order, so
-   this has to match .eq-card-grid's own display mode or the grid layout
-   would never actually take effect. gap/columns still come entirely
-   from .eq-card-grid/-2/-3/-4 -- only the display keyword is duplicated
-   here, out of cascade necessity, not by choice. */
-body.eq-dashboard-active #${viewElId(pageId)} { display: grid; }
+body.eq-dashboard-active #${viewElId(pageId)} { display: block; }
 body.eq-dashboard-active main > *${excludes} { display: none; }
 @media (max-width: 480px) {
   #${viewElId(pageId)} { padding-bottom: calc(62px + env(safe-area-inset-bottom)); }
@@ -140,21 +115,20 @@ body.eq-dashboard-active main > *${excludes} { display: none; }
 .set-toggle input:checked ~ .set-toggle-track { background: var(--eq-accent); }
 .set-toggle input:checked ~ .set-toggle-track .set-toggle-thumb { transform: translateX(15px); background: var(--eq-bg-primary); }
 
-/* Card box/title/label/value/grid all now live in equavia-core.css's
-   .eq-card family (every page here already links that file -- confirmed
-   for health.html/finance.html/planner.html). Only what's still genuinely
-   per-page-dynamic (interpolates pageId/keepVisible above), or specific
-   to the plain-body fallback that .eq-card family has no equivalent for,
-   stays injected here. */
-.eq-card-plain-body {
+.eq-dash-section {
+  margin-bottom: 24px; padding-bottom: 20px;
+  border-bottom: 1px solid var(--eq-border);
+}
+.eq-dash-section:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+.eq-dash-section-title {
+  font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--eq-text-muted); margin-bottom: 8px;
+}
+.eq-dash-section-body {
   font-size: 14px; line-height: 1.6; color: var(--eq-text-secondary);
 }
 `;
     document.head.appendChild(style);
-  }
-
-  function isValueShape(content) {
-    return !!content && typeof content === 'object' && !(content instanceof Node) && typeof content.value === 'string';
   }
 
   function renderAll(pageId) {
@@ -166,35 +140,22 @@ body.eq-dashboard-active main > *${excludes} { display: none; }
       try { content = renderFn(); } catch (e) { content = null; }
       if (content == null) return;
 
-      const card = document.createElement('div');
-      card.className = 'eq-card';
-      card.setAttribute('data-eq-dash-section', sectionId);
+      const box = document.createElement('div');
+      box.className = 'eq-dash-section';
+      box.setAttribute('data-eq-dash-section', sectionId);
 
       const heading = document.createElement('div');
-      heading.className = 'eq-card-title';
+      heading.className = 'eq-dash-section-title';
       heading.textContent = title;
-      card.appendChild(heading);
+      box.appendChild(heading);
 
-      if (isValueShape(content)) {
-        if (content.label) {
-          const label = document.createElement('div');
-          label.className = 'eq-card-label';
-          label.textContent = content.label;
-          card.appendChild(label);
-        }
-        const value = document.createElement('div');
-        value.className = 'eq-card-value';
-        value.textContent = content.value;
-        card.appendChild(value);
-      } else {
-        const body = document.createElement('div');
-        body.className = 'eq-card-plain-body';
-        if (typeof content === 'string') body.innerHTML = content;
-        else body.appendChild(content);
-        card.appendChild(body);
-      }
+      const body = document.createElement('div');
+      body.className = 'eq-dash-section-body';
+      if (typeof content === 'string') body.innerHTML = content;
+      else body.appendChild(content);
+      box.appendChild(body);
 
-      view.appendChild(card);
+      view.appendChild(box);
     });
   }
 
@@ -215,7 +176,6 @@ body.eq-dashboard-active main > *${excludes} { display: none; }
     initedPages[pageId] = true;
 
     injectStyle(pageId, opts.keepVisible);
-    const gridCols = [2, 3, 4].indexOf(opts.gridCols) !== -1 ? opts.gridCols : 3;
 
     const wrap = document.createElement('label');
     wrap.id = toggleElId(pageId);
@@ -237,7 +197,6 @@ body.eq-dashboard-active main > *${excludes} { display: none; }
 
     const view = document.createElement('div');
     view.id = viewElId(pageId);
-    view.className = 'eq-card-grid eq-card-grid-' + gridCols;
     main.appendChild(view);
   }
 
